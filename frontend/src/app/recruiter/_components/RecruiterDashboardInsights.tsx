@@ -639,7 +639,6 @@ export default function RecruiterDashboardInsights({
           </div>
         </div>
       </div>
-
     </div>
   )
 }

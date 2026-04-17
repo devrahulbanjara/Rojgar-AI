@@ -217,7 +217,7 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
     )
     db.add(user)
     await db.flush()  # generate user.id before creating related rows
-    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+    bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
 
     # Link OAuth account if this originated from a Google signup
     if data.get("google_id"):
@@ -292,7 +292,7 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
         action_type="verify_email",
         after_json={
             "email": user.email,
-            "primary_role": user.primary_role.value,
+            "primary_role": UserRole(user.primary_role).value,
             "is_email_verified": True,
         },
     )
@@ -315,7 +315,7 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Please verify your email before logging in",
         )
-    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+    bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
 
     tokens, jti, refresh_expires_at = create_tokens(str(user.id))
     company_id = await _get_active_company_id_for_user(db, user.id)
@@ -422,7 +422,7 @@ async def google_register(
             provider_account_id=data["google_id"],
         )
     )
-    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+    bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
 
     tokens, jti, refresh_expires_at = create_tokens(str(user.id))
     response.set_cookie(
@@ -443,7 +443,7 @@ async def google_register(
         action_type="signup_completed",
         after_json={
             "email": user.email,
-            "primary_role": user.primary_role.value,
+            "primary_role": UserRole(user.primary_role).value,
             "auth_provider": "google",
         },
     )
@@ -659,7 +659,7 @@ async def reset_password(db: AsyncSession, payload: ResetPasswordRequest) -> dic
 
     # revoke all refresh tokens on password reset — force re-login everywhere
     await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
-    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+    bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
     await create_custom_audit_log(
         db,
         entity_type="user",

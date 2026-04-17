@@ -145,5 +145,3 @@ Mock or skip Redis, Qdrant, and LLM side effects in tests.
 - Plan the smallest complete solution.
 - State assumptions when ambiguity matters.
 - Refactor only what you touch unless asked.
-
-## You are not allowed to run any terminal command at all related to frontend and backend, as the venv is made in windows powershell and you are inside WSL so it will corrupt it if you run.

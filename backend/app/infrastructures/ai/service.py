@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 import json
 from copy import deepcopy
 from collections.abc import AsyncIterator
-from typing import Any, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Type, TypeVar
 
 from fastapi import HTTPException, status
 from groq import APIStatusError, AsyncGroq, BadRequestError
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
 from loguru import logger
@@ -15,6 +16,9 @@ from app.core.config import settings
 
 
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
+
+if TYPE_CHECKING:
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
 def _walk_groq_strict_schema(node: Any) -> None:
@@ -96,19 +100,27 @@ class AIService:
     """
 
     def __init__(self) -> None:
-        # Embeddings provider (currently Google Gemini)
-        self._embeddings = GoogleGenerativeAIEmbeddings(
-            model=settings.embedding_model,
-            google_api_key=settings.google_api_key,
-        )
+        self._embeddings: GoogleGenerativeAIEmbeddings | None = None
 
         # LLM provider (currently Groq, easily swappable to OpenAI)
         self._llm_client = AsyncGroq(api_key=settings.groq_api_key)
         self._llm_model = settings.groq_model_job_drafting
 
+    def _get_embeddings_client(self) -> GoogleGenerativeAIEmbeddings:
+        if self._embeddings is None:
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+            self._embeddings = GoogleGenerativeAIEmbeddings(
+                model=settings.embedding_model,
+                google_api_key=settings.google_api_key,
+            )
+
+        return self._embeddings
+
     async def get_embeddings(self, text: str) -> list[float]:
         """Return a float vector for the given text using the configured provider."""
-        return await self._embeddings.aembed_query(text)
+        embeddings_client = self._get_embeddings_client()
+        return await embeddings_client.aembed_query(text)
 
     def _build_chat_model(
         self,

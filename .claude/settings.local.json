@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/Users/Rahul Dev Banjara/Desktop/ConvexHire/**)",
+      "Bash(TEST_DATABASE_URL=\"postgresql+asyncpg://postgres.njflpfcrbwjzftifvrhi:o4BmmCchGDMwgcq1@aws-1-ap-south-1.pooler.supabase.com:5432/postgres\" uv run pytest -v)",
+      "Bash(TEST_DATABASE_URL=\"postgresql+asyncpg://postgres.njflpfcrbwjzftifvrhi:o4BmmCchGDMwgcq1@aws-1-ap-south-1.pooler.supabase.com:5432/postgres\" uv run pytest tests/integration/test_auth.py::TestSignup::test_candidate_signup_success -v -s)",
+      "Bash(TEST_DATABASE_URL=\"postgresql+asyncpg://postgres.njflpfcrbwjzftifvrhi:o4BmmCchGDMwgcq1@aws-1-ap-south-1.pooler.supabase.com:5432/postgres\" uv run pytest tests/integration/test_auth.py::TestSignup::test_candidate_signup_success -v -rs)",
+      "Bash(uv run *)",
+      "Bash(grep -E \"app\\\\\\\\\\\\|tests\\\\\\\\\\\\|app/\")",
+      "Bash(grep \"app\\\\\\\\\")",
+      "WebSearch",
+      "WebFetch(domain:docs.github.com)"
+    ]
+  }
+}
