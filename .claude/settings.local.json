@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(aws ecs list-task-definition-families *)",
+      "Bash(aws ecs *)",
+      "Bash(aws ecr describe-repositories *)"
+    ]
+  }
+}
