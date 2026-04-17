@@ -156,7 +156,9 @@ function JobSelectionCard({
 }) {
   return (
     <section className="recruiter-chat-card recruiter-chat-card--clarification">
-      <div className="recruiter-chat-card-title">Choose the exact job</div>
+      <div className="recruiter-chat-card-title">
+        {options.length === 1 ? 'Confirm this is the job' : 'Choose the exact job'}
+      </div>
       <div className="recruiter-chat-section-stack">
         {options.map((job) => (
           <button
