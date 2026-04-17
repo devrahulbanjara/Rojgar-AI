@@ -1033,11 +1033,13 @@ async def _handle_job_edit(
 
     if not matches:
         hint = (
-            " (Tip: you can also say \"edit the Engineering Manager job\" to refer to a specific role.)"
+            ' (Tip: you can also say "edit the Engineering Manager job" to refer to a specific role.)'
             if state.get("last_job_id")
             else " Ask me to list your jobs first or mention the exact role title."
         )
-        reply = f"I could not match that edit request to one of your company jobs.{hint}"
+        reply = (
+            f"I could not match that edit request to one of your company jobs.{hint}"
+        )
         _append_history(
             state,
             "assistant",
@@ -1894,7 +1896,9 @@ async def stream_message(
         if intent == "job_query":
             reply = await _handle_job_query(db, user, session, state, user_message)
         elif intent == "job_description":
-            reply = await _handle_job_description(db, user, session, state, user_message)
+            reply = await _handle_job_description(
+                db, user, session, state, user_message
+            )
         elif intent == "job_edit":
             reply = await _handle_job_edit(db, user, session, state, user_message)
         else:

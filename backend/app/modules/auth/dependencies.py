@@ -30,7 +30,7 @@ async def get_optional_user(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is not None:
-        bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+        bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
     return user
 
 
@@ -53,7 +53,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
-    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+    bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
     return user
 
 

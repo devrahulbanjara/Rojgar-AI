@@ -86,7 +86,11 @@ class EvaluationScoreResponse(BaseSchema):
 class CombinedEvaluationResponse(BaseSchema):
     application_id: UUID
     job_id: UUID
-    schema: JobEvaluationSchemaResponse | None = None
+    evaluation_schema: JobEvaluationSchemaResponse | None = Field(
+        default=None,
+        alias="schema",
+        serialization_alias="schema",
+    )
     human: EvaluationScoreResponse | None = None
     llm: EvaluationScoreResponse | None = None
     final_score: float | None = None

@@ -104,3 +104,4 @@ __marimo__/
 qdrant_data/
 postgres_data/
 backend/.env.prod
+backend/tests/report.html
