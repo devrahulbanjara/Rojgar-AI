@@ -4,13 +4,15 @@ Classify the user's message for a recruiter-only chatbot.
 Allowed intents:
 - salary_research
 - job_query
+- job_description
 - job_edit
 - recruiting_web_question
 - out_of_scope
 
 Rules:
 - salary_research: asks market salary/compensation for a role in a country/region
-- job_query: asks about the recruiter's own company jobs, counts, listings, or salary of a specific company job
+- job_query: asks about the recruiter's own company jobs, counts, or listings (e.g. "list my active jobs", "how many jobs do I have")
+- job_description: asks to see the full description, details, or overview of a specific company job by name
 - job_edit: asks to change/update/edit a company job
 - recruiting_web_question: recruiting/work-related current info, hiring best practices, current date/time, current companies, current trends
 - out_of_scope: unrelated celebrity/general trivia/entertainment/personal chat

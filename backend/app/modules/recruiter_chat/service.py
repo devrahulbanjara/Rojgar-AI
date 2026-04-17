@@ -79,6 +79,7 @@ def _new_state() -> dict[str, Any]:
         },
         "pending_job_match": None,
         "pending_edit": None,
+        "last_job_id": None,
     }
 
 
@@ -311,7 +312,7 @@ async def _classify_intent(message: str) -> str:
     }:
         return "recruiting_web_question"
 
-    if "who are you" in text or "what can you do" in text or "what do you do" in text:
+    if _is_capability_question(text):
         return "recruiting_web_question"
 
     if "how are you" in text:
@@ -325,6 +326,12 @@ async def _classify_intent(message: str) -> str:
         if "our " in text or "my " in text:
             return "job_query"
         return "salary_research"
+
+    if "description" in text or (
+        any(term in text for term in ["detail", "overview", "posting", "job post"])
+        and any(word in text for word in ["job", "role", "opening", "position"])
+    ):
+        return "job_description"
 
     if any(
         term in text
@@ -795,7 +802,7 @@ async def _handle_job_query(
         return _serialize_response(response_type, reply, data=data)
 
     if any(term in lower for term in ["salary", "compensation", "pay"]):
-        matches = find_job_matches(filtered_jobs or jobs, message)
+        matches = _resolve_job_matches(filtered_jobs or jobs, message, state)
         if not matches:
             reply = (
                 "I could not match that to one of your company jobs. "
@@ -812,6 +819,7 @@ async def _handle_job_query(
 
         if len(matches) == 1:
             job = matches[0]
+            state["last_job_id"] = str(job.id)
             if job.salary_min is not None and job.salary_max is not None:
                 salary_text = f"{job.currency or ''} {job.salary_min:,} - {job.salary_max:,}".strip()
             else:
@@ -869,6 +877,149 @@ async def _handle_job_query(
     return _serialize_response(ChatResponseType.job_list, reply, data=payload)
 
 
+_PRONOUN_REFERENCES = (
+    " its ",
+    " it's ",
+    "edit it",
+    "update it",
+    "change it",
+    "the job",
+    "this job",
+    "that job",
+    "the role",
+    "this role",
+    "that role",
+    "the position",
+    "this position",
+)
+
+
+def _references_last_job(text: str) -> bool:
+    """Return True when the message refers to the previously-discussed job by pronoun."""
+    return any(phrase in f" {text} " for phrase in _PRONOUN_REFERENCES)
+
+
+def _resolve_job_matches(
+    jobs: list[Job],
+    message: str,
+    state: dict[str, Any],
+) -> list[Job]:
+    """
+    Try title-based matching first. If nothing matches and the message uses a
+    pronoun reference, fall back to the last job that was explicitly discussed.
+    """
+    matches = find_job_matches(jobs, message)
+    if matches:
+        return matches
+
+    last_job_id_raw = state.get("last_job_id")
+    if last_job_id_raw and _references_last_job(message.lower()):
+        try:
+            last_id = uuid.UUID(str(last_job_id_raw))
+        except ValueError:
+            return []
+        last_job = next((j for j in jobs if j.id == last_id), None)
+        if last_job:
+            return [last_job]
+
+    return []
+
+
+def _format_job_description(job: Job) -> str:
+    lines: list[str] = [f"## {job.title}"]
+
+    meta: list[str] = [f"**Status:** {effective_job_status(job)}"]
+    if job.location_type:
+        meta.append(f"**Location type:** {job.location_type.value}")
+    if job.location:
+        meta.append(f"**Location:** {job.location}")
+    if job.salary_min is not None and job.salary_max is not None:
+        salary = f"{job.currency or ''} {job.salary_min:,} – {job.salary_max:,}".strip()
+        meta.append(f"**Salary:** {salary}")
+    lines.append("  ".join(meta))
+
+    if job.overview:
+        lines.append("\n### Overview")
+        lines.append(job.overview)
+
+    if job.responsibilities:
+        lines.append("\n### Responsibilities")
+        for item in job.responsibilities:
+            lines.append(f"- {item}")
+
+    if job.requirements:
+        lines.append("\n### Requirements")
+        for item in job.requirements:
+            lines.append(f"- {item}")
+
+    if job.preferred_qualifications:
+        lines.append("\n### Preferred Qualifications")
+        for item in job.preferred_qualifications:
+            lines.append(f"- {item}")
+
+    if job.benefits:
+        lines.append("\n### Benefits")
+        for item in job.benefits:
+            lines.append(f"- {item}")
+
+    if not any([job.overview, job.responsibilities, job.requirements]):
+        lines.append("\n*No detailed description has been added to this job yet.*")
+
+    return "\n".join(lines)
+
+
+async def _handle_job_description(
+    db: AsyncSession,
+    user: User,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    company_id = await get_active_company_id(db, user.id)
+    jobs = await get_company_jobs(db, company_id)
+    matches = _resolve_job_matches(jobs, message, state)
+
+    if not matches:
+        reply = (
+            "I could not find a job matching that. "
+            "Try listing your jobs first or mention the exact job title."
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.clarification,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.clarification, reply)
+
+    state["mode"] = "awaiting_job_match_confirmation"
+    state["pending_job_match"] = {
+        "kind": "job_description",
+        "request_text": message,
+        "options": [serialize_job_option(job) for job in matches],
+    }
+
+    if len(matches) == 1:
+        reply = f"I found **{matches[0].title}**. Is this the job you want to see the description for?"
+    else:
+        reply = "I found multiple matching jobs. Please choose the one you want to see the description for."
+
+    _append_history(
+        state,
+        "assistant",
+        reply,
+        response_type=ChatResponseType.clarification,
+        data={"options": state["pending_job_match"]["options"]},
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(
+        ChatResponseType.clarification,
+        reply,
+        data={"options": state["pending_job_match"]["options"]},
+    )
+
+
 async def _handle_job_edit(
     db: AsyncSession,
     user: User,
@@ -878,13 +1029,15 @@ async def _handle_job_edit(
 ) -> RecruiterChatResponse:
     company_id = await get_active_company_id(db, user.id)
     jobs = await get_company_jobs(db, company_id)
-    matches = find_job_matches(jobs, message)
+    matches = _resolve_job_matches(jobs, message, state)
 
     if not matches:
-        reply = (
-            "I could not match that edit request to one of your company jobs. "
-            "Ask me to list your jobs first or mention the exact role title."
+        hint = (
+            " (Tip: you can also say \"edit the Engineering Manager job\" to refer to a specific role.)"
+            if state.get("last_job_id")
+            else " Ask me to list your jobs first or mention the exact role title."
         )
+        reply = f"I could not match that edit request to one of your company jobs.{hint}"
         _append_history(
             state,
             "assistant",
@@ -917,6 +1070,7 @@ async def _handle_job_edit(
         )
 
     job = matches[0]
+    state["last_job_id"] = str(job.id)
     summary, patch, diff = await _prepare_job_edit_preview(job, message)
     if not patch or not diff:
         reply = "I understood the request, but I do not see any actual change to apply."
@@ -983,14 +1137,15 @@ async def _handle_recruiting_web_question(
         await _save_session_state(db, session, state, title_hint=message)
         return _serialize_response(ChatResponseType.text, reply)
 
-    if (
-        "who are you" in lower
-        or "what can you do" in lower
-        or "what do you do" in lower
-    ):
+    if _is_capability_question(lower):
         reply = (
             f"I'm the recruiting assistant for {company_name}. "
-            "I can help you review company jobs, research salary ranges, prepare safe job edits for approval, and answer recruiting-related hiring questions."
+            "Here's what I can help you with:\n\n"
+            "- **View your company jobs** — list active, draft, or expired jobs\n"
+            "- **Job descriptions** — show the full description of any specific job\n"
+            "- **Salary research** — look up market salary ranges for any role and country\n"
+            "- **Job edits** — propose changes to a job with a preview-and-confirm step\n"
+            "- **Recruiting questions** — answer current hiring trends, best practices, and general recruiting info"
         )
         _append_history(
             state,
@@ -1156,6 +1311,8 @@ async def send_message(
         reply = await _handle_salary_flow(db, session, state, user_message)
     elif intent == "job_query":
         reply = await _handle_job_query(db, user, session, state, user_message)
+    elif intent == "job_description":
+        reply = await _handle_job_description(db, user, session, state, user_message)
     elif intent == "job_edit":
         reply = await _handle_job_edit(db, user, session, state, user_message)
     elif intent == "recruiting_web_question":
@@ -1199,6 +1356,7 @@ async def confirm_job_selection(
 
     state["pending_job_match"] = None
     state["mode"] = "idle"
+    state["last_job_id"] = str(job.id)
 
     if kind == "job_query_salary":
         if job.salary_min is not None and job.salary_max is not None:
@@ -1278,6 +1436,27 @@ async def confirm_job_selection(
             pending_action=_pending_action_from_state(state),
         )
 
+    if kind == "job_description":
+        description = _format_job_description(job)
+        reply = _serialize_response(
+            ChatResponseType.text,
+            description,
+            data={"job": serialize_job_list_item(job)},
+        )
+        _append_history(
+            state,
+            "assistant",
+            description,
+            response_type=reply.response_type,
+            data=reply.data,
+        )
+        await _save_session_state(db, session, state, title_hint=request_text)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=None,
+        )
+
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Unsupported pending job selection type.",
@@ -1332,6 +1511,7 @@ async def confirm_job_edit(
 
     state["mode"] = "idle"
     state["pending_edit"] = None
+    state["last_job_id"] = str(job.id)
 
     reply_text = f"I updated {job.title} successfully."
     reply = _serialize_response(
@@ -1382,6 +1562,27 @@ def _final_exchange_payload(
             else None
         ),
     }
+
+
+_CAPABILITY_PHRASES = (
+    "who are you",
+    "what can you do",
+    "what do you do",
+    "what are you able",
+    "what things can you",
+    "things can you do",
+    "can you do for me",
+    "you do for me",
+    "your capabilities",
+    "what you can do",
+    "what can i ask",
+    "list what you can",
+    "list out what",
+)
+
+
+def _is_capability_question(text: str) -> bool:
+    return any(phrase in text for phrase in _CAPABILITY_PHRASES)
 
 
 def _is_direct_recruiting_prompt(message: str) -> bool:
@@ -1514,9 +1715,7 @@ async def _handle_recruiting_web_question_stream(
             "good afternoon",
             "good evening",
         }
-        or "who are you" in lower
-        or "what can you do" in lower
-        or "what do you do" in lower
+        or _is_capability_question(lower)
         or "how are you" in lower
     ):
         reply = await _handle_recruiting_web_question(db, user, session, state, message)
@@ -1694,6 +1893,8 @@ async def stream_message(
 
         if intent == "job_query":
             reply = await _handle_job_query(db, user, session, state, user_message)
+        elif intent == "job_description":
+            reply = await _handle_job_description(db, user, session, state, user_message)
         elif intent == "job_edit":
             reply = await _handle_job_edit(db, user, session, state, user_message)
         else:

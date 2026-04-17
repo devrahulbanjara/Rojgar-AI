@@ -1,35 +1,48 @@
-# Stage 1: Build stage
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
-ENV UV_COMPILE_BYTECODE=1
+# Stage 1: Build
+FROM python:3.12-slim AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:0.7.12 /uv /bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never
+
 WORKDIR /app
 
-# Install dependencies using cache mounts
+# Copy dependency files first (separate layer for caching)
+COPY pyproject.toml uv.lock ./
+
+# Install deps only (not the project) — cached layer
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
 
-# Stage 2: Final runtime stage
-FROM python:3.12-slim
-WORKDIR /app
-
-# Copy the virtual environment
-COPY --from=builder /app/.venv /app/.venv
-
-# Copy all application files based on your directory structure
-COPY main.py alembic.ini hybrid_matching.py entrypoint.sh ./
+# Copy app code
+COPY main.py alembic.ini entrypoint.sh ./
 COPY app ./app
 COPY alembic ./alembic
 
-# Make the entrypoint script executable
-RUN chmod +x entrypoint.sh
+# Install the project itself
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
-# Set environment paths and flags
-ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONUNBUFFERED=1
+# Stage 2: Runtime
+FROM python:3.12-slim
+
+RUN groupadd -r app && useradd -r -d /app -g app app
+
+WORKDIR /app
+
+COPY --from=builder --chown=app:app /app /app
+
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+RUN mkdir -p /app/logs && chown -R app:app /app
+
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1
+
+USER app
 
 EXPOSE 8000
 
-# Use the script to run migrations then start the app
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["fastapi", "run", "main.py", "--port", "8000", "--host", "0.0.0.0"]

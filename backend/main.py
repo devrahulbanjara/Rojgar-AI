@@ -1,7 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-import logfire
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -95,10 +94,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(RequestContextMiddleware)
-
-if settings.environment == "dev":
-    logfire.configure()
-    logfire.instrument_fastapi(app)
 
 register_exception_handlers(app)
 
