@@ -60,6 +60,7 @@
     color: $color-gray-900;
     max-width: 780px;
     letter-spacing: -0.02em;
+    animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
 
     @include md {
       font-size: $font-size-5xl;
@@ -81,6 +82,7 @@
     max-width: 560px;
     line-height: $line-height-loose;
     margin-bottom: 0;
+    animation: fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.42s both;
   }
 
   // ── Search bar ─────────────────────────────────────────────
@@ -96,6 +98,7 @@
       0 0 0 1px $color-gray-200;
     padding: $space-2;
     gap: 0;
+    animation: fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.58s both;
 
     @include md {
       padding: $space-2 $space-2 $space-2 $space-4;
@@ -198,6 +201,7 @@
     padding-top: 14px;
     align-items: center;
     gap: clamp(10px, 1.5vw, 20px);
+    animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.72s both;
   }
 
   &__proofImg {
@@ -226,10 +230,29 @@
     transform: translateX(-50%);
     width: 60vw;
 
+    // fade-up-slide uses the independent CSS `translate` property
+    // so it composes cleanly with the existing translateX(-50%) transform.
+    animation: fade-up-slide 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
+
     img {
       width: 100%;
       height: auto;
       display: block;
+    }
+  }
+}
+
+// ── Respect reduced motion (hero animations) ──────────────────
+@media (prefers-reduced-motion: reduce) {
+  .homepage {
+    &__heading,
+    &__subtitle,
+    &__search,
+    &__proof-container,
+    &__bottomImg {
+      animation: none !important;
+      opacity: 1 !important;
+      translate: none !important;
     }
   }
 }

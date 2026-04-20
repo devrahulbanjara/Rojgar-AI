@@ -2,6 +2,19 @@
 @use '../variables' as *;
 @use '../mixins' as *;
 
+// ── Entrance animation (runs before JS loads) ────────────────
+@keyframes header-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-90px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 // ── Block ────────────────────────────────────────────────────
 .header {
   position: fixed;
@@ -10,10 +23,16 @@
   right: 0;
   z-index: $z-sticky;
   height: 68px;
-  will-change: top, opacity, transform;
+  will-change: top, transform, opacity;
 
-  // Hidden until GSAP entrance animation runs (prevents flash of unstyled header)
-  opacity: 0;
+  // CSS animation — fires immediately when stylesheet loads, no JS wait
+  animation: header-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  // ── Modifier: skip entrance for returning visitors ─────────
+  &--entered {
+    animation: none;
+    opacity: 1;
+  }
 
   // ── Modifier: scrolled (applied via GSAP) ──────────────────
   &--scrolled {
@@ -230,6 +249,8 @@
     z-index: $z-sticky - 1;
     backdrop-filter: blur(2px);
     cursor: pointer;
+    display: none; // Hidden by default; GSAP sets display:block when drawer opens
+    opacity: 0;
   }
 
   // ── Element: drawer ────────────────────────────────────────
@@ -245,6 +266,7 @@
     flex-direction: column;
     box-shadow: -4px 0 32px rgba($color-black, 0.12);
     will-change: transform;
+    transform: translateX(100%); // Hidden off-screen by default; GSAP animates it in
 
     @include lg {
       display: none;

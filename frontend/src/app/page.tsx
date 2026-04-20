@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
+import { useReveal } from '@/hooks/useReveal'
 import { ROLE_DASHBOARDS } from '@/lib/roleRoutes'
 import { useAppSelector } from '@/store/hooks'
 import { MapPin, Search } from 'lucide-react'
@@ -17,6 +18,7 @@ import WhyPreferUs from '@/components/sections/WhyPreferUs'
 export default function Home() {
   const { user, isAuthenticated } = useAppSelector((s) => s.auth)
   const router = useRouter()
+  useReveal()
 
   useEffect(() => {
     if (isAuthenticated && user) {

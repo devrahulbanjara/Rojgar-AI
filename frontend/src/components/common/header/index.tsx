@@ -20,22 +20,17 @@ export default function Header() {
   const overlayRef = useRef<HTMLDivElement>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // ── Entrance: slide down from above viewport (first page load only) ──
+  // ── Entrance: CSS animation handles first-load slide-down.
+  //    For returning visitors this session, skip the animation immediately.
   useEffect(() => {
     const header = headerRef.current
     if (!header) return
     const STORAGE_KEY = 'ch_header_animated'
     if (sessionStorage.getItem(STORAGE_KEY)) {
-      // Already animated this session — make header immediately visible
-      gsap.set(header, { y: 0, opacity: 1 })
-      return
+      header.classList.add('header--entered')
+    } else {
+      sessionStorage.setItem(STORAGE_KEY, '1')
     }
-    sessionStorage.setItem(STORAGE_KEY, '1')
-    gsap.fromTo(
-      header,
-      { y: -110, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out', delay: 0.1 },
-    )
   }, [])
 
   // ── Scroll: floating pill → full-width sticky ──────────────

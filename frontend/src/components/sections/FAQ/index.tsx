@@ -53,19 +53,30 @@ export default function FAQ() {
       <div className="faq__inner container">
         {/* Heading */}
         <div className="faq__header">
-          <h2 className="faq__heading">Frequently Asked Questions</h2>
-          <p className="faq__subheading">
+          <h2 className="faq__heading" data-reveal>
+            Frequently Asked Questions
+          </h2>
+          <p
+            className="faq__subheading"
+            data-reveal
+            style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
+          >
             Everything you need to know about ConvexHire. Can&apos;t find the answer? Reach out to
             our team.
           </p>
         </div>
 
-        {/* Accordion */}
+        {/* Accordion — items stagger in as section enters viewport */}
         <ul className="faq__list">
           {FAQS.map((item, i) => {
             const isOpen = openIndex === i
             return (
-              <li key={i} className={`faq__item${isOpen ? ' faq__item--open' : ''}`}>
+              <li
+                key={i}
+                className={`faq__item${isOpen ? ' faq__item--open' : ''}`}
+                data-reveal
+                style={{ '--reveal-delay': `${Math.min(i * 0.07, 0.35)}s` } as React.CSSProperties}
+              >
                 <button className="faq__trigger" onClick={() => toggle(i)} aria-expanded={isOpen}>
                   <span className="faq__question">{item.q}</span>
                   <span className="faq__icon" aria-hidden="true">
