@@ -82,21 +82,38 @@ export default function WhyPreferUs() {
   return (
     <section className="why-prefer">
       <div className="why-prefer__header container">
-        <p className="why-prefer__label">Why ConvexHire</p>
-        <h2 className="why-prefer__heading">
+        <p className="why-prefer__label" data-reveal>
+          Why ConvexHire
+        </p>
+        <h2
+          className="why-prefer__heading"
+          data-reveal
+          style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
+        >
           Built differently,
           <br />
           for people who care about their career
         </h2>
-        <p className="why-prefer__subheading">
+        <p
+          className="why-prefer__subheading"
+          data-reveal
+          style={{ '--reveal-delay': '0.2s' } as React.CSSProperties}
+        >
           Most job platforms treat candidates as data points. We don&apos;t.
         </p>
       </div>
 
       <div className="why-prefer__blocks container">
         {BLOCKS.map((block) => {
+          // Image slides in from its visual side; text slides from the opposite side.
+          const imgReveal = block.reverse ? 'right' : 'left'
+          const textReveal = block.reverse ? 'left' : 'right'
+
           const imgEl = (
-            <div className={`why-prefer__img-wrap why-prefer__img-wrap--${block.color}`}>
+            <div
+              className={`why-prefer__img-wrap why-prefer__img-wrap--${block.color}`}
+              data-reveal={imgReveal}
+            >
               <Image
                 src={block.image}
                 alt={block.imageAlt}
@@ -108,12 +125,21 @@ export default function WhyPreferUs() {
           )
 
           const textEl = (
-            <div className="why-prefer__text">
+            <div
+              className="why-prefer__text"
+              data-reveal={textReveal}
+              style={{ '--reveal-delay': '0.12s' } as React.CSSProperties}
+            >
               <h3 className="why-prefer__title">{block.title}</h3>
               <p className="why-prefer__body">{block.body}</p>
               <ul className="why-prefer__features">
-                {block.features.map((f) => (
-                  <li key={f.heading} className="why-prefer__feature">
+                {block.features.map((f, fi) => (
+                  <li
+                    key={f.heading}
+                    className="why-prefer__feature"
+                    data-reveal
+                    style={{ '--reveal-delay': `${fi * 0.1 + 0.22}s` } as React.CSSProperties}
+                  >
                     <span className="why-prefer__feature-icon">{ICONS[f.icon]}</span>
                     <span className="why-prefer__feature-copy">
                       <strong className="why-prefer__feature-heading">{f.heading}</strong>
@@ -132,7 +158,6 @@ export default function WhyPreferUs() {
                 block.reverse ? ' why-prefer__block--reverse' : ''
               }`}
             >
-              {/* Reverse: text left, image right — swap DOM order to match grid columns */}
               {block.reverse ? (
                 <>
                   {textEl}

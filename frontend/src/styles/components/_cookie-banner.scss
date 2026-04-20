@@ -2,6 +2,19 @@
 @use '../variables' as *;
 @use '../mixins' as *;
 
+// ── Entrance animation ────────────────────────────────────────
+@keyframes cookie-enter {
+  from {
+    opacity: 0;
+    transform: translateY(120%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 // ── Block ────────────────────────────────────────────────────
 .cookie-banner {
   position: fixed;
@@ -13,6 +26,9 @@
   justify-content: center;
   padding-inline: $space-4;
   will-change: transform, opacity;
+
+  // Fires the moment the component mounts — no JS needed for entrance
+  animation: cookie-enter 0.52s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
 
   // ── Element: inner (floating pill) ───────────────────────
   &__inner {

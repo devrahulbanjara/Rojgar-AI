@@ -21,17 +21,6 @@ export default function CookieBanner() {
     }
   }, [])
 
-  // ── Animate in when visible becomes true ──────────────────
-  useEffect(() => {
-    if (!visible || !bannerRef.current) return
-
-    gsap.fromTo(
-      bannerRef.current,
-      { y: '120%', opacity: 0 },
-      { y: '0%', opacity: 1, duration: 0.52, ease: 'power3.out', delay: 0.6 },
-    )
-  }, [visible])
-
   const dismiss = (choice: 'accepted' | 'rejected') => {
     const banner = bannerRef.current
     if (!banner) return

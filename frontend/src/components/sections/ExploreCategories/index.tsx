@@ -29,35 +29,21 @@ const LOGOS = [
 ]
 
 const CATEGORIES = [
-  {
-    src: '/homepage/exploreSection/cards/graphicDesign.png',
-    label: 'Graphic Design',
-  },
-  {
-    src: '/homepage/exploreSection/cards/uiuxDesign.png',
-    label: 'UI/UX Design',
-  },
-  {
-    src: '/homepage/exploreSection/cards/videoEditing.png',
-    label: 'Video Editing',
-  },
-  {
-    src: '/homepage/exploreSection/cards/development.png',
-    label: 'Development',
-  },
-  {
-    src: '/homepage/exploreSection/cards/contentWriting.png',
-    label: 'Content Writing',
-  },
+  { src: '/homepage/exploreSection/cards/graphicDesign.png', label: 'Graphic Design' },
+  { src: '/homepage/exploreSection/cards/uiuxDesign.png', label: 'UI/UX Design' },
+  { src: '/homepage/exploreSection/cards/videoEditing.png', label: 'Video Editing' },
+  { src: '/homepage/exploreSection/cards/development.png', label: 'Development' },
+  { src: '/homepage/exploreSection/cards/contentWriting.png', label: 'Content Writing' },
   { src: '/homepage/exploreSection/cards/seo.png', label: 'SEO' },
-  {
-    src: '/homepage/exploreSection/cards/3dAnimation.png',
-    label: '3D Animation',
-  },
-  {
-    src: '/homepage/exploreSection/cards/visualAssistant.png',
-    label: 'Virtual Assistant',
-  },
+  { src: '/homepage/exploreSection/cards/3dAnimation.png', label: '3D Animation' },
+  { src: '/homepage/exploreSection/cards/visualAssistant.png', label: 'Virtual Assistant' },
+]
+
+const STATS = [
+  { num: '50+', desc: 'Job Categories' },
+  { num: '12k+', desc: 'Active Listings' },
+  { num: '500+', desc: 'Partner Companies' },
+  { num: '3,400+', desc: 'Candidates Hired' },
 ]
 
 export default function ExploreCategories() {
@@ -73,8 +59,8 @@ export default function ExploreCategories() {
         aria-hidden="true"
       />
 
-      {/* Logos marquee */}
-      <div className="explore__logos">
+      {/* Logos marquee — fades in as section enters viewport */}
+      <div className="explore__logos" data-reveal>
         <div className="explore__marquee-track">
           {/* Duplicate for seamless loop */}
           {[...LOGOS, ...LOGOS].map((logo, i) => (
@@ -89,20 +75,33 @@ export default function ExploreCategories() {
       <div className="container explore__main">
         {/* Left */}
         <div className="explore__left">
-          <h2 className="explore__heading">
+          <h2 className="explore__heading" data-reveal>
             Explore Top Job <span className="explore__heading-accent">Categories</span>
           </h2>
-          <p className="explore__subtitle">
+          <p
+            className="explore__subtitle"
+            data-reveal
+            style={{ '--reveal-delay': '0.12s' } as React.CSSProperties}
+          >
             Discover the most in-demand roles and start finding opportunities that match your
             expertise.
           </p>
-          <Link href="/jobs" className="btn btn--primary explore__cta">
+          <Link
+            href="/jobs"
+            className="btn btn--primary explore__cta"
+            data-reveal
+            style={{ '--reveal-delay': '0.22s' } as React.CSSProperties}
+          >
             See All Jobs
           </Link>
         </div>
 
         {/* Right — Swiper */}
-        <div className="explore__carousel">
+        <div
+          className="explore__carousel"
+          data-reveal
+          style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
+        >
           <button className="explore__nav explore__nav--prev" aria-label="Previous">
             <ChevronLeft aria-hidden="true" />
           </button>
@@ -146,24 +145,19 @@ export default function ExploreCategories() {
         </div>
       </div>
 
-      {/* Stats strip */}
+      {/* Stats strip — staggered reveal */}
       <div className="container explore__stats">
-        <div className="explore__stat">
-          <span className="explore__stat-number">50+</span>
-          <span className="explore__stat-desc">Job Categories</span>
-        </div>
-        <div className="explore__stat">
-          <span className="explore__stat-number">12k+</span>
-          <span className="explore__stat-desc">Active Listings</span>
-        </div>
-        <div className="explore__stat">
-          <span className="explore__stat-number">500+</span>
-          <span className="explore__stat-desc">Partner Companies</span>
-        </div>
-        <div className="explore__stat">
-          <span className="explore__stat-number">3,400+</span>
-          <span className="explore__stat-desc">Candidates Hired</span>
-        </div>
+        {STATS.map((stat, i) => (
+          <div
+            key={stat.desc}
+            className="explore__stat"
+            data-reveal
+            style={{ '--reveal-delay': `${i * 0.1}s` } as React.CSSProperties}
+          >
+            <span className="explore__stat-number">{stat.num}</span>
+            <span className="explore__stat-desc">{stat.desc}</span>
+          </div>
+        ))}
       </div>
     </section>
   )
