@@ -39,6 +39,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "rapidfuzz>=3.14.3",
     "rich>=14.3.3",
+    "fastapi-limiter>=0.2.0",
 ]
 
 [tool.pytest.ini_options]

@@ -315,7 +315,22 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Please verify your email before logging in",
         )
+
+    if user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This account has been deleted",
+        )
+
     bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
+
+    # Purge expired refresh tokens for this user on every login
+    await db.execute(
+        delete(RefreshToken).where(
+            RefreshToken.user_id == user.id,
+            RefreshToken.expires_at < datetime.now(timezone.utc),
+        )
+    )
 
     tokens, jti, refresh_expires_at = create_tokens(str(user.id))
     company_id = await _get_active_company_id_for_user(db, user.id)
@@ -673,3 +688,26 @@ async def reset_password(db: AsyncSession, payload: ResetPasswordRequest) -> dic
 
     logger.info(f"Password reset successful: {user.email}")
     return {"message": "Password reset successfully. Please log in again."}
+
+
+async def delete_my_account(
+    db: AsyncSession,
+    user: User,
+    response: Response,
+) -> None:
+    """Soft-delete the user's account: marks deleted, revokes all sessions, clears cookie."""
+    user.is_deleted = True
+    user.deleted_at = datetime.now(timezone.utc)
+    await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
+    response.delete_cookie("refresh_token")
+    await create_custom_audit_log(
+        db,
+        entity_type="user",
+        entity_id=user.id,
+        target_user_id=user.id,
+        company_id=await _get_active_company_id_for_user(db, user.id),
+        action_type="account_deleted",
+        after_json={"is_deleted": True},
+    )
+    await db.commit()
+    logger.info(f"Account deleted: {user.email}")

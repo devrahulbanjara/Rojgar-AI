@@ -44,8 +44,6 @@ function OAuthCallbackInner() {
       }
 
       try {
-        localStorage.setItem('access_token', accessToken)
-
         const userParam = searchParams.get('user')
         let user: AuthUser | null = null
         if (userParam) {
@@ -73,7 +71,6 @@ function OAuthCallbackInner() {
         }
 
         dispatch(setCredentials({ accessToken, user }))
-        localStorage.setItem('auth_user', JSON.stringify(user))
 
         toast.success(`Welcome, ${user.full_name}!`)
         router.replace(getRoleDashboard(user.primary_role))

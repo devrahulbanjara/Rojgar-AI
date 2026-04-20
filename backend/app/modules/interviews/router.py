@@ -6,12 +6,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import require_active_membership
+from app.modules.auth.dependencies import require_active_membership, require_candidate
 from app.modules.auth.models import User
 from app.modules.interviews import service
-from app.modules.interviews.schemas import InterviewResponse
+from app.modules.interviews.schemas import CandidateInterviewView, InterviewResponse
 
 router = APIRouter()
+
+
+@router.get(
+    "/my",
+    response_model=UnifiedResponse[list[CandidateInterviewView]],
+    summary="List all interviews for the authenticated candidate",
+)
+async def list_my_interviews(
+    user: User = Depends(require_candidate),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await service.list_candidate_interviews(db, user.id)
+    return ResponseBuilder.success(data=data, message="Interviews fetched.")
 
 
 @router.get(

@@ -38,6 +38,12 @@ class User(Base):
     is_onboarded: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", index=True
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     primary_role: Mapped[UserRole] = mapped_column(nullable=False)
     email_verify_token: Mapped[str | None] = mapped_column(String(255), index=True)
     password_reset_token: Mapped[str | None] = mapped_column(String(255), index=True)

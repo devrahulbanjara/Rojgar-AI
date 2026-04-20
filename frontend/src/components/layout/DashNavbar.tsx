@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
+import { useLogoutMutation } from '@/store/services/authApi'
 import {
   useGetNotificationsQuery,
   useMarkAllNotificationsReadMutation,
@@ -79,6 +80,7 @@ function buildNavItems(role: DashRole): NavItem[] {
       { label: 'Dashboard', href: '/candidate' },
       { label: 'Jobs', href: '/candidate/jobs' },
       { label: 'Applications', href: '/candidate/applications' },
+      { label: 'Interviews', href: '/candidate/interviews' },
       { label: 'Audit', href: '/candidate/audit' },
       { label: 'Resumes', href: '/candidate/resume' },
       { label: 'Profile', href: '/candidate/profile' },
@@ -108,6 +110,7 @@ export default function DashNavbar({
   userInitials = 'U',
 }: DashNavbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { user } = useAppSelector((s) => s.auth)
   // Optional: override `role` prop with the actual authenticated primary_role if available
   const activeRole = user?.primary_role || role
@@ -116,6 +119,13 @@ export default function DashNavbar({
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [logout] = useLogoutMutation()
+
+  async function handleLogout() {
+    setDropdownOpen(false)
+    await logout()
+    router.push('/login')
+  }
 
   const { data: notificationsResponse, isFetching: notificationsLoading } =
     useGetNotificationsQuery(12)
@@ -393,14 +403,14 @@ export default function DashNavbar({
 
                 <div className="dash-navbar__dropdown-divider" />
 
-                <Link
-                  href="/login"
+                <button
+                  type="button"
                   className="dash-navbar__dropdown-item dash-navbar__dropdown-item--danger"
-                  onClick={() => setDropdownOpen(false)}
+                  onClick={() => void handleLogout()}
                 >
                   <LogOut size={15} />
                   Log Out
-                </Link>
+                </button>
               </div>
             )}
           </div>

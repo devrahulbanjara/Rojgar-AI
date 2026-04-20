@@ -85,7 +85,9 @@ Recruiter UI should feel denser and more operational.
 Status rules must hold:
 
 - Job: `draft -> active -> expired`
-- Application: `applied -> screening -> shortlisted -> rejected -> interview_booked -> interview_completed -> offer`
+- Application: `applied -> screening -> shortlisted -> rejected -> interview_booked -> interview_completed -> offer -> offer_accepted | offer_declined`
+- `offer_accepted` and `offer_declined` are terminal states set by the candidate via `POST /applications/{id}/offer/respond`
+- `rejected` is also a terminal state reachable from any active step
 
 Never break these constraints:
 
@@ -137,6 +139,23 @@ Mock or skip Redis, Qdrant, and LLM side effects in tests.
 - Qdrant sync considered
 - Tests added or updated
 - Types kept correct on both sides
+
+## Auth / User Model Notes
+
+- `User` uses soft-delete: `is_deleted: bool` and `deleted_at: datetime | None`. Deleted users are blocked at login. Any code that fetches users for auth purposes must be aware of this flag (the `login()` service already guards it).
+- Account deletion endpoint: `DELETE /auth/me` — soft-deletes the user, revokes all refresh tokens, clears the cookie.
+
+## Frontend Application Status Types
+
+There are two parallel type definitions that must stay in sync whenever statuses change:
+
+1. `ApplicationStatus` in `frontend/src/store/services/applicationsApi.ts` — used by RTK Query and API types
+2. `ApplicationLifecycleStatus` in `frontend/src/lib/statusMetadata.ts` — used by `StatusPill` and status label/variant helpers
+
+When adding a new `ApplicationStatus` value, you must update **both** type unions plus:
+- `APPLICATION_STATUS_METADATA` record in `statusMetadata.ts`
+- Every `Record<ApplicationStatus, ...>` object in page files (grep for `Record<ApplicationStatus` to find them all)
+- `statusCounts` initializer objects in list pages
 
 ## Working Style
 

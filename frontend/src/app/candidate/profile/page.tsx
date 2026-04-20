@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { toast } from 'react-toastify'
 
+import { useRouter } from 'next/navigation'
+
 import { parseApiError } from '@/lib/apiError'
 import { createCroppedImageFile } from '@/lib/cropImage'
 import { formatBytes, getInitials, validateImageFile } from '@/lib/mediaValidation'
@@ -13,6 +15,7 @@ import {
   getProfileCompletionMeta,
 } from '@/lib/profileCompletion'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useDeleteAccountMutation } from '@/store/services/authApi'
 import {
   type CandidateProfileData,
   type UpdateProfileRequest,
@@ -21,7 +24,7 @@ import {
   useUpdateMyAvatarMutation,
   useUpdateMyProfileMutation,
 } from '@/store/services/profileApi'
-import { updateUser } from '@/store/slices/authSlice'
+import { clearCredentials, updateUser } from '@/store/slices/authSlice'
 import { Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
@@ -340,6 +343,7 @@ function readImageDimensions(
 
 export default function ProfilePage() {
   // ── Auth user (name / email come from auth, not from profile API) ──────
+  const router = useRouter()
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
 
@@ -349,6 +353,7 @@ export default function ProfilePage() {
   const [updateProfile, { isLoading: isSaving }] = useUpdateMyProfileMutation()
   const [updateAvatar, { isLoading: isUploadingAvatar }] = useUpdateMyAvatarMutation()
   const [removeAvatar, { isLoading: isRemovingAvatar }] = useRemoveMyAvatarMutation()
+  const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation()
 
   // ── Local form state ─────────────────────────────────────────────────────
   const [form, setForm] = useState<FormProfile>(EMPTY_FORM)
@@ -368,6 +373,8 @@ export default function ProfilePage() {
   const [avatarZoom, setAvatarZoom] = useState(1)
   const [avatarCroppedAreaPixels, setAvatarCroppedAreaPixels] = useState<Area | null>(null)
   const [isSubmittingCroppedAvatar, setIsSubmittingCroppedAvatar] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [isAvatarCropModalClosing, setIsAvatarCropModalClosing] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const avatarCropModalTimeoutRef = useRef<number | null>(null)
@@ -610,6 +617,16 @@ export default function ProfilePage() {
       const message = 'We could not open that image for cropping. Please try another file.'
       setAvatarError(message)
       toast.error(message)
+    }
+  }
+
+  async function handleDeleteAccount() {
+    try {
+      await deleteAccount().unwrap()
+      dispatch(clearCredentials())
+      router.push('/login')
+    } catch {
+      toast.error('Failed to delete account. Please try again.')
     }
   }
 
@@ -1562,6 +1579,78 @@ export default function ProfilePage() {
           </div>
         </div>
       ) : null}
+
+      {/* Danger Zone */}
+      <div className="dash-card dash-card--danger">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Danger Zone</div>
+            <div className="dash-card__subtitle">Irreversible actions for your account.</div>
+          </div>
+        </div>
+        <div className="dash-card__body">
+          <button className="btn btn--danger" onClick={() => setShowDeleteModal(true)}>
+            Delete Account
+          </button>
+        </div>
+      </div>
+
+      {showDeleteModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <div className="modal__header">
+              <h3 className="modal__title">Delete Account</h3>
+              <button
+                type="button"
+                className="modal__close"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteConfirmText('')
+                }}
+                aria-label="Close"
+                disabled={isDeleting}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal__body">
+              <p>
+                This will permanently delete your account and all associated data. Type{' '}
+                <strong>DELETE</strong> to confirm.
+              </p>
+              <input
+                className="resume-field__input"
+                style={{ marginTop: '0.75rem' }}
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                autoComplete="off"
+              />
+            </div>
+            <div className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteConfirmText('')
+                }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn--danger"
+                onClick={() => void handleDeleteAccount()}
+                disabled={isDeleting || deleteConfirmText !== 'DELETE'}
+              >
+                {isDeleting ? <ButtonSpinner label="Deleting…" /> : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
