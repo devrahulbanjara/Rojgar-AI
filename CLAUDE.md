@@ -164,3 +164,20 @@ When adding a new `ApplicationStatus` value, you must update **both** type union
 - Plan the smallest complete solution.
 - State assumptions when ambiguity matters.
 - Refactor only what you touch unless asked.
+
+## Finish Commands
+
+If frontend files changed, run:
+
+```bash
+pnpm fix-all
+```
+
+If backend files changed, run:
+
+```bash
+uvx ruff check --fix
+uvx ruff format
+```
+
+If automated fixes leave issues behind, fix them manually.
