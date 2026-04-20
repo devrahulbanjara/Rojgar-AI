@@ -124,19 +124,27 @@ export default function Pricing() {
       <div className="container">
         {/* Section header */}
         <header className="pricing__header">
-          <h2 className="pricing__title">Simple, Transparent Pricing</h2>
-          <p className="pricing__subtitle">
+          <h2 className="pricing__title" data-reveal>
+            Simple, Transparent Pricing
+          </h2>
+          <p
+            className="pricing__subtitle"
+            data-reveal
+            style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
+          >
             Free for everyone to get started — upgrade when your team is ready to hire smarter with
             AI.
           </p>
         </header>
 
-        {/* Cards */}
+        {/* Cards — staggered scale-fade */}
         <div className="pricing__grid">
-          {TIERS.map((tier) => (
+          {TIERS.map((tier, i) => (
             <div
               key={tier.id}
               className={`pricing__card-wrap${tier.featured ? ' pricing__card-wrap--featured' : ''}`}
+              data-reveal="scale"
+              style={{ '--reveal-delay': `${i * 0.12}s` } as React.CSSProperties}
             >
               {tier.featured && (
                 <span className="pricing__ribbon" aria-label="Most popular plan">
