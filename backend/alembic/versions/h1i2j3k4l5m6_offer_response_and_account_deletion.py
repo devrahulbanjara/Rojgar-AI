@@ -23,30 +23,57 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+
     # Extend applicationstatus enum with offer response values.
     # ADD VALUE IF NOT EXISTS is safe to run multiple times.
     op.execute("ALTER TYPE applicationstatus ADD VALUE IF NOT EXISTS 'offer_accepted'")
     op.execute("ALTER TYPE applicationstatus ADD VALUE IF NOT EXISTS 'offer_declined'")
 
-    # Add soft-delete columns to users table.
-    op.add_column(
-        "users",
-        sa.Column(
-            "is_deleted",
-            sa.Boolean(),
-            nullable=False,
-            server_default="false",
-        ),
+    # Add is_deleted column if it doesn't exist yet.
+    result = conn.execute(
+        sa.text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name='users' AND column_name='is_deleted'"
+        )
     )
-    op.add_column(
-        "users",
-        sa.Column(
-            "deleted_at",
-            sa.DateTime(timezone=True),
-            nullable=True,
-        ),
+    if result.fetchone() is None:
+        op.add_column(
+            "users",
+            sa.Column(
+                "is_deleted",
+                sa.Boolean(),
+                nullable=False,
+                server_default="false",
+            ),
+        )
+
+    # Add deleted_at column if it doesn't exist yet.
+    result = conn.execute(
+        sa.text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name='users' AND column_name='deleted_at'"
+        )
     )
-    op.create_index("ix_users_is_deleted", "users", ["is_deleted"])
+    if result.fetchone() is None:
+        op.add_column(
+            "users",
+            sa.Column(
+                "deleted_at",
+                sa.DateTime(timezone=True),
+                nullable=True,
+            ),
+        )
+
+    # Create index only if it doesn't exist.
+    result = conn.execute(
+        sa.text(
+            "SELECT 1 FROM pg_indexes "
+            "WHERE tablename='users' AND indexname='ix_users_is_deleted'"
+        )
+    )
+    if result.fetchone() is None:
+        op.create_index("ix_users_is_deleted", "users", ["is_deleted"])
 
 
 def downgrade() -> None:
