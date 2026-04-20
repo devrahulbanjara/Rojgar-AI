@@ -13,35 +13,34 @@ from app.core.job_expiry_scheduler import (
     create_job_expiry_scheduler,
     run_job_expiry_startup_check,
 )
+from app.core.logging_config import setup_logging
 from app.core.request_middleware import RequestContextMiddleware
+from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.core.tasks import sync_daemon_loop
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
-
-from app.modules.audit.router import router as audit_router
-from app.modules.companies.router import router as companies_router
 from app.modules.activity.router import router as activity_router
-from app.modules.profiles.router import router as profiles_router
-from app.modules.resumes.router import router as resumes_router
-from app.modules.jobs.router import router as jobs_router
 from app.modules.applications.router import router as applications_router
-from app.core.logging_config import setup_logging
-from app.core.responses import ResponseBuilder, UnifiedResponse
+from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
+from app.modules.companies.router import router as companies_router
 from app.modules.dashboards.router import router as dash_router
-from app.modules.job_ai.runtime import job_ai_runtime
-from app.modules.job_ai.router import router as job_ai_router
-from app.modules.interviews.router import router as interviews_router
 from app.modules.interviews.evaluation_router import router as evaluation_router
 from app.modules.interviews.recording_router import router as recording_router
+from app.modules.interviews.router import router as interviews_router
 from app.modules.interviews.webhook import router as cal_webhook_router
+from app.modules.job_ai.router import router as job_ai_router
+from app.modules.job_ai.runtime import job_ai_runtime
+from app.modules.jobs.router import router as jobs_router
+from app.modules.notifications.router import router as notifications_router
 from app.modules.outreach.router import router as outreach_router
-from app.modules.resume_gap.router import router as resume_gap_router
+from app.modules.profiles.router import router as profiles_router
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
-from app.modules.notifications.router import router as notifications_router
+from app.modules.resume_gap.router import router as resume_gap_router
+from app.modules.resumes.router import router as resumes_router
 from app.modules.shortlisting.router import router as shortlisting_router
 
 setup_logging()

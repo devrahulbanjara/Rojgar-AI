@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { toast } from 'react-toastify'
 
 import { useRouter } from 'next/navigation'
 
@@ -12,13 +13,65 @@ import {
   useGetMyResumesQuery,
 } from '@/store/services/resumeApi'
 import { apiResumeToUi, removeResume, setResumes, upsertResume } from '@/store/slices/resumeSlice'
-import { Ellipsis, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Ellipsis, FileText, Pencil, Plus, Trash2, X } from 'lucide-react'
+
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 
 import CreateResumeModal from './_components/CreateResumeModal'
 import { ResumeTableSkeleton } from './_components/ResumeSkeletons'
 
 // ── Resume list page ───────────────────────────────────────────────────────
 // Clicking View or Edit routes to /candidate/resume/[id] (view or edit mode).
+
+function DeleteResumeModal({
+  resumeName,
+  isDeleting,
+  onConfirm,
+  onCancel,
+}: {
+  resumeName: string
+  isDeleting: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="modal-backdrop">
+      <div className="modal">
+        <div className="modal__header">
+          <h3 className="modal__title">Delete Resume</h3>
+          <button
+            type="button"
+            className="modal__close"
+            onClick={onCancel}
+            aria-label="Close"
+            disabled={isDeleting}
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="modal__body">
+          <p>
+            Are you sure you want to delete <strong>{resumeName}</strong>? This action cannot be
+            undone.
+          </p>
+        </div>
+        <div className="modal__footer">
+          <button type="button" className="btn btn--ghost" onClick={onCancel} disabled={isDeleting}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn--danger"
+            onClick={onConfirm}
+            disabled={isDeleting}
+          >
+            {isDeleting ? <ButtonSpinner label="Deleting…" /> : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function ResumePage() {
   const router = useRouter()
@@ -29,10 +82,15 @@ export default function ResumePage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   // ── RTK Query hooks ────────────────────────────────────────────────────────
-  const { data: resumesResponse, isLoading: isLoadingResumes } = useGetMyResumesQuery()
+  const {
+    data: resumesResponse,
+    isLoading: isLoadingResumes,
+    isError: isResumesError,
+  } = useGetMyResumesQuery()
   const [createResume, { isLoading: isCreating }] = useCreateResumeMutation()
   const [deleteResumeMutation] = useDeleteResumeMutation()
 
@@ -91,17 +149,21 @@ export default function ResumePage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    setDeletingId(id)
+  async function handleDeleteConfirm() {
+    if (!confirmDeleteId) return
+    setDeletingId(confirmDeleteId)
     try {
-      await deleteResumeMutation(id).unwrap()
-      dispatch(removeResume(id))
+      await deleteResumeMutation(confirmDeleteId).unwrap()
+      dispatch(removeResume(confirmDeleteId))
+      setConfirmDeleteId(null)
     } catch {
-      // silently fail — could add toast here
+      toast.error('Failed to delete resume. Please try again.')
     } finally {
       setDeletingId(null)
     }
   }
+
+  const confirmResume = resumes.find((r) => r.id === confirmDeleteId)
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -117,6 +179,16 @@ export default function ResumePage() {
           }}
           isLoading={isCreating}
           error={createError}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteId && confirmResume && (
+        <DeleteResumeModal
+          resumeName={confirmResume.name}
+          isDeleting={deletingId === confirmDeleteId}
+          onConfirm={() => void handleDeleteConfirm()}
+          onCancel={() => setConfirmDeleteId(null)}
         />
       )}
 
@@ -139,6 +211,10 @@ export default function ResumePage() {
       {/* API-backed content */}
       {isLoadingResumes ? (
         <ResumeTableSkeleton rows={6} />
+      ) : isResumesError ? (
+        <div className="dash-card dash-card--padded">
+          <p className="text-muted">Failed to load resumes. Please refresh the page.</p>
+        </div>
       ) : resumes.length === 0 ? (
         <div className="resume-empty-state">
           <FileText size={48} style={{ opacity: 0.4 }} />
@@ -213,12 +289,11 @@ export default function ResumePage() {
                               className="resume-row-actions__item resume-row-actions__item--danger"
                               onClick={() => {
                                 setOpenMenuId(null)
-                                void handleDelete(resume.id)
+                                setConfirmDeleteId(resume.id)
                               }}
-                              disabled={deletingId === resume.id}
                             >
                               <Trash2 size={15} aria-hidden="true" />
-                              {deletingId === resume.id ? 'Deleting…' : 'Delete'}
+                              Delete
                             </button>
                           </div>
                         ) : null}

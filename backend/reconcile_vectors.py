@@ -10,21 +10,19 @@ Usage:
 
 import asyncio
 
+from app.modules.jobs.enums import SyncAction, SyncStatus
 from loguru import logger
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
-from app.modules.jobs.enums import SyncAction, SyncStatus
-from app.modules.jobs.models import Job, JobSyncEvent
 from app.infrastructures.qdrant.service import qdrant_service
+from app.modules.jobs.models import Job, JobSyncEvent
 
 
 async def reconcile() -> None:
     await qdrant_service.initialize()  # Ensure collection + indexes exist
 
     async with AsyncSessionLocal() as db:
-        # Fetch every job regardless of status so we can make a conscious
-        # decision about each one.
         jobs = (await db.scalars(select(Job))).all()
         logger.info(f"Found {len(jobs)} job(s) in Postgres. Checking outbox…")
 

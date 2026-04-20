@@ -11,6 +11,8 @@ export type ApplicationStatus =
   | 'interview_booked'
   | 'interview_completed'
   | 'offer'
+  | 'offer_accepted'
+  | 'offer_declined'
   | 'rejected'
 
 export interface ApplicationResponse {
@@ -289,7 +291,7 @@ export const applicationsApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Applications', 'Candidates'],
+      invalidatesTags: ['Applications', 'Candidates', 'Jobs'],
     }),
 
     /** GET /applications/me — list all applications for the current candidate */
@@ -385,6 +387,21 @@ export const applicationsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Applications', 'Candidates'],
     }),
+
+    respondToOffer: builder.mutation<
+      ApiResponse<null>,
+      { application_id: string; accepted: boolean }
+    >({
+      query: ({ application_id, accepted }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${application_id}/offer/respond`,
+        method: 'POST',
+        body: { accepted },
+      }),
+      invalidatesTags: (_result, _error, { application_id }) => [
+        'Applications',
+        { type: 'Applications', id: application_id },
+      ],
+    }),
   }),
 })
 
@@ -400,4 +417,5 @@ export const {
   useGetJobApplicationsQuery,
   useUpdateApplicationReviewMutation,
   useUpdateApplicationStatusMutation,
+  useRespondToOfferMutation,
 } = applicationsApi

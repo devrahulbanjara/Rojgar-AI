@@ -4,13 +4,17 @@ import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
-import { useAppSelector } from '@/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useDeleteAccountMutation } from '@/store/services/authApi'
 import {
   useGetRecruiterPreferencesQuery,
   useUpdateRecruiterPreferencesMutation,
 } from '@/store/services/recruiterPreferencesApi'
+import { clearCredentials } from '@/store/slices/authSlice'
+import { X } from 'lucide-react'
 
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 
@@ -45,12 +49,27 @@ function toSettingsForm(data?: {
 }
 
 export default function RecruiterSettingsPage() {
+  const router = useRouter()
+  const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
   const isAdmin = user?.primary_role === 'recruiter_admin'
   const { data, isLoading, isError, error, isFetching, refetch } = useGetRecruiterPreferencesQuery()
   const [updatePreferences, { isLoading: isSaving }] = useUpdateRecruiterPreferencesMutation()
+  const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation()
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [draftForm, setDraftForm] = useState<SettingsForm | null>(null)
   const form = useMemo(() => draftForm ?? toSettingsForm(data?.data), [data?.data, draftForm])
+
+  async function handleDeleteAccount() {
+    try {
+      await deleteAccount().unwrap()
+      dispatch(clearCredentials())
+      router.push('/login')
+    } catch {
+      toast.error('Failed to delete account. Please try again.')
+    }
+  }
 
   async function handleSave() {
     try {
@@ -260,6 +279,78 @@ export default function RecruiterSettingsPage() {
           </div>
         </div>
       ) : null}
+
+      {/* Danger Zone */}
+      <div className="dash-card dash-card--danger">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Danger Zone</div>
+            <div className="dash-card__subtitle">Irreversible actions for your account.</div>
+          </div>
+        </div>
+        <div className="dash-card__body">
+          <button className="btn btn--danger" onClick={() => setShowDeleteModal(true)}>
+            Delete Account
+          </button>
+        </div>
+      </div>
+
+      {showDeleteModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <div className="modal__header">
+              <h3 className="modal__title">Delete Account</h3>
+              <button
+                type="button"
+                className="modal__close"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteConfirmText('')
+                }}
+                aria-label="Close"
+                disabled={isDeleting}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal__body">
+              <p>
+                This will permanently delete your account and revoke all active sessions. Type{' '}
+                <strong>DELETE</strong> to confirm.
+              </p>
+              <input
+                className="resume-field__input"
+                style={{ marginTop: '0.75rem' }}
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                autoComplete="off"
+              />
+            </div>
+            <div className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteConfirmText('')
+                }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn--danger"
+                onClick={() => void handleDeleteAccount()}
+                disabled={isDeleting || deleteConfirmText !== 'DELETE'}
+              >
+                {isDeleting ? 'Deleting…' : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,9 +1,16 @@
+import uuid
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import get_current_user, require_candidate
+from app.modules.auth.dependencies import (
+    get_current_user,
+    require_active_membership,
+    require_candidate,
+)
 from app.modules.auth.models import User
 from app.modules.applications import service
 from app.modules.applications.schemas import (
@@ -68,7 +75,7 @@ async def list_my_company_applications(
     job_id: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
     data = await service.list_my_company_applications(db, user, job_id, page, size)
@@ -85,7 +92,7 @@ async def list_my_company_candidates(
     status_filter: ApplicationStatus | None = Query(default=None, alias="status"),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=200),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
     data = await service.list_company_candidates(
@@ -106,7 +113,7 @@ async def list_my_company_candidates(
 )
 async def get_company_candidate_detail(
     application_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
     data = await service.get_company_candidate_detail(db, user, application_id)
@@ -205,3 +212,24 @@ async def update_application_status(
         db, user, application_id, payload, bg_tasks
     )
     return ResponseBuilder.success(data=data, message="Application status updated.")
+
+
+class OfferResponsePayload(BaseModel):
+    accepted: bool
+
+
+@router.post(
+    "/{application_id}/offer/respond",
+    response_model=UnifiedResponse[None],
+    summary="Candidate accepts or declines a recorded offer",
+)
+async def respond_to_offer(
+    application_id: uuid.UUID,
+    payload: OfferResponsePayload,
+    user: User = Depends(require_candidate),
+    db: AsyncSession = db,
+):
+    await service.respond_to_offer(db, application_id, payload.accepted, user)
+    return ResponseBuilder.success(
+        message="Offer accepted" if payload.accepted else "Offer declined"
+    )

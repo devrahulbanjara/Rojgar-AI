@@ -29,6 +29,8 @@ type CandidateDashboardStatus =
   | 'interview_booked'
   | 'interview_completed'
   | 'offer'
+  | 'offer_accepted'
+  | 'offer_declined'
   | 'rejected'
 
 function getFirstName(name: string | null | undefined): string {

@@ -52,6 +52,8 @@ const STATUS_LABELS: Record<ApplicationStatus, string> = {
   interview_booked: 'Interview booked',
   interview_completed: 'Interview completed',
   offer: 'Offer',
+  offer_accepted: 'Offer accepted',
+  offer_declined: 'Offer declined',
   rejected: 'Rejected',
 }
 

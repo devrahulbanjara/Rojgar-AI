@@ -46,6 +46,8 @@ const STATUS_FILTERS: StageFilter[] = [
   { key: 'interview_booked', label: 'Interview Booked' },
   { key: 'interview_completed', label: 'Interview Completed' },
   { key: 'offer', label: 'Offer' },
+  { key: 'offer_accepted', label: 'Offer Accepted' },
+  { key: 'offer_declined', label: 'Offer Declined' },
   { key: 'rejected', label: 'Rejected' },
 ]
 
@@ -141,6 +143,10 @@ function getStatusUpdateCopy(application: CandidateApplicationView): string {
       return `Your interview was marked completed on ${formatDisplayDate(application.updated_at)}.`
     case 'offer':
       return `An offer was recorded on ${formatDisplayDate(application.updated_at)}.`
+    case 'offer_accepted':
+      return `You accepted the offer on ${formatDisplayDate(application.updated_at)}.`
+    case 'offer_declined':
+      return `You declined the offer on ${formatDisplayDate(application.updated_at)}.`
     case 'rejected':
       return `This application was closed as rejected on ${formatDisplayDate(application.updated_at)}.`
     default:
@@ -154,7 +160,11 @@ function getReviewFeedback(feedback: string | null): string | null {
 }
 
 function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
-  if (application.status === 'rejected') {
+  if (
+    application.status === 'rejected' ||
+    application.status === 'offer_accepted' ||
+    application.status === 'offer_declined'
+  ) {
     return [
       {
         stage: 'Applied',
@@ -213,6 +223,8 @@ export default function ApplicationsPage() {
         interview_booked: 0,
         interview_completed: 0,
         offer: 0,
+        offer_accepted: 0,
+        offer_declined: 0,
         rejected: 0,
       },
     )

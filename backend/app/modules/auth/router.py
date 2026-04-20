@@ -1,5 +1,6 @@
 import secrets
 
+from loguru import logger
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -12,6 +13,8 @@ from fastapi import (
 )
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_limiter.depends import RateLimiter
+from pyrate_limiter import Duration, Limiter, Rate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -49,6 +52,7 @@ db = Depends(get_db)
     response_model=UnifiedResponse[SignupData],
     status_code=status.HTTP_201_CREATED,
     summary="Stage 1 of local signup: validates credentials and sends verification email",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE * 5))))],
 )
 async def signup(
     payload: SignupRequest,
@@ -67,6 +71,7 @@ async def signup(
     "/verify-email",
     response_model=UnifiedResponse[None],
     summary="Complete account creation after email verification",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
 )
 async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = db):
     await service.verify_email(db, payload)
@@ -77,6 +82,7 @@ async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = db):
     "/login",
     response_model=UnifiedResponse[LoginResponse],
     summary="Authenticate with email and password, return access and refresh tokens",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
 )
 async def login(payload: LoginRequest, response: Response, db: AsyncSession = db):
     result = await service.login(db, payload, response)
@@ -91,6 +97,7 @@ async def login(payload: LoginRequest, response: Response, db: AsyncSession = db
     "/refresh",
     response_model=UnifiedResponse[TokenResponse],
     summary="Refresh expired access token using refresh token cookie",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
 )
 async def refresh(
     response: Response,
@@ -123,6 +130,7 @@ async def logout(
     "/forgot-password",
     response_model=UnifiedResponse[None],
     summary="Initiate password reset flow: sends reset link to email",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(3, Duration.MINUTE * 10))))],
 )
 async def forgot_password(
     payload: ForgotPasswordRequest,
@@ -139,6 +147,7 @@ async def forgot_password(
     "/reset-password",
     response_model=UnifiedResponse[None],
     summary="Complete password reset using token from reset link",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE))))],
 )
 async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = db):
     await service.reset_password(db, payload)
@@ -215,6 +224,20 @@ async def upload_my_avatar(
 
 
 @router.delete(
+    "/me",
+    response_model=UnifiedResponse[None],
+    summary="Permanently delete the authenticated user's account",
+)
+async def delete_my_account(
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    await service.delete_my_account(db, current_user, response)
+    return ResponseBuilder.success(message="Account deleted", response=response)
+
+
+@router.delete(
     "/me/avatar",
     response_model=UnifiedResponse[None],
     summary="Delete the authenticated user's avatar",
@@ -287,6 +310,7 @@ async def google_callback(
 ):
     import json
     from urllib.parse import urlencode
+
     from app.core.config import settings
 
     # 1. state IS the raw CSRF token — compare directly
@@ -303,6 +327,7 @@ async def google_callback(
     try:
         result = await google_oauth_callback(db, code, redirect_resp)
     except Exception:
+        logger.exception("Google OAuth callback error")
         redirect_resp.headers["location"] = (
             f"{settings.frontend_url}/login?error=oauth_failed"
         )
@@ -331,6 +356,7 @@ async def google_callback(
     response_model=UnifiedResponse[LoginResponse | SignupData],
     status_code=status.HTTP_201_CREATED,
     summary="Complete two-phase Google signup: consume signup_token and create account",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE * 5))))],
 )
 async def google_register(
     payload: GoogleRegisterRequest,

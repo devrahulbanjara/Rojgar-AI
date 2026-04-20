@@ -8,8 +8,9 @@ from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.core.cache import (
     invalidate_candidate_read_caches,
@@ -18,6 +19,7 @@ from app.core.cache import (
     invalidate_interview_list_caches,
     invalidate_job_detail_caches,
 )
+from app.infrastructures.email.service import EmailService
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import (
@@ -70,6 +72,52 @@ def _application_detail_href(application_id: str) -> str:
 
 def _recruiter_candidate_href(application_id: str) -> str:
     return f"/recruiter/candidates/{application_id}"
+
+
+_EMAIL_STATUSES = {
+    ApplicationStatus.shortlisted,
+    ApplicationStatus.rejected,
+    ApplicationStatus.offer,
+}
+
+
+def _status_email_html(
+    status: ApplicationStatus,
+    *,
+    applicant_name: str,
+    job_title: str,
+    company_name: str,
+    app_href: str,
+) -> tuple[str, str]:
+    """Returns (subject, html_body) for candidate status notification emails."""
+    link = f"{settings.frontend_url}{app_href}"
+    if status == ApplicationStatus.shortlisted:
+        subject = f"You've been shortlisted for {job_title}"
+        body = (
+            f"<p>Hi {applicant_name},</p>"
+            f"<p>Great news — <strong>{company_name}</strong> has shortlisted you "
+            f"for <strong>{job_title}</strong>.</p>"
+            f'<p><a href="{link}">View your application</a></p>'
+        )
+    elif status == ApplicationStatus.rejected:
+        subject = f"Update on your application for {job_title}"
+        body = (
+            f"<p>Hi {applicant_name},</p>"
+            f"<p><strong>{company_name}</strong> has closed your application "
+            f"for <strong>{job_title}</strong>. Thank you for your interest.</p>"
+            f'<p><a href="{link}">View details</a></p>'
+        )
+    elif status == ApplicationStatus.offer:
+        subject = f"An offer has been recorded for {job_title}"
+        body = (
+            f"<p>Hi {applicant_name},</p>"
+            f"<p><strong>{company_name}</strong> has recorded an offer for you "
+            f"for <strong>{job_title}</strong>.</p>"
+            f'<p><a href="{link}">Review and respond</a></p>'
+        )
+    else:
+        return "", ""
+    return subject, body
 
 
 def _status_event_copy(
@@ -1099,6 +1147,27 @@ async def update_application_status(
             "candidate_name": application.user.full_name,
         },
     )
+    if payload.status in _EMAIL_STATUSES:
+        subject, html_body = _status_email_html(
+            payload.status,
+            applicant_name=application.user.full_name,
+            job_title=job.title,
+            company_name=company.name if company else "Your recruiter",
+            app_href=_application_detail_href(str(application.id)),
+        )
+        try:
+            await EmailService.send_generic_email(
+                to_email=application.user.email,
+                subject=subject,
+                html_body=html_body,
+            )
+        except Exception:
+            logger.warning(
+                "Failed to send status email to {} for status {}",
+                application.user.email,
+                payload.status.value,
+            )
+
     sync_event = enqueue_application_sync_event(db, uuid.UUID(str(application.id)))
     await db.commit()
     await db.refresh(application)
@@ -1220,3 +1289,97 @@ async def update_application_review(
         user_id=user.id,
     )
     return ApplicationResponse.model_validate(application)
+
+
+async def respond_to_offer(
+    db: AsyncSession,
+    application_id: uuid.UUID,
+    accepted: bool,
+    user: User,
+) -> None:
+    """Candidate accepts or declines a recorded offer."""
+    result = await db.execute(
+        select(Application)
+        .where(Application.id == application_id, Application.user_id == user.id)
+        .options(
+            selectinload(Application.job).selectinload(Job.company),
+        )
+    )
+    application = result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+        )
+    if application.status != ApplicationStatus.offer:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Application is not at offer stage",
+        )
+
+    new_status = (
+        ApplicationStatus.offer_accepted
+        if accepted
+        else ApplicationStatus.offer_declined
+    )
+    application.status = new_status
+    company_id = application.job.company_id
+
+    event_type = (
+        "application_offer_accepted" if accepted else "application_offer_declined"
+    )
+    response_word = "accepted" if accepted else "declined"
+    job_title = application.job.title
+    company_name = (
+        application.job.company.name if application.job.company else "The recruiter"
+    )
+
+    await create_activity_event(
+        db,
+        event_type=event_type,
+        audience="candidate",
+        title=f"Offer {response_word} for {job_title}",
+        description=f"You {response_word} the offer for {job_title}.",
+        href=_application_detail_href(str(application.id)),
+        user_id=user.id,
+        company_id=company_id,
+        application_id=application.id,
+        job_id=application.job_id,
+        actor_user_id=user.id,
+    )
+    await create_activity_event(
+        db,
+        event_type=event_type,
+        audience="recruiter",
+        title=f"{user.full_name} {response_word} the offer for {job_title}",
+        description=f"{user.full_name} responded to the offer for {job_title}.",
+        href=_recruiter_candidate_href(str(application.id)),
+        company_id=company_id,
+        application_id=application.id,
+        job_id=application.job_id,
+        actor_user_id=user.id,
+    )
+
+    try:
+        await EmailService.send_generic_email(
+            to_email=user.email,
+            subject=f"Offer {response_word} — {job_title}",
+            html_body=(
+                f"<p>Hi {user.full_name},</p>"
+                f"<p>This confirms you have <strong>{response_word}</strong> the offer "
+                f"from <strong>{company_name}</strong> for <strong>{job_title}</strong>.</p>"
+            ),
+        )
+    except Exception:
+        logger.warning(
+            "Failed to send offer response confirmation email to {}", user.email
+        )
+
+    enqueue_application_sync_event(db, application.id)
+    await invalidate_candidate_read_caches(str(user.id))
+    await db.commit()
+    logger.info(
+        "Offer {} by candidate {} for application {}",
+        response_word,
+        user.id,
+        application_id,
+    )
