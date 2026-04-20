@@ -21,6 +21,8 @@ class ApplicationStatus(str, Enum):
     interview_booked = "interview_booked"
     interview_completed = "interview_completed"
     offer = "offer"
+    offer_accepted = "offer_accepted"
+    offer_declined = "offer_declined"
 
 
 class ShortlistStatus(str, Enum):

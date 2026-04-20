@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Image from 'next/image'
@@ -330,6 +330,27 @@ function SignupContent() {
   const [joinCompanyName, setJoinCompanyName] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
   const passwordStrength = getPasswordStrength(creds.password)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const resendTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (resendTimerRef.current) clearInterval(resendTimerRef.current)
+    }
+  }, [])
+
+  function startResendCooldown() {
+    setResendCooldown(60)
+    resendTimerRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(resendTimerRef.current!)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
 
   function clearError(field: string) {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
@@ -1095,13 +1116,23 @@ function SignupContent() {
             </p>
             <p className="auth__success-note">
               Didn&apos;t get it? Check your spam folder, or{' '}
-              <button
-                type="button"
-                className="auth__inline-link"
-                onClick={() => handleIntentCandidate()}
-              >
-                resend the email
-              </button>
+              {resendCooldown > 0 ? (
+                <span className="auth__inline-link" style={{ opacity: 0.5, cursor: 'default' }}>
+                  resend the email ({resendCooldown}s)
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="auth__inline-link"
+                  disabled={isSigningUp}
+                  onClick={() => {
+                    void handleIntentCandidate()
+                    startResendCooldown()
+                  }}
+                >
+                  {isSigningUp ? 'Sending…' : 'resend the email'}
+                </button>
+              )}
               .
             </p>
             <Link href="/login" className="auth__submit auth__submit--link">

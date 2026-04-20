@@ -14,13 +14,14 @@ from app.core.cache import (
     invalidate_company_dashboard_caches,
     invalidate_interview_list_caches,
 )
+from app.modules.activity.service import create_activity_event
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.auth.enums import MembershipStatus
-from app.modules.companies.models import CompanyMembership
+from app.modules.companies.models import Company, CompanyMembership
 from app.infrastructures.redis.service import redis_service
 from app.modules.interviews.models import Interview
-from app.modules.interviews.schemas import InterviewResponse
+from app.modules.interviews.schemas import CandidateInterviewView, InterviewResponse
 from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStatus
 
@@ -112,6 +113,38 @@ async def list_interviews(
     return response
 
 
+async def list_candidate_interviews(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> list[CandidateInterviewView]:
+    """Return all interviews for the authenticated candidate, newest first."""
+    rows = await db.execute(
+        select(Interview, Application, Job, Company)
+        .join(Application, Application.id == Interview.application_id)
+        .join(Job, Job.id == Application.job_id)
+        .join(Company, Company.id == Job.company_id)
+        .where(Application.user_id == user_id)
+        .order_by(Interview.start_time.desc())
+    )
+    results = rows.all()
+    return [
+        CandidateInterviewView(
+            id=interview.id,
+            application_id=interview.application_id,
+            start_time=interview.start_time,
+            end_time=interview.end_time,
+            timezone=interview.timezone,
+            location=interview.location,
+            title=interview.title,
+            job_id=job.id,
+            job_title=job.title,
+            company_name=company.name,
+            application_status=application.status,
+        )
+        for interview, application, job, company in results
+    ]
+
+
 async def mark_interview_complete(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -156,6 +189,21 @@ async def mark_interview_complete(
 
     application.status = ApplicationStatus.interview_completed
     enqueue_application_sync_event(db, application.id)
+
+    await create_activity_event(
+        db,
+        event_type="application_interview_completed",
+        audience="candidate",
+        title=f"Interview completed for {job.title}",
+        description="Your interview has been marked complete. The recruiter is reviewing your performance.",
+        href=f"/candidate/applications/{application.id}",
+        user_id=application.user_id,
+        company_id=company_id,
+        application_id=application.id,
+        job_id=application.job_id,
+        actor_user_id=user_id,
+    )
+
     await db.commit()
     await db.refresh(interview)
 

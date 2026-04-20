@@ -243,6 +243,14 @@ export const authApi = baseApi.injectEndpoints({
       }),
     }),
 
+    /** DELETE /auth/me — soft-deletes the authenticated user's account */
+    deleteAccount: builder.mutation<EmptyResponse, void>({
+      query: () => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`,
+        method: 'DELETE',
+      }),
+    }),
+
     /** POST /auth/google/register — 201, data: LoginData | SignupData */
     googleRegister: builder.mutation<ApiResponse<LoginData | SignupData>, GoogleRegisterRequest>({
       query: (body) => ({
@@ -285,6 +293,7 @@ export const {
   useUpdateMyAuthAvatarMutation,
   useRemoveMyAuthAvatarMutation,
   useChangeMyPasswordMutation,
+  useDeleteAccountMutation,
   useGoogleRegisterMutation,
 } = authApi
 

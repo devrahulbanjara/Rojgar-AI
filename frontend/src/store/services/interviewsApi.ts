@@ -20,6 +20,20 @@ export interface InterviewItem {
   company_id: string
 }
 
+export interface CandidateInterviewView {
+  id: string
+  application_id: string
+  start_time: string
+  end_time: string
+  timezone: string | null
+  location: string | null
+  title: string | null
+  job_id: string
+  job_title: string
+  company_name: string
+  application_status: ApplicationStatus
+}
+
 export interface GetInterviewsParams {
   job_id?: string
   start?: string
@@ -42,7 +56,13 @@ export const interviewsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Interviews', 'Applications'],
     }),
+
+    getMyInterviews: builder.query<ApiResponse<CandidateInterviewView[]>, void>({
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/interviews/my`,
+      providesTags: ['Interviews'],
+    }),
   }),
 })
 
-export const { useGetInterviewsQuery, useMarkInterviewCompleteMutation } = interviewsApi
+export const { useGetInterviewsQuery, useMarkInterviewCompleteMutation, useGetMyInterviewsQuery } =
+  interviewsApi

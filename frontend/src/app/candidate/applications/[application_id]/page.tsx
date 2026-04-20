@@ -1,10 +1,17 @@
 'use client'
 
+import { useState } from 'react'
+import { toast } from 'react-toastify'
+
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
+import { parseApiError } from '@/lib/apiError'
 import { getApplicationStatusLabel } from '@/lib/applicationStatus'
-import { useGetApplicationByIdQuery } from '@/store/services/applicationsApi'
+import {
+  useGetApplicationByIdQuery,
+  useRespondToOfferMutation,
+} from '@/store/services/applicationsApi'
 import { ArrowLeft, CalendarDays, Clock3, MapPin } from 'lucide-react'
 
 import DashboardErrorState from '@/components/common/DashboardErrorState'
@@ -26,6 +33,19 @@ export default function CandidateApplicationDetailPage() {
   const { data, isLoading, isError, error, isFetching, refetch } =
     useGetApplicationByIdQuery(applicationId)
   const application = data?.data
+  const [respondToOffer, { isLoading: isResponding }] = useRespondToOfferMutation()
+  const [respondedAccepted, setRespondedAccepted] = useState<boolean | null>(null)
+
+  async function handleOfferRespond(accepted: boolean) {
+    try {
+      await respondToOffer({ application_id: applicationId, accepted }).unwrap()
+      setRespondedAccepted(accepted)
+      toast.success(accepted ? 'Offer accepted.' : 'Offer declined.')
+    } catch (err) {
+      const parsed = parseApiError(err, {}, 'Failed to respond to offer.')
+      toast.error(parsed.message)
+    }
+  }
 
   return (
     <div className="dash-content container container--app-shell">
@@ -121,6 +141,44 @@ export default function CandidateApplicationDetailPage() {
                   <div className="recruiter-candidate-detail__label">Review notes</div>
                   <p>{application.feedback ?? 'No recruiter notes have been shared yet.'}</p>
                 </div>
+
+                {application.status === 'offer' && respondedAccepted === null && (
+                  <div className="recruiter-candidate-detail__block">
+                    <div className="recruiter-candidate-detail__label">Respond to offer</div>
+                    <p style={{ marginBottom: '0.75rem' }}>
+                      A job offer has been recorded for this application. Please respond at your
+                      earliest convenience.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        onClick={() => void handleOfferRespond(true)}
+                        disabled={isResponding}
+                      >
+                        {isResponding ? 'Responding…' : 'Accept offer'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--danger btn--sm"
+                        onClick={() => void handleOfferRespond(false)}
+                        disabled={isResponding}
+                      >
+                        {isResponding ? 'Responding…' : 'Decline offer'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {respondedAccepted !== null && (
+                  <div className="recruiter-candidate-detail__block">
+                    <p>
+                      {respondedAccepted
+                        ? 'You have accepted this offer. Congratulations!'
+                        : 'You have declined this offer.'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

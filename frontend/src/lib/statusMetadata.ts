@@ -5,6 +5,8 @@ export type ApplicationLifecycleStatus =
   | 'interview_booked'
   | 'interview_completed'
   | 'offer'
+  | 'offer_accepted'
+  | 'offer_declined'
   | 'rejected'
 
 export type JobLifecycleStatus = 'draft' | 'active' | 'expired'
@@ -21,6 +23,8 @@ const APPLICATION_STATUS_METADATA: Record<ApplicationLifecycleStatus, StatusMeta
   interview_booked: { label: 'Interview Booked', variant: 'primary' },
   interview_completed: { label: 'Interview Completed', variant: 'primary' },
   offer: { label: 'Offer', variant: 'success' },
+  offer_accepted: { label: 'Offer Accepted', variant: 'success' },
+  offer_declined: { label: 'Offer Declined', variant: 'danger' },
   rejected: { label: 'Rejected', variant: 'danger' },
 }
 
@@ -62,8 +66,12 @@ export function getApplicationStatusOrder(status: ApplicationLifecycleStatus): n
       return 4
     case 'offer':
       return 5
-    case 'rejected':
+    case 'offer_accepted':
       return 6
+    case 'offer_declined':
+      return 6
+    case 'rejected':
+      return 7
     default:
       return 0
   }

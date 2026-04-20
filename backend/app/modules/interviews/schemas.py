@@ -22,3 +22,17 @@ class InterviewResponse(BaseSchema):
     job_id: UUID
     job_title: str
     company_id: UUID
+
+
+class CandidateInterviewView(BaseSchema):
+    id: UUID
+    application_id: UUID
+    start_time: datetime
+    end_time: datetime
+    timezone: str | None
+    location: str | None
+    title: str | None
+    job_id: UUID
+    job_title: str
+    company_name: str
+    application_status: ApplicationStatus
