@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from copy import deepcopy
 from collections.abc import AsyncIterator
@@ -118,9 +119,24 @@ class AIService:
         return self._embeddings
 
     async def get_embeddings(self, text: str) -> list[float]:
-        """Return a float vector for the given text using the configured provider."""
+        """Return a float vector for the given text using the configured provider.
+
+        Results are cached in Redis keyed by a hash of the input text.
+        Cache TTL is 1 hour — covers repeated searches within a session
+        while keeping embeddings fresh as profiles / queries change.
+        """
+        from app.infrastructures.redis.service import redis_service
+
+        cache_key = f"embedding:{hashlib.sha256(text.encode()).hexdigest()[:16]}"
+        cached = await redis_service.get(cache_key)
+        if cached is not None:
+            return json.loads(cached)
+
         embeddings_client = self._get_embeddings_client()
-        return await embeddings_client.aembed_query(text)
+        vector = await embeddings_client.aembed_query(text)
+
+        await redis_service.set(cache_key, json.dumps(vector), ttl_seconds=3600)
+        return vector
 
     def _build_chat_model(
         self,

@@ -1,0 +1,136 @@
+// ============================================================
+// FEATURED JOBS SECTION (Landing Page)
+// ============================================================
+
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.featured-jobs {
+  position: relative;
+  padding-block: $space-16 $space-20;
+  background-color: $color-gray-100;
+
+  // ── Section header ────────────────────────────────────────
+  &__header {
+    text-align: center;
+    margin-bottom: $space-10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  &__label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $color-primary;
+    margin: 0;
+  }
+
+  &__heading {
+    font-family: $font-heading;
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+    margin: 0;
+
+    @include lg {
+      font-size: $font-size-5xl;
+    }
+  }
+
+  &__subheading {
+    font-size: $font-size-base;
+    color: $color-text-muted;
+    max-width: 560px;
+    line-height: $line-height-loose;
+    margin: 0;
+
+    @include md {
+      font-size: $font-size-lg;
+    }
+  }
+
+  // ── Card grid ─────────────────────────────────────────────
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-5;
+
+    @include md {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include lg {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    // Prevent children from blowing out grid columns
+    > * {
+      min-width: 0;
+    }
+  }
+
+  // ── Card entrance animation (CSS-only, no IntersectionObserver) ──
+  &__card-enter {
+    animation: featured-jobs-fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--stagger, 0s);
+  }
+
+  @keyframes featured-jobs-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  // ── Skeleton placeholder ──────────────────────────────────
+  &__skeleton {
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    min-height: 160px;
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  // ── CTA wrap ──────────────────────────────────────────────
+  &__cta-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: $space-10;
+  }
+
+  // ── Empty state ───────────────────────────────────────────
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-12 0;
+    color: $color-gray-400;
+    text-align: center;
+
+    p {
+      margin: 0;
+    }
+  }
+}

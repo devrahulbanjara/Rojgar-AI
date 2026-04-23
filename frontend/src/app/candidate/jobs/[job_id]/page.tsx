@@ -177,7 +177,7 @@ export default function JobDetailPage() {
   const { data: resp, isLoading, isError, refetch } = useGetJobByIdQuery(jobId)
   const job: JobDetail | undefined = resp?.data
 
-  const { data: jobsResp } = useSearchJobsQuery({ size: 7 })
+  const { data: jobsResp } = useSearchJobsQuery({ q: job?.title, size: 7 }, { skip: !job?.title })
   const recommended = (jobsResp?.data?.items ?? []).filter((j) => j.id !== jobId).slice(0, 6)
 
   if (isLoading) {
