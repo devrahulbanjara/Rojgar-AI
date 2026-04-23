@@ -4,6 +4,7 @@ from app.core.config import settings
 
 
 def setup_logging() -> None:
+    """Configure loguru for stdout and rotating file logs in production."""
     logger.remove()  # remove default handler
     logger.add(
         sys.stdout,

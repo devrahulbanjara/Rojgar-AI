@@ -12,12 +12,15 @@ QDRANT_NO_EXPIRY_TS = 32503680000  # year 3000, good enough for human nonsense
 
 
 def _expires_at_to_ts(value: datetime | None) -> int:
+    """Convert an optional expiry datetime to an integer timestamp for Qdrant."""
     if value is None:
         return QDRANT_NO_EXPIRY_TS
     return int(value.timestamp())
 
 
 class QdrantService:
+    """Qdrant-backed vector storage for jobs and candidate applications."""
+
     def __init__(self) -> None:
         self.collection_name = settings.qdrant_collection_name
         self.candidate_collection_name = settings.qdrant_candidate_collection_name
@@ -37,6 +40,7 @@ class QdrantService:
             logger.error(f"Qdrant robust init failed: {exc}")
 
     async def _ensure_collection(self, collection_name: str) -> None:
+        """Create a collection if it does not already exist."""
         exists = await self.client.collection_exists(collection_name)
         if exists:
             return
@@ -58,6 +62,7 @@ class QdrantService:
         integer_fields: list[str],
         text_fields: list[str] | None = None,
     ) -> None:
+        """Ensure the configured payload indexes exist for a collection."""
         for field in keyword_fields:
             try:
                 await self.client.create_payload_index(
@@ -113,6 +118,7 @@ class QdrantService:
                     )
 
     async def _ensure_job_indexes(self) -> None:
+        """Ensure payload indexes exist for the job collection."""
         keywords = ["status", "location_type", "company_id"]
         integers = ["salary_min", "salary_max", "expires_at_ts"]
         texts = ["location"]
@@ -125,6 +131,7 @@ class QdrantService:
         logger.info("Qdrant job payload indexes verified.")
 
     async def _ensure_candidate_indexes(self) -> None:
+        """Ensure payload indexes exist for the candidate-application collection."""
         keywords = ["company_id", "job_id", "user_id", "application_status"]
         integers = ["score", "updated_at_ts"]
         await self._ensure_payload_indexes(
@@ -147,6 +154,7 @@ class QdrantService:
         return "\n\n".join(parts)
 
     def _build_application_document(self, application, job) -> str:
+        """Serialise an application and its resume into searchable plain text."""
         resume = application.resume
         user = application.user
         resume_experiences = []
@@ -256,6 +264,7 @@ class QdrantService:
             raise  # Re-raise so the outbox processor can mark the event FAILED
 
     async def upsert_application(self, application, job) -> None:
+        """Embed and upsert one application into the candidate collection."""
         try:
             text_content = self._build_application_document(application, job)
             vector = await ai_service.get_embeddings(text_content)
@@ -292,6 +301,7 @@ class QdrantService:
             raise
 
     async def delete_application(self, application_id: uuid.UUID) -> None:
+        """Delete one application vector from the candidate collection."""
         try:
             await self.client.delete(
                 collection_name=self.candidate_collection_name,
@@ -443,6 +453,7 @@ class QdrantService:
         statuses: list[str] | None = None,
         limit: int = 10,
     ) -> list[dict]:
+        """Run semantic candidate search within one company and optional statuses."""
         vector = await ai_service.get_embeddings(query)
         must_conditions: list[models.Condition] = [
             models.FieldCondition(

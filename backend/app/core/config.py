@@ -97,20 +97,24 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        """Return the async SQLAlchemy database URL for the primary database."""
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
     def test_database_url(self) -> str:
+        """Return the async SQLAlchemy database URL for the test database."""
         return f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
 
     @property
     def s3_base_url(self) -> str:
+        """Return the public base URL for the configured S3 bucket."""
         if not self.s3_bucket_name:
             return ""
         return f"https://{self.s3_bucket_name}.s3.{self.aws_region}.amazonaws.com"
 
     @property
     def langgraph_postgres_dsn(self) -> str:
+        """Return the sync PostgreSQL DSN used by LangGraph runtime components."""
         return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     model_config = SettingsConfigDict(

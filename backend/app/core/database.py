@@ -54,6 +54,7 @@ def _apply_pk_defaults(target, args, kwargs) -> None:
 
 # FastAPI dependency — one session per request, always closed
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Yield one async SQLAlchemy session per request."""
     async with AsyncSessionLocal() as session:
         try:
             yield session

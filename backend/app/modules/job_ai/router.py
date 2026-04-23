@@ -30,6 +30,7 @@ async def create_ai_job_draft(
     user: User = Depends(get_current_user),
     db: AsyncSession = db_dep,
 ):
+    """Generate a new AI-assisted job draft."""
     data = await service.create_draft(db, user, payload)
     return ResponseBuilder.success(
         data=data,
@@ -47,6 +48,7 @@ async def list_ai_job_drafts(
     user: User = Depends(get_current_user),
     db: AsyncSession = db_dep,
 ):
+    """List AI job drafts owned by the current recruiter."""
     data = await service.list_drafts(db, user)
     return ResponseBuilder.success(data=data, message="AI drafts fetched.")
 
@@ -61,6 +63,7 @@ async def get_ai_job_draft(
     user: User = Depends(get_current_user),
     db: AsyncSession = db_dep,
 ):
+    """Fetch one AI job draft."""
     data = await service.get_draft(db, user, draft_id)
     return ResponseBuilder.success(data=data, message="AI draft fetched.")
 
@@ -76,6 +79,7 @@ async def respond_to_ai_job_draft(
     user: User = Depends(get_current_user),
     db: AsyncSession = db_dep,
 ):
+    """Submit a recruiter decision for an AI draft review checkpoint."""
     data = await service.respond_to_draft(db, user, draft_id, payload.decision)
     return ResponseBuilder.success(data=data, message="Draft response processed.")
 
@@ -92,5 +96,6 @@ async def commit_ai_job_draft(
     user: User = Depends(get_current_user),
     db: AsyncSession = db_dep,
 ):
+    """Commit an approved AI draft into a persisted job."""
     data = await service.commit_draft(db, user, draft_id, payload, bg_tasks)
     return ResponseBuilder.success(data=data, message="AI draft committed as job.")

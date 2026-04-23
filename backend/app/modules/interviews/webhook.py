@@ -51,6 +51,7 @@ async def cal_webhook_handler(
     body: CalWebhookBody,
     db: AsyncSession = Depends(get_db),
 ):
+    """Record interview bookings received from the Cal webhook."""
     if body.triggerEvent != "BOOKING_CREATED":
         return {"status": "ignored"}
 

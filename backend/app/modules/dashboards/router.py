@@ -27,6 +27,7 @@ async def get_candidate_dashboard(
     current_user: User = Depends(require_candidate),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return the candidate dashboard summary view."""
     data = await service.get_candidate_dashboard(db, current_user)
     return ResponseBuilder.success(
         data=data, message="Candidate dashboard data retrieved"
@@ -42,6 +43,7 @@ async def get_candidate_dashboard_analytics(
     current_user: User = Depends(require_candidate),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return analytics for the candidate dashboard."""
     data = await service.get_candidate_dashboard_analytics(db, current_user, range_key)
     return ResponseBuilder.success(
         data=data, message="Candidate dashboard analytics retrieved"
@@ -53,6 +55,7 @@ async def get_recruiter_dashboard(
     current_user: User = Depends(require_recruiter_privileges),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return the recruiter dashboard summary view."""
     data = await service.get_recruiter_dashboard(db, current_user)
     return ResponseBuilder.success(
         data=data, message="Recruiter dashboard data retrieved"
@@ -68,6 +71,7 @@ async def get_recruiter_dashboard_analytics(
     current_user: User = Depends(require_recruiter_privileges),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return analytics for the recruiter dashboard."""
     data = await service.get_recruiter_dashboard_analytics(db, current_user, range_key)
     return ResponseBuilder.success(
         data=data, message="Recruiter dashboard analytics retrieved"
@@ -82,6 +86,7 @@ async def get_recruiter_admin_dashboard(
     current_user: User = Depends(require_recruiter_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return the recruiter-admin dashboard summary view."""
     data = await service.get_recruiter_admin_dashboard(db, current_user)
     return ResponseBuilder.success(data=data, message="Admin dashboard data retrieved")
 
@@ -95,6 +100,7 @@ async def get_recruiter_admin_dashboard_analytics(
     current_user: User = Depends(require_recruiter_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return analytics for the recruiter-admin dashboard."""
     data = await service.get_recruiter_admin_dashboard_analytics(
         db, current_user, range_key
     )

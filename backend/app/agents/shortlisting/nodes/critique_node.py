@@ -4,6 +4,7 @@ from app.infrastructures.aws.bedrock import get_bedrock_llm
 
 
 async def critique_node(state: ShortlistState) -> dict:
+    """Review the latest CTO and HR evaluations and decide whether to stop."""
     judge_llm = get_bedrock_llm().with_structured_output(JudgeResponse)
     prompt = CRITIQUE_PROMPT.format(
         cto_eval=state["cto_evals"][-1].model_dump_json(),

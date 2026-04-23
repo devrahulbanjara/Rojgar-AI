@@ -28,6 +28,7 @@ class SearchService:
         country: str | None = None,
         **kwargs,
     ) -> list[dict[str, Any]]:
+        """Execute a Tavily search and return standardised result dictionaries."""
         try:
             full_query = query.strip()
             if (

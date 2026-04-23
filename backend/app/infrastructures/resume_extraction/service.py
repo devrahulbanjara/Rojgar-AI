@@ -24,6 +24,7 @@ class ResumeExtractionService:
         self._client = None
 
     def _get_client(self):
+        """Lazily initialise and return the LlamaExtract client."""
         if self._client is not None:
             return self._client
 
@@ -50,6 +51,7 @@ class ResumeExtractionService:
         return self._client
 
     def validate_upload(self, file: UploadFile) -> None:
+        """Validate that an uploaded resume is a non-empty PDF within size limits."""
         filename = file.filename or ""
         extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
@@ -77,6 +79,7 @@ class ResumeExtractionService:
             )
 
     def _build_extract_config(self):
+        """Build the LlamaExtract configuration from application settings."""
         try:
             from llama_cloud import ExtractConfig
         except Exception as exc:
@@ -110,6 +113,7 @@ class ResumeExtractionService:
         data_schema: dict,
         output_model: type[SchemaT],
     ) -> SchemaT:
+        """Extract structured resume data from an UploadFile and validate it."""
         self.validate_upload(file)
         client = self._get_client()
         config = self._build_extract_config()
@@ -164,6 +168,7 @@ class ResumeExtractionService:
         data_schema: dict,
         output_model: type[SchemaT],
     ) -> SchemaT:
+        """Extract structured resume data from a filesystem path and validate it."""
         client = self._get_client()
         config = self._build_extract_config()
 

@@ -48,6 +48,7 @@ setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Run startup and shutdown tasks for the FastAPI application lifecycle."""
     await qdrant_service.initialize()
     await job_ai_runtime.start()
     await redis_service.connect()
@@ -128,6 +129,7 @@ app.include_router(cal_webhook_router, tags=["Webhooks"])
 
 @app.get("/", tags=["System"], response_model=UnifiedResponse[dict])
 async def root():
+    """Return basic API metadata for liveness checks and discovery."""
     data = {
         "app": settings.app_name,
         "version": settings.app_version,
@@ -138,6 +140,7 @@ async def root():
 
 @app.get("/health", tags=["System"], response_model=UnifiedResponse[dict])
 async def health_check(db: AsyncSession = Depends(get_db)):
+    """Verify database connectivity and report overall service health."""
     try:
         await db.execute(text("SELECT 1"))
         data = {"status": "healthy", "database": "connected"}

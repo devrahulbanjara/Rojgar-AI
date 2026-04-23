@@ -7,6 +7,7 @@ from app.core.config import settings
 
 @lru_cache(maxsize=1)
 def get_bedrock_llm() -> ChatBedrockConverse:
+    """Return the Bedrock chat model used by the shortlisting workflow."""
     return ChatBedrockConverse(
         model=settings.aws_bedrock_shortlisting_model_id,
         region_name=settings.aws_region,

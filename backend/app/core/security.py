@@ -11,10 +11,12 @@ ph = PasswordHasher()
 
 
 def hash_password(password: str) -> str:
+    """Hash a plain-text password with Argon2."""
     return ph.hash(password)
 
 
 def verify_password(hashed: str | None, plain: str) -> bool:
+    """Verify a plain password against an Argon2 hash."""
     if not hashed:
         return False
     try:
@@ -56,6 +58,7 @@ def create_tokens(user_id: str) -> tuple[dict, str, datetime]:
 
 
 def decode_access_token(token: str) -> str | None:
+    """Decode an access JWT and return the user ID if valid."""
     try:
         payload = jwt.decode(
             token, settings.secret_key, algorithms=[settings.algorithm]

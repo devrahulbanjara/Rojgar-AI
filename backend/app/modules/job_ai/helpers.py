@@ -7,6 +7,7 @@ MAX_SALARY_TITLE_CHARS = 160
 
 
 def truncate_text(value: Any, max_chars: int) -> str | None:
+    """Trim text to a bounded character count for prompts and summaries."""
     if not value:
         return None
 

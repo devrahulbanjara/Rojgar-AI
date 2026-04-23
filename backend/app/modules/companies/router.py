@@ -36,6 +36,7 @@ async def register_company(
     bg_tasks: BackgroundTasks,
     db: AsyncSession = db,
 ):
+    """Stage company registration details for recruiter-admin signup."""
     await service.register_company(db, payload, bg_tasks)
     return ResponseBuilder.success(
         data=None,
@@ -55,6 +56,7 @@ async def request_join_company(
     bg_tasks: BackgroundTasks,
     db: AsyncSession = db,
 ):
+    """Stage a recruiter join request before email verification."""
     await service.request_join_company(db, payload, bg_tasks)
     return ResponseBuilder.success(
         message="Almost there! Please check your email to verify your account and submit your join request.",
@@ -71,6 +73,7 @@ async def get_my_company(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
+    """Return the active company for the authenticated recruiter."""
     data = await service.get_my_company(db, user)
     return ResponseBuilder.success(data=data, message="Company fetched.")
 
@@ -85,6 +88,7 @@ async def update_my_company(
     user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
+    """Update the authenticated admin's company profile."""
     data = await service.update_my_company(db, user, payload)
     return ResponseBuilder.success(data=data, message="Company updated.")
 
@@ -98,6 +102,7 @@ async def get_company_recruiters(
     user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
+    """List recruiter memberships for the admin's company."""
     data = await service.list_company_recruiters(db, user)
     return ResponseBuilder.success(data=data, message="Recruiters fetched.")
 
@@ -113,6 +118,7 @@ async def update_recruiter_status(
     user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
+    """Approve or reject a recruiter membership request."""
     data = await service.update_recruiter_status(db, user, membership_id, payload)
     return ResponseBuilder.success(data=data, message="Recruiter status updated.")
 
@@ -127,6 +133,7 @@ async def remove_recruiter(
     user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
+    """Remove a recruiter membership from the admin's company."""
     await service.remove_recruiter(db, user, membership_id)
     return ResponseBuilder.success(data=None, message="Recruiter removed.")
 
@@ -141,6 +148,7 @@ async def upload_company_logo(
     user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
+    """Upload or replace the active company's logo."""
     company = await get_admin_company(db, user)
     previous_logo_url = company.logo_url
     new_logo_url = await storage_service.upload_image(file, folder="logos")
@@ -167,6 +175,7 @@ async def delete_company_logo(
     user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
+    """Delete the active company's logo."""
     company = await get_admin_company(db, user)
     previous_logo_url = company.logo_url
     company.logo_url = None

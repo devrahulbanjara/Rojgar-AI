@@ -11,6 +11,7 @@ from app.agents.shortlisting.schemas import ShortlistState
 
 
 def create_workflow():
+    """Build the uncompiled LangGraph shortlisting workflow."""
     workflow = StateGraph(ShortlistState)
     workflow.add_node("cto", cto_node)
     workflow.add_node("hr", hr_node)

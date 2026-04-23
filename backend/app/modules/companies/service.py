@@ -33,19 +33,23 @@ from app.modules.companies.utils import get_admin_company, get_member_company
 
 
 def _company_to_response(company: Company) -> CompanyResponse:
+    """Convert a company ORM instance into its response schema."""
     return CompanyResponse.model_validate(company)
 
 
 def _company_recruiters_cache_key(company_id: str) -> str:
+    """Build the recruiter-list cache key for a company."""
     return f"company:recruiters:{company_id}"
 
 
 async def _get_company_job_ids(db: AsyncSession, company_id: str) -> list[str]:
+    """Return all job IDs belonging to a company."""
     result = await db.execute(select(Job.id).where(Job.company_id == company_id))
     return [str(job_id) for job_id in result.scalars().all()]
 
 
 async def invalidate_company_content_caches(db: AsyncSession, company_id: str) -> None:
+    """Invalidate company, job, dashboard, and candidate caches for a company."""
     await invalidate_company_detail_caches(db, company_id)
     await invalidate_company_dashboard_caches(db, company_id)
     await redis_service.delete_many(
@@ -62,6 +66,7 @@ async def invalidate_company_content_caches(db: AsyncSession, company_id: str) -
 
 
 async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
+    """Return the current user's company, using cache when available."""
     cache_key = f"company:detail:{user.id}"
 
     # 1. Try Cache
@@ -81,6 +86,7 @@ async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
 async def update_my_company(
     db: AsyncSession, user: User, payload: UpdateCompanyRequest
 ) -> CompanyResponse:
+    """Update the authenticated admin's company profile and invalidate caches."""
     company = await get_admin_company(db, user)
     update_data = payload.model_dump(exclude_unset=True)
 
