@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Image from 'next/image'
@@ -9,7 +9,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 import { applyFieldErrors, parseApiError } from '@/lib/apiError'
 import { getRoleDashboard } from '@/lib/roleRoutes'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'
+import { clearCredentials } from '@/store/slices/authSlice'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
@@ -99,6 +101,18 @@ function getSafeRedirect(value: string | null): string | null {
 function LoginPageInner() {
   const searchParams = useSearchParams()
   const nextUrl = getSafeRedirect(searchParams.get('next'))
+
+  const dispatch = useAppDispatch()
+  const { isAuthenticated } = useAppSelector((s) => s.auth)
+
+  // If the middleware bounced us here with stale browser storage (access token
+  // present but refresh_token cookie is gone), clear the dead session so the
+  // homepage redirect loop doesn't re-trigger after login.
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(clearCredentials())
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [formValues, setFormValues] = useState<LoginFormState>({
     email: '',

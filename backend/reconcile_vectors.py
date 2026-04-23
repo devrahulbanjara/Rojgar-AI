@@ -30,7 +30,9 @@ async def reconcile(*, force: bool = False) -> None:
 
     async with AsyncSessionLocal() as db:
         jobs = (await db.scalars(select(Job))).all()
-        logger.info(f"Found {len(jobs)} job(s) in Postgres. Mode: {'force' if force else 'incremental'}")
+        logger.info(
+            f"Found {len(jobs)} job(s) in Postgres. Mode: {'force' if force else 'incremental'}"
+        )
 
         created_count = 0
         skipped_count = 0

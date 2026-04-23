@@ -8,6 +8,7 @@
 
 .homepage {
   overflow: hidden;
+  margin-top: -$space-24; // cancel out .page padding-top — hero fills viewport from the top
 
   .heroSection {
     height: 100vh;

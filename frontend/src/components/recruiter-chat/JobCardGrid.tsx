@@ -26,9 +26,7 @@ function JobRow({ job }: { job: CompanyJobData }) {
       <div className="recruiter-chat-job-mini-row__main">
         <div className="recruiter-chat-job-mini-row__header">
           <div className="recruiter-chat-job-mini-row__title">{job.title}</div>
-          <span
-            className={`recruiter-chat-badge recruiter-chat-badge--${getStatusTone(job.status)}`}
-          >
+          <span className={`status-dot status-dot--${getStatusTone(job.status)}`}>
             {job.status.replace(/_/g, ' ')}
           </span>
         </div>

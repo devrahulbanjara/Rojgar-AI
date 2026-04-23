@@ -132,15 +132,28 @@ export default function RecruiterJobDetailPage() {
                   {job.location ?? 'Location not specified'} ·{' '}
                   {LOCATION_TYPE_LABELS[job.location_type]}
                 </div>
-                <div className="jd-hero__chips">
-                  <span className="badge badge--primary">
-                    <Briefcase size={12} aria-hidden="true" />
+                <div className="job-meta jd-hero__chips">
+                  <span className="job-meta__item">
+                    <Briefcase size={11} aria-hidden="true" />
                     {LOCATION_TYPE_LABELS[job.location_type]}
                   </span>
-                  {salary && <span className="badge badge--secondary">{salary}</span>}
+                  {salary && (
+                    <>
+                      <span className="job-meta__sep" aria-hidden="true">
+                        ·
+                      </span>
+                      <span className="job-meta__item job-meta__item--salary">{salary}</span>
+                    </>
+                  )}
+                  <span className="job-meta__sep" aria-hidden="true">
+                    ·
+                  </span>
                   <StatusPill kind="job" status={job.status} />
-                  <span className="badge badge--gray">
-                    <Clock size={12} aria-hidden="true" />
+                  <span className="job-meta__sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span className="job-meta__item job-meta__item--time">
+                    <Clock size={11} aria-hidden="true" />
                     Posted {formatDate(job.updated_at ?? job.created_at)}
                   </span>
                 </div>

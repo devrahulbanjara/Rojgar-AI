@@ -8,10 +8,9 @@ import Link from 'next/link'
 import gsap from 'gsap'
 
 const NAV_LINKS = [
-  { href: '/jobs', label: 'Jobs' },
-  { href: '/companies', label: 'Companies' },
-  { href: '/career', label: 'Resume Tracking' },
-  { href: '/employers', label: 'For Employers' },
+  { href: '/jobs', label: 'Browse Jobs' },
+  { href: '/#pricing', label: 'Pricing' },
+  { href: '/#faq', label: 'FAQ' },
 ]
 
 export default function Header() {

@@ -142,14 +142,19 @@ function RecommendedCard({ job, index }: { job: JobListItem; index: number }) {
           </div>
         </div>
         {job.match_score !== null && (
-          <div className="badge badge--primary badge--xs" title="AI Match Score">
-            {Math.round(job.match_score * 100)}%
-          </div>
+          <span className="match-score" title="AI Match Score">
+            {Math.round(job.match_score * 100)}% match
+          </span>
         )}
       </div>
-      <div className="job-card__tags">
-        {tags.map((tag) => (
-          <span key={tag} className="badge badge--gray">
+      <div className="job-meta">
+        {tags.map((tag, i) => (
+          <span key={tag} className="job-meta__item">
+            {i > 0 && (
+              <span className="job-meta__sep" aria-hidden="true">
+                ·
+              </span>
+            )}
             {tag}
           </span>
         ))}
@@ -260,15 +265,28 @@ export default function JobDetailPage() {
                   {job.location ?? 'Location not specified'} ·{' '}
                   {LOCATION_TYPE_LABELS[job.location_type]}
                 </div>
-                <div className="jd-hero__chips">
-                  <span className="badge badge--primary">
-                    <Briefcase size={12} aria-hidden="true" />
+                <div className="job-meta jd-hero__chips">
+                  <span className="job-meta__item">
+                    <Briefcase size={11} aria-hidden="true" />
                     {LOCATION_TYPE_LABELS[job.location_type]}
                   </span>
-                  {salary && <span className="badge badge--secondary">{salary}</span>}
+                  {salary && (
+                    <>
+                      <span className="job-meta__sep" aria-hidden="true">
+                        ·
+                      </span>
+                      <span className="job-meta__item job-meta__item--salary">{salary}</span>
+                    </>
+                  )}
+                  <span className="job-meta__sep" aria-hidden="true">
+                    ·
+                  </span>
                   <StatusPill kind="job" status={job.status} />
-                  <span className="badge badge--gray">
-                    <Clock size={12} aria-hidden="true" />
+                  <span className="job-meta__sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span className="job-meta__item job-meta__item--time">
+                    <Clock size={11} aria-hidden="true" />
                     Posted {formatDate(job.updated_at ?? job.created_at)}
                   </span>
                 </div>
@@ -452,29 +470,43 @@ export default function JobDetailPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div className="job-meta" style={{ marginTop: '0.5rem' }}>
                 {job.company?.company_size && (
-                  <span className="badge badge--gray">
+                  <span className="job-meta__item">
                     <Briefcase width={11} height={11} aria-hidden="true" />
                     {job.company.company_size} employees
                   </span>
                 )}
                 {job.company?.location && (
-                  <span className="badge badge--gray">
-                    <MapPin width={11} height={11} aria-hidden="true" />
-                    {job.company.location}
-                  </span>
+                  <>
+                    {job.company?.company_size && (
+                      <span className="job-meta__sep" aria-hidden="true">
+                        ·
+                      </span>
+                    )}
+                    <span className="job-meta__item">
+                      <MapPin width={11} height={11} aria-hidden="true" />
+                      {job.company.location}
+                    </span>
+                  </>
                 )}
                 {job.company?.website_url && (
-                  <a
-                    href={job.company.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="badge badge--secondary"
-                    style={{ textDecoration: 'none', cursor: 'pointer' }}
-                  >
-                    Visit Website ↗
-                  </a>
+                  <>
+                    {(job.company?.company_size || job.company?.location) && (
+                      <span className="job-meta__sep" aria-hidden="true">
+                        ·
+                      </span>
+                    )}
+                    <a
+                      href={job.company.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="job-meta__item job-meta__item--salary"
+                      style={{ textDecoration: 'none' }}
+                    >
+                      Visit Website ↗
+                    </a>
+                  </>
                 )}
               </div>
 

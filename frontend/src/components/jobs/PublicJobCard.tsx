@@ -49,11 +49,21 @@ export default function PublicJobCard({ job }: { job: JobListItem }) {
         </div>
       </div>
 
-      <div className="job-card__tags">
-        <span className="badge badge--gray">{LOCATION_TYPE_LABELS[job.location_type]}</span>
-        {salary && <span className="badge badge--secondary">{salary}</span>}
-        <span className="job-card__meta-time">
-          <Clock size={12} aria-hidden="true" />
+      <div className="job-meta">
+        <span className="job-meta__item">{LOCATION_TYPE_LABELS[job.location_type]}</span>
+        {salary && (
+          <>
+            <span className="job-meta__sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="job-meta__item job-meta__item--salary">{salary}</span>
+          </>
+        )}
+        <span className="job-meta__sep" aria-hidden="true">
+          ·
+        </span>
+        <span className="job-meta__item job-meta__item--time">
+          <Clock size={11} aria-hidden="true" />
           {formatDate(job.created_at)}
         </span>
       </div>
