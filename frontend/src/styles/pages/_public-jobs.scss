@@ -1,0 +1,171 @@
+// ============================================================
+// PUBLIC JOBS PAGE (unauthenticated /jobs)
+// ============================================================
+
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.public-jobs {
+  padding-block: $space-12 $space-20;
+  min-height: 60vh;
+
+  // ── Header ────────────────────────────────────────────────
+  &__header {
+    margin-bottom: $space-8;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+    margin: 0 0 $space-2;
+  }
+
+  &__subtitle {
+    font-size: $font-size-base;
+    color: $color-text-muted;
+    margin: 0;
+  }
+
+  // ── Search toolbar ────────────────────────────────────────
+  &__toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    margin-bottom: $space-8;
+    padding: $space-4;
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+
+    @include md {
+      flex-direction: row;
+      align-items: center;
+      padding: $space-3;
+    }
+  }
+
+  &__field {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex: 1;
+    padding: $space-2 $space-3;
+    border-radius: $radius-lg;
+    background: $color-gray-100;
+  }
+
+  &__field-icon {
+    color: $color-gray-400;
+    flex-shrink: 0;
+  }
+
+  &__input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: $font-body;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    outline: none;
+
+    &::placeholder {
+      color: $color-gray-400;
+    }
+  }
+
+  &__search-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+
+  // ── Card grid ─────────────────────────────────────────────
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-5;
+
+    @include md {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include lg {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    // Prevent children from blowing out grid columns
+    > * {
+      min-width: 0;
+    }
+  }
+
+  // ── Card entrance animation (CSS-only, no IntersectionObserver) ──
+  &__card-enter {
+    animation: pub-jobs-fade-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--stagger, 0s);
+  }
+
+  @keyframes pub-jobs-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  // ── Skeleton ──────────────────────────────────────────────
+  &__skeleton {
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    min-height: 160px;
+    animation: pub-jobs-pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pub-jobs-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  // ── Empty state ───────────────────────────────────────────
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-16 0;
+    color: $color-gray-400;
+    text-align: center;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  // ── Pagination ────────────────────────────────────────────
+  &__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-4;
+    margin-top: $space-10;
+  }
+
+  &__page-info {
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+    font-weight: $font-weight-medium;
+  }
+}

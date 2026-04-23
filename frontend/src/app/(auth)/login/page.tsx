@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { applyFieldErrors, parseApiError } from '@/lib/apiError'
 import { getRoleDashboard } from '@/lib/roleRoutes'
@@ -85,9 +85,21 @@ function validateForm(values: LoginFormState): FormErrors {
   return errors
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+/** Allow only safe relative paths — blocks open redirect via protocol or // */
+function getSafeRedirect(value: string | null): string | null {
+  if (!value) return null
+  if (value.startsWith('/') && !value.startsWith('//')) return value
+  return null
+}
+
 // ── Component ──────────────────────────────────────────────────────────────
 
-export default function LoginPage() {
+function LoginPageInner() {
+  const searchParams = useSearchParams()
+  const nextUrl = getSafeRedirect(searchParams.get('next'))
+
   const [formValues, setFormValues] = useState<LoginFormState>({
     email: '',
     password: '',
@@ -131,7 +143,7 @@ export default function LoginPage() {
 
       if (result.success) {
         toast.success('Signed in! Redirecting…')
-        router.push(getRoleDashboard(result.data?.user?.primary_role))
+        router.push(nextUrl ?? getRoleDashboard(result.data?.user?.primary_role))
       } else {
         toast.error(result.message ?? 'Login failed. Please try again.')
       }
@@ -335,5 +347,13 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   )
 }

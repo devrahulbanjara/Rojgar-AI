@@ -314,13 +314,14 @@ async def _build_recommendation_query(db: AsyncSession, user: User) -> str:
         .where(Profile.user_id == user.id)
         .options(
             selectinload(Profile.experiences),
+            selectinload(Profile.educations),
             selectinload(Profile.skills),
         )
     )
     profile = result.scalar_one_or_none()
 
     if not profile:
-        return "Software engineering technology jobs"
+        return "Jobs hiring now across all industries and roles"
 
     target_roles: list[str] = profile.target_roles or []
     top_target = target_roles[0] if target_roles else "Technology Professional"
@@ -332,15 +333,31 @@ async def _build_recommendation_query(db: AsyncSession, user: User) -> str:
     skill_names = (
         ", ".join(s.skill_name for s in profile.skills) if profile.skills else ""
     )
+    education_entries = (
+        ", ".join(
+            " ".join(
+                part
+                for part in [edu.degree, edu.field_of_study, edu.institution]
+                if part
+            )
+            for edu in profile.educations
+        )
+        if profile.educations
+        else ""
+    )
 
     parts = [
         f"TARGET ROLE (highest priority):\n{top_target}",
         f"PREFERRED ROLE KEYWORDS:\n{', '.join(target_roles)}",
     ]
+    if profile.headline:
+        parts.append(f"PROFESSIONAL HEADLINE:\n{profile.headline}")
     if profile.summary:
         parts.append(f"PROFESSIONAL SUMMARY:\n{profile.summary}")
     if experience_titles:
         parts.append(f"WORK EXPERIENCE:\n{experience_titles}")
+    if education_entries:
+        parts.append(f"EDUCATION:\n{education_entries}")
     if skill_names:
         parts.append(f"SKILLS:\n{skill_names}")
 
@@ -351,6 +368,7 @@ async def search_jobs(
     db: AsyncSession,
     user: "User | None",
     q: str | None,
+    location: str | None,
     location_type: LocationType | None,
     salary_min: int | None,
     salary_max: int | None,
@@ -363,7 +381,7 @@ async def search_jobs(
     - When ``q`` is provided: embeds the search string and queries Qdrant.
     - When no ``q`` and user is a candidate: builds a profile-based
       recommendation query so the most relevant jobs surface first.
-    - Metadata filters (location_type, salary) are applied inside
+    - Metadata filters (location, location_type, salary) are applied inside
       Qdrant, with smart fallback padding for under-filled pages.
     """
     # 1. Determine the semantic query string
@@ -377,6 +395,7 @@ async def search_jobs(
     # 2. Run the semantic search with simple filter parameters
     qdrant_results, total_count = await qdrant_service.search_jobs(
         query=search_query,
+        location=location.strip() if location else None,
         location_type=location_type.value if location_type else None,
         salary_min=salary_min,
         salary_max=salary_max,
