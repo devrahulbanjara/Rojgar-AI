@@ -1,55 +1,43 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useAppSelector } from '@/store/hooks'
-import { AlertCircle, RefreshCw } from 'lucide-react'
+import { Wifi, WifiOff } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
+type Phase = 'hidden' | 'error' | 'recovering'
 
 export default function BackendConnectionBanner() {
-  const [isReloading, setIsReloading] = useState(false)
-  const { hasIssue, message } = useAppSelector((state) => state.ui.backendConnection)
+  const hasIssue = useAppSelector((s) => s.ui.backendConnection.hasIssue)
+  const [phase, setPhase] = useState<Phase>('hidden')
 
-  if (!hasIssue) return null
+  useEffect(() => {
+    if (hasIssue) {
+      setPhase('error')
+    } else if (phase === 'error') {
+      setPhase('recovering')
+      const t = setTimeout(() => setPhase('hidden'), 2000)
+      return () => clearTimeout(t)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasIssue])
+
+  if (phase === 'hidden') return null
+
+  const isRecovered = phase === 'recovering'
 
   return (
-    <div className="backend-connection-banner" role="alert" aria-live="polite">
-      <div className="container container--app-shell">
-        <div className="backend-connection-banner__inner">
-          <div className="backend-connection-banner__copy">
-            <div className="backend-connection-banner__eyebrow">
-              <AlertCircle size={14} aria-hidden="true" />
-              Connection issue
-            </div>
-            <div className="backend-connection-banner__title">
-              {message ?? 'Live data is temporarily unavailable.'}
-            </div>
-            <p className="backend-connection-banner__description">
-              Some information may appear empty or out of date until the connection is restored.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className="btn btn--primary backend-connection-banner__action"
-            disabled={isReloading}
-            onClick={() => {
-              setIsReloading(true)
-              window.location.reload()
-            }}
-          >
-            {isReloading ? (
-              <ButtonSpinner label="Refreshing" />
-            ) : (
-              <>
-                <RefreshCw size={16} aria-hidden="true" />
-                Try again
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+    <div
+      className={`conn-status${isRecovered ? ' conn-status--ok' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="conn-status__icon" aria-hidden="true">
+        {isRecovered ? <Wifi size={16} /> : <WifiOff size={16} />}
+      </span>
+      <span className="conn-status__text">
+        {isRecovered ? 'Back online' : 'Connection lost — retrying\u2026'}
+      </span>
     </div>
   )
 }

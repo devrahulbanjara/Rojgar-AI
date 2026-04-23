@@ -31,7 +31,7 @@ interface PricingTier {
 const TIERS: PricingTier[] = [
   {
     id: 'free',
-    badge: 'Candidates & Employers',
+    badge: 'Candidates & Companies',
     planName: 'Free',
     currency: 'NPR',
     amount: '0',
@@ -41,56 +41,56 @@ const TIERS: PricingTier[] = [
     cta: 'Get Started',
     ctaHref: '/signup',
     features: [
-      { text: 'Browse & apply to all job listings', included: true },
-      { text: 'Create a company profile & post jobs', included: true },
-      { text: 'Interview scheduling for candidates', included: true },
-      { text: 'AI screening suggestions', included: true },
+      { text: 'Build profile & multiple resumes', included: true },
+      { text: 'Browse & apply to all active jobs', included: true },
+      { text: 'AI resume gap analysis on apply', included: true },
+      { text: 'Live application pipeline tracking', included: true },
+      { text: 'Register company & post jobs', included: true },
       { text: 'AI screening engine', included: false },
-      { text: 'Auto email sender', included: false },
-      { text: 'AI resume builder', included: false },
+      { text: 'AI outreach email drafting', included: false },
     ],
   },
   {
-    id: 'recruiter',
-    badge: 'HR & Recruiters',
-    planName: 'Recruiter',
+    id: 'company',
+    badge: 'For Companies',
+    planName: 'Company',
     currency: 'NPR',
     amount: '499',
-    period: '/ month',
+    period: '/ mo · per company',
     featured: true,
     ctaVariant: 'filled',
     cta: 'Start Free Trial',
     ctaHref: '/signup',
     features: [
-      { text: 'Everything in Free', included: true },
-      { text: 'AI screening engine', included: true },
-      { text: 'Candidate ranking & scoring', included: true },
-      { text: 'Advanced search & filters', included: true },
-      { text: 'Priority job placement', included: true },
-      { text: 'Auto email sender', included: false },
-      { text: 'AI resume builder', included: false },
+      { text: 'Everything in Free — for your whole team', included: true },
+      { text: 'AI screening engine (auto or batch)', included: true },
+      { text: 'Candidate scoring, ranking & AI feedback', included: true },
+      { text: 'AI-assisted bulk shortlisting with threshold', included: true },
+      { text: 'Cal.com interview scheduling for all recruiters', included: true },
+      { text: 'AI outreach email drafting', included: false },
+      { text: 'Recruiter AI Chat', included: false },
     ],
   },
   {
     id: 'business',
-    badge: 'Growing Companies',
+    badge: 'For Growing Teams',
     planName: 'Business',
     currency: 'NPR',
     amount: '1,499',
-    period: '/ month',
+    period: '/ mo · per company',
     featured: false,
     ctaVariant: 'outline',
     cta: 'Contact Sales',
     ctaHref: 'https://wa.me/9779823527078',
     ctaExternal: true,
     features: [
-      { text: 'Everything in Recruiter', included: true },
-      { text: 'Auto email sender', included: true },
-      { text: 'AI resume builder', included: true },
-      { text: 'AI screening with shortlisting actions', included: true },
-      { text: 'Interview scheduling & reminders', included: true },
+      { text: 'Everything in Company — for your whole team', included: true },
+      { text: 'AI outreach email drafting & review pipeline', included: true },
+      { text: 'Recruiter AI Chat (candidate search, salary research)', included: true },
+      { text: 'AI job creation assistant', included: true },
+      { text: 'Multi-recruiter team & role management', included: true },
       { text: 'Dedicated account manager', included: true },
-      { text: 'Custom integrations & API access', included: true },
+      { text: 'Priority support', included: true },
     ],
   },
 ]
@@ -132,8 +132,8 @@ export default function Pricing() {
             data-reveal
             style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
           >
-            Free for everyone to get started — upgrade when your team is ready to hire smarter with
-            AI.
+            Free for candidates and companies to get started. Company plans unlock AI hiring tools
+            for your entire team — one subscription, every recruiter covered.
           </p>
         </header>
 
