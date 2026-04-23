@@ -343,7 +343,7 @@ export default function RecruiterInterviewsPage() {
             </button>
           ) : null}
           {selectedJob?.hiring_completed ? (
-            <span className="badge badge--success">Hiring complete</span>
+            <span className="status-dot status-dot--success">Hiring complete</span>
           ) : null}
           <button
             type="button"

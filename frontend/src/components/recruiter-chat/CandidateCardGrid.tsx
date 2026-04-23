@@ -50,7 +50,7 @@ export function CandidateCardGrid({ data }: { data: CandidateSearchResult }) {
 
               <div className="recruiter-chat-candidate-row__meta">
                 <span
-                  className={`recruiter-chat-badge recruiter-chat-badge--${getStatusTone(candidate.application_status)}`}
+                  className={`status-dot status-dot--${getStatusTone(candidate.application_status)}`}
                 >
                   {candidate.application_status.replace(/_/g, ' ')}
                 </span>

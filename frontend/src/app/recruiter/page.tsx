@@ -434,7 +434,9 @@ export default function CompanyDashboardPage() {
                             {getExpiryLabel(job.days_until_expiry)}
                           </div>
                         </div>
-                        <span className={`badge badge--${getExpiryTone(job.days_until_expiry)}`}>
+                        <span
+                          className={`status-dot status-dot--${getExpiryTone(job.days_until_expiry)}`}
+                        >
                           {getExpiryLabel(job.days_until_expiry)}
                         </span>
                       </div>
@@ -556,7 +558,7 @@ export default function CompanyDashboardPage() {
                               <div className="recruiter-list-card__meta recruiter-team-activity__meta">
                                 {member.membership_status !== 'active' ? (
                                   <span
-                                    className={`badge badge--${getMembershipTone(member.membership_status)}`}
+                                    className={`status-dot status-dot--${getMembershipTone(member.membership_status)}`}
                                   >
                                     {member.membership_status === 'pending'
                                       ? 'Pending'

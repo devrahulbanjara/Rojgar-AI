@@ -926,7 +926,7 @@ export default function RecruiterOutreachPage() {
                         ) : selectedDraft.is_sent ? (
                           <div className={`${styles.detailNotice} ${styles.detailNoticeMuted}`}>
                             <div className={styles.sentState}>
-                              <span className="badge badge--success">Sent</span>
+                              <span className="status-dot status-dot--success">Sent</span>
                               <span className={styles.detailTimestamp}>
                                 Sent on {formatTimestamp(selectedDraft.updated_at)}
                               </span>

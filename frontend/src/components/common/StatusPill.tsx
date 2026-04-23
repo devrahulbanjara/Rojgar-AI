@@ -30,7 +30,9 @@ export default function StatusPill(props: StatusPillProps) {
       : getJobStatusVariant(props.status)
 
   return (
-    <span className={`badge badge--${variant}${props.className ? ` ${props.className}` : ''}`}>
+    <span
+      className={`status-dot status-dot--${variant}${props.className ? ` ${props.className}` : ''}`}
+    >
       {label}
     </span>
   )

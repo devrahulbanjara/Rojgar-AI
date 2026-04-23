@@ -64,7 +64,7 @@ export default function FAQ() {
   }, [])
 
   return (
-    <section className="faq">
+    <section className="faq" id="faq">
       {/* Decorative bg */}
       <Image
         src="/bg/bg-ui-v4.svg"

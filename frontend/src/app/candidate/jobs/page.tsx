@@ -361,9 +361,9 @@ export default function UserJobsPage() {
                           </div>
                           <div className="job-card__actions-wrap">
                             {job.match_score !== null && (
-                              <div className="badge badge--primary" title="AI Match Score">
+                              <span className="match-score" title="AI Match Score">
                                 {Math.round(job.match_score * 100)}% Match
-                              </div>
+                              </span>
                             )}
                             <button
                               className="job-card__bookmark"
@@ -375,31 +375,48 @@ export default function UserJobsPage() {
                           </div>
                         </div>
 
-                        <div className="job-card__tags">
-                          <span className="badge badge--gray">
+                        <div className="job-meta">
+                          <span className="job-meta__item">
                             {LOCATION_TYPE_LABELS[job.location_type]}
                           </span>
                           {(job.salary_min || job.salary_max) && (
-                            <span className="badge badge--secondary">
-                              {formatSalary(job.salary_min, job.salary_max, job.currency)}
-                            </span>
+                            <>
+                              <span className="job-meta__sep" aria-hidden="true">
+                                ·
+                              </span>
+                              <span className="job-meta__item job-meta__item--salary">
+                                {formatSalary(job.salary_min, job.salary_max, job.currency)}
+                              </span>
+                            </>
                           )}
-                          <span className="job-card__meta-time">
-                            <Clock size={12} aria-hidden="true" />
+                          <span className="job-meta__sep" aria-hidden="true">
+                            ·
+                          </span>
+                          <span className="job-meta__item job-meta__item--time">
+                            <Clock size={11} aria-hidden="true" />
                             {formatDate(job.created_at)}
                           </span>
                           {job.expires_at &&
                             (() => {
                               const expiry = formatExpiryDate(job.expires_at)
-                              return expiry ? (
-                                <span
-                                  className="job-card__meta-expiry"
-                                  style={{ color: expiry.color }}
-                                >
-                                  <Calendar size={12} aria-hidden="true" />
-                                  {expiry.text}
-                                </span>
-                              ) : null
+                              if (!expiry) return null
+                              const mod =
+                                expiry.color === '#ff4d4d'
+                                  ? 'expiry-danger'
+                                  : expiry.color === '#f59e0b'
+                                    ? 'expiry-warning'
+                                    : 'time'
+                              return (
+                                <>
+                                  <span className="job-meta__sep" aria-hidden="true">
+                                    ·
+                                  </span>
+                                  <span className={`job-meta__item job-meta__item--${mod}`}>
+                                    <Calendar size={11} aria-hidden="true" />
+                                    {expiry.text}
+                                  </span>
+                                </>
+                              )
                             })()}
                         </div>
                       </div>

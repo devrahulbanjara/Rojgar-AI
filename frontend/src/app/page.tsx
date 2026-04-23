@@ -41,9 +41,6 @@ export default function Home() {
     router.push(qs ? `/jobs?${qs}` : '/jobs')
   }
 
-  // While redirecting, show nothing to avoid flash of landing page
-  if (isAuthenticated) return null
-
   return (
     <section className="homepage">
       <div className="heroSection">

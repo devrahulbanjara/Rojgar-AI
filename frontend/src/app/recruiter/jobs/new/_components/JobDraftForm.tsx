@@ -91,9 +91,18 @@ function FieldChrome({
             )}
           </button>
           <div className="job-ai-field__badges">
-            {isLocked ? <span className="job-ai-badge job-ai-badge--locked">Locked</span> : null}
-            {isDirty ? <span className="job-ai-badge job-ai-badge--edited">Edited</span> : null}
-            {isMissing ? <span className="job-ai-badge job-ai-badge--missing">Missing</span> : null}
+            {isLocked ? (
+              <span className="job-ai-field__label job-ai-field__label--locked">
+                <Lock size={10} aria-hidden="true" />
+                Locked
+              </span>
+            ) : null}
+            {isDirty ? (
+              <span className="job-ai-field__label job-ai-field__label--edited">Edited</span>
+            ) : null}
+            {isMissing ? (
+              <span className="job-ai-field__label job-ai-field__label--missing">Missing</span>
+            ) : null}
           </div>
         </div>
       </div>
