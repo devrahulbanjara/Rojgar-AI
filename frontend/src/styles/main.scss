@@ -64,6 +64,7 @@ body {
 
 .page {
   min-height: 100vh;
+  padding-top: $space-24; // offset for fixed header (top: 20px + height: 68px = 88px)
 }
 
 // Selection

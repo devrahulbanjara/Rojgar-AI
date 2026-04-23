@@ -109,7 +109,7 @@ function LockIcon({ className }: { className?: string }) {
 
 export default function Pricing() {
   return (
-    <section className="pricing">
+    <section className="pricing" id="pricing">
       {/* Background SVG — bottom right */}
       <Image
         src="/bg/bg-ui-v5.svg"

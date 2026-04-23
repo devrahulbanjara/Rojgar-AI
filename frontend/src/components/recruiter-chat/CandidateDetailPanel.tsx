@@ -24,9 +24,7 @@ export function CandidateDetailPanel({ data }: { data: CandidateDetailData }) {
             {data.headline || data.job_title || data.email}
           </div>
           <div className="recruiter-chat-detail-meta">
-            <span
-              className={`recruiter-chat-badge recruiter-chat-badge--${getStatusTone(data.application_status)}`}
-            >
+            <span className={`status-dot status-dot--${getStatusTone(data.application_status)}`}>
               {data.application_status.replace(/_/g, ' ')}
             </span>
             {data.score != null ? (
@@ -48,10 +46,11 @@ export function CandidateDetailPanel({ data }: { data: CandidateDetailData }) {
       {data.skills.length ? (
         <div className="recruiter-chat-section">
           <div className="recruiter-chat-section-title">Skills</div>
-          <div className="recruiter-chat-chip-row">
-            {data.skills.map((skill) => (
-              <span key={skill.id} className="recruiter-chat-chip">
+          <div className="recruiter-chat-skills">
+            {data.skills.map((skill, i) => (
+              <span key={skill.id}>
                 {skill.skill_name}
+                {i < data.skills.length - 1 ? ', ' : ''}
               </span>
             ))}
           </div>

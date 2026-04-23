@@ -141,30 +141,43 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
       <div className="job-preview__company-meta">
         {job.company?.industry && <span>{job.company.industry}</span>}
         {job.company?.company_size && <span>· {job.company.company_size}</span>}
-        {openRolesCount > 1 && (
-          <span className="badge badge--success">{openRolesCount} active roles</span>
-        )}
+        {openRolesCount > 1 && <span>· {openRolesCount} active roles</span>}
       </div>
 
-      <div className="job-preview__chips">
-        <span className="badge badge--gray">{LOCATION_TYPE_LABELS[job.location_type]}</span>
-        {salary && <span className="badge badge--secondary">{salary}</span>}
+      <div className="job-meta job-preview__chips">
+        <span className="job-meta__item">{LOCATION_TYPE_LABELS[job.location_type]}</span>
+        {salary && (
+          <>
+            <span className="job-meta__sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="job-meta__item job-meta__item--salary">{salary}</span>
+          </>
+        )}
+        <span className="job-meta__sep" aria-hidden="true">
+          ·
+        </span>
         <StatusPill kind="job" status={job.status} />
         {job.expires_at &&
           (() => {
             const expiry = formatExpiryDate(job.expires_at)
             if (!expiry) return null
-            const chipClass =
+            const mod =
               expiry.color === '#ff4d4d'
-                ? 'badge--danger'
+                ? 'expiry-danger'
                 : expiry.color === '#f59e0b'
-                  ? 'badge--warning'
-                  : 'badge--gray'
+                  ? 'expiry-warning'
+                  : 'time'
             return (
-              <span className={`badge ${chipClass}`}>
-                <Calendar size={11} aria-hidden="true" />
-                {expiry.text}
-              </span>
+              <>
+                <span className="job-meta__sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className={`job-meta__item job-meta__item--${mod}`}>
+                  <Calendar size={11} aria-hidden="true" />
+                  {expiry.text}
+                </span>
+              </>
             )
           })()}
       </div>

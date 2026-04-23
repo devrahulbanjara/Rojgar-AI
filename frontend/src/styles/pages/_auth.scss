@@ -13,7 +13,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: calc(80px + #{$space-12});
+  padding-top: $space-8;
   padding-bottom: $space-16;
   overflow: hidden;
   background-color: $color-white;

@@ -25,7 +25,7 @@ import {
   useUpdateMyProfileMutation,
 } from '@/store/services/profileApi'
 import { clearCredentials, updateUser } from '@/store/slices/authSlice'
-import { Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
+import { AlertTriangle, Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import DashboardTabs from '@/components/common/DashboardTabs'
@@ -896,16 +896,16 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="resume-skills-wrap" style={{ marginBottom: '1rem', gap: '6px' }}>
+                <div className="skills-wrap" style={{ marginBottom: '1rem', gap: '6px' }}>
                   {form.target_roles.map((role) => (
                     <div
-                      className="resume-skill-chip"
+                      className="skill-item"
                       key={role}
                       style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
                     >
                       {role}
                       <button
-                        className="resume-skill-chip__remove"
+                        className="skill-item__remove"
                         disabled={isSaving}
                         onClick={() => removeTargetRole(role)}
                         aria-label={`Remove ${role}`}
@@ -1279,7 +1279,9 @@ export default function ProfilePage() {
                               {exp.current ? 'Present' : formatDate(exp.endDate)}
                             </span>
                           )}
-                          {exp.current && <span className="badge badge--success">Current</span>}
+                          {exp.current && (
+                            <span className="status-dot status-dot--success">Current</span>
+                          )}
                         </div>
                         {exp.description && (
                           <ul className="profile-exp-view__desc-list">
@@ -1452,12 +1454,12 @@ export default function ProfilePage() {
                     </button>
                   </div>
 
-                  <div className="resume-skills-wrap">
+                  <div className="skills-wrap">
                     {form.skills.map((sk) => (
-                      <div className="resume-skill-chip" key={sk}>
+                      <div className="skill-item" key={sk}>
                         {sk}
                         <button
-                          className="resume-skill-chip__remove"
+                          className="skill-item__remove"
                           disabled={isSaving}
                           onClick={() => removeSkill(sk)}
                           aria-label={`Remove ${sk}`}
@@ -1585,21 +1587,44 @@ export default function ProfilePage() {
         <div className="dash-card__header">
           <div>
             <div className="dash-card__title">Danger Zone</div>
-            <div className="dash-card__subtitle">Irreversible actions for your account.</div>
+            <div className="dash-card__subtitle">Irreversible actions — proceed with caution.</div>
           </div>
         </div>
         <div className="dash-card__body">
-          <button className="btn btn--danger" onClick={() => setShowDeleteModal(true)}>
-            Delete Account
-          </button>
+          <div className="danger-zone-row">
+            <div className="danger-zone-row__icon" aria-hidden="true">
+              <Trash2 size={18} />
+            </div>
+            <div className="danger-zone-row__copy">
+              <div className="danger-zone-row__title">Delete Account</div>
+              <div className="danger-zone-row__desc">
+                Permanently remove your account, profile, resumes, and all application history. This
+                cannot be undone.
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn--outline btn--danger btn--sm"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Account
+            </button>
+          </div>
         </div>
       </div>
 
       {showDeleteModal && (
-        <div className="modal-backdrop">
-          <div className="modal">
+        <div className="modal-backdrop modal-backdrop--animated" role="presentation">
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+          >
             <div className="modal__header">
-              <h3 className="modal__title">Delete Account</h3>
+              <h3 className="modal__title" id="delete-account-title">
+                Delete Account
+              </h3>
               <button
                 type="button"
                 className="modal__close"
@@ -1614,18 +1639,28 @@ export default function ProfilePage() {
               </button>
             </div>
             <div className="modal__body">
-              <p>
-                This will permanently delete your account and all associated data. Type{' '}
-                <strong>DELETE</strong> to confirm.
+              <div className="modal-danger-warning" role="alert">
+                <AlertTriangle size={16} aria-hidden="true" />
+                <span>This action is permanent and cannot be undone.</span>
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text)', lineHeight: 1.6 }}>
+                Your account, profile, resume data, and all application history will be permanently
+                deleted. You will be immediately signed out.
               </p>
-              <input
-                className="resume-field__input"
-                style={{ marginTop: '0.75rem' }}
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Type DELETE to confirm"
-                autoComplete="off"
-              />
+              <div className="resume-field">
+                <label className="resume-field__label" htmlFor="delete-confirm-input">
+                  Type <strong>DELETE</strong> to confirm
+                </label>
+                <input
+                  id="delete-confirm-input"
+                  className="resume-field__input"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  autoComplete="off"
+                  autoFocus
+                />
+              </div>
             </div>
             <div className="modal__footer">
               <button

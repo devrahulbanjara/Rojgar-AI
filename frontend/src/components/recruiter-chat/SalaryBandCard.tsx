@@ -20,9 +20,7 @@ export function SalaryBandCard({ data }: { data: SalaryResearchResult }) {
           </div>
         </div>
 
-        <span
-          className={`recruiter-chat-badge recruiter-chat-badge--${getConfidenceTone(data.confidence)}`}
-        >
+        <span className={`status-dot status-dot--${getConfidenceTone(data.confidence)}`}>
           {data.confidence}
         </span>
       </div>

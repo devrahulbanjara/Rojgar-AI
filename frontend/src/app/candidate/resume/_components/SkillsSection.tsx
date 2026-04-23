@@ -42,18 +42,18 @@ export default function SkillsSection({
           Add
         </button>
       </div>
-      <div className="resume-skills-wrap">
+      <div className="skills-wrap">
         {skills.map((sk) => (
-          <div className="resume-skill-chip" key={sk}>
+          <span className="skill-item" key={sk}>
             {sk}
             <button
-              className="resume-skill-chip__remove"
+              className="skill-item__remove"
               onClick={() => onRemove(sk)}
               aria-label={`Remove ${sk}`}
             >
-              x
+              ×
             </button>
-          </div>
+          </span>
         ))}
       </div>
     </div>
