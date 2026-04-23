@@ -2,68 +2,68 @@
 
 import Image from 'next/image'
 
-import { BarChart3, Bell, BrainCircuit, Clock, Target } from 'lucide-react'
+import { BarChart3, Bell, BrainCircuit, Target, Zap } from 'lucide-react'
 
 const BLOCKS = [
   {
-    id: 'no-ghosting',
+    id: 'resume-ai',
     color: 'secondary',
     image: '/homepage/whyPreferUs/image1.svg',
-    imageAlt: 'Candidate working at laptop',
-    title: 'We Never Ghost Candidates',
-    body: "Every application you submit is tracked, and every candidate receives a response. We believe in transparent, respectful communication throughout your entire hiring journey — not just when it's convenient for us.",
+    imageAlt: 'Candidate comparing resume to job requirements',
+    title: 'AI Closes Your Resume Gaps Before You Apply',
+    body: "Run a gap analysis against any job. See exactly what's missing — then let AI patch your resume. You approve every edit before anything saves.",
     features: [
       {
-        icon: 'clock',
-        heading: 'Hear back within 48 hours',
-        desc: 'Prompt responses at every stage of your application.',
+        icon: 'brain',
+        heading: 'Resume Gap Analysis',
+        desc: "Compare your resume to any job's requirements. Get a precise gap report before you hit Apply.",
       },
       {
-        icon: 'bell',
-        heading: 'Real-time status updates',
-        desc: 'Know exactly where you stand — no more waiting in silence.',
+        icon: 'target',
+        heading: 'AI Resume Patching',
+        desc: 'Accept or reject every AI suggestion individually. Nothing changes without your explicit approval.',
       },
     ],
     reverse: false,
   },
   {
-    id: 'salary-range',
+    id: 'pipeline-clarity',
     color: 'warning',
     image: '/homepage/whyPreferUs/image2.svg',
-    imageAlt: 'Professional reviewing salary insights',
-    title: 'Know Your Salary Range Before You Apply',
-    body: "Stop wasting time on roles that don't match your worth. ConvexHire surfaces verified salary data for every listing so you can negotiate from a position of strength — not guesswork.",
+    imageAlt: 'Application pipeline status dashboard',
+    title: 'Know Exactly Where You Stand — Every Step',
+    body: 'Live pipeline tracking from Applied to Offer. See your AI score out of 100 and written feedback — even after a rejection.',
     features: [
       {
-        icon: 'chart',
-        heading: 'Verified salary bands',
-        desc: 'Sourced directly from employers, not scraped estimates.',
+        icon: 'bell',
+        heading: 'Live Application Pipeline',
+        desc: 'Track every stage in real time: Applied → Screening → Shortlisted → Interview → Offer.',
       },
       {
-        icon: 'target',
-        heading: 'Personalised market insights',
-        desc: 'Salary benchmarks tailored to your skills and location.',
+        icon: 'chart',
+        heading: 'Your AI Score & Feedback Visible',
+        desc: "After screening, see your 0–100 score and the AI's written reasoning — not a generic rejection.",
       },
     ],
     reverse: true,
   },
   {
-    id: 'ai-tracking',
+    id: 'ai-hiring',
     color: 'accent',
     image: '/homepage/whyPreferUs/image3.svg',
-    imageAlt: 'HR team reviewing AI analytics dashboard',
-    title: 'AI-Powered Tracking for HR Teams',
-    body: 'Track every applicant through your pipeline with AI-driven analytics that highlight top candidates, flag bottlenecks, and help your team make faster, fairer hiring decisions at scale.',
+    imageAlt: 'Recruiter AI dashboard showing candidate pipeline',
+    title: 'One Platform Runs Your Entire Hiring Pipeline',
+    body: 'AI creates jobs, scores applicants, drafts outreach, and syncs interview bookings — with human approval at every decision point.',
     features: [
       {
         icon: 'brain',
-        heading: 'Intelligent candidate scoring',
-        desc: 'Automated pipeline tracking with smart ranking built in.',
+        heading: 'AI Screening + Smart Shortlisting',
+        desc: 'Auto-score every applicant on arrival. Set a threshold and shortlist your entire cohort in one action.',
       },
       {
-        icon: 'chart',
-        heading: 'Data-driven HR dashboards',
-        desc: 'Real-time insights built for modern hiring teams.',
+        icon: 'zap',
+        heading: 'AI Outreach + Cal.com Interviews',
+        desc: 'AI drafts personalized emails. Candidates book via Cal.com. Status updates automatically.',
       },
     ],
     reverse: false,
@@ -71,11 +71,11 @@ const BLOCKS = [
 ]
 
 const ICONS: Record<string, React.ReactNode> = {
-  clock: <Clock aria-hidden="true" />,
   bell: <Bell aria-hidden="true" />,
   chart: <BarChart3 aria-hidden="true" />,
   target: <Target aria-hidden="true" />,
   brain: <BrainCircuit aria-hidden="true" />,
+  zap: <Zap aria-hidden="true" />,
 }
 
 export default function WhyPreferUs() {
@@ -90,16 +90,16 @@ export default function WhyPreferUs() {
           data-reveal
           style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
         >
-          Built differently,
+          Built for both sides
           <br />
-          for people who care about their career
+          of the hiring equation
         </h2>
         <p
           className="why-prefer__subheading"
           data-reveal
           style={{ '--reveal-delay': '0.2s' } as React.CSSProperties}
         >
-          Most job platforms treat candidates as data points. We don&apos;t.
+          Candidates apply smarter. Recruiters hire faster. AI does the heavy lifting for both.
         </p>
       </div>
 

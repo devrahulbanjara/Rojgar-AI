@@ -1,7 +1,7 @@
 const CONNECTION_RELATED_STATUSES = new Set([502, 503, 504])
 
 export const LIVE_DATA_UNAVAILABLE_MESSAGE =
-  'Live data is temporarily unavailable. Please try again in a moment.'
+  'Service temporarily unavailable. Please try again in a moment.'
 
 function getErrorMessage(error: unknown): string | undefined {
   if (error instanceof Error && error.message) return error.message
@@ -37,7 +37,7 @@ export function isBackendConnectionIssue(error: unknown): boolean {
   if (!message) return false
 
   return (
-    message.includes('live data is temporarily unavailable') ||
+    message.includes('service temporarily unavailable') ||
     message.includes('unable to reach') ||
     message.includes('failed to fetch') ||
     message.includes('load failed') ||
