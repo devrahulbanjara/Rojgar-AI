@@ -19,6 +19,7 @@ async def get_my_activity(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return the authenticated user's recent activity feed."""
     data = await service.list_my_activity(db, current_user, limit=limit)
     return ResponseBuilder.success(data=data, message="Activity retrieved.")
 
@@ -29,5 +30,6 @@ async def get_company_activity(
     current_user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return recent company activity for an active recruiter membership."""
     data = await service.list_company_activity(db, current_user, limit=limit)
     return ResponseBuilder.success(data=data, message="Company activity retrieved.")

@@ -17,6 +17,7 @@ def enqueue_application_sync_event(
     application_id: uuid.UUID,
     action: SyncAction = SyncAction.UPSERT,
 ) -> ApplicationSyncEvent:
+    """Create and add one application outbox event to the current session."""
     event = ApplicationSyncEvent(application_id=application_id, action=action)
     db.add(event)
     return event
@@ -27,6 +28,7 @@ def enqueue_application_sync_events(
     application_ids: list[uuid.UUID],
     action: SyncAction = SyncAction.UPSERT,
 ) -> list[ApplicationSyncEvent]:
+    """Create and add multiple application outbox events to the session."""
     return [
         enqueue_application_sync_event(db, application_id, action)
         for application_id in application_ids
@@ -34,6 +36,7 @@ def enqueue_application_sync_events(
 
 
 async def process_sync_event(event_id: uuid.UUID) -> None:
+    """Process one application sync event in a fresh database session."""
     async with AsyncSessionLocal() as db:
         event = await db.scalar(
             select(ApplicationSyncEvent).where(ApplicationSyncEvent.id == event_id)
@@ -82,6 +85,7 @@ async def process_sync_event(event_id: uuid.UUID) -> None:
 
 
 async def process_pending_events() -> None:
+    """Process up to 50 pending or failed application sync events oldest-first."""
     async with AsyncSessionLocal() as db:
         events = await db.scalars(
             select(ApplicationSyncEvent)

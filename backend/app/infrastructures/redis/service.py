@@ -9,11 +9,14 @@ from app.core.config import settings
 
 
 class RedisService:
+    """Thin Redis wrapper for prefixed keys, TTL jitter, and safe invalidation."""
+
     def __init__(self) -> None:
         self._client: redis.Redis | None = None
         self.prefix = f"convexhire:{settings.environment}"
 
     async def connect(self) -> None:
+        """Connect to Redis if enabled; fail gracefully on connection errors."""
         if not settings.redis_enabled or not settings.redis_url:
             logger.warning("Redis is disabled or REDIS_URL is missing.")
             return
@@ -34,13 +37,16 @@ class RedisService:
             self._client = None
 
     async def disconnect(self) -> None:
+        """Close the Redis client if one is active."""
         if self._client:
             await self._client.aclose()
 
     def _build_key(self, key: str) -> str:
+        """Apply the environment-specific key prefix."""
         return f"{self.prefix}:{key}"
 
     def _build_ttl(self, ttl_seconds: int, ttl_jitter_seconds: int) -> int:
+        """Return the base TTL plus optional random jitter."""
         if ttl_seconds <= 0:
             raise ValueError("ttl_seconds must be greater than zero.")
         if ttl_jitter_seconds <= 0:
@@ -94,6 +100,7 @@ class RedisService:
         await self.invalidate_patterns(pattern)
 
     async def invalidate_patterns(self, *patterns: str) -> None:
+        """Invalidate one or more key patterns using non-blocking scan iteration."""
         if not self._client or not patterns:
             return
 

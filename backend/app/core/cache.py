@@ -13,6 +13,7 @@ from app.modules.companies.models import CompanyMembership
 async def _get_active_company_member_ids(
     db: AsyncSession, company_id: str
 ) -> list[str]:
+    """Return user IDs of all active members for a company."""
     result = await db.execute(
         select(CompanyMembership.user_id).where(
             CompanyMembership.company_id == company_id,
@@ -23,6 +24,7 @@ async def _get_active_company_member_ids(
 
 
 async def invalidate_candidate_read_caches(user_id: str) -> None:
+    """Delete candidate dashboard and application-list cache entries for a user."""
     await redis_service.delete(f"dashboard:candidate:{user_id}")
     await redis_service.invalidate_patterns(
         f"dashboard:candidate:{user_id}:analytics:*",
@@ -31,6 +33,7 @@ async def invalidate_candidate_read_caches(user_id: str) -> None:
 
 
 async def invalidate_profile_read_caches(user_id: str) -> None:
+    """Delete profile detail and candidate dashboard caches for a user."""
     await redis_service.delete_many(
         f"profile:detail:{user_id}",
         f"dashboard:candidate:{user_id}",
@@ -39,6 +42,7 @@ async def invalidate_profile_read_caches(user_id: str) -> None:
 
 
 async def invalidate_candidate_read_caches_for_users(user_ids: Iterable[str]) -> None:
+    """Batch invalidate candidate-facing caches for a set of user IDs."""
     seen_ids = {str(user_id) for user_id in user_ids}
     for user_id in seen_ids:
         await invalidate_candidate_read_caches(user_id)
@@ -47,6 +51,7 @@ async def invalidate_candidate_read_caches_for_users(user_ids: Iterable[str]) ->
 async def invalidate_company_dashboard_caches(
     db: AsyncSession, company_id: str
 ) -> None:
+    """Delete recruiter and recruiter-admin dashboard caches for a company."""
     member_ids = await _get_active_company_member_ids(db, company_id)
     if not member_ids:
         return
@@ -67,6 +72,7 @@ async def invalidate_company_dashboard_caches(
 
 
 async def invalidate_company_detail_caches(db: AsyncSession, company_id: str) -> None:
+    """Delete cached company-detail entries for all active members."""
     member_ids = await _get_active_company_member_ids(db, company_id)
     if not member_ids:
         return
@@ -79,6 +85,7 @@ async def invalidate_company_detail_caches(db: AsyncSession, company_id: str) ->
 async def invalidate_company_application_caches(
     company_id: str, application_id: str | None = None
 ) -> None:
+    """Invalidate company inbox caches and optionally one candidate-detail cache."""
     await redis_service.invalidate_patterns(
         f"applications:company:{company_id}:job:*",
         f"applications:company:{company_id}:candidates:*",
@@ -92,6 +99,7 @@ async def invalidate_company_application_caches(
 async def invalidate_application_candidate_detail_caches(
     application_ids: Sequence[str], company_id: str | None = None
 ) -> None:
+    """Invalidate recruiter candidate-detail caches for one or more applications."""
     patterns = [
         (
             f"applications:company:{company_id}:candidate-detail:{application_id}"
@@ -107,15 +115,18 @@ async def invalidate_application_candidate_detail_caches(
 
 
 async def invalidate_interview_list_caches(company_id: str) -> None:
+    """Invalidate interview list caches for a company."""
     await redis_service.invalidate_pattern(f"interviews:company:{company_id}:*")
 
 
 async def invalidate_job_detail_caches(job_id: str) -> None:
+    """Delete shared and per-candidate job detail cache entries."""
     await redis_service.delete(f"job:detail:{job_id}")
     await redis_service.invalidate_pattern(f"job:detail:{job_id}:candidate:*")
 
 
 async def invalidate_resume_caches(user_id: str, resume_id: str | None = None) -> None:
+    """Delete a user's resume list cache and optionally one resume detail cache."""
     keys = [f"resumes:list:{user_id}"]
     if resume_id is not None:
         keys.append(f"resume:detail:{resume_id}:user:{user_id}")
@@ -123,12 +134,14 @@ async def invalidate_resume_caches(user_id: str, resume_id: str | None = None) -
 
 
 async def invalidate_resume_gap_caches(resume_id: str) -> None:
+    """Invalidate all resume-gap cache entries for a resume."""
     await redis_service.invalidate_pattern(f"resume_gap:{resume_id}:*")
 
 
 async def get_company_applicant_user_ids(
     db: AsyncSession, company_id: str
 ) -> list[str]:
+    """Return distinct user IDs who have applied to any job at the company."""
     from app.modules.applications.models import Application
     from app.modules.jobs.models import Job
 
@@ -141,6 +154,7 @@ async def get_company_applicant_user_ids(
 
 
 async def get_job_applicant_user_ids(db: AsyncSession, job_id: str) -> list[str]:
+    """Return distinct user IDs who have applied to a specific job."""
     from app.modules.applications.models import Application
 
     result = await db.execute(
@@ -150,6 +164,7 @@ async def get_job_applicant_user_ids(db: AsyncSession, job_id: str) -> list[str]
 
 
 async def get_resume_application_ids(db: AsyncSession, resume_id: str) -> list[str]:
+    """Return application IDs that currently reference a given resume."""
     from app.modules.applications.models import Application
 
     result = await db.execute(

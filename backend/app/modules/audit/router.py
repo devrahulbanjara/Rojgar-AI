@@ -27,6 +27,7 @@ async def get_my_audit_logs(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return audit logs scoped to the authenticated user."""
     data = await service.list_my_audit_logs(
         db,
         current_user,
@@ -49,6 +50,7 @@ async def get_company_audit_logs(
     current_user: User = Depends(require_recruiter_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return company audit logs for a recruiter admin."""
     data = await service.list_company_audit_logs(
         db,
         current_user,
@@ -73,6 +75,7 @@ async def get_entity_audit_timeline(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return the audit trail for a specific entity the user can access."""
     data = await service.get_entity_audit_timeline(
         db,
         current_user,

@@ -65,6 +65,7 @@ class JobDraft(BaseModel):
     )
     @classmethod
     def normalize_lists(cls, value: Any) -> list[str]:
+        """Normalize list-like draft fields into trimmed string lists."""
         if value is None:
             return []
         if isinstance(value, list):
@@ -73,6 +74,7 @@ class JobDraft(BaseModel):
 
     @model_validator(mode="after")
     def check_salary_range(self) -> "JobDraft":
+        """Ensure the salary range is ordered correctly."""
         if (
             self.salary_min is not None
             and self.salary_max is not None
@@ -92,6 +94,7 @@ class GenerateJobDraftRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_input(self) -> "GenerateJobDraftRequest":
+        """Require at least one source of draft-generation input."""
         if not self.prompt and not self.source_text and not self.source_job_id:
             raise ValueError("Provide prompt, source_text, or source_job_id")
         return self

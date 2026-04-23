@@ -24,6 +24,7 @@ from app.shared.enums import RecordingStatus
 async def _get_company_membership(
     db: AsyncSession, recruiter_user_id: uuid.UUID
 ) -> CompanyMembership:
+    """Return the recruiter's active company membership or raise 403."""
     result = await db.execute(
         select(CompanyMembership).where(
             CompanyMembership.user_id == recruiter_user_id,
@@ -43,6 +44,7 @@ async def _get_job_for_company(
     recruiter_user_id: uuid.UUID,
     job_id: uuid.UUID,
 ) -> Job:
+    """Return a company-owned job visible to the recruiter."""
     membership = await _get_company_membership(db, recruiter_user_id)
     result = await db.execute(
         select(Job).where(Job.id == job_id, Job.company_id == membership.company_id)
@@ -58,6 +60,7 @@ async def _get_application_for_company(
     recruiter_user_id: uuid.UUID,
     application_id: uuid.UUID,
 ) -> Application:
+    """Return a company-owned application visible to the recruiter."""
     membership = await _get_company_membership(db, recruiter_user_id)
     result = await db.execute(
         select(Application)
@@ -82,6 +85,7 @@ async def upsert_job_schema(
     human_weight: float,
     llm_weight: float,
 ) -> JobEvaluationSchema:
+    """Create or update the evaluation schema for a job."""
     await _get_job_for_company(db, recruiter_user_id, job_id)
 
     result = await db.execute(
@@ -113,6 +117,7 @@ async def get_job_schema(
     recruiter_user_id: uuid.UUID,
     job_id: uuid.UUID,
 ) -> JobEvaluationSchema | None:
+    """Fetch the evaluation schema for a job after access checks."""
     await _get_job_for_company(db, recruiter_user_id, job_id)
     result = await db.execute(
         select(JobEvaluationSchema).where(JobEvaluationSchema.job_id == job_id)
@@ -128,6 +133,7 @@ async def submit_human_score(
     scores: dict[str, float],
     notes: str | None,
 ) -> CandidateEvaluationScore:
+    """Persist recruiter-provided evaluation scores for an application."""
     application = await _get_application_for_company(
         db, recruiter_user_id, application_id
     )
@@ -177,6 +183,7 @@ async def run_llm_evaluation(
     recruiter_user_id: uuid.UUID,
     application_id: uuid.UUID,
 ) -> CandidateEvaluationScore:
+    """Generate and persist LLM evaluation scores from a transcript."""
     application = await _get_application_for_company(
         db, recruiter_user_id, application_id
     )
@@ -291,6 +298,7 @@ async def get_combined_evaluation(
     CandidateEvaluationScore | None,
     float | None,
 ]:
+    """Return application evaluation artifacts and the blended final score."""
     application = await _get_application_for_company(
         db, recruiter_user_id, application_id
     )
@@ -324,6 +332,7 @@ async def get_combined_evaluation(
 async def _get_schema_or_400(
     db: AsyncSession, job_id: uuid.UUID
 ) -> JobEvaluationSchema:
+    """Return a job schema or raise a 400 error if none exists."""
     result = await db.execute(
         select(JobEvaluationSchema).where(JobEvaluationSchema.job_id == job_id)
     )
@@ -339,6 +348,7 @@ def _coerce_scores(
     scores: dict[str, float] | dict[str, int],
     criteria: list[dict],
 ) -> dict[str, float]:
+    """Validate and clamp submitted scores against the schema criteria."""
     normalized: dict[str, float] = {}
     allowed_keys = {criterion["key"] for criterion in criteria}
 
@@ -366,6 +376,7 @@ def _coerce_scores(
 
 
 def _compute_weighted_total(scores: dict[str, float], criteria: list[dict]) -> float:
+    """Compute the weighted normalized total for one evaluator."""
     total_weight = sum(float(criterion["weight"]) for criterion in criteria)
     if total_weight <= 0:
         return 0.0
@@ -387,6 +398,7 @@ def _compute_final_score(
     llm: CandidateEvaluationScore | None,
     schema: JobEvaluationSchema | None,
 ) -> float | None:
+    """Blend human and LLM totals using the schema weights."""
     if not schema:
         return None
 

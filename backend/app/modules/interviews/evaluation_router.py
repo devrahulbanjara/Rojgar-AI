@@ -30,6 +30,7 @@ async def upsert_job_evaluation_schema(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Create or update the evaluation schema for a company job."""
     schema = await evaluation_service.upsert_job_schema(
         db,
         user.id,
@@ -51,6 +52,7 @@ async def fetch_job_evaluation_schema(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Fetch the evaluation schema configured for a company job."""
     schema = await evaluation_service.get_job_schema(db, user.id, job_id)
     return ResponseBuilder.success(data=schema, message="Evaluation schema fetched.")
 
@@ -66,6 +68,7 @@ async def submit_human_evaluation(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Submit recruiter-provided evaluation scores for an application."""
     score = await evaluation_service.submit_human_score(
         db,
         user.id,
@@ -86,6 +89,7 @@ async def run_llm_evaluation(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Run LLM scoring for the latest transcribed interview recording."""
     score = await evaluation_service.run_llm_evaluation(db, user.id, application_id)
     return ResponseBuilder.success(data=score, message="LLM evaluation complete.")
 
@@ -100,6 +104,7 @@ async def fetch_combined_evaluation(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Fetch human, LLM, and blended evaluation results for an application."""
     (
         application,
         schema,

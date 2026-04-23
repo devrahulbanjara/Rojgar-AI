@@ -38,6 +38,7 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
+    """Validate the Bearer token and return the authenticated user."""
     user_id = decode_access_token(token)
     if not user_id:
         raise HTTPException(
@@ -58,6 +59,7 @@ async def get_current_user(
 
 
 async def get_verified_user(user: User = Depends(get_current_user)) -> User:
+    """Require that the authenticated user's email has been verified."""
     if not user.is_email_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified"
@@ -66,6 +68,7 @@ async def get_verified_user(user: User = Depends(get_current_user)) -> User:
 
 
 async def require_candidate(user: User = Depends(get_current_user)) -> User:
+    """Require the authenticated user to have the candidate role."""
     if user.primary_role != UserRole.candidate:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -75,6 +78,7 @@ async def require_candidate(user: User = Depends(get_current_user)) -> User:
 
 
 async def require_recruiter(user: User = Depends(get_current_user)) -> User:
+    """Require the authenticated user to have the recruiter role."""
     if user.primary_role != UserRole.recruiter:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -84,6 +88,7 @@ async def require_recruiter(user: User = Depends(get_current_user)) -> User:
 
 
 async def require_recruiter_admin(user: User = Depends(get_current_user)) -> User:
+    """Require the authenticated user to have the recruiter-admin role."""
     if user.primary_role != UserRole.recruiter_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -127,6 +132,7 @@ async def require_active_membership(
 
 
 async def require_admin(user: User = Depends(get_current_user)) -> User:
+    """Require the authenticated user to have the admin role."""
     if user.primary_role != UserRole.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

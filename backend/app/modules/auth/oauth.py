@@ -28,6 +28,7 @@ def get_google_auth_url(csrf_token: str) -> str:
 
 
 async def exchange_google_code(code: str) -> dict:
+    """Exchange a Google OAuth authorisation code for token data."""
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             GOOGLE_TOKEN_URL,
@@ -44,6 +45,7 @@ async def exchange_google_code(code: str) -> dict:
 
 
 async def get_google_user_info(access_token: str) -> dict:
+    """Fetch the Google userinfo payload for a valid access token."""
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             GOOGLE_USERINFO_URL,
@@ -58,6 +60,7 @@ async def google_oauth_callback(
     code: str,
     response: Response,
 ) -> dict:
+    """Handle the Google OAuth callback for existing and new users."""
     # 1. Exchange code for tokens and fetch Google user info
     try:
         token_data = await exchange_google_code(code)

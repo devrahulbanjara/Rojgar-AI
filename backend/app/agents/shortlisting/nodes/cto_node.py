@@ -7,6 +7,7 @@ from app.infrastructures.aws.bedrock import get_bedrock_llm
 
 
 async def cto_node(state: ShortlistState) -> dict:
+    """Run the CTO evaluator agent for technical fit and engineering depth."""
     last_critique = (
         state["critiques"][-1] if state["critiques"] else "None (initial review)."
     )

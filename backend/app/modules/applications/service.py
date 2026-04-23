@@ -67,10 +67,12 @@ RECRUITER_SETTABLE = {
 
 
 def _application_detail_href(application_id: str) -> str:
+    """Build the candidate-facing application detail URL path."""
     return f"/candidate/applications/{application_id}"
 
 
 def _recruiter_candidate_href(application_id: str) -> str:
+    """Build the recruiter-facing candidate detail URL path."""
     return f"/recruiter/candidates/{application_id}"
 
 
@@ -127,6 +129,7 @@ def _status_event_copy(
     job_title: str,
     company_name: str,
 ) -> tuple[str, str]:
+    """Return activity-event title and description text for a status change."""
     if status == ApplicationStatus.shortlisted:
         return (
             f"Shortlisted for {job_title}",
@@ -154,6 +157,7 @@ def _status_event_copy(
 
 
 def _candidate_next_step_hint(status: ApplicationStatus) -> str:
+    """Return a human-friendly next-step hint for a candidate-facing status view."""
     if status == ApplicationStatus.applied:
         return "Your application has been submitted. The next update will appear here when screening starts."
     if status == ApplicationStatus.screening:
@@ -175,6 +179,7 @@ def _company_applications_cache_key(
     page: int,
     size: int,
 ) -> str:
+    """Build the Redis cache key for recruiter application list queries."""
     job_scope = job_id or "all"
     return f"applications:company:{company_id}:job:{job_scope}:p{page}:s{size}"
 
@@ -186,6 +191,7 @@ def _company_candidates_cache_key(
     page: int,
     size: int,
 ) -> str:
+    """Build the Redis cache key for recruiter candidate list queries."""
     job_scope = job_id or "all"
     status_scope = status_filter.value if status_filter is not None else "all"
     return (
@@ -195,10 +201,12 @@ def _company_candidates_cache_key(
 
 
 def _company_candidate_detail_cache_key(company_id: str, application_id: str) -> str:
+    """Build the Redis cache key for one recruiter candidate detail view."""
     return f"applications:company:{company_id}:candidate-detail:{application_id}"
 
 
 def _build_share_settings(payload: ApplyRequest) -> CandidateShareSettings:
+    """Derive persisted share settings from an application request payload."""
     if payload.share_profile_all:
         return CandidateShareSettings(
             share_profile_all=True,
@@ -222,6 +230,7 @@ def _build_share_settings(payload: ApplyRequest) -> CandidateShareSettings:
 
 
 def _application_share_settings(application: Application) -> CandidateShareSettings:
+    """Read the effective share settings from a persisted application."""
     if application.share_profile_all:
         return CandidateShareSettings(
             share_profile_all=True,
@@ -257,6 +266,7 @@ async def _get_outreach_audit_items(
     db: AsyncSession,
     application_id,
 ) -> list[ApplicationOutreachAuditItem]:
+    """Fetch outreach draft audit rows for one application."""
     result = await db.execute(
         select(EmailDraft)
         .where(EmailDraft.application_id == application_id)
@@ -287,6 +297,7 @@ def _build_shared_profile_snapshot(
     profile: Profile | None,
     share_settings: CandidateShareSettings,
 ) -> dict[str, str | None]:
+    """Build the shared_* snapshot stored on the application at apply time."""
     return {
         "shared_full_name": user.full_name,
         "shared_avatar_url": user.avatar_url if share_settings.share_avatar else None,
@@ -316,6 +327,7 @@ def _build_shared_profile_snapshot(
 
 
 def _background_database_url(db: AsyncSession) -> str:
+    """Extract a renderable DB URL for background tasks needing a new session."""
     bind = db.bind
     if bind is not None and hasattr(bind, "url"):
         return bind.url.render_as_string(hide_password=False)
@@ -328,6 +340,7 @@ def _background_database_url(db: AsyncSession) -> str:
 
 
 def _job_is_open_for_auto_shortlisting(job: Job) -> bool:
+    """Return True when a job is active and not yet expired."""
     return job.status == JobStatus.active and (
         job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
     )
@@ -493,6 +506,7 @@ def _app_to_list_item(app: Application) -> ApplicationListItem:
 
 
 async def _get_active_company_id(db: AsyncSession, user: User) -> str:
+    """Return the user's active company ID or raise HTTP 403."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user.id,
@@ -629,6 +643,7 @@ async def list_company_candidates(
     page: int,
     size: int,
 ) -> list[RecruiterCandidateListItem]:
+    """Return recruiter candidate rows grouped by candidate across applications."""
     company_id = await _get_active_company_id(db, user)
     cache_key = _company_candidates_cache_key(
         str(company_id),
@@ -729,6 +744,7 @@ async def list_company_candidates(
 async def get_company_candidate_detail(
     db: AsyncSession, user: User, application_id: str
 ) -> RecruiterCandidateDetailView:
+    """Return the recruiter-safe candidate detail view for one application."""
     company_id = await _get_active_company_id(db, user)
     cache_key = _company_candidate_detail_cache_key(str(company_id), application_id)
     cached_data = await redis_service.get(cache_key)
@@ -971,6 +987,7 @@ async def get_application(
 async def get_application_timeline(
     db: AsyncSession, user: User, application_id: str
 ) -> list[ActivityEventResponse]:
+    """Return the application timeline for the correct candidate or recruiter audience."""
     result = await db.execute(
         select(Application).where(Application.id == application_id)
     )
@@ -1008,6 +1025,7 @@ async def get_application_timeline(
 async def get_company_candidate_timeline(
     db: AsyncSession, user: User, application_id: str
 ) -> list[ActivityEventResponse]:
+    """Return the recruiter-scoped timeline for a company candidate application."""
     await get_company_candidate_detail(db, user, application_id)
     return await list_application_timeline(
         db,

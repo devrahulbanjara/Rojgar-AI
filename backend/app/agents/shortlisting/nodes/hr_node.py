@@ -7,6 +7,7 @@ from app.infrastructures.aws.bedrock import get_bedrock_llm
 
 
 async def hr_node(state: ShortlistState) -> dict:
+    """Run the HR evaluator agent for seniority, risk, and communication fit."""
     last_critique = (
         state["critiques"][-1] if state["critiques"] else "None (initial review)."
     )

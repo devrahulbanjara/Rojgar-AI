@@ -59,6 +59,7 @@ async def signup(
     bg_tasks: BackgroundTasks,
     db: AsyncSession = db,
 ):
+    """Start the local signup flow for a new user."""
     data = await service.signup(db, payload, bg_tasks)
     return ResponseBuilder.success(
         data=data,
@@ -74,6 +75,7 @@ async def signup(
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
 )
 async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = db):
+    """Complete account creation from an email verification token."""
     await service.verify_email(db, payload)
     return ResponseBuilder.success(message="Email verified successfully")
 
@@ -85,6 +87,7 @@ async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = db):
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
 )
 async def login(payload: LoginRequest, response: Response, db: AsyncSession = db):
+    """Authenticate a user and issue tokens."""
     result = await service.login(db, payload, response)
     return ResponseBuilder.success(
         data=result,
@@ -104,6 +107,7 @@ async def refresh(
     refresh_token: str | None = Cookie(None),
     db: AsyncSession = db,
 ):
+    """Rotate the refresh token and return a new access token."""
     result = await service.refresh_tokens(db, refresh_token, response)
     return ResponseBuilder.success(
         data=result,
@@ -122,6 +126,7 @@ async def logout(
     refresh_token: str | None = Cookie(None),
     db: AsyncSession = db,
 ):
+    """Log out the current user and clear their refresh cookie."""
     await service.logout(db, refresh_token, response)
     return ResponseBuilder.success(message="Logged out successfully", response=response)
 
@@ -137,6 +142,7 @@ async def forgot_password(
     bg_tasks: BackgroundTasks,
     db: AsyncSession = db,
 ):
+    """Start the password reset flow for an email address."""
     await service.forgot_password(db, payload, bg_tasks)
     return ResponseBuilder.success(
         message="If that email exists, a reset link has been sent"
@@ -150,6 +156,7 @@ async def forgot_password(
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE))))],
 )
 async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = db):
+    """Complete a password reset using a reset token."""
     await service.reset_password(db, payload)
     return ResponseBuilder.success(
         message="Password reset successfully. Please log in again."
@@ -164,6 +171,7 @@ async def login_swagger(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = db,
 ):
+    """Authenticate Swagger UI and return a bearer token payload."""
     return await service.login_swagger(db, form_data)
 
 
@@ -179,6 +187,7 @@ async def get_me(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Return the authenticated user's profile payload."""
     data = await service.get_me_data(db, current_user)
     return ResponseBuilder.success(data=data, message="Profile retrieved")
 
@@ -193,6 +202,7 @@ async def update_me(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Update the authenticated user's basic profile fields."""
     data = await service.update_me_data(db, current_user, payload)
     await service.invalidate_user_read_caches(db, current_user)
     return ResponseBuilder.success(data=data, message="Profile updated")
@@ -208,6 +218,7 @@ async def upload_my_avatar(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Upload or replace the authenticated user's avatar image."""
     previous_avatar_url = current_user.avatar_url
     new_avatar_url = await storage_service.upload_image(file, folder="avatars")
     current_user.avatar_url = new_avatar_url
@@ -233,6 +244,7 @@ async def delete_my_account(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Soft-delete the authenticated user's account."""
     await service.delete_my_account(db, current_user, response)
     return ResponseBuilder.success(message="Account deleted", response=response)
 
@@ -246,6 +258,7 @@ async def delete_my_avatar(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Remove the authenticated user's avatar image."""
     previous_avatar_url = current_user.avatar_url
     current_user.avatar_url = None
     await db.commit()
@@ -269,6 +282,7 @@ async def update_my_password(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Change the authenticated user's password."""
     await service.change_password(db, current_user, payload)
     return ResponseBuilder.success(
         data=None,
@@ -284,6 +298,7 @@ async def update_my_password(
     summary="Initiate Google OAuth flow: redirects to Google login",
 )
 async def google_login():
+    """Start the Google OAuth flow and set the CSRF state cookie."""
     csrf_token = secrets.token_urlsafe(16)
     url = get_google_auth_url(csrf_token)
 
@@ -308,6 +323,7 @@ async def google_callback(
     oauth_state: str | None = Cookie(None),
     db: AsyncSession = db,
 ):
+    """Handle the Google OAuth callback and redirect the frontend."""
     import json
     from urllib.parse import urlencode
 
@@ -363,6 +379,7 @@ async def google_register(
     response: Response,
     db: AsyncSession = db,
 ):
+    """Complete a Google signup flow after role selection."""
     result = await service.google_register(db, payload, response)
     return ResponseBuilder.success(
         data=result,

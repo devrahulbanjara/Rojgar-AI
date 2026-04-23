@@ -103,13 +103,18 @@ function LoginPageInner() {
   const nextUrl = getSafeRedirect(searchParams.get('next'))
 
   const dispatch = useAppDispatch()
-  const { isAuthenticated } = useAppSelector((s) => s.auth)
+  const { isAuthenticated, user } = useAppSelector((s) => s.auth)
+  const router = useRouter()
 
-  // If the middleware bounced us here with stale browser storage (access token
-  // present but refresh_token cookie is gone), clear the dead session so the
-  // homepage redirect loop doesn't re-trigger after login.
+  // On mount, if storage says authenticated:
+  //   • auth_present cookie exists → real session, redirect to dashboard
+  //   • no cookie → stale storage (refresh_token expired/cross-domain), clear it
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) return
+    const hasCookie = document.cookie.split(';').some((c) => c.trim().startsWith('auth_present=1'))
+    if (hasCookie) {
+      router.replace(nextUrl ?? getRoleDashboard(user?.primary_role))
+    } else {
       dispatch(clearCredentials())
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -119,8 +124,6 @@ function LoginPageInner() {
     password: '',
     rememberMe: false,
   })
-
-  const router = useRouter()
   const [login, { isLoading }] = useLoginMutation()
 
   const [errors, setErrors] = useState<FormErrors>({})

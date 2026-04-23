@@ -11,6 +11,7 @@ class JobAIRuntime:
         self.graph = None
 
     async def start(self) -> None:
+        """Initialize the LangGraph checkpointer and compiled graph."""
         self._checkpointer_cm = AsyncPostgresSaver.from_conn_string(
             settings.langgraph_postgres_dsn
         )
@@ -22,6 +23,7 @@ class JobAIRuntime:
         self.graph = build_job_ai_graph().compile(checkpointer=self.checkpointer)
 
     async def stop(self) -> None:
+        """Tear down the LangGraph runtime and release resources."""
         if self._checkpointer_cm is not None:
             await self._checkpointer_cm.__aexit__(None, None, None)
             self._checkpointer_cm = None
@@ -29,6 +31,7 @@ class JobAIRuntime:
             self.graph = None
 
     def get_graph(self):
+        """Return the compiled graph, raising if runtime startup has not run."""
         if self.graph is None:
             raise RuntimeError("Job AI runtime not initialized")
         return self.graph

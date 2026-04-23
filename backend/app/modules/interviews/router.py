@@ -23,6 +23,7 @@ async def list_my_interviews(
     user: User = Depends(require_candidate),
     db: AsyncSession = Depends(get_db),
 ):
+    """List interviews for the authenticated candidate."""
     data = await service.list_candidate_interviews(db, user.id)
     return ResponseBuilder.success(data=data, message="Interviews fetched.")
 
@@ -39,6 +40,7 @@ async def list_interviews(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """List interviews visible to the recruiter's company."""
     data = await service.list_interviews(db, user.id, job_id, start, end)
     return ResponseBuilder.success(data=data, message="Interviews fetched.")
 
@@ -53,5 +55,6 @@ async def mark_interview_complete(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Mark an interview as completed for the recruiter's company."""
     data = await service.mark_interview_complete(db, user.id, interview_id)
     return ResponseBuilder.success(data=data, message="Interview marked as completed.")
