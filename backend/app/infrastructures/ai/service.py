@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 
 def _walk_groq_strict_schema(node: Any) -> None:
+    """Mutate a JSON schema tree in-place to satisfy Groq strict mode."""
     if isinstance(node, list):
         for item in node:
             _walk_groq_strict_schema(item)
@@ -57,12 +58,14 @@ def _walk_groq_strict_schema(node: Any) -> None:
 
 
 def _to_groq_strict_json_schema(schema_model: Type[SchemaT]) -> dict[str, Any]:
+    """Return a Groq-compatible strict JSON schema for a Pydantic model."""
     schema = deepcopy(schema_model.model_json_schema())
     _walk_groq_strict_schema(schema)
     return schema
 
 
 def _extract_groq_error_message(exc: Exception) -> str:
+    """Extract a human-readable error message from a Groq exception."""
     body = getattr(exc, "body", None)
     if isinstance(body, dict):
         error = body.get("error")
@@ -75,6 +78,7 @@ def _extract_groq_error_message(exc: Exception) -> str:
 
 
 def _is_groq_rate_limit(exc: Exception) -> bool:
+    """Return True when a Groq error indicates throttling or token-cap exhaustion."""
     status_code = getattr(exc, "status_code", None)
     body = getattr(exc, "body", None)
     code = None
@@ -108,6 +112,7 @@ class AIService:
         self._llm_model = settings.groq_model_job_drafting
 
     def _get_embeddings_client(self) -> GoogleGenerativeAIEmbeddings:
+        """Lazily initialise and return the Gemini embeddings client."""
         if self._embeddings is None:
             from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
@@ -144,6 +149,7 @@ class AIService:
         model: str | None = None,
         temperature: float = 0.0,
     ) -> ChatGroq:
+        """Create a ChatGroq client configured for plain-text streaming."""
         return ChatGroq(
             model=model or settings.groq_model_recruiter_chat,
             temperature=temperature,
@@ -230,6 +236,7 @@ class AIService:
         model: str | None = None,
         temperature: float = 0.0,
     ) -> AsyncIterator[str]:
+        """Stream plain-text output from the configured chat model."""
         llm = self._build_chat_model(model=model, temperature=temperature)
         messages = [
             SystemMessage(content=system_prompt.strip()),

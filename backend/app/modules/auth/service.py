@@ -49,6 +49,7 @@ from app.modules.auth.utils import build_user_dict, get_membership_status
 
 
 async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
+    """Clear profile and company dashboard caches affected by user changes."""
     await invalidate_profile_read_caches(str(user.id))
 
     company_id = await db.scalar(
@@ -65,6 +66,7 @@ async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
 
 
 async def _get_active_company_id_for_user(db: AsyncSession, user_id) -> str | None:
+    """Return the active company ID for a user when one exists."""
     return await db.scalar(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user_id,
@@ -92,6 +94,7 @@ async def get_me_data(db: AsyncSession, user: User) -> UserResponse:
 async def update_me_data(
     db: AsyncSession, user: User, payload: UpdateMeRequest
 ) -> UserResponse:
+    """Update the user's full name and record the change in audit logs."""
     previous_name = user.full_name
     user.full_name = payload.full_name.strip()
     company_id = await _get_active_company_id_for_user(db, user.id)
@@ -114,6 +117,7 @@ async def update_me_data(
 async def change_password(
     db: AsyncSession, user: User, payload: ChangePasswordRequest
 ) -> None:
+    """Change the user's password and revoke all refresh tokens."""
     if user.password_hash:
         if not payload.current_password or not verify_password(
             user.password_hash, payload.current_password

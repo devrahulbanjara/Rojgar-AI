@@ -55,6 +55,7 @@ IGNORED_DIFF_FIELDS = {"updated_at"}
 
 
 def _is_redacted_field(field_name: str) -> bool:
+    """Return True when an audit field should be masked."""
     lowered = field_name.lower()
     return (
         field_name in REDACTED_FIELD_NAMES
@@ -64,6 +65,7 @@ def _is_redacted_field(field_name: str) -> bool:
 
 
 def _serialize_value(value: Any) -> Any:
+    """Convert audit payload values into JSON-serializable forms."""
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, uuid.UUID):
@@ -78,10 +80,12 @@ def _serialize_value(value: Any) -> Any:
 
 
 def _should_skip_instance(instance: Any) -> bool:
+    """Return True when an ORM instance should be excluded from auditing."""
     return _entity_type_for_instance(instance) in EXCLUDED_ENTITY_TYPES
 
 
 def _entity_type_for_instance(instance: Any) -> str:
+    """Map an ORM instance class to its audit entity type name."""
     name = instance.__class__.__name__
     mapping = {
         "Job": "job",
@@ -118,6 +122,7 @@ def _entity_type_for_instance(instance: Any) -> str:
 
 
 def _serialize_model(instance: Any) -> dict[str, Any]:
+    """Serialize an ORM instance into an audit snapshot payload."""
     state = inspect(instance)
     data: dict[str, Any] = {}
     for column in state.mapper.columns:
@@ -141,6 +146,7 @@ def _serialize_model(instance: Any) -> dict[str, Any]:
 def _build_update_snapshots(
     instance: Any,
 ) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    """Build before, after, and diff snapshots for an updated ORM instance."""
     state = inspect(instance)
     after_json = _serialize_model(instance)
     before_json = dict(after_json)
@@ -175,6 +181,7 @@ def _build_update_snapshots(
 
 
 def _resolve_related_instance(session: Session, model_cls, entity_id: uuid.UUID | None):
+    """Resolve a related ORM instance from the identity map or database."""
     if entity_id is None:
         return None
     for instance in list(session.identity_map.values()) + list(session.new):
@@ -191,6 +198,7 @@ def _resolve_related_instance(session: Session, model_cls, entity_id: uuid.UUID 
 def _resolve_job_company_id(
     session: Session, job_id: uuid.UUID | None
 ) -> uuid.UUID | None:
+    """Resolve the company ID for a given job ID."""
     if job_id is None:
         return None
     from app.modules.jobs.models import Job
@@ -200,6 +208,7 @@ def _resolve_job_company_id(
 
 
 def _resolve_application(session: Session, application_id: uuid.UUID | None):
+    """Resolve an application instance by ID."""
     if application_id is None:
         return None
     from app.modules.applications.models import Application
@@ -210,6 +219,7 @@ def _resolve_application(session: Session, application_id: uuid.UUID | None):
 def _resolve_active_company_id_for_user(
     session: Session, user_id: uuid.UUID | None
 ) -> uuid.UUID | None:
+    """Resolve the active company ID for a user within the current session."""
     if user_id is None:
         return None
 
@@ -230,6 +240,7 @@ def _resolve_active_company_id_for_user(
 
 
 def _resolve_scope(session: Session, instance: Any) -> AuditScope:
+    """Derive audit scoping metadata for an ORM instance."""
     entity_type = _entity_type_for_instance(instance)
     entity_id = (
         str(getattr(instance, "id", None)) if getattr(instance, "id", None) else None
@@ -331,6 +342,7 @@ def _resolve_scope(session: Session, instance: Any) -> AuditScope:
 
 
 def _infer_update_action(diff_json: dict[str, Any]) -> str:
+    """Infer the audit action type from a field diff payload."""
     if any(key == "status" or key.endswith("_status") for key in diff_json):
         return "status_transition"
     if diff_json.get("is_approved", {}).get("after") is True:
@@ -359,6 +371,7 @@ def _build_audit_log(
     success: bool = True,
     error_message: str | None = None,
 ) -> AuditLog | None:
+    """Construct an audit-log row for an ORM lifecycle change."""
     scope = _resolve_scope(session, instance)
     if scope.entity_type in EXCLUDED_ENTITY_TYPES:
         return None
@@ -392,6 +405,7 @@ def _build_audit_log(
 
 @event.listens_for(Session, "before_flush")
 def capture_audit_logs(session: Session, flush_context, instances) -> None:
+    """Capture create, update, and delete audit logs before flush."""
     if session.info.get(_AUDIT_DISABLED_KEY):
         return
     if session.info.get(_AUDIT_COLLECTING_KEY):
@@ -467,6 +481,7 @@ async def create_custom_audit_log(
     success: bool = True,
     error_message: str | None = None,
 ) -> AuditLog:
+    """Create and flush an explicit audit-log record."""
     context = get_request_context()
     audit_log = AuditLog(
         actor_user_id=context.actor_user_id,
@@ -507,6 +522,7 @@ async def list_my_audit_logs(
     entity_type: str | None = None,
     action_type: str | None = None,
 ) -> list[AuditLogResponse]:
+    """List audit logs where the user is the actor or target."""
     stmt = select(AuditLog).where(
         or_(AuditLog.actor_user_id == user.id, AuditLog.target_user_id == user.id)
     )
@@ -520,6 +536,7 @@ async def list_my_audit_logs(
 
 
 async def _get_active_company_membership(db, user_id: uuid.UUID) -> CompanyMembership:
+    """Return the active company membership for a user or raise 403."""
     result = await db.execute(
         select(CompanyMembership).where(
             CompanyMembership.user_id == user_id,
@@ -547,6 +564,7 @@ async def list_company_audit_logs(
     start_at: datetime | None = None,
     end_at: datetime | None = None,
 ) -> list[AuditLogResponse]:
+    """List company audit logs visible to an active recruiter admin."""
     membership = await _get_active_company_membership(db, user.id)
     filters = [AuditLog.company_id == membership.company_id]
     if entity_type:
@@ -578,6 +596,7 @@ async def get_entity_audit_timeline(
     entity_type: str,
     entity_id: str,
 ) -> list[AuditLogResponse]:
+    """Return an entity's audit trail after enforcing access checks."""
     stmt = (
         select(AuditLog)
         .where(AuditLog.entity_type == entity_type, AuditLog.entity_id == entity_id)

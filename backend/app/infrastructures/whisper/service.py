@@ -12,9 +12,11 @@ class WhisperService:
     """
 
     async def transcribe_from_bytes(self, audio_bytes: bytes, filename: str) -> str:
+        """Transcribe audio bytes without blocking the event loop."""
         return await asyncio.to_thread(self._transcribe_bytes, audio_bytes, filename)
 
     def _transcribe_bytes(self, audio_bytes: bytes, filename: str) -> str:
+        """Write audio bytes to a temp file, transcribe them, and clean up."""
 
         client = Groq(api_key=settings.groq_api_key)
 

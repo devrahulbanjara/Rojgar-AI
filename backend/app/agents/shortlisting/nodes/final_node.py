@@ -4,6 +4,7 @@ from app.infrastructures.aws.bedrock import get_bedrock_llm
 
 
 async def final_node(state: ShortlistState) -> dict:
+    """Merge the latest CTO and HR evaluations into the final recruiter result."""
     summary_llm = get_bedrock_llm().with_structured_output(FinalResponse)
     prompt = FINAL_PROMPT.format(
         job_title=state["job_title"],

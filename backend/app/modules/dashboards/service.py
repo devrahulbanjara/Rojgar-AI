@@ -77,24 +77,29 @@ INTERVIEW_RELATED_STATUSES = {
 
 
 def _utcnow() -> datetime:
+    """Return the current UTC datetime."""
     return datetime.now(timezone.utc)
 
 
 def _today_utc() -> datetime.date:
+    """Return today's date in UTC."""
     return _utcnow().date()
 
 
 def _pipeline_step(status: ApplicationStatus) -> int | None:
+    """Map an application status to its dashboard pipeline step."""
     return PIPELINE_STEPS.get(status)
 
 
 def _job_days_until_expiry(expires_at: datetime | None) -> int | None:
+    """Return the number of days until a job expires."""
     if expires_at is None:
         return None
     return (expires_at.date() - _today_utc()).days
 
 
 def _draft_email_type(application_status: ApplicationStatus) -> str:
+    """Classify an outreach draft as shortlist or rejection related."""
     if application_status in {
         ApplicationStatus.shortlisted,
         ApplicationStatus.interview_booked,
@@ -106,10 +111,12 @@ def _draft_email_type(application_status: ApplicationStatus) -> str:
 
 
 def _normalize_range_key(range_key: str) -> str:
+    """Normalize analytics range keys to a supported value."""
     return range_key if range_key in ANALYTICS_RANGE_DAYS else "30d"
 
 
 def _analytics_window(range_key: str) -> tuple[str, datetime, date, date]:
+    """Return the normalized range key and its date window."""
     normalized = _normalize_range_key(range_key)
     end_date = _today_utc()
     start_date = end_date - timedelta(days=ANALYTICS_RANGE_DAYS[normalized] - 1)
@@ -118,17 +125,20 @@ def _analytics_window(range_key: str) -> tuple[str, datetime, date, date]:
 
 
 def _date_sequence(start_date: date, end_date: date) -> list[date]:
+    """Return all dates in an inclusive range."""
     days = (end_date - start_date).days
     return [start_date + timedelta(days=index) for index in range(days + 1)]
 
 
 def _round_days(value: float | None) -> float | None:
+    """Round a duration in days to one decimal place."""
     if value is None:
         return None
     return round(value, 1)
 
 
 def _average_duration_days(rows: list[tuple[datetime, datetime]]) -> float | None:
+    """Compute the average duration in days across datetime pairs."""
     if not rows:
         return None
     total_days = sum(
@@ -142,6 +152,7 @@ def _average_duration_days(rows: list[tuple[datetime, datetime]]) -> float | Non
 async def _get_company_context(
     db: AsyncSession, user_id: uuid.UUID
 ) -> tuple[uuid.UUID | None, str]:
+    """Return the active company ID and name for a recruiter user."""
     row = await db.execute(
         select(Company.id, Company.name)
         .join(CompanyMembership, CompanyMembership.company_id == Company.id)
@@ -160,6 +171,7 @@ async def _get_company_context(
 async def get_candidate_dashboard(
     db: AsyncSession, current_user: User
 ) -> CandidateDashboardResponse:
+    """Build the candidate dashboard summary response."""
     cache_key = f"dashboard:candidate:{current_user.id}"
     cached_data = await redis_service.get(cache_key)
     if cached_data:
@@ -262,6 +274,7 @@ async def get_candidate_dashboard(
 async def get_candidate_dashboard_analytics(
     db: AsyncSession, current_user: User, range_key: str
 ) -> CandidateDashboardAnalyticsResponse:
+    """Build analytics for the candidate dashboard."""
     normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
     cache_key = f"dashboard:candidate:{current_user.id}:analytics:{normalized_range}"
     cached_data = await redis_service.get(cache_key)
@@ -428,6 +441,7 @@ async def get_candidate_dashboard_analytics(
 async def _get_recruiter_stats(
     db: AsyncSession, company_id: uuid.UUID
 ) -> RecruiterStats:
+    """Aggregate recruiter dashboard headline stats for a company."""
     today = _today_utc()
     stats_stmt = (
         select(
@@ -467,6 +481,7 @@ async def _get_recruiter_stats(
 async def _get_active_jobs(
     db: AsyncSession, company_id: uuid.UUID
 ) -> list[JobPipelineItem]:
+    """Return active job pipeline summaries for a company."""
     result = await db.execute(
         select(
             Job.id,
@@ -515,6 +530,7 @@ async def _get_active_jobs(
 async def _get_todays_interviews(
     db: AsyncSession, company_id: uuid.UUID
 ) -> list[TodayInterview]:
+    """Return today's interviews for a company."""
     result = await db.execute(
         select(
             Interview.id.label("interview_id"),
@@ -540,6 +556,7 @@ async def _get_todays_interviews(
 async def _get_pending_drafts(
     db: AsyncSession, company_id: uuid.UUID
 ) -> list[PendingDraftItem]:
+    """Return pending outreach drafts for a company."""
     result = await db.execute(
         select(
             EmailDraft.id.label("draft_id"),
@@ -580,6 +597,7 @@ async def _get_pending_drafts(
 async def get_recruiter_dashboard(
     db: AsyncSession, current_user: User
 ) -> RecruiterDashboardResponse:
+    """Build the recruiter dashboard summary response."""
     cache_key = f"dashboard:recruiter:{current_user.id}"
     cached_data = await redis_service.get(cache_key)
     if cached_data:
@@ -619,6 +637,7 @@ async def get_recruiter_dashboard(
 async def _get_recruiter_analytics_stats(
     db: AsyncSession, company_id: uuid.UUID
 ) -> RecruiterAnalyticsStats:
+    """Aggregate recruiter analytics headline stats for a company."""
     stats_row = (
         await db.execute(
             select(
@@ -674,6 +693,7 @@ async def _get_recruiter_applications_timeseries(
     start_date: date,
     end_date: date,
 ) -> list[RecruiterAnalyticsTimeseriesPoint]:
+    """Build recruiter application counts over time."""
     application_rows = (
         await db.execute(
             select(
@@ -741,6 +761,7 @@ async def _get_recruiter_applications_timeseries(
 async def _get_recruiter_interview_load(
     db: AsyncSession, company_id: uuid.UUID
 ) -> list[InterviewLoadPoint]:
+    """Return the current interview load grouped by day."""
     load_start = _today_utc()
     load_end = load_start + timedelta(days=13)
     interview_rows = (
@@ -777,6 +798,7 @@ async def _get_recruiter_interview_load(
 async def _get_score_distribution(
     db: AsyncSession, company_id: uuid.UUID
 ) -> ScoreDistribution:
+    """Return application score distribution buckets for a company."""
     score_rows = (
         await db.execute(
             select(Application.score)
@@ -817,6 +839,7 @@ async def _get_score_distribution(
 async def _get_outreach_summary(
     db: AsyncSession, company_id: uuid.UUID
 ) -> RecruiterOutreachSummary:
+    """Summarize outreach draft states for a company."""
     draft_rows = (
         await db.execute(
             select(
@@ -856,6 +879,7 @@ async def _get_outreach_summary(
 async def _get_recruiter_velocity(
     db: AsyncSession, company_id: uuid.UUID
 ) -> RecruiterAnalyticsVelocity:
+    """Compute recruiter workflow velocity metrics for a company."""
     rows = (
         await db.execute(
             select(
@@ -892,6 +916,7 @@ async def _get_recruiter_velocity(
 async def get_recruiter_dashboard_analytics(
     db: AsyncSession, current_user: User, range_key: str
 ) -> RecruiterDashboardAnalyticsResponse:
+    """Build analytics for the recruiter dashboard."""
     normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
     cache_key = f"dashboard:recruiter:{current_user.id}:analytics:{normalized_range}"
     cached_data = await redis_service.get(cache_key)
@@ -958,6 +983,7 @@ async def get_recruiter_dashboard_analytics(
 async def _get_join_requests(
     db: AsyncSession, company_id: uuid.UUID
 ) -> list[JoinRequestItem]:
+    """Return pending recruiter join requests for a company."""
     result = await db.execute(
         select(
             CompanyMembership.id.label("membership_id"),
@@ -978,6 +1004,7 @@ async def _get_join_requests(
 async def _get_team_activity(
     db: AsyncSession, company_id: uuid.UUID
 ) -> list[TeamMemberActivity]:
+    """Return per-recruiter activity metrics for the current month."""
     month_start = _utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     memberships_result = await db.execute(
         select(
@@ -1090,6 +1117,7 @@ async def _get_team_activity(
 async def get_recruiter_admin_dashboard(
     db: AsyncSession, current_user: User
 ) -> RecruiterAdminDashboardResponse:
+    """Build the recruiter-admin dashboard summary response."""
     cache_key = f"dashboard:recruiter-admin:{current_user.id}"
     cached_data = await redis_service.get(cache_key)
     if cached_data:
@@ -1143,6 +1171,7 @@ async def get_recruiter_admin_dashboard(
 async def _get_membership_breakdown(
     db: AsyncSession, company_id: uuid.UUID
 ) -> list[MembershipBreakdownPoint]:
+    """Return company membership counts by status."""
     rows = (
         await db.execute(
             select(
@@ -1175,6 +1204,7 @@ async def _get_join_request_timeseries(
     start_date: date,
     end_date: date,
 ) -> list[JoinRequestTimeseriesPoint]:
+    """Build join-request activity counts over time."""
     rows = (
         await db.execute(
             select(
@@ -1222,6 +1252,7 @@ async def _get_join_request_timeseries(
 async def get_recruiter_admin_dashboard_analytics(
     db: AsyncSession, current_user: User, range_key: str
 ) -> RecruiterAdminDashboardAnalyticsResponse:
+    """Build analytics for the recruiter-admin dashboard."""
     normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
     cache_key = (
         f"dashboard:recruiter-admin:{current_user.id}:analytics:{normalized_range}"

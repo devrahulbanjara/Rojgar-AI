@@ -18,6 +18,7 @@ class EvaluationCriterion(BaseSchema):
     @field_validator("key")
     @classmethod
     def normalize_key(cls, value: str) -> str:
+        """Normalize criterion keys into stable snake_case values."""
         normalized = value.strip().lower().replace(" ", "_")
         if not normalized:
             raise ValueError("Criterion key is required.")
@@ -26,6 +27,7 @@ class EvaluationCriterion(BaseSchema):
     @field_validator("label")
     @classmethod
     def normalize_label(cls, value: str) -> str:
+        """Trim and validate criterion labels."""
         normalized = value.strip()
         if not normalized:
             raise ValueError("Criterion label is required.")
@@ -39,6 +41,7 @@ class UpsertJobEvaluationSchemaRequest(BaseSchema):
 
     @model_validator(mode="after")
     def validate_schema(self):
+        """Validate schema completeness, uniqueness, and weight totals."""
         if not self.criteria:
             raise ValueError("At least one criterion is required.")
 

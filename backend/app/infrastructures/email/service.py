@@ -13,6 +13,7 @@ class EmailService:
 
     @staticmethod
     async def _send(subject: str, recipient: str, html_content: str) -> None:
+        """Send one HTML email or log-and-skip when email sending is disabled."""
         message = EmailMessage()
         message["From"] = f"{settings.app_name} <{settings.mail_from}>"
         message["To"] = recipient
@@ -40,6 +41,7 @@ class EmailService:
 
     @classmethod
     async def send_verification(cls, email: str, token: str) -> None:
+        """Send the account-verification email."""
         link = f"{settings.frontend_url}/verify-email?token={token}"
         html = f"""
         <div style="font-family: sans-serif; padding: 20px;">
@@ -62,6 +64,7 @@ class EmailService:
 
     @classmethod
     async def send_password_reset(cls, email: str, token: str) -> None:
+        """Send the password-reset email."""
         link = f"{settings.frontend_url}/reset-password?token={token}"
         html = f"""
         <div style="font-family: sans-serif; padding: 20px;">
@@ -86,4 +89,5 @@ class EmailService:
     async def send_generic_email(
         cls, to_email: str, subject: str, html_body: str
     ) -> None:
+        """Send a generic HTML email through the shared SMTP transport."""
         await cls._send(subject, to_email, html_body)

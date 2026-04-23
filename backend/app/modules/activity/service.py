@@ -32,6 +32,7 @@ async def create_activity_event(
     metadata: dict | None = None,
     create_in_app_notification: bool = True,
 ) -> ActivityEvent:
+    """Create and flush an activity event, optionally also creating a notification."""
     event = ActivityEvent(
         event_type=event_type,
         audience=audience,
@@ -71,6 +72,7 @@ async def list_my_activity(
     *,
     limit: int = 25,
 ) -> list[ActivityEventResponse]:
+    """Return activity where the user is the subject or the actor."""
     result = await db.execute(
         select(ActivityEvent)
         .where(
@@ -87,6 +89,7 @@ async def list_my_activity(
 
 
 async def _get_active_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
+    """Return the active company ID for a recruiter, or raise HTTP 403."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user_id,
@@ -108,6 +111,7 @@ async def list_company_activity(
     *,
     limit: int = 40,
 ) -> list[ActivityEventResponse]:
+    """Return recent activity events scoped to the user's active company."""
     company_id = await _get_active_company_id(db, user.id)
     result = await db.execute(
         select(ActivityEvent)
@@ -126,6 +130,7 @@ async def list_application_timeline(
     application_id: str,
     audience: str | None = None,
 ) -> list[ActivityEventResponse]:
+    """Return an application's activity events in chronological order."""
     stmt = select(ActivityEvent).where(ActivityEvent.application_id == application_id)
     if audience is not None:
         stmt = stmt.where(ActivityEvent.audience == audience)

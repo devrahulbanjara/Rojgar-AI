@@ -6,6 +6,18 @@ const isBrowser = typeof window !== 'undefined'
 const REMEMBER_KEY = 'remember_me'
 const TOKEN_KEY = 'access_token'
 const USER_KEY = 'auth_user'
+const AUTH_COOKIE = 'auth_present'
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
+
+function setAuthCookie() {
+  if (!isBrowser) return
+  document.cookie = `${AUTH_COOKIE}=1; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`
+}
+
+function clearAuthCookie() {
+  if (!isBrowser) return
+  document.cookie = `${AUTH_COOKIE}=; path=/; max-age=0; SameSite=Lax`
+}
 
 function getActiveStorage(): Storage | null {
   if (!isBrowser) return null
@@ -79,6 +91,7 @@ const authSlice = createSlice({
           sessionStorage.setItem(TOKEN_KEY, accessToken)
           sessionStorage.setItem(USER_KEY, JSON.stringify(user))
         }
+        setAuthCookie()
       }
     },
 
@@ -100,7 +113,10 @@ const authSlice = createSlice({
 
       removeFromStorage(TOKEN_KEY)
       removeFromStorage(USER_KEY)
-      if (isBrowser) localStorage.removeItem(REMEMBER_KEY)
+      if (isBrowser) {
+        localStorage.removeItem(REMEMBER_KEY)
+        clearAuthCookie()
+      }
     },
   },
 })

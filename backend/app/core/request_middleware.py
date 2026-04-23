@@ -14,7 +14,10 @@ from app.core.request_context import (
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
+    """Populate request-scoped metadata and propagate the request ID header."""
+
     async def dispatch(self, request: Request, call_next) -> Response:
+        """Capture request metadata, bind it to context, and reset it safely."""
         request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
         forwarded_for = request.headers.get("X-Forwarded-For")
         ip_address = (

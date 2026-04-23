@@ -10,11 +10,13 @@ from app.modules.jobs.service import expire_due_jobs
 
 
 async def _expire_due_jobs_once() -> int:
+    """Run job expiry once inside the shared application event loop."""
     async with AsyncSessionLocal() as session:
         return await expire_due_jobs(session)
 
 
 async def _expire_due_jobs_once_in_scheduler_thread() -> int:
+    """Run job expiry once in a scheduler thread with a fresh engine/session."""
     engine = create_async_engine(
         settings.database_url,
         echo=settings.debug,
@@ -30,6 +32,7 @@ async def _expire_due_jobs_once_in_scheduler_thread() -> int:
 
 
 def _run_expire_due_jobs() -> None:
+    """Synchronous APScheduler callback that executes async expiry logic."""
     try:
         expired_count = asyncio.run(_expire_due_jobs_once_in_scheduler_thread())
         if expired_count:
@@ -41,6 +44,7 @@ def _run_expire_due_jobs() -> None:
 
 
 def create_job_expiry_scheduler() -> BackgroundScheduler:
+    """Create the background scheduler that expires due jobs daily."""
     scheduler = BackgroundScheduler()
     scheduler.add_job(
         _run_expire_due_jobs,
@@ -55,6 +59,7 @@ def create_job_expiry_scheduler() -> BackgroundScheduler:
 
 
 async def run_job_expiry_startup_check() -> None:
+    """Expire overdue jobs once at application startup."""
     try:
         expired_count = await _expire_due_jobs_once()
         if expired_count:

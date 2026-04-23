@@ -43,6 +43,7 @@ async def apply_to_job(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Submit a candidate application for a job."""
     data = await service.apply_to_job(db, user, payload, bg_tasks)
     return ResponseBuilder.success(
         data=data,
@@ -62,6 +63,7 @@ async def list_my_applications(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """List the authenticated candidate's applications."""
     data = await service.list_user_applications(db, user, page, size)
     return ResponseBuilder.success(data=data, message="Applications fetched.")
 
@@ -78,6 +80,7 @@ async def list_my_company_applications(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
+    """List applications for the recruiter's active company."""
     data = await service.list_my_company_applications(db, user, job_id, page, size)
     return ResponseBuilder.success(data=data, message="Applications fetched.")
 
@@ -95,6 +98,7 @@ async def list_my_company_candidates(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
+    """List candidate applications for the recruiter's active company."""
     data = await service.list_company_candidates(
         db,
         user,
@@ -116,6 +120,7 @@ async def get_company_candidate_detail(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
+    """Return recruiter-safe detail for one company application."""
     data = await service.get_company_candidate_detail(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Candidate fetched.")
 
@@ -132,6 +137,7 @@ async def list_job_applications(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """List applications for one job the user can access."""
     data = await service.list_job_applications(db, user, job_id, page, size)
     return ResponseBuilder.success(data=data, message="Applications fetched.")
 
@@ -146,6 +152,7 @@ async def get_application(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Return one application visible to the requesting user."""
     data = await service.get_application(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application fetched.")
 
@@ -160,6 +167,7 @@ async def get_application_timeline(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Return the timeline for one visible application."""
     data = await service.get_application_timeline(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application timeline fetched.")
 
@@ -174,6 +182,7 @@ async def get_company_candidate_timeline(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Return the recruiter-scoped timeline for one company candidate."""
     data = await service.get_company_candidate_timeline(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Candidate timeline fetched.")
 
@@ -190,6 +199,7 @@ async def update_application_review(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Update recruiter review data for an application."""
     data = await service.update_application_review(
         db, user, application_id, payload, bg_tasks
     )
@@ -208,6 +218,7 @@ async def update_application_status(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Update an application's workflow status."""
     data = await service.update_application_status(
         db, user, application_id, payload, bg_tasks
     )
@@ -229,6 +240,7 @@ async def respond_to_offer(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Record the candidate's response to an offer."""
     await service.respond_to_offer(db, application_id, payload.accepted, user)
     return ResponseBuilder.success(
         message="Offer accepted" if payload.accepted else "Offer declined"

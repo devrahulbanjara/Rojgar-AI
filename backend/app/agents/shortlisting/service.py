@@ -13,12 +13,15 @@ from app.modules.jobs.models import Job
 
 @dataclass
 class ShortlistingAgentResult:
+    """Plain result container returned after the workflow completes."""
+
     score: int
     reason: str
     feedback: str
 
 
 def stringify_job(job: Job) -> str:
+    """Serialise a job into structured plain text for the shortlisting prompt."""
     sections: list[str] = [
         f"Title: {job.title}",
         f"Location: {job.location or 'Not specified'}",
@@ -57,6 +60,7 @@ def stringify_job(job: Job) -> str:
 
 
 def stringify_resume(application: Application) -> str:
+    """Serialise the application's attached resume into prompt-ready plain text."""
     resume = application.resume
     if resume is None:
         return "Resume: Not attached."
@@ -99,6 +103,7 @@ def stringify_resume(application: Application) -> str:
 
 
 def build_shortlisting_inputs(job: Job, application: Application) -> dict:
+    """Construct the initial workflow state for one job/application pair."""
     return {
         "job_title": job.title,
         "jd": stringify_job(job),
@@ -114,10 +119,12 @@ def build_shortlisting_inputs(job: Job, application: Application) -> dict:
 
 @lru_cache(maxsize=1)
 def get_compiled_shortlisting_workflow():
+    """Return the compiled shortlisting workflow, cached per process."""
     return create_workflow().compile()
 
 
 def build_shortlisting_result(result: dict) -> ShortlistingAgentResult:
+    """Extract the final workflow fields into a stable return type."""
     return ShortlistingAgentResult(
         score=result["final_score"],
         reason=result["final_reason"],
@@ -128,6 +135,7 @@ def build_shortlisting_result(result: dict) -> ShortlistingAgentResult:
 async def evaluate_application_with_shortlisting_agent(
     *, job: Job, application: Application
 ) -> ShortlistingAgentResult:
+    """Run the full shortlisting workflow for a single application."""
     workflow = get_compiled_shortlisting_workflow()
     inputs = build_shortlisting_inputs(job, application)
     logger.info(

@@ -72,6 +72,7 @@ class ResponseBuilder:
 
     @staticmethod
     def _meta() -> dict:
+        """Build the response metadata block from the current request context."""
         request_context = get_request_context()
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -85,6 +86,7 @@ class ResponseBuilder:
         status_code: int = status.HTTP_200_OK,
         response: Response | None = None,
     ) -> JSONResponse:
+        """Wrap a successful payload in the unified response envelope."""
         content = {
             "success": True,
             "message": message,
@@ -106,6 +108,7 @@ class ResponseBuilder:
         status_code: int = status.HTTP_400_BAD_REQUEST,
         response: Response | None = None,
     ) -> JSONResponse:
+        """Wrap an error payload in the unified response envelope."""
         content = {
             "success": False,
             "message": message,
@@ -129,6 +132,7 @@ class ResponseBuilder:
         message: str = "Data fetched successfully",
         status_code: int = status.HTTP_200_OK,
     ) -> JSONResponse:
+        """Wrap paginated data in the unified response envelope."""
         total_pages = math.ceil(total / size) if size > 0 else 0
         content = {
             "success": True,
