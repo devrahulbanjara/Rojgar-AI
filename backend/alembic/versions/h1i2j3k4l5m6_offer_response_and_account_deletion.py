@@ -23,6 +23,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Apply the offer-response and account-deletion migration."""
     conn = op.get_bind()
 
     # Extend applicationstatus enum with offer response values.
@@ -80,6 +81,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the offer-response and account-deletion migration."""
     # PostgreSQL cannot remove enum values; downgrade only removes the user columns.
     op.drop_index("ix_users_is_deleted", table_name="users")
     op.drop_column("users", "deleted_at")

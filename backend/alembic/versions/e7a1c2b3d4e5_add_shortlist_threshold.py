@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the shortlist-threshold migration."""
     op.add_column(
         "jobs",
         sa.Column(
@@ -27,4 +28,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the shortlist-threshold migration."""
     op.drop_column("jobs", "shortlist_threshold")

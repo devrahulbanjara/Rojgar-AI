@@ -81,6 +81,7 @@ _rejection_chain = (
 
 
 def _first_name(candidate_name: str) -> str:
+    """Return the first token from a candidate's display name."""
     parts = candidate_name.split()
     return parts[0] if parts else "there"
 
@@ -93,6 +94,7 @@ async def compose_email(
     feedback: str | None,
     booking_url: str | None = None,
 ) -> tuple[str, str]:
+    """Compose an outreach email tailored to the candidate and job context."""
     first_name = _first_name(candidate_name)
     feedback_text = (feedback or "No specific feedback available.").strip()
 

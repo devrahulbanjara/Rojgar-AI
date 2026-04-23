@@ -21,6 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Apply the application sync-events migration."""
     syncaction = postgresql.ENUM(
         "UPSERT",
         "DELETE",
@@ -71,6 +72,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the application sync-events migration."""
     op.drop_index(
         op.f("ix_application_sync_events_status"),
         table_name="application_sync_events",

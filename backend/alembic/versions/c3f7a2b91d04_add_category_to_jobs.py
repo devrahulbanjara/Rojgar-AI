@@ -19,10 +19,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Apply the job category migration."""
     op.add_column("jobs", sa.Column("category", sa.String(length=50), nullable=True))
     op.create_index(op.f("ix_jobs_category"), "jobs", ["category"], unique=False)
 
 
 def downgrade() -> None:
+    """Revert the job category migration."""
     op.drop_index(op.f("ix_jobs_category"), table_name="jobs")
     op.drop_column("jobs", "category")

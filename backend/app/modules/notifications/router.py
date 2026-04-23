@@ -19,6 +19,7 @@ async def get_notifications(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """List notifications for the authenticated user."""
     data = await service.list_notifications(db, current_user, limit=limit)
     return ResponseBuilder.success(data=data, message="Notifications retrieved.")
 
@@ -31,6 +32,7 @@ async def read_notification(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Mark one notification as read."""
     data = await service.mark_notification_read(db, current_user, notification_id)
     return ResponseBuilder.success(data=data, message="Notification marked as read.")
 
@@ -40,6 +42,7 @@ async def read_all_notifications(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Mark all notifications as read for the authenticated user."""
     updated = await service.mark_all_notifications_read(db, current_user)
     return ResponseBuilder.success(
         data={"updated": updated},

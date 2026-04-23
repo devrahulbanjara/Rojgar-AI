@@ -21,6 +21,7 @@ async def get_preferences(
     current_user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Return recruiter preferences for the authenticated user."""
     data = await service.get_recruiter_preferences(db, current_user)
     return ResponseBuilder.success(data=data, message="Preferences retrieved.")
 
@@ -31,5 +32,6 @@ async def patch_preferences(
     current_user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
+    """Update recruiter preferences for the authenticated user."""
     data = await service.update_recruiter_preferences(db, current_user, payload)
     return ResponseBuilder.success(data=data, message="Preferences updated.")

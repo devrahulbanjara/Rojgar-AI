@@ -23,6 +23,7 @@ from app.shared.enums import JobStatus
 
 
 async def get_recruiter_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
+    """Return the active company ID for a recruiter user."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user_id,
@@ -38,6 +39,7 @@ async def get_recruiter_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid
 async def get_company_context(
     db: AsyncSession, company_id: uuid.UUID
 ) -> dict[str, Any]:
+    """Return summarized company context for job drafting prompts."""
     company = await db.scalar(select(Company).where(Company.id == company_id))
     if not company:
         raise ValueError("Company not found")
@@ -85,6 +87,7 @@ async def get_company_context(
 async def get_source_job_context(
     db: AsyncSession, job_id: uuid.UUID
 ) -> dict[str, Any] | None:
+    """Return source job context for improve or clone draft modes."""
     job = await db.scalar(select(Job).where(Job.id == job_id))
     if not job:
         return None

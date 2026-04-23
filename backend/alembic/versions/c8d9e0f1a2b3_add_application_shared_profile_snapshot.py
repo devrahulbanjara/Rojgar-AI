@@ -17,6 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the shared application profile-snapshot migration."""
     op.add_column(
         "applications", sa.Column("shared_full_name", sa.Text(), nullable=True)
     )
@@ -94,6 +95,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the shared application profile-snapshot migration."""
     op.drop_column("applications", "shared_portfolio_url")
     op.drop_column("applications", "shared_github_url")
     op.drop_column("applications", "shared_linkedin_url")

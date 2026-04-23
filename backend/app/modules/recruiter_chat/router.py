@@ -32,6 +32,7 @@ async def create_recruiter_chat_session(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Create a recruiter chat session."""
     data = await service.create_session(db, user)
     return ResponseBuilder.success(data=data, message="Recruiter chat session created.")
 
@@ -45,6 +46,7 @@ async def list_recruiter_chat_sessions(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """List recruiter chat sessions for the authenticated user."""
     data = await service.list_sessions(db, user)
     return ResponseBuilder.success(
         data=data, message="Recruiter chat sessions fetched."
@@ -61,6 +63,7 @@ async def get_recruiter_chat_history(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Fetch chat history for one recruiter chat session."""
     data = await service.get_history(db, user, session_id)
     return ResponseBuilder.success(data=data, message="Recruiter chat history fetched.")
 
@@ -76,6 +79,7 @@ async def send_recruiter_chat_message(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Send a recruiter chat message and return the assistant response."""
     data = await service.send_message(db, user, session_id, payload)
     return ResponseBuilder.success(data=data, message="Recruiter chat message sent.")
 
@@ -90,6 +94,7 @@ async def stream_recruiter_chat_message(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Stream a recruiter chat response over SSE."""
     stream = service.stream_message(db, user, session_id, payload)
     return StreamingResponse(
         stream,
@@ -113,6 +118,7 @@ async def confirm_recruiter_chat_job_selection(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Confirm a pending job selection inside recruiter chat."""
     data = await service.confirm_job_selection(db, user, session_id, payload)
     return ResponseBuilder.success(data=data, message="Job selection confirmed.")
 
@@ -128,6 +134,7 @@ async def confirm_recruiter_chat_job_edit(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Approve or cancel a pending job edit inside recruiter chat."""
     data = await service.confirm_job_edit(db, user, session_id, payload)
     return ResponseBuilder.success(data=data, message="Job edit decision recorded.")
 
@@ -142,5 +149,6 @@ async def delete_recruiter_chat_session(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Delete a recruiter chat session."""
     await service.delete_session(db, user, session_id)
     return ResponseBuilder.success(data=None, message="Recruiter chat session deleted.")

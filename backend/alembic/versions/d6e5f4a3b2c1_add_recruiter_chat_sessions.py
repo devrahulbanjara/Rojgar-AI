@@ -20,6 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Apply the recruiter chat sessions migration."""
     op.create_table(
         "recruiter_chat_sessions",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -60,6 +61,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the recruiter chat sessions migration."""
     op.drop_index(
         op.f("ix_recruiter_chat_sessions_recruiter_id"),
         table_name="recruiter_chat_sessions",

@@ -115,6 +115,7 @@ class AiImportCommitRequest(BaseSchema):
 
     @model_validator(mode="after")
     def validate_target_requirements(self):
+        """Validate resume-target requirements for the selected import action."""
         if self.action == "create_resume" and not self.resume_name:
             raise ValueError("resume_name is required when action=create_resume.")
         if self.action == "update_resume" and self.resume_id is None:

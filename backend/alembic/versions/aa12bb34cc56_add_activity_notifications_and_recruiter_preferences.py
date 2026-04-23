@@ -19,6 +19,7 @@ depends_on: Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    """Apply the activity, notifications, and recruiter-preferences migration."""
     op.create_table(
         "activity_events",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -279,6 +280,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the activity, notifications, and recruiter-preferences migration."""
     op.drop_constraint(
         "fk_email_drafts_discarded_by_user", "email_drafts", type_="foreignkey"
     )

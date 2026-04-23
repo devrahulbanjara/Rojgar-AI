@@ -12,6 +12,7 @@ from app.modules.recruiter_preferences.schemas import (
 
 
 async def _get_or_create_preferences(db: AsyncSession, user_id) -> RecruiterPreference:
+    """Return the user's recruiter preferences, creating defaults if missing."""
     result = await db.execute(
         select(RecruiterPreference).where(RecruiterPreference.user_id == user_id)
     )
@@ -29,6 +30,7 @@ async def get_recruiter_preferences(
     db: AsyncSession,
     user: User,
 ) -> RecruiterPreferenceResponse:
+    """Fetch recruiter preferences for a user."""
     preference = await _get_or_create_preferences(db, user.id)
     await db.commit()
     await db.refresh(preference)
@@ -40,6 +42,7 @@ async def update_recruiter_preferences(
     user: User,
     payload: UpdateRecruiterPreferenceRequest,
 ) -> RecruiterPreferenceResponse:
+    """Update recruiter preferences for a user."""
     preference = await _get_or_create_preferences(db, user.id)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(preference, key, value)

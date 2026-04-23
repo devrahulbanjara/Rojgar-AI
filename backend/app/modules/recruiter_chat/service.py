@@ -64,10 +64,12 @@ from app.shared.enums import JobStatus
 
 
 def _utcnow() -> datetime:
+    """Return the current UTC datetime."""
     return datetime.now(timezone.utc)
 
 
 def _new_state() -> dict[str, Any]:
+    """Return the default persisted state for a recruiter chat session."""
     return {
         "mode": "idle",
         "history": [],
@@ -84,6 +86,7 @@ def _new_state() -> dict[str, Any]:
 
 
 def _copy_state(state: dict[str, Any] | None) -> dict[str, Any]:
+    """Clone stored chat state while restoring expected defaults."""
     base = _new_state()
     if not state:
         return base
@@ -103,6 +106,7 @@ def _append_history(
     response_type: ChatResponseType | None = None,
     data: dict | None = None,
 ) -> None:
+    """Append a bounded chat-history item to session state."""
     state["history"].append(
         {
             "role": role,
@@ -116,6 +120,7 @@ def _append_history(
 
 
 def _history_to_schema(state: dict[str, Any]) -> list[ChatHistoryMessage]:
+    """Convert stored history rows into response schemas."""
     items: list[ChatHistoryMessage] = []
     for row in state.get("history", []):
         try:
@@ -137,6 +142,7 @@ def _history_to_schema(state: dict[str, Any]) -> list[ChatHistoryMessage]:
 
 
 def _artifacts_from_state(state: dict[str, Any]) -> list[ChatSessionArtifact]:
+    """Extract recent user-facing artifacts from chat history state."""
     artifacts: list[ChatSessionArtifact] = []
 
     for row in reversed(state.get("history", [])):
@@ -194,6 +200,7 @@ def _artifacts_from_state(state: dict[str, Any]) -> list[ChatSessionArtifact]:
 
 
 def _serialize_session(session: RecruiterChatSession) -> ChatSessionResponse:
+    """Serialize a recruiter chat session into its API response shape."""
     state = _copy_state(session.state_json)
     return ChatSessionResponse(
         id=session.id,
@@ -209,6 +216,7 @@ def _serialize_session(session: RecruiterChatSession) -> ChatSessionResponse:
 
 
 def _generate_session_title(message: str) -> str | None:
+    """Generate a concise session title from the first user message."""
     normalized = re.sub(r"\s+", " ", (message or "").strip())
     if not normalized:
         return None
@@ -220,6 +228,7 @@ def _serialize_response(
     message: str,
     data: dict | None = None,
 ) -> RecruiterChatResponse:
+    """Build a structured recruiter chat response payload."""
     return RecruiterChatResponse(
         response_type=response_type,
         message=message,
@@ -228,6 +237,7 @@ def _serialize_response(
 
 
 def _pending_action_from_state(state: dict[str, Any]) -> PendingActionPayload | None:
+    """Return the current pending chat action, if any."""
     if state.get("pending_job_match"):
         return PendingActionPayload(
             type=PendingActionType.job_selection,
@@ -299,6 +309,7 @@ class JobEditPatchSchema(BaseModel):
 
 
 async def _classify_intent(message: str) -> str:
+    """Classify the recruiter's message into a supported chat intent."""
     text = message.lower().strip()
 
     if text in {
@@ -397,6 +408,7 @@ async def _classify_intent(message: str) -> str:
 
 
 async def _extract_salary_slots(message: str) -> SalarySlotExtraction:
+    """Extract salary-research slots from a recruiter message."""
     return await ai_service.generate_structured(
         system_prompt=SALARY_SLOT_EXTRACTION_PROMPT,
         user_payload={"message": message},
@@ -409,6 +421,7 @@ def _merge_salary_slots(
     current_slots: dict[str, Any],
     extracted: SalarySlotExtraction,
 ) -> dict[str, Any]:
+    """Merge newly extracted salary slots into session state."""
     merged = dict(current_slots)
     if extracted.role and not merged.get("role"):
         merged["role"] = extracted.role
@@ -422,6 +435,7 @@ def _merge_salary_slots(
 
 
 def _next_missing_salary_question(slots: dict[str, Any]) -> str | None:
+    """Return the next clarification question needed for salary research."""
     missing = []
     if not slots.get("role"):
         missing.append("job role")
@@ -449,6 +463,7 @@ async def _synthesize_search_answer(
     results: list[dict[str, Any]],
     extra_context: dict[str, Any] | None = None,
 ) -> str:
+    """Synthesize a concise answer from web search results."""
     synthesized = await ai_service.generate_structured(
         system_prompt=SEARCH_SYNTHESIS_PROMPT,
         user_payload={
@@ -467,6 +482,7 @@ async def _build_direct_recruiting_answer(
     *,
     company_name: str,
 ) -> str:
+    """Generate a direct recruiting answer without web search."""
     response = await ai_service.generate_structured(
         system_prompt=DIRECT_RECRUITING_RESPONSE_PROMPT,
         user_payload={
@@ -480,6 +496,7 @@ async def _build_direct_recruiting_answer(
 
 
 def _job_to_editable_context(job: Job) -> dict[str, Any]:
+    """Serialize a job into the editable context used for chat patching."""
     return {
         "id": str(job.id),
         "title": job.title,
@@ -501,6 +518,7 @@ def _job_to_editable_context(job: Job) -> dict[str, Any]:
 
 
 def _normalize_for_diff(value: Any) -> Any:
+    """Normalize values before building a job-edit diff."""
     if isinstance(value, datetime):
         return value.isoformat()
     if hasattr(value, "value"):
@@ -509,6 +527,7 @@ def _normalize_for_diff(value: Any) -> Any:
 
 
 def _build_diff(old: dict[str, Any], patch: dict[str, Any]) -> list[JobEditDiff]:
+    """Build a field-level diff between a job snapshot and a patch."""
     diff: list[JobEditDiff] = []
     for field, new_value in patch.items():
         old_value = old.get(field)
@@ -527,6 +546,7 @@ async def _prepare_job_edit_preview(
     job: Job,
     request_text: str,
 ) -> tuple[str, dict[str, Any], list[JobEditDiff]]:
+    """Generate a preview summary, patch, and diff for a job edit request."""
     current = _job_to_editable_context(job)
     proposal = await ai_service.generate_structured(
         system_prompt=JOB_EDIT_PATCH_PROMPT,
@@ -547,6 +567,7 @@ async def get_session(
     user: User,
     session_id: uuid.UUID,
 ) -> RecruiterChatSession:
+    """Load one recruiter chat session visible to the current recruiter."""
     company_id = await get_active_company_id(db, user.id)
     session = await db.scalar(
         select(RecruiterChatSession).where(
@@ -570,6 +591,7 @@ async def _save_session_state(
     *,
     title_hint: str | None = None,
 ) -> None:
+    """Persist updated recruiter chat session state."""
     session.state_json = state
     session.last_interaction_at = _utcnow()
     if not session.title and title_hint:
@@ -579,6 +601,7 @@ async def _save_session_state(
 
 
 async def create_session(db: AsyncSession, user: User) -> ChatSessionResponse:
+    """Create a new recruiter chat session."""
     company_id = await get_active_company_id(db, user.id)
     preference = await db.scalar(
         select(RecruiterPreference).where(RecruiterPreference.user_id == user.id)
@@ -600,6 +623,7 @@ async def create_session(db: AsyncSession, user: User) -> ChatSessionResponse:
 
 
 async def list_sessions(db: AsyncSession, user: User) -> list[ChatSessionResponse]:
+    """List recruiter chat sessions for the current user."""
     company_id = await get_active_company_id(db, user.id)
     rows = await db.execute(
         select(RecruiterChatSession)
@@ -620,6 +644,7 @@ async def get_history(
     user: User,
     session_id: uuid.UUID,
 ) -> ChatHistoryResponse:
+    """Return history and pending action for one recruiter chat session."""
     session = await get_session(db, user, session_id)
     state = _copy_state(session.state_json)
     return ChatHistoryResponse(
@@ -634,6 +659,7 @@ async def _handle_salary_flow(
     state: dict[str, Any],
     message: str,
 ) -> RecruiterChatResponse:
+    """Handle salary-research turns in the recruiter chat flow."""
     extracted = await _extract_salary_slots(message)
     slots = _merge_salary_slots(state["salary_slots"], extracted)
     state["salary_slots"] = slots
@@ -728,6 +754,7 @@ async def _handle_salary_flow(
 
 
 def _job_query_filter(message: str) -> str | None:
+    """Infer a requested job-status filter from free text."""
     text = message.lower()
     if "draft" in text:
         return JobStatus.draft.value
@@ -745,6 +772,7 @@ async def _handle_job_query(
     state: dict[str, Any],
     message: str,
 ) -> RecruiterChatResponse:
+    """Handle recruiter chat queries about company jobs."""
     company_id = await get_active_company_id(db, user.id)
     jobs = await get_company_jobs(db, company_id)
     counts = build_job_counts(jobs)
@@ -926,6 +954,7 @@ def _resolve_job_matches(
 
 
 def _format_job_description(job: Job) -> str:
+    """Format a company job into a markdown description for chat."""
     lines: list[str] = [f"## {job.title}"]
 
     meta: list[str] = [f"**Status:** {effective_job_status(job)}"]
@@ -975,6 +1004,7 @@ async def _handle_job_description(
     state: dict[str, Any],
     message: str,
 ) -> RecruiterChatResponse:
+    """Handle recruiter requests for full job descriptions."""
     company_id = await get_active_company_id(db, user.id)
     jobs = await get_company_jobs(db, company_id)
     matches = _resolve_job_matches(jobs, message, state)
@@ -1027,6 +1057,7 @@ async def _handle_job_edit(
     state: dict[str, Any],
     message: str,
 ) -> RecruiterChatResponse:
+    """Handle recruiter requests to edit a company job."""
     company_id = await get_active_company_id(db, user.id)
     jobs = await get_company_jobs(db, company_id)
     matches = _resolve_job_matches(jobs, message, state)
@@ -1113,6 +1144,7 @@ async def _handle_recruiting_web_question(
     state: dict[str, Any],
     message: str,
 ) -> RecruiterChatResponse:
+    """Handle recruiting-related questions, with search when needed."""
     lower = message.lower()
     company = await get_active_company(db, user.id)
     company_name = company.name.strip() if company.name else "your company"
@@ -1227,6 +1259,7 @@ async def _handle_out_of_scope(
     state: dict[str, Any],
     message: str,
 ) -> RecruiterChatResponse:
+    """Handle unsupported recruiter chat requests."""
     reply = (
         "I can't help with unrelated or unprofessional requests. "
         "I can only help with salary research, your company jobs, job edits with confirmation, "
@@ -1248,6 +1281,7 @@ async def send_message(
     session_id: uuid.UUID,
     payload: ChatMessageRequest,
 ) -> ChatExchangeResponse:
+    """Process one recruiter chat message and return the updated exchange."""
     session = await get_session(db, user, session_id)
     state = _copy_state(session.state_json)
 
@@ -1341,6 +1375,7 @@ async def confirm_job_selection(
     session_id: uuid.UUID,
     payload: ConfirmJobSelectionRequest,
 ) -> ChatExchangeResponse:
+    """Confirm a pending recruiter chat job selection."""
     session = await get_session(db, user, session_id)
     state = _copy_state(session.state_json)
     pending = state.get("pending_job_match")
@@ -1471,6 +1506,7 @@ async def confirm_job_edit(
     session_id: uuid.UUID,
     payload: ConfirmJobEditRequest,
 ) -> ChatExchangeResponse:
+    """Approve or cancel a pending recruiter chat job edit."""
     session = await get_session(db, user, session_id)
     state = _copy_state(session.state_json)
     pending = state.get("pending_edit")
@@ -1541,12 +1577,14 @@ async def delete_session(
     user: User,
     session_id: uuid.UUID,
 ) -> None:
+    """Delete a recruiter chat session."""
     session = await get_session(db, user, session_id)
     await db.delete(session)
     await db.commit()
 
 
 def _sse(event: str, data: dict[str, Any]) -> str:
+    """Serialize one server-sent event frame."""
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
@@ -1555,6 +1593,7 @@ def _final_exchange_payload(
     reply: RecruiterChatResponse,
     state: dict[str, Any],
 ) -> dict[str, Any]:
+    """Build the final streamed payload for a recruiter chat exchange."""
     return {
         "reply": reply.model_dump(mode="json"),
         "history": [item.model_dump(mode="json") for item in _history_to_schema(state)],
@@ -1584,10 +1623,12 @@ _CAPABILITY_PHRASES = (
 
 
 def _is_capability_question(text: str) -> bool:
+    """Return True when the message asks about recruiter chat capabilities."""
     return any(phrase in text for phrase in _CAPABILITY_PHRASES)
 
 
 def _is_direct_recruiting_prompt(message: str) -> bool:
+    """Return True when a prompt can be answered without web search."""
     lower = message.lower().strip()
     return any(
         phrase in lower
@@ -1613,6 +1654,7 @@ async def _handle_salary_flow_stream(
     state: dict[str, Any],
     message: str,
 ):
+    """Stream the salary-research flow over SSE."""
     extracted = await _extract_salary_slots(message)
     slots = _merge_salary_slots(state["salary_slots"], extracted)
     state["salary_slots"] = slots
@@ -1704,6 +1746,7 @@ async def _handle_recruiting_web_question_stream(
     state: dict[str, Any],
     message: str,
 ):
+    """Stream recruiting web-question answers over SSE."""
     lower = message.lower().strip()
 
     if (
@@ -1821,6 +1864,7 @@ async def stream_message(
     session_id: uuid.UUID,
     payload: ChatMessageRequest,
 ):
+    """Stream one recruiter chat exchange over SSE."""
     try:
         session = await get_session(db, user, session_id)
         state = _copy_state(session.state_json)

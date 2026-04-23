@@ -21,6 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Apply the audit-logs table migration."""
     op.create_table(
         "audit_logs",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -106,6 +107,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the audit-logs table migration."""
     op.drop_index("ix_audit_logs_company_created_at", table_name="audit_logs")
     op.drop_index("ix_audit_logs_entity_lookup", table_name="audit_logs")
     op.drop_index(op.f("ix_audit_logs_created_at"), table_name="audit_logs")

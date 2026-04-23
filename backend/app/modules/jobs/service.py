@@ -40,18 +40,22 @@ from app.shared.enums import JobStatus, LocationType, SyncAction
 
 
 def _utcnow() -> datetime:
+    """Return the current UTC datetime."""
     return datetime.now(timezone.utc)
 
 
 def _default_expires_at() -> datetime:
+    """Return the default job expiry timestamp."""
     return _utcnow() + timedelta(weeks=1)
 
 
 def _today_utc() -> date:
+    """Return today's date in UTC."""
     return _utcnow().date()
 
 
 def _effective_job_status(job: Job) -> JobStatus:
+    """Return the effective job status, accounting for expiry."""
     if (
         job.status == JobStatus.active
         and job.expires_at is not None
@@ -62,6 +66,7 @@ def _effective_job_status(job: Job) -> JobStatus:
 
 
 def _validate_expires_at_for_write(expires_at: datetime | None) -> datetime | None:
+    """Validate and normalize a job expiry timestamp before writes."""
     if expires_at is None:
         return None
     if expires_at.tzinfo is None:
@@ -73,12 +78,14 @@ def _validate_expires_at_for_write(expires_at: datetime | None) -> datetime | No
 
 
 def _should_be_searchable(job: Job) -> bool:
+    """Return True when a job should be indexed for search."""
     return _effective_job_status(job) == JobStatus.active and (
         job.expires_at is None or job.expires_at > _utcnow()
     )
 
 
 def _background_database_url(db: AsyncSession) -> str:
+    """Extract a database URL for background worker tasks."""
     bind = db.bind
     if bind is not None and hasattr(bind, "url"):
         return str(bind.url)
@@ -142,6 +149,7 @@ def _job_list_item_from_row(
     is_fallback: bool = False,
     has_applied: bool = False,
 ) -> JobListItem:
+    """Build a job-list response item from a loaded job row."""
     company = CompanySnippet.model_validate(job.company)
     return JobListItem.model_validate(
         {
@@ -172,6 +180,7 @@ def _job_list_item_from_row(
 def _job_detail_response_from_row(
     job: Job, applications_count: int | None = None, *, has_applied: bool = False
 ) -> JobDetailResponse:
+    """Build a job-detail response from a loaded job row."""
     company = CompanySnippet.model_validate(job.company)
     return JobDetailResponse.model_validate(
         {
@@ -208,6 +217,7 @@ async def _get_applied_job_ids(
     user: User | None,
     job_ids: list[uuid.UUID],
 ) -> set[uuid.UUID]:
+    """Return the set of job IDs already applied to by the user."""
     if not user or user.primary_role != UserRole.candidate or not job_ids:
         return set()
 
@@ -221,6 +231,7 @@ async def _get_applied_job_ids(
 
 
 async def _get_user_company_id(db: AsyncSession, user: User):
+    """Return the active company ID for the authenticated recruiter."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user.id,
@@ -657,6 +668,7 @@ async def set_hiring_completed(
     job_id: uuid.UUID,
     hiring_completed: bool,
 ) -> dict[str, bool]:
+    """Update a job's hiring-completed flag and invalidate dependent state."""
     company_id = await _get_user_company_id(db, user)
     result = await db.execute(
         select(Job).where(Job.id == job_id, Job.company_id == company_id)

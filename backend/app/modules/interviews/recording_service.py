@@ -46,6 +46,7 @@ async def _assert_recruiter_owns_application(
 async def _get_active_company_membership(
     db: AsyncSession, recruiter_user_id: uuid.UUID
 ) -> CompanyMembership:
+    """Return the active company membership for a recruiter user."""
     membership = await db.execute(
         select(CompanyMembership).where(
             CompanyMembership.user_id == recruiter_user_id,
@@ -63,6 +64,7 @@ async def list_batch_transcribe_candidates(
     recruiter_user_id: uuid.UUID,
     job_id: uuid.UUID,
 ) -> list[BatchTranscribeCandidateResponse]:
+    """List applications and recording status for batch transcription."""
     membership = await _get_active_company_membership(db, recruiter_user_id)
 
     job = await db.scalar(
@@ -119,6 +121,7 @@ async def upload_recording(
     file: UploadFile,
     duration_seconds: int | None,
 ) -> InterviewRecording:
+    """Upload and persist a recording for an application."""
     await _assert_recruiter_owns_application(db, recruiter_user_id, application_id)
 
     s3_url, s3_key = await storage_service.upload_audio(
@@ -143,6 +146,7 @@ async def get_recordings_for_application(
     recruiter_user_id: uuid.UUID,
     application_id: uuid.UUID,
 ) -> list[InterviewRecording]:
+    """List recordings attached to an application."""
     await _assert_recruiter_owns_application(db, recruiter_user_id, application_id)
     result = await db.execute(
         select(InterviewRecording)
@@ -157,6 +161,7 @@ async def transcribe_recording(
     recruiter_user_id: uuid.UUID,
     recording_id: uuid.UUID,
 ) -> InterviewRecording:
+    """Transcribe a stored recording and save its transcript."""
     result = await db.execute(
         select(InterviewRecording).where(InterviewRecording.id == recording_id)
     )
@@ -197,6 +202,7 @@ async def transcribe_recording(
 
 
 async def _download_from_s3(s3_key: str) -> bytes:
+    """Download recording bytes from S3."""
     import asyncio
     import boto3
     from app.core.config import settings
@@ -300,6 +306,7 @@ async def evaluate_recording(
     recruiter_user_id: uuid.UUID,
     recording_id: uuid.UUID,
 ) -> InterviewRecording:
+    """Run AI evaluation for a transcribed recording."""
     result = await db.execute(
         select(InterviewRecording).where(InterviewRecording.id == recording_id)
     )
@@ -358,6 +365,7 @@ async def delete_recording(
     recruiter_user_id: uuid.UUID,
     recording_id: uuid.UUID,
 ) -> None:
+    """Delete a recording and its stored file."""
     result = await db.execute(
         select(InterviewRecording).where(InterviewRecording.id == recording_id)
     )
