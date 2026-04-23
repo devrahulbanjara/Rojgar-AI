@@ -31,10 +31,13 @@ def upgrade() -> None:
     op.execute("ALTER TYPE applicationstatus ADD VALUE IF NOT EXISTS 'offer_declined'")
 
     # Add is_deleted column if it doesn't exist yet.
+    # NOTE: filter by table_schema='public' — Supabase also has auth.users which
+    # has its own columns that would cause the schema-unfiltered check to give
+    # a false positive and silently skip adding the column to public.users.
     result = conn.execute(
         sa.text(
             "SELECT 1 FROM information_schema.columns "
-            "WHERE table_name='users' AND column_name='is_deleted'"
+            "WHERE table_schema='public' AND table_name='users' AND column_name='is_deleted'"
         )
     )
     if result.fetchone() is None:
@@ -52,7 +55,7 @@ def upgrade() -> None:
     result = conn.execute(
         sa.text(
             "SELECT 1 FROM information_schema.columns "
-            "WHERE table_name='users' AND column_name='deleted_at'"
+            "WHERE table_schema='public' AND table_name='users' AND column_name='deleted_at'"
         )
     )
     if result.fetchone() is None:

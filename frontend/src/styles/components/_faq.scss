@@ -83,6 +83,29 @@
     width: 100%;
   }
 
+  // ── Accordion item — local reveal (avoids React className conflict) ──────
+  [data-faq-item] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+
+    &.is-revealed {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-faq-item] {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
   // ── Accordion item ────────────────────────────────────────
   &__item {
     border-bottom: 1px solid $color-gray-200;

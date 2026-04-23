@@ -35,7 +35,7 @@ const uiSlice = createSlice({
     },
     reportBackendConnectionIssue(state, action: PayloadAction<string | undefined>) {
       state.backendConnection.hasIssue = true
-      state.backendConnection.message = action.payload ?? 'Live data is temporarily unavailable.'
+      state.backendConnection.message = action.payload ?? 'Service temporarily unavailable.'
       state.backendConnection.lastDetectedAt = new Date().toISOString()
     },
     clearBackendConnectionIssue(state) {

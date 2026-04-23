@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import Image from 'next/image'
 
@@ -8,35 +8,60 @@ import { Minus, Plus } from 'lucide-react'
 
 const FAQS = [
   {
-    q: 'How do I apply for a job on ConvexHire?',
-    a: "Sign up for a free account and complete your profile with your skills, experience, and preferences. Browse curated listings matched to your background, then hit Apply — your profile is sent instantly. You'll also get AI-powered job alerts delivered to your dashboard so you never miss a match.",
-  },
-  {
     q: 'What is ConvexHire?',
-    a: "ConvexHire is an AI-first job platform built for transparency. We connect candidates with companies that are serious about hiring — listing real salary ranges, committing to response timelines, and giving you a full view of every application's status. No black holes, no guesswork.",
+    a: 'ConvexHire is an end-to-end AI recruitment platform. Candidates apply smarter with resume gap analysis, AI patching, and live pipeline tracking. Recruiters hire faster with automated screening, smart shortlisting, AI outreach drafting, and Cal.com-integrated interview ops — all in one place.',
   },
   {
-    q: 'How can I get better job matches?',
-    a: 'The more complete your profile, the smarter our matching becomes. Add your skills, preferred role types, salary expectations, and location preferences. Our AI analyses your profile against every active listing and surfaces the roles most likely to convert — not just the ones with matching keywords.',
+    q: 'How does the AI resume gap analysis work?',
+    a: "Before submitting, run Gap Analysis on your selected resume. The AI compares it to the job's requirements and identifies what's missing. You can then patch your resume — the AI suggests specific edits, and you approve or reject each one before anything saves.",
   },
   {
-    q: 'How often are new jobs posted on ConvexHire?',
-    a: "New roles are added daily. We partner directly with employers who post exclusively on ConvexHire, so you'll find listings here before they appear anywhere else. Enable real-time alerts to get notified within minutes of a relevant role going live.",
+    q: 'Can I see my AI score and feedback after applying?',
+    a: 'Yes. Once a recruiter runs AI screening on your application, you can see your score out of 100 and a written explanation of what matched and what was missing. Even rejected candidates get specific, actionable feedback — not a generic response.',
   },
   {
-    q: 'Can I save job listings for later?',
-    a: 'Yes — bookmark any listing to your saved jobs board with a single click. You can organise saved roles into custom lists, set reminders to follow up, and track their status alongside your active applications all from your dashboard.',
+    q: 'How does interview scheduling work?',
+    a: 'When shortlisted, you receive an email with a Cal.com booking link. Pick a slot, confirm your time, and ConvexHire auto-detects the booking via webhook — your application status updates to Interview Booked instantly, with no manual back-and-forth.',
   },
   {
-    q: 'Do employers see my full profile before I apply?',
-    a: "Only when you choose. You control exactly what's visible — you can apply fully anonymously and only reveal contact details when you're ready. We built our privacy controls around candidate trust, not employer convenience.",
+    q: 'How does AI screening work for recruiters?',
+    a: "Enable auto-screening on a job and every application is scored the moment it arrives. Or run manual batch screening whenever you're ready. Each candidate gets a 0–100 score with a plain-English paragraph explaining what aligned and what was missing. Scores can be edited manually too.",
+  },
+  {
+    q: "What's included in the free plan?",
+    a: 'Candidates get full access: build a profile, create multiple resumes, run AI gap analysis, apply to jobs, and track applications in real time. Recruiters can register a company, post and manage jobs, and review applications. AI screening and outreach tools require an upgrade.',
   },
 ]
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
+  const [revealed, setRevealed] = useState<Set<number>>(new Set())
+  const itemRefs = useRef<(HTMLLIElement | null)[]>([])
 
   const toggle = (i: number) => setOpenIndex(openIndex === i ? null : i)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = itemRefs.current.indexOf(entry.target as HTMLLIElement)
+            if (idx !== -1) {
+              setRevealed((prev) => new Set([...prev, idx]))
+              observer.unobserve(entry.target)
+            }
+          }
+        })
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -48px 0px' },
+    )
+
+    itemRefs.current.forEach((el) => {
+      if (el) observer.observe(el)
+    })
+
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <section className="faq">
@@ -73,8 +98,11 @@ export default function FAQ() {
             return (
               <li
                 key={i}
-                className={`faq__item${isOpen ? ' faq__item--open' : ''}`}
-                data-reveal
+                ref={(el) => {
+                  itemRefs.current[i] = el
+                }}
+                className={`faq__item${isOpen ? ' faq__item--open' : ''}${revealed.has(i) ? ' is-revealed' : ''}`}
+                data-faq-item
                 style={{ '--reveal-delay': `${Math.min(i * 0.07, 0.35)}s` } as React.CSSProperties}
               >
                 <button className="faq__trigger" onClick={() => toggle(i)} aria-expanded={isOpen}>
