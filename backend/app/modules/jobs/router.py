@@ -37,6 +37,7 @@ async def create_job(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Create a new job for the recruiter's active company."""
     data = await service.create_job(db, user, payload, bg_tasks)
     return ResponseBuilder.success(
         data=data,
@@ -67,6 +68,7 @@ async def search_jobs(
     user: User | None = Depends(get_optional_user),
     db: AsyncSession = db,
 ):
+    """Search public jobs with optional personalization."""
     jobs, total = await service.search_jobs(
         db, user, q, location, location_type, salary_min, salary_max, page, size
     )
@@ -88,6 +90,7 @@ async def list_company_jobs(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """List jobs for the recruiter's active company."""
     data = await service.list_company_jobs(db, user)
     return ResponseBuilder.success(data=data, message="Company jobs fetched.")
 
@@ -102,6 +105,7 @@ async def get_job(
     user: User | None = Depends(get_optional_user),
     db: AsyncSession = db,
 ):
+    """Fetch one job detail payload."""
     data = await service.get_job_detail(db, job_id, user)
     return ResponseBuilder.success(data=data, message="Job fetched.")
 
@@ -118,6 +122,7 @@ async def update_job(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Update a company job."""
     data = await service.update_job(db, user, job_id, payload, bg_tasks)
     return ResponseBuilder.success(data=data, message="Job updated.")
 
@@ -133,6 +138,7 @@ async def delete_job(
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Delete a company job."""
     await service.delete_job(db, user, job_id, bg_tasks)
     return ResponseBuilder.success(data=None, message="Job deleted.")
 
@@ -148,5 +154,6 @@ async def set_hiring_completed(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
+    """Mark a job as having completed hiring."""
     data = await service.set_hiring_completed(db, user, job_id, hiring_completed)
     return ResponseBuilder.success(data=data)

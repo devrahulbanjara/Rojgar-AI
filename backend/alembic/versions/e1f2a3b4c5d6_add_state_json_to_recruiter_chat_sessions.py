@@ -17,6 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the recruiter chat session state-json migration."""
     op.add_column(
         "recruiter_chat_sessions",
         sa.Column(
@@ -29,4 +30,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the recruiter chat session state-json migration."""
     op.drop_column("recruiter_chat_sessions", "state_json")

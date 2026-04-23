@@ -27,6 +27,7 @@ async def analyze_gaps(
     user: User = Depends(require_candidate),
     db: AsyncSession = Depends(get_db),
 ):
+    """Analyze a resume against a target job for improvement gaps."""
     data = await service.analyze_gaps(db, user, payload)
     return ResponseBuilder.success(data=data, message="Gap analysis complete.")
 
@@ -41,5 +42,6 @@ async def auto_patch_resume(
     user: User = Depends(require_candidate),
     db: AsyncSession = Depends(get_db),
 ):
+    """Apply a safe AI-generated patch to a resume."""
     data = await service.auto_patch_resume(db, user, payload)
     return ResponseBuilder.success(data=data, message=data.message)

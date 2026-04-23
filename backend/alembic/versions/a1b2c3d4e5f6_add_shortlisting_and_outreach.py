@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the shortlisting and outreach schema migration."""
     op.add_column("applications", sa.Column("score", sa.Integer(), nullable=True))
     op.add_column("applications", sa.Column("feedback", sa.Text(), nullable=True))
     op.add_column(
@@ -96,6 +97,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the shortlisting and outreach schema migration."""
     op.drop_index("ix_email_drafts_application_id", table_name="email_drafts")
     op.drop_table("email_drafts")
     op.drop_column("jobs", "final_shortlist_completed")

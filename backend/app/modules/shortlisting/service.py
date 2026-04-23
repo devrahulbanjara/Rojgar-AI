@@ -38,18 +38,21 @@ SHORTLISTING_STALE_AFTER = timedelta(minutes=2)
 
 
 def _job_is_open_for_auto_shortlisting(job: Job) -> bool:
+    """Return True when a job is still open for auto-shortlisting."""
     return job.status == JobStatus.active and (
         job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
     )
 
 
 def _job_has_expired(job: Job) -> bool:
+    """Return True when a job is effectively expired."""
     return job.status == JobStatus.expired or (
         job.expires_at is not None and job.expires_at <= datetime.now(timezone.utc)
     )
 
 
 def _application_has_complete_review(application: Application) -> bool:
+    """Return True when an application already has score and feedback."""
     return application.score is not None and application.feedback is not None
 
 
@@ -58,6 +61,7 @@ def _apply_review_if_missing(
     score: int,
     feedback: str,
 ) -> bool:
+    """Populate review fields that are still missing on an application."""
     updated = False
     if application.score is None:
         application.score = score
@@ -69,6 +73,7 @@ def _apply_review_if_missing(
 
 
 async def _get_company_id_for_user(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
+    """Return the active company ID for a recruiter user."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user_id,
@@ -87,6 +92,7 @@ async def _get_company_id_for_user(db: AsyncSession, user_id: uuid.UUID) -> uuid
 async def _get_job_for_company(
     db: AsyncSession, job_id: uuid.UUID, company_id: uuid.UUID
 ) -> Job:
+    """Return a company-owned job or raise if unavailable."""
     result = await db.execute(
         select(Job).where(Job.id == job_id, Job.company_id == company_id)
     )
@@ -100,6 +106,7 @@ async def _get_job_for_company(
 
 
 def _score_application(application: Application) -> tuple[int, str]:
+    """Fallback-score an application from resume completeness."""
     resume = application.resume
     if resume is None:
         return (
@@ -150,6 +157,7 @@ def _score_application(application: Application) -> tuple[int, str]:
 async def process_auto_shortlist_for_application(
     application_id: uuid.UUID, database_url: str
 ) -> None:
+    """Run auto-shortlisting for one application in a background session."""
     engine = create_async_engine(database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     try:
@@ -211,10 +219,12 @@ async def process_auto_shortlist_for_application(
 
 
 async def queue_auto_shortlist_backfill(job_id: uuid.UUID, database_url: str) -> None:
+    """Queue a full shortlisting run for a job."""
     await _run_shortlisting_task(job_id, database_url)
 
 
 async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
+    """Score pending applications for a job in a background session."""
     engine = create_async_engine(database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     async with session_factory() as db:
@@ -286,6 +296,7 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
 async def get_shortlist_summary(
     db: AsyncSession, job_id: uuid.UUID, user_id: uuid.UUID
 ) -> ShortlistSummaryResponse:
+    """Return shortlisting progress for a recruiter-visible job."""
     company_id = await _get_company_id_for_user(db, user_id)
     job = await _get_job_for_company(db, job_id, company_id)
     cache_key = f"shortlist:summary:{job_id}"
@@ -351,6 +362,7 @@ async def trigger_shortlisting(
     user_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> TriggerShortlistResponse:
+    """Start shortlisting for a job if work remains."""
     company_id = await _get_company_id_for_user(db, user_id)
     job = await _get_job_for_company(db, job_id, company_id)
     total_applications = await db.scalar(
@@ -422,6 +434,7 @@ async def finalize_shortlist(
     user_id: uuid.UUID,
     payload: FinalizeShortlistRequest,
 ) -> FinalizeShortlistResponse:
+    """Finalize shortlist outcomes for a job and invalidate caches."""
     company_id = await _get_company_id_for_user(db, user_id)
     job = await _get_job_for_company(db, job_id, company_id)
 

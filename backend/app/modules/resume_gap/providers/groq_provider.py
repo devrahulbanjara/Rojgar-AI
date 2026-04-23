@@ -13,6 +13,7 @@ class GroqGapAnalysisProvider(GapAnalysisProvider):
         resume_data: dict,
         job_data: dict,
     ) -> GapAnalysisResult:
+        """Generate a structured gap analysis for a resume and job."""
         return await ai_service.generate_structured(
             system_prompt=GAP_ANALYSIS_SYSTEM_PROMPT,
             user_payload={"resume": resume_data, "job": job_data},
@@ -24,6 +25,7 @@ class GroqGapAnalysisProvider(GapAnalysisProvider):
         resume_data: dict,
         gap_result: GapAnalysisResult,
     ) -> AutoPatchResult:
+        """Generate a structured resume patch from a gap-analysis result."""
         return await ai_service.generate_structured(
             system_prompt=PATCH_SYSTEM_PROMPT,
             user_payload={

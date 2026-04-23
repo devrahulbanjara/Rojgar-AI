@@ -28,14 +28,17 @@ from app.shared.enums import SyncAction
 
 
 def _resume_list_cache_key(user_id: str) -> str:
+    """Build the cache key for a user's resume list."""
     return f"resumes:list:{user_id}"
 
 
 def _resume_detail_cache_key(user_id: str, resume_id: str) -> str:
+    """Build the cache key for one resume detail view."""
     return f"resume:detail:{resume_id}:user:{user_id}"
 
 
 async def _load_full_resume(db: AsyncSession, resume_id) -> Resume:
+    """Load a resume with all related collections eagerly."""
     result = await db.execute(
         select(Resume)
         .where(Resume.id == resume_id)

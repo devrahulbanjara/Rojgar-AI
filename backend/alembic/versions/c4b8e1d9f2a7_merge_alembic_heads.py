@@ -20,8 +20,10 @@ depends_on: Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    """Merge Alembic heads without schema changes."""
     pass
 
 
 def downgrade() -> None:
+    """Undo the Alembic heads merge marker."""
     pass

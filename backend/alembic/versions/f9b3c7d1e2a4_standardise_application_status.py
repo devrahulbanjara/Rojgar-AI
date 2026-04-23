@@ -17,6 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the application-status standardization migration."""
     op.execute("ALTER TYPE applicationstatus RENAME TO applicationstatus_old")
 
     op.execute(
@@ -60,6 +61,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the application-status standardization migration."""
     op.execute("ALTER TYPE applicationstatus RENAME TO applicationstatus_new")
 
     op.execute(

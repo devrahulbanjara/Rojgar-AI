@@ -17,6 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the job evaluation schema and scores migration."""
     op.create_table(
         "job_evaluation_schemas",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
@@ -134,6 +135,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the job evaluation schema and scores migration."""
     op.drop_index(
         "ix_candidate_evaluation_scores_schema_id",
         table_name="candidate_evaluation_scores",

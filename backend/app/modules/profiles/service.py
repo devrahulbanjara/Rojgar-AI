@@ -63,6 +63,7 @@ def _profile_to_response(
 
 
 async def invalidate_profile_reads(user_id: str) -> None:
+    """Invalidate cached profile reads for a user."""
     await invalidate_profile_read_caches(user_id)
 
 
@@ -158,6 +159,7 @@ async def update_profile(
 
 
 async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileResponse:
+    """Fetch a public profile response by user ID, with caching."""
     cache_key = f"profile:detail:{user_id}"
 
     # 1. Try Cache

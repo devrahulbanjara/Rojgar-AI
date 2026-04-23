@@ -31,6 +31,7 @@ from app.modules.resumes.schemas import ResumeUpdate
 
 
 def _dedupe_texts(values: Iterable[str]) -> list[str]:
+    """Return unique non-empty strings while preserving order."""
     seen: set[str] = set()
     result: list[str] = []
 
@@ -48,6 +49,7 @@ def _dedupe_texts(values: Iterable[str]) -> list[str]:
 
 
 def _build_data_schema() -> dict:
+    """Build the flattened extraction schema for resume parsing."""
     raw_schema = ImportedCandidateDocument.model_json_schema()
     return _inline_local_refs(raw_schema)
 
@@ -92,6 +94,7 @@ def _inline_local_refs(schema: dict) -> dict:
 
 
 def _augment_warnings(data: ImportedCandidateDocument) -> ImportedCandidateDocument:
+    """Add derived extraction warnings to imported candidate data."""
     warnings = _dedupe_texts(data.warnings)
     if not data.experiences:
         warnings.append("No work experience was detected.")
@@ -107,6 +110,7 @@ async def _list_resume_target_options(
     db: AsyncSession,
     user_id: UUID,
 ) -> list[ResumeTargetOption]:
+    """List resume targets available for an import commit."""
     resume_items = await resumes_service.list_resumes_by_user_id(db, user_id)
     return [
         ResumeTargetOption(id=item.id, resume_name=item.resume_name)
@@ -120,6 +124,7 @@ async def _build_preview_response(
     source_file_name: str,
     extracted: ImportedCandidateDocument,
 ) -> AiImportPreviewResponse:
+    """Build the preview payload returned from resume import."""
     return AiImportPreviewResponse(
         source_file_name=source_file_name,
         extracted_profile=_augment_warnings(extracted),
@@ -128,6 +133,7 @@ async def _build_preview_response(
 
 
 def _to_profile_update(data: ImportedCandidateDocument) -> ProfileUpdate:
+    """Map imported candidate data into a profile update payload."""
     return ProfileUpdate(
         headline=data.headline,
         summary=data.summary,
@@ -148,6 +154,7 @@ def _to_resume_update(
     data: ImportedCandidateDocument,
     resume_name: str | None = None,
 ) -> ResumeUpdate:
+    """Map imported candidate data into a resume update payload."""
     return ResumeUpdate(
         resume_name=resume_name,
         headline=data.headline,
@@ -169,6 +176,7 @@ async def preview_profile_from_resume_upload(
     user: User,
     file: UploadFile,
 ) -> AiImportPreviewResponse:
+    """Extract and preview profile data from an uploaded resume."""
     extracted = await resume_extraction_service.extract_structured(
         file=file,
         data_schema=_build_data_schema(),
@@ -188,6 +196,7 @@ async def start_resume_import_task(
     file: UploadFile,
     background_tasks: BackgroundTasks,
 ) -> AiImportTaskStartResponse:
+    """Create a background resume-import task and queue extraction."""
     resume_extraction_service.validate_upload(file)
 
     task = ResumeImportTask(
@@ -231,6 +240,7 @@ async def get_resume_import_task_status(
     user: User,
     task_id: UUID,
 ) -> AiImportTaskStatusResponse:
+    """Return the current state of a resume import task."""
     task = await db.get(ResumeImportTask, task_id)
     if task is None or task.user_id != user.id:
         raise HTTPException(
@@ -260,6 +270,7 @@ async def _run_resume_import_task(
     file_path: Path,
     source_file_name: str,
 ) -> None:
+    """Run the asynchronous resume extraction job for one task."""
     try:
         async with AsyncSessionLocal() as db:
             task = await db.get(ResumeImportTask, task_id)
@@ -318,6 +329,7 @@ async def commit_profile_from_ai_import(
     user: User,
     payload: AiImportCommitRequest,
 ) -> AiImportCommitResponse:
+    """Apply imported data to the requested profile or resume target."""
     if payload.action == "update_profile":
         updated = await profiles_service.update_profile(
             db,

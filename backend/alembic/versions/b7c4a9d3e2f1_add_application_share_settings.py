@@ -17,6 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the application share-settings migration."""
     op.add_column(
         "applications",
         sa.Column(
@@ -57,6 +58,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the application share-settings migration."""
     op.drop_column("applications", "share_headline_summary")
     op.drop_column("applications", "share_links")
     op.drop_column("applications", "share_location")

@@ -25,6 +25,7 @@ class JobBase(BaseSchema):
 
     @model_validator(mode="after")
     def validate_job_fields(self) -> "JobBase":
+        """Validate salary ordering and date constraints for a job payload."""
         if (
             self.salary_min is not None
             and self.salary_max is not None

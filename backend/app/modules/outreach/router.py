@@ -35,6 +35,7 @@ async def prepare_drafts(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Generate outreach drafts for a job."""
     data = await service.prepare_drafts(
         db, job_id, user.id, background_tasks, payload.direct_send
     )
@@ -51,6 +52,7 @@ async def get_drafts(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """List outreach drafts for a job."""
     data = await service.get_drafts_for_job(db, job_id, user.id)
     return ResponseBuilder.success(data=data, message="Drafts fetched.")
 
@@ -65,6 +67,7 @@ async def generate_draft_for_application(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Generate an outreach draft for one application."""
     data = await service.generate_draft_for_application(db, application_id, user.id)
     return ResponseBuilder.success(data=data, message="Draft generated.")
 
@@ -80,6 +83,7 @@ async def update_draft(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Update an outreach draft."""
     data = await service.update_draft(db, draft_id, user.id, payload)
     return ResponseBuilder.success(data=data, message="Draft updated.")
 
@@ -94,6 +98,7 @@ async def delete_draft(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Delete an outreach draft."""
     data = await service.delete_draft(db, draft_id, user.id)
     return ResponseBuilder.success(data=data, message=data.message)
 
@@ -109,6 +114,7 @@ async def approve_draft(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Approve or discard an outreach draft."""
     data = await service.approve_draft(db, draft_id, user.id, payload)
     message = "Draft approved." if payload.approved else "Draft discarded."
     return ResponseBuilder.success(data=data, message=message)
@@ -125,6 +131,7 @@ async def send_all_drafts(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Send all approved drafts for a job."""
     data = await service.send_all_drafts(db, job_id, user.id, background_tasks)
     return ResponseBuilder.success(data=data, message=data.message)
 
@@ -139,5 +146,6 @@ async def delete_all_drafts(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Delete all drafts for a job."""
     data = await service.delete_all_drafts_for_job(db, job_id, user.id)
     return ResponseBuilder.success(data=data, message=data.message)

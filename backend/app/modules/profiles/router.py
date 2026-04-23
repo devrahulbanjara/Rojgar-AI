@@ -42,6 +42,7 @@ async def get_my_profile(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Return the authenticated candidate's profile."""
     data = await service.get_or_create_profile(db, user)
     return ResponseBuilder.success(data=data, message="Profile fetched.")
 
@@ -56,6 +57,7 @@ async def update_my_profile(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Update the authenticated candidate's profile."""
     data = await service.update_profile(db, user, payload)
     return ResponseBuilder.success(data=data, message="Profile updated.")
 
@@ -71,6 +73,7 @@ async def start_ai_resume_import(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Upload a resume and start a background AI import task."""
     data = await start_resume_import_task(db, user, file, background_tasks)
     return ResponseBuilder.success(
         data=data,
@@ -88,6 +91,7 @@ async def get_ai_resume_import_task(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Fetch the current status of a resume import task."""
     data = await get_resume_import_task_status(db, user, task_id)
     return ResponseBuilder.success(data=data, message="Resume import task fetched.")
 
@@ -102,6 +106,7 @@ async def preview_ai_resume_import(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Preview AI-extracted profile data from an uploaded resume."""
     data = await preview_profile_from_resume_upload(db, user, file)
     return ResponseBuilder.success(data=data, message="Resume parsed successfully.")
 
@@ -116,6 +121,7 @@ async def commit_ai_resume_import(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Commit imported resume data to a profile or resume target."""
     data = await commit_profile_from_ai_import(db, user, payload)
     return ResponseBuilder.success(
         data=data,
@@ -133,6 +139,7 @@ async def upload_my_avatar(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Upload or replace the candidate's avatar."""
     previous_avatar_url = user.avatar_url
     new_avatar_url = await storage_service.upload_image(file, folder="avatars")
 
@@ -158,6 +165,7 @@ async def delete_my_avatar(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Delete the candidate's avatar."""
     previous_avatar_url = user.avatar_url
     user.avatar_url = None
     await db.commit()
@@ -181,6 +189,7 @@ async def complete_onboarding(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Complete candidate onboarding and persist target roles."""
     data = await service.complete_onboarding(db, user, payload)
     return ResponseBuilder.success(
         data=data, message="Onboarding completed successfully."
@@ -197,5 +206,6 @@ async def get_profile_by_user(
     _caller: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
+    """Return a public candidate profile by user ID."""
     data = await service.get_profile_by_user_id(db, user_id)
     return ResponseBuilder.success(data=data, message="Profile fetched.")

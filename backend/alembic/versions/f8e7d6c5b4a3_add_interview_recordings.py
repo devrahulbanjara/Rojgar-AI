@@ -17,6 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the interview recordings migration."""
     op.execute("DROP TABLE IF EXISTS interview_recordings CASCADE")
     op.execute("DROP TYPE IF EXISTS recordingstatus CASCADE")
 
@@ -67,6 +68,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the interview recordings migration."""
     op.drop_index("ix_interview_recordings_application_id", "interview_recordings")
     op.drop_table("interview_recordings")
     op.execute("DROP TYPE recordingstatus")

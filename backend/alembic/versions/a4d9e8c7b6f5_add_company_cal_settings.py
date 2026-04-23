@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply the company Cal settings schema migration."""
     op.add_column(
         "companies",
         sa.Column("cal_booking_url", sa.String(length=500), nullable=True),
@@ -34,6 +35,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the company Cal settings schema migration."""
     op.drop_constraint(
         "uq_companies_cal_organizer_email",
         "companies",
