@@ -1032,6 +1032,32 @@
   }
 }
 
+// ── Public Job Card (unauthenticated landing/browse) ──────────
+.pub-job-card {
+  display: block;
+  color: inherit;
+  overflow: hidden;
+  min-width: 0;
+
+  .job-card__tags {
+    margin-bottom: 0;
+    flex-wrap: wrap;
+  }
+
+  &__hint {
+    margin-top: $space-3;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+    opacity: 0;
+    transition: opacity $transition-fast;
+  }
+
+  &:hover &__hint {
+    opacity: 1;
+  }
+}
+
 .job-card--skeleton {
   cursor: default;
   pointer-events: none;

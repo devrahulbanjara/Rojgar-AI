@@ -1,46 +1,49 @@
 """
-One-time backfill script: ensures every job in Postgres has a corresponding
-entry in the job_sync_events outbox so the background daemon picks it up.
+Backfill script: ensures every job in Postgres gets a PENDING sync event
+so the background daemon re-embeds and re-upserts it to Qdrant.
 
-Safe to run multiple times — it skips jobs that already have any sync event.
+Modes:
+    --force    Queue ALL jobs (re-sync everything, e.g. after schema/payload change)
+    (default)  Only queue jobs that have zero sync events
+
+Safe to run multiple times in either mode.
 
 Usage:
-    uv run python reconcile_vectors.py
+    uv run python reconcile_vectors.py          # incremental
+    uv run python reconcile_vectors.py --force  # full re-sync
 """
 
 import asyncio
+import sys
 
-from app.modules.jobs.enums import SyncAction, SyncStatus
 from loguru import logger
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.infrastructures.qdrant.service import qdrant_service
 from app.modules.jobs.models import Job, JobSyncEvent
+from app.shared.enums import SyncAction, SyncStatus
 
 
-async def reconcile() -> None:
+async def reconcile(*, force: bool = False) -> None:
     await qdrant_service.initialize()  # Ensure collection + indexes exist
 
     async with AsyncSessionLocal() as db:
         jobs = (await db.scalars(select(Job))).all()
-        logger.info(f"Found {len(jobs)} job(s) in Postgres. Checking outbox…")
+        logger.info(f"Found {len(jobs)} job(s) in Postgres. Mode: {'force' if force else 'incremental'}")
 
         created_count = 0
         skipped_count = 0
 
         for job in jobs:
-            # Skip if any sync event already exists (including COMPLETED ones)
-            existing = await db.scalar(
-                select(JobSyncEvent).where(JobSyncEvent.job_id == job.id)
-            )
-            if existing:
-                skipped_count += 1
-                continue
+            if not force:
+                existing = await db.scalar(
+                    select(JobSyncEvent).where(JobSyncEvent.job_id == job.id)
+                )
+                if existing:
+                    skipped_count += 1
+                    continue
 
-            # Create a PENDING UPSERT event — the daemon (or the fast-path
-            # after restart) will call process_sync_event which will check
-            # job.status and remove non-active jobs from Qdrant automatically.
             db.add(
                 JobSyncEvent(
                     job_id=job.id,
@@ -55,7 +58,7 @@ async def reconcile() -> None:
 
     logger.success(
         f"Reconciliation complete — "
-        f"{created_count} event(s) created, {skipped_count} already had events."
+        f"{created_count} event(s) created, {skipped_count} skipped."
     )
     if created_count:
         logger.info(
@@ -65,4 +68,5 @@ async def reconcile() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(reconcile())
+    force_flag = "--force" in sys.argv
+    asyncio.run(reconcile(force=force_flag))

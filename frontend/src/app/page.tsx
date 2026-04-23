@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -11,6 +11,7 @@ import { MapPin, Search } from 'lucide-react'
 
 import ExploreCategories from '@/components/sections/ExploreCategories'
 import FAQ from '@/components/sections/FAQ'
+import FeaturedJobs from '@/components/sections/FeaturedJobs'
 import HeroAnimations from '@/components/sections/HeroAnimations'
 import Pricing from '@/components/sections/Pricing'
 import WhyPreferUs from '@/components/sections/WhyPreferUs'
@@ -18,6 +19,8 @@ import WhyPreferUs from '@/components/sections/WhyPreferUs'
 export default function Home() {
   const { user, isAuthenticated } = useAppSelector((s) => s.auth)
   const router = useRouter()
+  const [heroQuery, setHeroQuery] = useState('')
+  const [heroLocation, setHeroLocation] = useState('')
   useReveal()
 
   useEffect(() => {
@@ -28,6 +31,15 @@ export default function Home() {
       }
     }
   }, [isAuthenticated, user, router])
+
+  function handleHeroSearch(e: React.FormEvent) {
+    e.preventDefault()
+    const sp = new URLSearchParams()
+    if (heroQuery.trim()) sp.set('q', heroQuery.trim())
+    if (heroLocation.trim()) sp.set('location', heroLocation.trim())
+    const qs = sp.toString()
+    router.push(qs ? `/jobs?${qs}` : '/jobs')
+  }
 
   // While redirecting, show nothing to avoid flash of landing page
   if (isAuthenticated) return null
@@ -57,7 +69,7 @@ export default function Home() {
             you spend less time tracking and more time interviewing.
           </p>
           {/* Search bar */}
-          <div className="homepage__search">
+          <form className="homepage__search" onSubmit={handleHeroSearch}>
             <div className="homepage__search-field">
               <Search className="homepage__search-icon" aria-hidden="true" />
               <input
@@ -65,6 +77,8 @@ export default function Home() {
                 type="text"
                 placeholder="Job title or keyword"
                 aria-label="Job title or keyword"
+                value={heroQuery}
+                onChange={(e) => setHeroQuery(e.target.value)}
               />
             </div>
             <div className="homepage__search-divider" aria-hidden="true" />
@@ -75,12 +89,14 @@ export default function Home() {
                 type="text"
                 placeholder="Location"
                 aria-label="Location"
+                value={heroLocation}
+                onChange={(e) => setHeroLocation(e.target.value)}
               />
             </div>
-            <button className="homepage__search-btn" type="button" aria-label="Search jobs">
+            <button className="homepage__search-btn" type="submit" aria-label="Search jobs">
               Search
             </button>
-          </div>
+          </form>
           {/* Social proof */}
           <div className="homepage__proof-container">
             <Image
@@ -107,6 +123,8 @@ export default function Home() {
       </div>
 
       <ExploreCategories />
+
+      <FeaturedJobs />
 
       <WhyPreferUs />
 

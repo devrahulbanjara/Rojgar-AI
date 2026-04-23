@@ -25,11 +25,13 @@
 @use 'components/loader';
 @use 'components/faq';
 @use 'components/pricing';
+@use 'components/featured-jobs';
 @use 'components/toast';
 @use 'components/connection-status';
 
 // ── 5. Pages ─────────────────────────────────────────────────
 @use 'pages/homepage';
+@use 'pages/public-jobs';
 @use 'pages/legal';
 @use 'pages/auth';
 @use 'pages/dashboard';

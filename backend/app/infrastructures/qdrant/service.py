@@ -56,6 +56,7 @@ class QdrantService:
         *,
         keyword_fields: list[str],
         integer_fields: list[str],
+        text_fields: list[str] | None = None,
     ) -> None:
         for field in keyword_fields:
             try:
@@ -89,13 +90,37 @@ class QdrantService:
                         e,
                     )
 
+        for field in text_fields or []:
+            try:
+                await self.client.create_payload_index(
+                    collection_name=collection_name,
+                    field_name=field,
+                    field_schema=models.TextIndexParams(
+                        type="text",
+                        tokenizer=models.TokenizerType.WORD,
+                        min_token_len=2,
+                        max_token_len=20,
+                        lowercase=True,
+                    ),
+                )
+            except UnexpectedResponse as e:
+                if "already exists" not in str(e).lower():
+                    logger.warning(
+                        "Could not create text index on {}.{}: {}",
+                        collection_name,
+                        field,
+                        e,
+                    )
+
     async def _ensure_job_indexes(self) -> None:
         keywords = ["status", "location_type", "company_id"]
         integers = ["salary_min", "salary_max", "expires_at_ts"]
+        texts = ["location"]
         await self._ensure_payload_indexes(
             self.collection_name,
             keyword_fields=keywords,
             integer_fields=integers,
+            text_fields=texts,
         )
         logger.info("Qdrant job payload indexes verified.")
 
@@ -202,6 +227,7 @@ class QdrantService:
                         payload={
                             "company_id": str(job.company_id),
                             "status": job.status.value,
+                            "location": job.location or "",
                             "location_type": job.location_type.value
                             if job.location_type
                             else None,
@@ -283,6 +309,7 @@ class QdrantService:
     async def search_jobs(
         self,
         query: str,
+        location: str | None = None,
         location_type: str | None = None,
         salary_min: int | None = None,
         salary_max: int | None = None,
@@ -297,6 +324,7 @@ class QdrantService:
 
         Args:
             query: Semantic search query string
+            location: Free-text location filter (tokenized substring match)
             location_type: Filter by location type (e.g., "remote", "onsite", "hybrid")
             salary_min: Minimum salary filter (job's max salary must be >= this)
             salary_max: Maximum salary filter (job's min salary must be <= this)
@@ -319,6 +347,13 @@ class QdrantService:
         base_must = [active_condition, expires_condition]
 
         filters: list[models.Condition] = []
+        if location:
+            filters.append(
+                models.FieldCondition(
+                    key="location",
+                    match=models.MatchText(text=location),
+                )
+            )
         if location_type:
             filters.append(
                 models.FieldCondition(
