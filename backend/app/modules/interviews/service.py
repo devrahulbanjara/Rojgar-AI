@@ -32,6 +32,7 @@ def _interview_list_cache_key(
     start: datetime | None,
     end: datetime | None,
 ) -> str:
+    """Build the cache key for recruiter interview list queries."""
     job_scope = str(job_id) if job_id is not None else "all"
     start_scope = start.isoformat() if start is not None else "none"
     end_scope = end.isoformat() if end is not None else "none"
@@ -48,6 +49,7 @@ async def list_interviews(
     start: datetime | None = None,
     end: datetime | None = None,
 ) -> list[InterviewResponse]:
+    """List interviews visible to a recruiter's active company."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user_id,

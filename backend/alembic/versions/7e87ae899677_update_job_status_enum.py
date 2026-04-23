@@ -17,6 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Apply the job-status enum migration."""
     # 1. Drop the existing default constraint so Postgres allows the type change
     op.execute("ALTER TABLE jobs ALTER COLUMN status DROP DEFAULT")
 
@@ -46,6 +47,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the job-status enum migration."""
     # 1. Drop default
     op.execute("ALTER TABLE jobs ALTER COLUMN status DROP DEFAULT")
 

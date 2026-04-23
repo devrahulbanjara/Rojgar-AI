@@ -19,6 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Apply the auto-shortlist jobs migration."""
     op.add_column(
         "jobs",
         sa.Column(
@@ -31,4 +32,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Revert the auto-shortlist jobs migration."""
     op.drop_column("jobs", "auto_shortlist")

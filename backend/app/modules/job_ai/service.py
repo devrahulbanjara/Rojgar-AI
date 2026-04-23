@@ -41,6 +41,7 @@ from app.shared.enums import JobStatus, LocationType
 
 
 def _ensure_recruiting_user(user: User) -> None:
+    """Raise when the user lacks recruiter privileges for job drafting."""
 
     if user.primary_role not in {UserRole.recruiter, UserRole.recruiter_admin}:
         raise HTTPException(
@@ -50,11 +51,13 @@ def _ensure_recruiting_user(user: User) -> None:
 
 
 def _new_thread_id() -> str:
+    """Generate a new LangGraph thread ID for a draft session."""
 
     return f"job-ai-{uuid.uuid4()}"
 
 
 def _extract_interrupt_payload(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract the latest interrupt payload from a graph result."""
 
     interrupts = result.get("__interrupt__")
 
@@ -78,6 +81,7 @@ def _merge_latest_draft(
     current_draft: dict[str, Any] | None,
     edited_fields: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
+    """Merge recruiter edits into the latest draft payload."""
 
     if current_draft is None and not edited_fields:
         return None
@@ -89,6 +93,7 @@ def _merge_latest_draft(
 def _map_draft_to_job_create(
     draft: dict[str, Any], status_override: JobStatus | None
 ) -> JobCreate:
+    """Map a finalized AI draft into the normal job creation schema."""
 
     return JobCreate(
         title=draft["title"],
@@ -113,6 +118,7 @@ async def create_draft(
     user: User,
     payload: GenerateJobDraftRequest,
 ) -> JobAIDraftResponse:
+    """Create a new AI job draft and persist its first review state."""
 
     _ensure_recruiting_user(user)
 
@@ -235,6 +241,7 @@ async def get_draft(
     user: User,
     draft_id: uuid.UUID,
 ) -> JobAIDraftResponse:
+    """Fetch one AI draft owned by the current recruiter."""
 
     _ensure_recruiting_user(user)
 
@@ -255,6 +262,7 @@ async def list_drafts(
     db: AsyncSession,
     user: User,
 ) -> list[JobAIDraftResponse]:
+    """List non-terminal AI drafts owned by the current recruiter."""
 
     _ensure_recruiting_user(user)
 
@@ -277,6 +285,7 @@ async def respond_to_draft(
     draft_id: uuid.UUID,
     decision: HumanDecision,
 ) -> JobAIDraftResponse:
+    """Resume a paused draft workflow with a recruiter decision."""
 
     _ensure_recruiting_user(user)
 
@@ -377,6 +386,7 @@ async def commit_draft(
     payload: CommitDraftRequest,
     bg_tasks: BackgroundTasks,
 ):
+    """Commit an approved AI draft through the standard job creation flow."""
 
     _ensure_recruiting_user(user)
 

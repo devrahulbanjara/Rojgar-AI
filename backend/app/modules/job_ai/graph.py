@@ -41,6 +41,8 @@ class JobAgentState(TypedDict):
 
 
 def build_job_ai_graph():
+    """Build the LangGraph workflow for AI-assisted job drafting."""
+
     async def synthesize_salary_node(state: JobAgentState) -> dict[str, Any]:
         if not state["research_salary"] or not state["salary_research_input"]:
             return {"salary_research": None}

@@ -27,6 +27,7 @@ async def list_my_resumes(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """List resumes belonging to the authenticated candidate."""
     data = await service.list_resumes(db, user)
     return ResponseBuilder.success(data=data, message="Resumes fetched.")
 
@@ -42,6 +43,7 @@ async def create_resume(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Create a new resume by forking the candidate profile."""
     data = await service.fork_resume_from_profile(db, user, payload.resume_name)
     return ResponseBuilder.success(
         data=data,
@@ -60,6 +62,7 @@ async def get_resume(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Fetch one resume owned by the authenticated candidate."""
     data = await service.get_resume(db, user, resume_id)
     return ResponseBuilder.success(data=data, message="Resume fetched.")
 
@@ -75,6 +78,7 @@ async def update_resume(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Update one resume owned by the authenticated candidate."""
     data = await service.update_resume(db, user, resume_id, payload)
     return ResponseBuilder.success(data=data, message="Resume updated.")
 
@@ -89,5 +93,6 @@ async def delete_resume(
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
+    """Delete one resume owned by the authenticated candidate."""
     await service.delete_resume(db, user, resume_id)
     return ResponseBuilder.success(data=None, message="Resume deleted.")

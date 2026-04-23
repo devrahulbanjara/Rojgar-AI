@@ -38,6 +38,7 @@ from app.shared.enums import ApplicationStatus, SyncAction
 
 
 def _utcnow() -> datetime:
+    """Return the current UTC datetime."""
     return datetime.now(timezone.utc)
 
 
@@ -47,6 +48,7 @@ async def _apply_signature(
     user_id: uuid.UUID | None,
     body: str,
 ) -> str:
+    """Append the recruiter's saved outreach signature to an email body."""
     if user_id is None:
         return body
 
@@ -64,6 +66,7 @@ async def _apply_signature(
 
 
 async def _get_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
+    """Return the active company ID for a recruiter user."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user_id,
@@ -82,6 +85,7 @@ async def _get_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
 async def _get_job_for_company(
     db: AsyncSession, job_id: uuid.UUID, company_id: uuid.UUID
 ) -> Job:
+    """Return a company-owned job or raise if unavailable."""
     result = await db.execute(
         select(Job).where(Job.id == job_id, Job.company_id == company_id)
     )
@@ -95,12 +99,14 @@ async def _get_job_for_company(
 
 
 async def _get_company(db: AsyncSession, company_id: uuid.UUID) -> Company | None:
+    """Fetch a company by ID."""
     return await db.scalar(select(Company).where(Company.id == company_id))
 
 
 async def _get_application_for_company(
     db: AsyncSession, application_id: uuid.UUID, company_id: uuid.UUID
 ) -> tuple[Application, Job]:
+    """Return an application and job visible to the company."""
     result = await db.execute(
         select(Application, Job)
         .join(Job, Job.id == Application.job_id)
@@ -118,6 +124,7 @@ async def _get_application_for_company(
 def _resolve_outreach_status(
     job: Job, application: Application
 ) -> ApplicationStatus | None:
+    """Resolve whether an application is ready for shortlist or rejection outreach."""
     if application.status in {
         ApplicationStatus.shortlisted,
         ApplicationStatus.interview_booked,
@@ -145,6 +152,7 @@ def _resolve_outreach_status(
 
 
 def _draft_to_response(draft: EmailDraft) -> EmailDraftResponse:
+    """Convert an email draft ORM instance into its response schema."""
     app = draft.application
     user = app.user
     return EmailDraftResponse(
@@ -181,6 +189,7 @@ def _compose_draft(
     feedback: str | None,
     booking_url: str | None = None,
 ) -> tuple[str, str]:
+    """Build a deterministic fallback outreach email draft."""
     safe_name = html.escape(candidate_name)
     safe_company = html.escape(company_name)
     safe_job = html.escape(job_title)
@@ -228,6 +237,7 @@ async def _compose_draft_with_fallback(
     feedback: str | None,
     booking_url: str | None = None,
 ) -> tuple[str, str]:
+    """Compose an AI outreach draft and fall back to the static template on failure."""
     if application_status == ApplicationStatus.shortlisted and not booking_url:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -276,6 +286,7 @@ async def _upsert_generated_draft(
     company: Company | None,
     generated_by_user_id: uuid.UUID | None = None,
 ) -> EmailDraft:
+    """Create or refresh a generated outreach draft for an application."""
     outreach_status = _resolve_outreach_status(job, application)
     if outreach_status is None:
         raise HTTPException(
@@ -340,6 +351,7 @@ async def prepare_drafts(
     background_tasks: BackgroundTasks,
     direct_send: bool = False,
 ) -> PrepareDraftsResponse:
+    """Prepare outreach drafts for all candidates ready on a job."""
     company_id = await _get_company_id(db, user_id)
     job = await _get_job_for_company(db, job_id, company_id)
     company = await _get_company(db, company_id)
@@ -473,6 +485,7 @@ async def prepare_drafts(
 async def get_drafts_for_job(
     db: AsyncSession, job_id: uuid.UUID, user_id: uuid.UUID
 ) -> list[EmailDraftResponse]:
+    """List outreach drafts for a job."""
     company_id = await _get_company_id(db, user_id)
     await _get_job_for_company(db, job_id, company_id)
 
@@ -491,6 +504,7 @@ async def generate_draft_for_application(
     application_id: uuid.UUID,
     user_id: uuid.UUID,
 ) -> EmailDraftResponse:
+    """Generate or refresh the outreach draft for one application."""
     company_id = await _get_company_id(db, user_id)
     application, job = await _get_application_for_company(
         db, application_id, company_id
@@ -532,6 +546,7 @@ async def update_draft(
     user_id: uuid.UUID,
     payload: UpdateDraftRequest,
 ) -> EmailDraftResponse:
+    """Update a saved outreach draft."""
     company_id = await _get_company_id(db, user_id)
     result = await db.execute(
         select(EmailDraft)
@@ -584,6 +599,7 @@ async def approve_draft(
     user_id: uuid.UUID,
     payload: ApproveDraftRequest,
 ) -> EmailDraftResponse:
+    """Approve or discard an outreach draft and send it when approved."""
     company_id = await _get_company_id(db, user_id)
     result = await db.execute(
         select(EmailDraft)
@@ -672,6 +688,7 @@ async def delete_draft(
     draft_id: uuid.UUID,
     user_id: uuid.UUID,
 ) -> DeleteDraftsResponse:
+    """Delete a single unsent outreach draft."""
     company_id = await _get_company_id(db, user_id)
     result = await db.execute(
         select(EmailDraft)
@@ -701,6 +718,7 @@ async def delete_all_drafts_for_job(
     job_id: uuid.UUID,
     user_id: uuid.UUID,
 ) -> DeleteDraftsResponse:
+    """Delete all unsent drafts for a job."""
     company_id = await _get_company_id(db, user_id)
     await _get_job_for_company(db, job_id, company_id)
 
@@ -729,6 +747,7 @@ async def send_all_drafts(
     user_id: uuid.UUID,
     background_tasks: BackgroundTasks,
 ) -> SendAllResponse:
+    """Queue sending for all unsent drafts on a job."""
     company_id = await _get_company_id(db, user_id)
     await _get_job_for_company(db, job_id, company_id)
 
@@ -764,6 +783,7 @@ async def send_all_drafts(
 
 
 async def _send_single_draft(draft: EmailDraft) -> None:
+    """Send one outreach email draft if email delivery is enabled."""
     if not settings.send_emails:
         logger.info(
             "Skipping real email send for draft {} because send_emails is disabled.",
@@ -784,6 +804,7 @@ async def _send_all_for_job(
     initiated_by_user_id: uuid.UUID | None = None,
     company_id: uuid.UUID | None = None,
 ) -> None:
+    """Send all pending drafts for a job in a background session."""
     if database_url is None:
         database_url = str(AsyncSessionLocal.kw["bind"].url)
 

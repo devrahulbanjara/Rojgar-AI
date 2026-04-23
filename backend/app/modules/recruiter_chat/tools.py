@@ -18,6 +18,7 @@ from app.shared.enums import JobStatus
 
 
 def utcnow() -> datetime:
+    """Return the current UTC datetime."""
     return datetime.now(timezone.utc)
 
 
@@ -25,6 +26,7 @@ async def get_active_company_id(
     db: AsyncSession,
     recruiter_id: uuid.UUID,
 ) -> uuid.UUID:
+    """Return the active company ID for a recruiter user."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == recruiter_id,
@@ -44,6 +46,7 @@ async def get_active_company(
     db: AsyncSession,
     recruiter_id: uuid.UUID,
 ) -> Company:
+    """Return the active company for a recruiter user."""
     company = await db.scalar(
         select(Company)
         .join(CompanyMembership, CompanyMembership.company_id == Company.id)
@@ -64,6 +67,7 @@ async def get_company_jobs(
     db: AsyncSession,
     company_id: uuid.UUID,
 ) -> list[Job]:
+    """List jobs belonging to a company."""
     rows = await db.execute(
         select(Job).where(Job.company_id == company_id).order_by(Job.created_at.desc())
     )
@@ -75,6 +79,7 @@ async def get_job_by_id_for_company(
     company_id: uuid.UUID,
     job_id: uuid.UUID,
 ) -> Job:
+    """Return one company-owned job by ID."""
     job = await db.scalar(
         select(Job).where(
             Job.id == job_id,
@@ -90,6 +95,7 @@ async def get_job_by_id_for_company(
 
 
 def effective_job_status(job: Job) -> str:
+    """Return the effective job status, accounting for expiry."""
     if (
         job.status == JobStatus.active
         and job.expires_at is not None
@@ -100,6 +106,7 @@ def effective_job_status(job: Job) -> str:
 
 
 def _normalize(text: str) -> str:
+    """Normalize free-text job queries for fuzzy matching."""
     text = text.lower().strip()
     text = re.sub(r"\bml\b", "machine learning", text)
     text = re.sub(r"\bfe\b", "frontend", text)
@@ -110,6 +117,7 @@ def _normalize(text: str) -> str:
 
 
 def find_job_matches(jobs: list[Job], user_text: str) -> list[Job]:
+    """Return the best fuzzy job matches for a user query."""
     query = _normalize(user_text)
     scored: list[tuple[int, Job]] = []
 
@@ -134,6 +142,7 @@ def find_job_matches(jobs: list[Job], user_text: str) -> list[Job]:
 
 
 def serialize_job_option(job: Job) -> dict[str, Any]:
+    """Serialize a job for chat selection options."""
     return {
         "job_id": str(job.id),
         "title": job.title,
@@ -148,6 +157,7 @@ def serialize_job_option(job: Job) -> dict[str, Any]:
 
 
 def serialize_job_list_item(job: Job) -> dict[str, Any]:
+    """Serialize a job for recruiter chat list responses."""
     return {
         "job_id": str(job.id),
         "title": job.title,
@@ -164,6 +174,7 @@ def serialize_job_list_item(job: Job) -> dict[str, Any]:
 
 
 def build_job_counts(jobs: list[Job]) -> dict[str, int]:
+    """Count company jobs by effective status."""
     active = 0
     expired = 0
     draft = 0
@@ -191,6 +202,7 @@ async def search_web(
     max_results: int = 5,
     country: str | None = None,
 ) -> list[dict[str, Any]]:
+    """Run a recruiter-chat web search query."""
     return await search_service.query(
         query=query,
         max_results=max_results,
@@ -203,6 +215,7 @@ def build_source_items(
     results: list[dict[str, Any]],
     limit: int = 4,
 ) -> list[dict[str, str]]:
+    """Build compact source items from search results."""
     items: list[dict[str, str]] = []
     for row in results[:limit]:
         title = (row.get("title") or row.get("url") or "Source").strip()

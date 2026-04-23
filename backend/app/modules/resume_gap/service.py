@@ -25,6 +25,7 @@ CACHE_TTL_SECONDS = 600
 
 
 def _serialize_resume(resume: Resume) -> dict:
+    """Serialize a resume into the gap-analysis provider payload format."""
     return {
         "headline": resume.headline,
         "summary": resume.summary,
@@ -53,6 +54,7 @@ def _serialize_resume(resume: Resume) -> dict:
 
 
 def _serialize_job(job: Job) -> dict:
+    """Serialize a job into the gap-analysis provider payload format."""
     return {
         "title": job.title,
         "overview": job.overview or "",
@@ -63,6 +65,7 @@ def _serialize_job(job: Job) -> dict:
 
 
 async def _load_resume(db: AsyncSession, resume_id: UUID, user_id: UUID) -> Resume:
+    """Load a user-owned resume with all fields needed for analysis."""
     result = await db.execute(
         select(Resume)
         .where(Resume.id == resume_id, Resume.user_id == user_id)
@@ -82,6 +85,7 @@ async def _load_resume(db: AsyncSession, resume_id: UUID, user_id: UUID) -> Resu
 
 
 async def _load_job(db: AsyncSession, job_id: UUID) -> Job:
+    """Load a job referenced during gap analysis."""
     result = await db.execute(select(Job).where(Job.id == job_id))
     job = result.scalar_one_or_none()
     if job is None:
@@ -97,6 +101,7 @@ async def analyze_gaps(
     user: User,
     payload: GapAnalysisRequest,
 ) -> GapAnalysisResult:
+    """Run gap analysis for a resume against a target job."""
     cache_key = f"resume_gap:{payload.resume_id}:{payload.job_id}"
     cached = await redis_service.get(cache_key)
     if cached:
@@ -122,6 +127,7 @@ async def auto_patch_resume(
     user: User,
     payload: AutoPatchRequest,
 ) -> AutoPatchResponse:
+    """Apply provider-generated resume improvements and invalidate caches."""
     resume = await _load_resume(db, payload.resume_id, user.id)
     patch = await _provider.build_patch(
         resume_data=_serialize_resume(resume),

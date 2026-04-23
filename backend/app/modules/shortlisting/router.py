@@ -31,6 +31,7 @@ async def trigger_shortlisting(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Trigger AI shortlisting for a job."""
     data = await service.trigger_shortlisting(db, job_id, user.id, background_tasks)
     return ResponseBuilder.success(data=data, message=data.message)
 
@@ -45,6 +46,7 @@ async def get_shortlisting_summary(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Return shortlisting progress and status for a job."""
     data = await service.get_shortlist_summary(db, job_id, user.id)
     return ResponseBuilder.success(data=data, message="Shortlist summary fetched.")
 
@@ -60,5 +62,6 @@ async def finalize_shortlist(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
+    """Finalize shortlist decisions for a job."""
     data = await service.finalize_shortlist(db, job_id, user.id, payload)
     return ResponseBuilder.success(data=data, message="Shortlist finalized.")

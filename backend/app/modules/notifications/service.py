@@ -16,6 +16,7 @@ from app.modules.recruiter_preferences.models import RecruiterPreference
 
 
 def _utcnow() -> datetime:
+    """Return the current UTC datetime."""
     return datetime.now(timezone.utc)
 
 
@@ -23,6 +24,7 @@ async def _user_allows_in_app_notifications(
     db: AsyncSession,
     user_id: uuid.UUID,
 ) -> bool:
+    """Return whether the user allows in-app notifications."""
     user = await db.scalar(select(User).where(User.id == user_id))
     if user is None:
         return False
@@ -49,6 +51,7 @@ async def create_notification(
     company_id: uuid.UUID | None = None,
     activity_event=None,
 ) -> Notification:
+    """Create in-app notifications for one user or all active company members."""
     if user_id is None and company_id is not None:
         result = await db.execute(
             select(CompanyMembership.user_id).where(
@@ -105,6 +108,7 @@ async def list_notifications(
     *,
     limit: int = 50,
 ) -> list[NotificationResponse]:
+    """List notifications for a user, newest first."""
     result = await db.execute(
         select(Notification)
         .where(Notification.user_id == user.id)
@@ -121,6 +125,7 @@ async def mark_notification_read(
     user: User,
     notification_id: str,
 ) -> NotificationResponse:
+    """Mark a single notification as read for a user."""
     result = await db.execute(
         select(Notification).where(
             Notification.id == notification_id,
@@ -142,6 +147,7 @@ async def mark_notification_read(
 
 
 async def mark_all_notifications_read(db: AsyncSession, user: User) -> int:
+    """Mark all unread notifications as read for a user."""
     result = await db.execute(
         update(Notification)
         .where(Notification.is_read.is_(False), Notification.user_id == user.id)

@@ -14,6 +14,7 @@ BANNED_PHRASES = {
 
 
 def validate_job_draft(draft: JobDraft) -> list[str]:
+    """Return validation warnings for a generated job draft."""
     errors: list[str] = []
 
     if not draft.title.strip():
