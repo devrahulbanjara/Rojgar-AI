@@ -14,6 +14,7 @@ from app.shared.enums import ApplicationStatus, SyncAction, SyncStatus
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
+    from app.modules.jobs.models import Job
     from app.modules.resumes.models import Resume
 
 
@@ -85,6 +86,7 @@ class Application(Base):
 
     user: Mapped[User] = relationship(lazy="joined")
     resume: Mapped[Resume] = relationship(lazy="joined")
+    job: Mapped[Job] = relationship(lazy="raise")
 
 
 class ApplicationSyncEvent(Base):
