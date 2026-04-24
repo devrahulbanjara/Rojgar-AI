@@ -36,6 +36,19 @@ def disable_side_effects(monkeypatch_session):
         _qdrant_mod.qdrant_service, "search_jobs", _mock_search_jobs
     )
 
+    # Bypass in-memory rate limiter so tests don't hit per-IP request caps.
+    # Must match the original signature (self, request, response) so FastAPI
+    # injects the Starlette types correctly and doesn't treat param names as
+    # required request body fields.
+    import fastapi_limiter.depends as _limiter_mod
+    from starlette.requests import Request
+    from starlette.responses import Response
+
+    async def _noop_rate_limit(self, request: Request, response: Response):
+        pass
+
+    monkeypatch_session.setattr(_limiter_mod.RateLimiter, "__call__", _noop_rate_limit)
+
     yield
     settings.send_emails = original_send_emails
     settings.redis_enabled = original_redis_enabled
