@@ -98,28 +98,30 @@ export function ScreeningTableSkeleton({ rows = 6 }: { rows?: number }) {
                 {Array.from({ length: rows }).map((_, index) => (
                   <tr key={index} className={styles.dataRow}>
                     <td>
-                      <div className={styles.candidateCell}>
-                        <SkeletonBlock
+                      <div className="cell-user">
+                        <div
+                          className="skeleton-block"
                           style={{
-                            width: '3.1rem',
-                            height: '3.1rem',
-                            borderRadius: '999px',
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            flexShrink: 0,
                           }}
                         />
                         <div className={styles.candidateMeta} style={{ width: '100%' }}>
                           <SkeletonBlock
                             style={{
                               width: `${54 + (index % 3) * 9}%`,
-                              height: '15px',
-                              borderRadius: '999px',
+                              height: '14px',
+                              borderRadius: '4px',
                             }}
                           />
                           <SkeletonBlock
                             style={{
                               width: `${68 + (index % 2) * 10}%`,
                               height: '12px',
-                              borderRadius: '999px',
-                              marginTop: '0.45rem',
+                              borderRadius: '4px',
+                              marginTop: '4px',
                             }}
                           />
                         </div>
@@ -129,17 +131,17 @@ export function ScreeningTableSkeleton({ rows = 6 }: { rows?: number }) {
                     <td>
                       <div className={styles.reviewCell}>
                         <SkeletonBlock
-                          style={{ width: '100%', height: '13px', borderRadius: '999px' }}
+                          style={{ width: '100%', height: '13px', borderRadius: '4px' }}
                         />
                         <SkeletonBlock
-                          style={{ width: '92%', height: '13px', borderRadius: '999px' }}
+                          style={{ width: '92%', height: '13px', borderRadius: '4px' }}
                         />
                         <div className={styles.reviewActions}>
                           <SkeletonBlock
-                            style={{ width: '4.9rem', height: '12px', borderRadius: '999px' }}
+                            style={{ width: '4.9rem', height: '12px', borderRadius: '4px' }}
                           />
                           <SkeletonBlock
-                            style={{ width: '5.6rem', height: '12px', borderRadius: '999px' }}
+                            style={{ width: '5.6rem', height: '12px', borderRadius: '4px' }}
                           />
                         </div>
                       </div>
@@ -148,10 +150,7 @@ export function ScreeningTableSkeleton({ rows = 6 }: { rows?: number }) {
                     <td>
                       <div className={styles.scoreCell}>
                         <SkeletonBlock
-                          style={{ width: '4.5rem', height: '1.4rem', borderRadius: '999px' }}
-                        />
-                        <SkeletonBlock
-                          style={{ width: '7rem', height: '0.42rem', borderRadius: '999px' }}
+                          style={{ width: '3.5rem', height: '1rem', borderRadius: '4px' }}
                         />
                       </div>
                     </td>
@@ -159,16 +158,8 @@ export function ScreeningTableSkeleton({ rows = 6 }: { rows?: number }) {
                     <td>
                       <div className={styles.statusActionCell}>
                         <SkeletonBlock
-                          style={{ width: '7.4rem', height: '2rem', borderRadius: '999px' }}
+                          style={{ width: '7.4rem', height: '2rem', borderRadius: '0.5rem' }}
                         />
-                        <div className={styles.rowActionButtons}>
-                          <SkeletonBlock
-                            style={{ width: '2.3rem', height: '2.3rem', borderRadius: '999px' }}
-                          />
-                          <SkeletonBlock
-                            style={{ width: '2.3rem', height: '2.3rem', borderRadius: '999px' }}
-                          />
-                        </div>
                       </div>
                     </td>
                   </tr>

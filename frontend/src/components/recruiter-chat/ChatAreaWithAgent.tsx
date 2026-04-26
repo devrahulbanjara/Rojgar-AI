@@ -8,6 +8,7 @@ import Image from 'next/image'
 
 import { LIVE_DATA_UNAVAILABLE_MESSAGE, isBackendConnectionStatus } from '@/lib/backendConnection'
 import type {
+  CandidateSearchResult,
   ChatExchangeApiResponse,
   ChatHistoryApiResponse,
   ChatHistoryMessage,
@@ -24,6 +25,7 @@ import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '@/sto
 import { ArrowUp, RotateCcw, Square } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
 
+import { CandidateCardGrid } from './CandidateCardGrid'
 import { JobCardGrid } from './JobCardGrid'
 import { JobEditDiffCard } from './JobEditDiffCard'
 import { RecruiterChatPanelSkeleton } from './skeletons'
@@ -196,6 +198,24 @@ function getSources(data: Record<string, unknown> | null | undefined): SourceIte
 
 function asJobListResult(data: Record<string, unknown> | null | undefined) {
   return data as unknown as CompanyJobListResult
+}
+
+function asCandidateSearchResult(
+  data: Record<string, unknown> | null | undefined,
+): CandidateSearchResult {
+  const raw = (data ?? {}) as Record<string, unknown>
+  const rawItems = (raw.candidates ?? raw.results ?? []) as Array<Record<string, unknown>>
+  const candidates = rawItems.map((c) => ({
+    user_id: (c.user_id ?? '') as string,
+    application_id: (c.application_id ?? '') as string,
+    avatar_url: (c.avatar_url ?? null) as string | null,
+    full_name: (c.full_name ?? c.candidate_name ?? '') as string,
+    applied_for_job: (c.applied_for_job ?? c.job_title ?? '') as string,
+    application_status: (c.application_status ?? c.status ?? '') as string,
+    match_score: (c.match_score ?? 0) as number,
+  }))
+  const total = typeof raw.total === 'number' ? raw.total : candidates.length
+  return { candidates, total }
 }
 
 function asJobEditPreviewData(data: Record<string, unknown> | null | undefined) {
@@ -726,6 +746,8 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
               const inlineJobCard =
                 message.response_type === 'job_list' && message.data ? (
                   <JobCardGrid data={asJobListResult(message.data)} />
+                ) : message.response_type === 'candidate_search_results' && message.data ? (
+                  <CandidateCardGrid data={asCandidateSearchResult(message.data)} />
                 ) : null
               const card = renderAssistantCard(
                 message,

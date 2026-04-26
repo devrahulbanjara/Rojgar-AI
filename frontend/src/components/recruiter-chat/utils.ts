@@ -183,6 +183,8 @@ export function getUiTypeToolName(uiType: RecruiterChatUiType): string | null {
       return 'research_salary'
     case 'job_edit_preview':
       return 'prepare_job_edit'
+    case 'candidate_search_results':
+      return 'search_company_candidates'
     default:
       return null
   }

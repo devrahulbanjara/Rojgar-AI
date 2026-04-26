@@ -36,6 +36,13 @@ def disable_side_effects(monkeypatch_session):
         _qdrant_mod.qdrant_service, "search_jobs", _mock_search_jobs
     )
 
+    async def _mock_search_applications(**_kwargs):
+        return []
+
+    monkeypatch_session.setattr(
+        _qdrant_mod.qdrant_service, "search_applications", _mock_search_applications
+    )
+
     # Bypass in-memory rate limiter so tests don't hit per-IP request caps.
     # Must match the original signature (self, request, response) so FastAPI
     # injects the Starlette types correctly and doesn't treat param names as

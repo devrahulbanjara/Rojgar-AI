@@ -278,6 +278,50 @@ export interface RecruiterCandidateDetailView {
   outreach_audit: ApplicationOutreachAuditItem[]
 }
 
+export interface SemanticCandidateSearchResult {
+  application_id: string
+  candidate_id: string
+  applicant_name: string
+  applicant_email: string
+  applicant_avatar_url: string | null
+  job_title: string
+  job_id: string
+  status: ApplicationStatus
+  score: number | null
+  feedback: string | null
+  match_score: number
+  applied_at: string
+  updated_at: string
+}
+
+export interface SemanticCandidateSearchResponse {
+  query: string
+  total: number
+  candidates: SemanticCandidateSearchResult[]
+}
+
+export interface SimilarCandidateResult {
+  application_id: string
+  candidate_id: string
+  applicant_name: string
+  applicant_email: string
+  applicant_avatar_url: string | null
+  job_title: string
+  job_id: string
+  status: ApplicationStatus
+  score: number | null
+  similarity_score: number
+  applied_at: string
+  updated_at: string
+}
+
+export interface SimilarCandidatesResponse {
+  reference_application_id: string
+  reference_candidate_name: string
+  total: number
+  candidates: SimilarCandidateResult[]
+}
+
 // ---------------------------------------------------------------------------
 // API endpoints
 // ---------------------------------------------------------------------------
@@ -402,6 +446,32 @@ export const applicationsApi = baseApi.injectEndpoints({
         { type: 'Applications', id: application_id },
       ],
     }),
+
+    /** GET /applications/company/me/candidates/search — semantic candidate search */
+    semanticSearchCandidates: builder.query<
+      ApiResponse<SemanticCandidateSearchResponse>,
+      { q: string; status?: string[]; page?: number; size?: number }
+    >({
+      query: (params) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/company/me/candidates/search`,
+        params,
+      }),
+      providesTags: ['Candidates'],
+    }),
+
+    /** GET /applications/company/me/candidates/{id}/similar — find similar candidates */
+    getSimilarCandidates: builder.query<
+      ApiResponse<SimilarCandidatesResponse>,
+      { application_id: string; limit?: number }
+    >({
+      query: ({ application_id, limit }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/company/me/candidates/${application_id}/similar`,
+        params: limit ? { limit } : undefined,
+      }),
+      providesTags: (_result, _error, { application_id }) => [
+        { type: 'Candidates', id: application_id },
+      ],
+    }),
   }),
 })
 
@@ -418,4 +488,8 @@ export const {
   useUpdateApplicationReviewMutation,
   useUpdateApplicationStatusMutation,
   useRespondToOfferMutation,
+  useSemanticSearchCandidatesQuery,
+  useLazySemanticSearchCandidatesQuery,
+  useGetSimilarCandidatesQuery,
+  useLazyGetSimilarCandidatesQuery,
 } = applicationsApi

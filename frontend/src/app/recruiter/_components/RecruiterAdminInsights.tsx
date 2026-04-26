@@ -2,6 +2,8 @@
 
 import { type RecruiterAdminDashboardAnalyticsData } from '@/store/services/dashboardApi'
 
+import DonutChart, { type DonutSegment } from '@/components/common/DonutChart'
+
 type RecruiterAdminInsightsProps = {
   analytics: RecruiterAdminDashboardAnalyticsData | undefined
   isLoading: boolean
@@ -14,19 +16,28 @@ function formatShortDate(value: string): string {
   })
 }
 
+function buildTeamAccessSegments(
+  breakdown: RecruiterAdminDashboardAnalyticsData['membership_breakdown'],
+): DonutSegment[] {
+  const order: Array<{ status: string; tone: DonutSegment['tone']; label: string }> = [
+    { status: 'active', tone: 'success', label: 'Active' },
+    { status: 'pending', tone: 'warning', label: 'Pending' },
+    { status: 'rejected', tone: 'danger', label: 'Rejected' },
+  ]
+  return order.map(({ status, tone, label }) => ({
+    label,
+    value: breakdown.find((b) => b.status === status)?.count ?? 0,
+    tone,
+  }))
+}
+
 function InsightsSkeleton() {
   return (
     <>
       <div className="dashboard-metric-grid dashboard-metric-grid--recruiter-admin-top">
         {[
-          {
-            key: 'active-recruiters',
-            label: 'Active recruiters',
-          },
-          {
-            key: 'pending-join-requests',
-            label: 'Pending join requests',
-          },
+          { key: 'active-recruiters', label: 'Active recruiters' },
+          { key: 'pending-join-requests', label: 'Pending join requests' },
           { key: 'requested', label: 'Requested' },
           { key: 'approved', label: 'Approved' },
         ].map((item) => (
@@ -40,33 +51,18 @@ function InsightsSkeleton() {
       </div>
 
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        <div className="dash-card" aria-hidden="true">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Team access status</div>
-              <div className="dash-card__subtitle">
-                Current company membership mix across active, pending, and rejected access.
+        {['Team access status', 'Join request trend'].map((title) => (
+          <div key={title} className="dash-card" aria-hidden="true">
+            <div className="dash-card__header">
+              <div>
+                <div className="dash-card__title">{title}</div>
               </div>
             </div>
-          </div>
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
-          </div>
-        </div>
-
-        <div className="dash-card" aria-hidden="true">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Join request trend</div>
-              <div className="dash-card__subtitle">
-                Requested, approved, and rejected team access over time.
-              </div>
+            <div className="dash-card__body recruiter-dashboard__analytics-body">
+              <div className="skeleton-block dashboard-analytics__chart-skeleton" />
             </div>
           </div>
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="dash-card" aria-hidden="true">
@@ -98,7 +94,6 @@ export default function RecruiterAdminInsights({
     return null
   }
 
-  const maxMembership = Math.max(...analytics.membership_breakdown.map((item) => item.count), 1)
   const maxJoinRequests = Math.max(
     ...analytics.join_request_timeseries.map((item) => item.requested),
     1,
@@ -111,18 +106,12 @@ export default function RecruiterAdminInsights({
     (sum, item) => sum + item.approved,
     0,
   )
-  const rejectedTotal = analytics.join_request_timeseries.reduce(
-    (sum, item) => sum + item.rejected,
-    0,
-  )
   const pendingJoinRequestsValueClassName =
     analytics.stats.pending_join_requests > 0
       ? 'stat-card__value recruiter-dashboard__stat-value--warning'
       : 'stat-card__value'
-  const approvedValueClassName =
-    rejectedTotal > 0
-      ? 'stat-card__value recruiter-dashboard__stat-value--primary'
-      : 'stat-card__value'
+
+  const teamAccessSegments = buildTeamAccessSegments(analytics.membership_breakdown)
 
   return (
     <>
@@ -152,37 +141,25 @@ export default function RecruiterAdminInsights({
 
         <div className="stat-card dashboard-metric-card">
           <div className="dashboard-metric-card__copy">
-            <div className={approvedValueClassName}>{approvedTotal}</div>
+            <div className="stat-card__value">{approvedTotal}</div>
             <div className="stat-card__label">Approved</div>
           </div>
         </div>
       </div>
 
+      {/* Row: Team access donut + Join request trend */}
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
         <div className="dash-card">
           <div className="dash-card__header">
             <div>
               <div className="dash-card__title">Team access status</div>
               <div className="dash-card__subtitle">
-                Current company membership mix across active, pending, and rejected access.
+                Current company membership breakdown by access state.
               </div>
             </div>
           </div>
           <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-funnel-list">
-              {analytics.membership_breakdown.map((item) => (
-                <div key={item.status} className="dashboard-funnel-list__row">
-                  <div className="dashboard-funnel-list__label">{item.status}</div>
-                  <div className="dashboard-funnel-list__track">
-                    <span
-                      className={`dashboard-funnel-list__fill dashboard-funnel-list__fill--${item.status}`}
-                      style={{ width: `${(item.count / maxMembership) * 100}%` }}
-                    />
-                  </div>
-                  <div className="dashboard-funnel-list__value">{item.count}</div>
-                </div>
-              ))}
-            </div>
+            <DonutChart segments={teamAccessSegments} size={148} strokeWidth={26} />
           </div>
         </div>
 
@@ -214,6 +191,7 @@ export default function RecruiterAdminInsights({
         </div>
       </div>
 
+      {/* Recruiter workload */}
       <div className="dash-card">
         <div className="dash-card__header">
           <div>

@@ -20,6 +20,8 @@ from app.modules.applications.schemas import (
     RecruiterCandidateDetailView,
     RecruiterCandidateListItem,
     RecruiterApplicationView,
+    SemanticCandidateSearchResponse,
+    SimilarCandidatesResponse,
     UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
@@ -86,6 +88,33 @@ async def list_my_company_applications(
 
 
 @router.get(
+    "/company/me/candidates/search",
+    response_model=UnifiedResponse[SemanticCandidateSearchResponse],
+    summary="Semantic candidate search (natural language query)",
+)
+async def search_candidates_semantic(
+    q: str = Query(
+        ..., min_length=1, max_length=500, description="Free-text search query"
+    ),
+    status: list[str] | None = Query(
+        default=None, description="Filter by application statuses"
+    ),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=100),
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db,
+):
+    """
+    Search candidates semantically across your company.
+
+    The query is embedded and matched against the resume vectors stored in
+    Qdrant.  Results are ranked by cosine similarity.
+    """
+    data = await service.semantic_search_candidates(db, user, q, status, page, size)
+    return ResponseBuilder.success(data=data, message="Search complete.")
+
+
+@router.get(
     "/company/me/candidates",
     response_model=UnifiedResponse[list[RecruiterCandidateListItem]],
     summary="List candidate applications for the authenticated recruiter's company",
@@ -108,6 +137,25 @@ async def list_my_company_candidates(
         size,
     )
     return ResponseBuilder.success(data=data, message="Candidates fetched.")
+
+
+@router.get(
+    "/company/me/candidates/{application_id}/similar",
+    response_model=UnifiedResponse[SimilarCandidatesResponse],
+    summary="Find candidates similar to a given application",
+)
+async def get_similar_candidates(
+    application_id: str,
+    limit: int = Query(default=10, ge=1, le=50),
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db,
+):
+    """
+    Given one candidate application, surface the most similar candidates
+    from the same company's talent pool using vector similarity.
+    """
+    data = await service.find_similar_candidates(db, user, application_id, limit)
+    return ResponseBuilder.success(data=data, message="Similar candidates fetched.")
 
 
 @router.get(

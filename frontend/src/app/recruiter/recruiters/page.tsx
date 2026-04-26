@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
@@ -14,10 +14,23 @@ import {
   useUpdateRecruiterStatusMutation,
 } from '@/store/services/companyApi'
 import type { RecruiterMember } from '@/store/services/companyApi'
+import { Mail, Search, UserRound, X } from 'lucide-react'
 
-import MediaBadge from '@/components/common/MediaBadge'
+function getAvatarColor(name: string): string {
+  const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return colors[seed % colors.length]
+}
 
-function StatusBadge({ status }: { status: RecruiterMember['status'] }) {
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+function StatusDot({ status }: { status: RecruiterMember['status'] }) {
   const map = {
     active: { label: 'Active', color: '#0cce6b' },
     pending: { label: 'Pending', color: '#f59e0b' },
@@ -25,57 +38,95 @@ function StatusBadge({ status }: { status: RecruiterMember['status'] }) {
   }
   const { label, color } = map[status]
   return (
-    <span
-      className="recruiters-status-badge"
-      style={
-        {
-          background: color + '1A',
-          color,
-        } as React.CSSProperties
-      }
-    >
-      {label}
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+      <span
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: '50%',
+          backgroundColor: color,
+          flexShrink: 0,
+        }}
+      />
+      <span style={{ fontSize: '0.84rem', fontWeight: 500, color: '#374151' }}>{label}</span>
     </span>
   )
 }
 
-function RecruiterRowSkeleton() {
+function RecruitersTableSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="item-row item-row--pad" aria-hidden="true" style={{ pointerEvents: 'none' }}>
-      <div
-        className="skeleton-block"
-        style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }}
-      />
-      <div className="item-row__info" style={{ flex: 1 }}>
-        <div
-          className="skeleton-block"
-          style={{ width: '150px', height: '1.25rem', marginBottom: '0.25rem' }}
-        />
-        <div
-          className="skeleton-block"
-          style={{ width: '200px', height: '0.875rem', marginBottom: '0.75rem' }}
-        />
-        <div className="cell-actions">
-          <div
-            className="skeleton-block"
-            style={{ width: '60px', height: '1.5rem', borderRadius: '9999px' }}
-          />
-          <div className="skeleton-block" style={{ width: '100px', height: '0.875rem' }} />
-        </div>
-      </div>
-      <div className="cell-actions" style={{ gap: '0.5rem' }}>
-        <div
-          className="skeleton-block"
-          style={{ width: '80px', height: '2rem', borderRadius: '0.375rem' }}
-        />
+    <div className="dash-card">
+      <div className="table-scroll">
+        <table className="dash-table">
+          <thead>
+            <tr>
+              <th>Recruiter</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: count }).map((_, index) => (
+              <tr key={index}>
+                <td>
+                  <div className="cell-user">
+                    <div className="skeleton-block cell-user__avatar" />
+                    <div className="recruiter-candidates-table__identity">
+                      <div
+                        className="skeleton-block"
+                        style={{ width: `${110 + (index % 3) * 20}px`, height: '1.125rem' }}
+                      />
+                      <div
+                        className="skeleton-block"
+                        style={{
+                          width: `${140 + (index % 2) * 30}px`,
+                          height: '0.875rem',
+                          marginTop: '4px',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <div
+                      className="skeleton-block"
+                      style={{ width: 7, height: 7, borderRadius: '50%' }}
+                    />
+                    <div className="skeleton-block" style={{ width: '52px', height: '0.875rem' }} />
+                  </div>
+                </td>
+                <td>
+                  <div className="skeleton-block" style={{ width: '100px', height: '1.125rem' }} />
+                </td>
+                <td>
+                  <div
+                    className="skeleton-block"
+                    style={{ width: '80px', height: '2rem', borderRadius: '999px' }}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
 
+const STATUS_FILTER_OPTIONS: Array<{ value: 'all' | RecruiterMember['status']; label: string }> = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'rejected', label: 'Rejected' },
+]
+
 export default function RecruitersPage() {
   const router = useRouter()
   const { user } = useAppSelector((s) => s.auth)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | RecruiterMember['status']>('all')
 
   useEffect(() => {
     if (user && user.primary_role !== 'recruiter_admin') {
@@ -88,6 +139,7 @@ export default function RecruitersPage() {
     data: response,
     isLoading,
     isError,
+    refetch,
   } = useGetCompanyRecruitersQuery(undefined, {
     skip: user?.primary_role !== 'recruiter_admin',
   })
@@ -95,13 +147,22 @@ export default function RecruitersPage() {
   const [updateStatus, { isLoading: isUpdating }] = useUpdateRecruiterStatusMutation()
   const [removeRecruiter, { isLoading: isRemoving }] = useRemoveRecruiterMutation()
 
+  const recruiters: RecruiterMember[] = useMemo(() => response?.data ?? [], [response?.data])
+
+  const filteredRecruiters = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+
+    return recruiters.filter((r) => {
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false
+      if (!normalizedSearch) return true
+      return [r.full_name, r.email].some((v) => v.toLowerCase().includes(normalizedSearch))
+    })
+  }, [recruiters, searchTerm, statusFilter])
+
+  const activeCount = recruiters.filter((r) => r.status === 'active').length
+  const pendingCount = recruiters.filter((r) => r.status === 'pending').length
+
   if (!user || user.primary_role !== 'recruiter_admin') return null
-
-  const recruiters: RecruiterMember[] = response?.data ?? []
-
-  const pending = recruiters.filter((r) => r.status === 'pending')
-  const active = recruiters.filter((r) => r.status === 'active')
-  const rejected = recruiters.filter((r) => r.status === 'rejected')
 
   async function handleApprove(membershipId: string) {
     try {
@@ -132,17 +193,19 @@ export default function RecruitersPage() {
 
   return (
     <div className="dash-content container container--app-shell">
-      {/* Header */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Recruiters</h2>
-          <p className="dash-page-header__subtitle">Manage recruiters for your company.</p>
+          <p className="dash-page-header__subtitle">
+            Manage your company&apos;s recruiting team members, approve requests, and control
+            access.
+          </p>
         </div>
         <div className="dash-page-header__actions">
           <span className="page-header-hint">
             {isLoading
               ? 'Loading...'
-              : `${active.length} recruiter${active.length === 1 ? '' : 's'}`}
+              : `${activeCount} active${pendingCount > 0 ? ` · ${pendingCount} pending` : ''}`}
           </span>
           <Link href="/recruiter/company/settings" className="btn btn--primary btn--sm">
             Invite recruiter
@@ -150,105 +213,90 @@ export default function RecruitersPage() {
         </div>
       </div>
 
-      {isError && (
-        <div className="dash-card">
-          <div className="dash-card__body">Failed to load recruiters. Please refresh.</div>
-        </div>
-      )}
-
-      {/* Pending requests */}
-      {!isLoading && pending.length > 0 && (
-        <div className="dash-card content-fade-in">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Pending Requests</div>
-              <div className="dash-card__subtitle">Recruiters awaiting your approval</div>
-            </div>
-            <span className="skill-pill" style={{ background: '#f59e0b1A', color: '#f59e0b' }}>
-              {pending.length}
-            </span>
-          </div>
-          <div className="dash-card__body dash-card__body--no-top">
-            {pending.map((r) => (
-              <RecruiterRow key={r.membership_id} recruiter={r}>
-                <button
-                  className="btn btn--success btn--sm"
-                  disabled={isUpdating || isRemoving}
-                  onClick={() => handleApprove(r.membership_id)}
-                >
-                  Approve
-                </button>
-                <button
-                  className="btn btn--danger btn--sm"
-                  disabled={isUpdating || isRemoving}
-                  onClick={() => handleReject(r.membership_id)}
-                >
-                  Reject
-                </button>
-              </RecruiterRow>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Active recruiters */}
       <div className="dash-card">
-        <div className="dash-card__header">
-          <div className="dash-card__title">Active Recruiters</div>
-        </div>
-        <div className="dash-card__body dash-card__body--no-top">
-          {isLoading ? (
-            <>
-              <RecruiterRowSkeleton />
-              <RecruiterRowSkeleton />
-              <RecruiterRowSkeleton />
-            </>
-          ) : active.length === 0 ? (
-            <p style={{ color: 'var(--color-muted)', padding: '1rem 0' }}>
-              No active recruiters yet.
-            </p>
-          ) : (
-            <div className="content-fade-in">
-              {active.map((r) => (
-                <RecruiterRow key={r.membership_id} recruiter={r}>
-                  <button
-                    className="btn btn--ghost btn--sm recruiters-remove-btn"
-                    disabled={isUpdating || isRemoving}
-                    onClick={() => handleRemove(r.membership_id)}
-                  >
-                    Remove
-                  </button>
-                </RecruiterRow>
-              ))}
-            </div>
-          )}
+        <div className="dash-card__body recruiter-candidates-toolbar">
+          <div className="dash-page-toolbar__search recruiter-candidates-toolbar__search">
+            <span className="dash-page-toolbar__icon">
+              <Search size={16} aria-hidden="true" />
+            </span>
+            <input
+              type="text"
+              className="dash-page-toolbar__input"
+              placeholder="Search by name or email"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+            {searchTerm ? (
+              <button
+                type="button"
+                className="dash-page-toolbar__clear"
+                onClick={() => setSearchTerm('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
+          </div>
+
+          <select
+            className="resume-field__input recruiter-candidates-toolbar__select"
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as 'all' | RecruiterMember['status'])
+            }
+          >
+            {STATUS_FILTER_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Rejected */}
-      {!isLoading && rejected.length > 0 && (
-        <div className="dash-card content-fade-in">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Rejected Requests</div>
-              <div className="dash-card__subtitle">Previously declined recruiter requests</div>
-            </div>
-            <span className="skill-pill" style={{ background: '#ef44441A', color: '#ef4444' }}>
-              {rejected.length}
-            </span>
+      {isLoading ? (
+        <RecruitersTableSkeleton count={4} />
+      ) : isError ? (
+        <div className="dash-card">
+          <div className="dash-card__body">
+            Failed to load recruiters.{' '}
+            <button className="auth__inline-link" onClick={() => void refetch()}>
+              Try again
+            </button>
           </div>
-          <div className="dash-card__body dash-card__body--no-top">
-            {rejected.map((r) => (
-              <RecruiterRow key={r.membership_id} recruiter={r}>
-                <button
-                  className="btn btn--outline btn--sm"
-                  disabled={isUpdating || isRemoving}
-                  onClick={() => handleApprove(r.membership_id)}
-                >
-                  Re-approve
-                </button>
-              </RecruiterRow>
-            ))}
+        </div>
+      ) : filteredRecruiters.length === 0 ? (
+        <div className="dash-card">
+          <div className="dash-card__body dash-empty-state">
+            <UserRound className="dash-empty-state__icon" />
+            <p>No recruiters match these filters.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="dash-card">
+          <div className="table-scroll">
+            <table className="dash-table">
+              <thead>
+                <tr>
+                  <th>Recruiter</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRecruiters.map((recruiter) => (
+                  <RecruiterRow
+                    key={recruiter.membership_id}
+                    recruiter={recruiter}
+                    isBusy={isUpdating || isRemoving}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -256,52 +304,95 @@ export default function RecruitersPage() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Row sub-component
-// ---------------------------------------------------------------------------
-
 function RecruiterRow({
   recruiter,
-  children,
+  isBusy,
+  onApprove,
+  onReject,
+  onRemove,
 }: {
   recruiter: RecruiterMember
-  children: React.ReactNode
+  isBusy: boolean
+  onApprove: (id: string) => void
+  onReject: (id: string) => void
+  onRemove: (id: string) => void
 }) {
   const initials = getInitials(recruiter.full_name, 'R')
-  const joinedDate = new Date(recruiter.joined_at).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  const color = getAvatarColor(recruiter.full_name)
 
   return (
-    <div className="item-row item-row--pad">
-      <MediaBadge
-        src={recruiter.avatar_url}
-        alt={recruiter.full_name}
-        fallback={initials}
-        className="item-row__logo item-row__logo--circle"
-        sizes="40px"
-        style={
-          {
-            '--logo-bg': '#7928ca1A',
-            '--logo-color': '#7928ca',
-          } as React.CSSProperties
-        }
-      />
-
-      <div className="item-row__info">
-        <div className="item-row__title">{recruiter.full_name}</div>
-        <div className="item-row__sub">{recruiter.email}</div>
-        <div className="recruiters-row-meta">
-          <StatusBadge status={recruiter.status} />
-          <span>Joined {joinedDate}</span>
+    <tr>
+      <td>
+        <div className="cell-user">
+          <div
+            className="cell-user__avatar"
+            style={
+              {
+                '--avatar-bg': color + '1A',
+                '--avatar-color': color,
+                backgroundImage: recruiter.avatar_url ? `url(${recruiter.avatar_url})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              } as CSSProperties
+            }
+          >
+            {!recruiter.avatar_url && initials}
+          </div>
+          <div className="recruiter-candidates-table__identity">
+            <div className="recruiter-candidates-table__name">{recruiter.full_name}</div>
+            <div className="recruiter-candidates-table__meta">
+              <span>
+                <Mail size={12} aria-hidden="true" />
+                {recruiter.email}
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className="cell-actions" style={{ gap: '0.5rem' }}>
-        {children}
-      </div>
-    </div>
+      </td>
+      <td>
+        <StatusDot status={recruiter.status} />
+      </td>
+      <td className="cell-muted">{formatDate(recruiter.joined_at)}</td>
+      <td>
+        <div className="cell-actions" style={{ gap: '0.5rem', justifyContent: 'flex-end' }}>
+          {recruiter.status === 'pending' && (
+            <>
+              <button
+                className="btn btn--success btn--sm"
+                disabled={isBusy}
+                onClick={() => onApprove(recruiter.membership_id)}
+              >
+                Approve
+              </button>
+              <button
+                className="btn btn--danger btn--sm"
+                disabled={isBusy}
+                onClick={() => onReject(recruiter.membership_id)}
+              >
+                Reject
+              </button>
+            </>
+          )}
+          {recruiter.status === 'active' && (
+            <button
+              className="btn btn--ghost btn--sm recruiters-remove-btn"
+              disabled={isBusy}
+              onClick={() => onRemove(recruiter.membership_id)}
+            >
+              Remove
+            </button>
+          )}
+          {recruiter.status === 'rejected' && (
+            <button
+              className="btn btn--outline btn--sm"
+              disabled={isBusy}
+              onClick={() => onApprove(recruiter.membership_id)}
+            >
+              Re-approve
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
   )
 }

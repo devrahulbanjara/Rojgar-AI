@@ -2,6 +2,8 @@ import uuid
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
+from fastapi_limiter.depends import RateLimiter
+from pyrate_limiter import Duration, Limiter, Rate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -27,6 +29,7 @@ db_dep = Depends(get_db)
     "/sessions",
     response_model=UnifiedResponse[ChatSessionResponse],
     summary="Create a recruiter chat session",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE * 5))))],
 )
 async def create_recruiter_chat_session(
     user: User = Depends(require_active_membership),
@@ -41,6 +44,7 @@ async def create_recruiter_chat_session(
     "/sessions",
     response_model=UnifiedResponse[list[ChatSessionResponse]],
     summary="List recruiter chat sessions",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
 )
 async def list_recruiter_chat_sessions(
     user: User = Depends(require_active_membership),
@@ -57,6 +61,7 @@ async def list_recruiter_chat_sessions(
     "/sessions/{session_id}/history",
     response_model=UnifiedResponse[ChatHistoryResponse],
     summary="Get recruiter chat history",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
 )
 async def get_recruiter_chat_history(
     session_id: uuid.UUID,
@@ -72,6 +77,7 @@ async def get_recruiter_chat_history(
     "/sessions/{session_id}/messages",
     response_model=UnifiedResponse[ChatExchangeResponse],
     summary="Send a recruiter chat message",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(20, Duration.MINUTE))))],
 )
 async def send_recruiter_chat_message(
     session_id: uuid.UUID,
@@ -87,6 +93,7 @@ async def send_recruiter_chat_message(
 @router.post(
     "/sessions/{session_id}/messages/stream",
     summary="Stream a recruiter chat message response",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(20, Duration.MINUTE))))],
 )
 async def stream_recruiter_chat_message(
     session_id: uuid.UUID,
@@ -111,6 +118,7 @@ async def stream_recruiter_chat_message(
     "/sessions/{session_id}/confirm-job-selection",
     response_model=UnifiedResponse[ChatExchangeResponse],
     summary="Confirm a specific job choice for recruiter chat",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(15, Duration.MINUTE))))],
 )
 async def confirm_recruiter_chat_job_selection(
     session_id: uuid.UUID,
@@ -127,6 +135,7 @@ async def confirm_recruiter_chat_job_selection(
     "/sessions/{session_id}/confirm-job-edit",
     response_model=UnifiedResponse[ChatExchangeResponse],
     summary="Approve or cancel the pending recruiter chat job edit",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(15, Duration.MINUTE))))],
 )
 async def confirm_recruiter_chat_job_edit(
     session_id: uuid.UUID,
@@ -143,6 +152,7 @@ async def confirm_recruiter_chat_job_edit(
     "/sessions/{session_id}",
     response_model=UnifiedResponse[None],
     summary="Delete a recruiter chat session",
+    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE * 5))))],
 )
 async def delete_recruiter_chat_session(
     session_id: uuid.UUID,

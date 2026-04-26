@@ -43,12 +43,10 @@ export default function RecruiterEditJobPage() {
     return (
       <div className="dash-content container container--app-shell">
         <div className="job-editor-page">
-          <div className="job-editor-page__header">
-            <Link href="/recruiter/jobs" className="job-editor-page__back">
-              <ArrowLeft size={16} aria-hidden="true" />
-              <span>Back to Jobs</span>
-            </Link>
-          </div>
+          <Link href="/recruiter/jobs" className="jd-back">
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to Jobs
+          </Link>
 
           <div className="dash-page-header">
             <div className="dash-page-header__left">
@@ -97,12 +95,10 @@ export default function RecruiterEditJobPage() {
   return (
     <div className="dash-content container container--app-shell">
       <div className="job-editor-page">
-        <div className="job-editor-page__header">
-          <Link href="/recruiter/jobs" className="job-editor-page__back">
-            <ArrowLeft size={16} aria-hidden="true" />
-            <span>Back to Jobs</span>
-          </Link>
-        </div>
+        <Link href="/recruiter/jobs" className="jd-back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Jobs
+        </Link>
 
         <div className="dash-page-header">
           <div className="dash-page-header__left">
