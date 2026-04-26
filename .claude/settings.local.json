@@ -6,7 +6,9 @@
       "Bash(uvx ruff:*)",
       "Bash(python3 /Users/devrahulbanjara/.claude/skills/ui-ux-pro-max/scripts/search.py \"animation smooth professional landing page\" --domain ux -n 15)",
       "Bash(npx next:*)",
-      "Bash(pnpm stylelint:fix)"
+      "Bash(pnpm stylelint:fix)",
+      "Bash(npx tsc *)",
+      "Bash(pnpm lint:fix)"
     ]
   }
 }

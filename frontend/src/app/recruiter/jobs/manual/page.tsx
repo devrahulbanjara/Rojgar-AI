@@ -72,12 +72,10 @@ export default function RecruiterManualJobPage() {
 
   return (
     <div className="dash-content container container--app-shell">
-      <div className="job-ai-page__header">
-        <Link href="/recruiter/jobs" className="job-ai-page__back">
-          <ArrowLeft size={16} aria-hidden="true" />
-          <span>Back to Jobs</span>
-        </Link>
-      </div>
+      <Link href="/recruiter/jobs" className="jd-back">
+        <ArrowLeft size={16} aria-hidden="true" />
+        Back to Jobs
+      </Link>
 
       <div className="dash-page-header">
         <div className="dash-page-header__left">

@@ -13657,6 +13657,178 @@
   }
 }
 
+// ── Donut chart ────────────────────────────────────────────────
+.dashboard-donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-4;
+
+  &__pair {
+    display: flex;
+    justify-content: center;
+    gap: $space-6;
+    flex-wrap: wrap;
+  }
+
+  &__unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  &__svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  &__label {
+    font-size: $font-size-xs;
+    color: $color-gray-600;
+    font-weight: $font-weight-medium;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__legend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $space-2 $space-4;
+    width: 100%;
+  }
+
+  &__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+
+    strong {
+      margin-left: auto;
+      color: $color-gray-800;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-xs;
+    }
+  }
+
+  &__legend-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  // Segment stroke colors
+  &__segment--primary {
+    stroke: rgba($color-primary, 0.9);
+  }
+  &__segment--blue {
+    stroke: #3d8de0;
+  }
+  &__segment--success {
+    stroke: #1d9e75;
+  }
+  &__segment--warning {
+    stroke: #f0a63b;
+  }
+  &__segment--danger {
+    stroke: #e24b4a;
+  }
+  &__segment--accent {
+    stroke: $color-secondary;
+  }
+  &__segment--gray {
+    stroke: $color-gray-300;
+  }
+
+  // Legend dot colors
+  &__legend-dot--primary {
+    background: rgba($color-primary, 0.9);
+  }
+  &__legend-dot--blue {
+    background: #3d8de0;
+  }
+  &__legend-dot--success {
+    background: #1d9e75;
+  }
+  &__legend-dot--warning {
+    background: #f0a63b;
+  }
+  &__legend-dot--danger {
+    background: #e24b4a;
+  }
+  &__legend-dot--accent {
+    background: $color-secondary;
+  }
+  &__legend-dot--gray {
+    background: $color-gray-300;
+  }
+}
+
+// ── Grouped bar chart ──────────────────────────────────────────
+.dashboard-grouped-bar {
+  display: flex;
+  gap: 0.2rem;
+  align-items: flex-end;
+  min-height: 190px;
+  overflow: hidden;
+
+  &__group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-2;
+    min-width: 0;
+  }
+
+  &__bars {
+    display: flex;
+    gap: 0.12rem;
+    align-items: flex-end;
+    width: 100%;
+    height: 155px;
+  }
+
+  &__bar {
+    flex: 1;
+    border-radius: $radius-sm $radius-sm 0 0;
+    min-height: 2px;
+
+    &--primary {
+      background: rgba($color-primary, 0.82);
+    }
+    &--secondary {
+      background: rgba($color-secondary, 0.65);
+    }
+    &--success {
+      background: rgba(#1d9e75, 0.82);
+    }
+    &--blue {
+      background: rgba(#3d8de0, 0.82);
+    }
+    &--warning {
+      background: rgba(#f0a63b, 0.82);
+    }
+    &--danger {
+      background: rgba(#e24b4a, 0.75);
+    }
+  }
+
+  &__label {
+    font-size: 0.68rem;
+    color: $color-text-muted;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}
+
 @media (max-width: $bp-md) {
   .dashboard-metric-grid {
     grid-template-columns: 1fr;

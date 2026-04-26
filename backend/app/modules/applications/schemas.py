@@ -207,3 +207,57 @@ class ApplicationOutreachAuditItem(BaseSchema):
     discarded_by_user_id: UUID | None = None
     discarded_at: datetime | None = None
     updated_at: datetime
+
+
+class SemanticCandidateSearchResult(BaseSchema):
+    """One candidate result from a semantic (vector) search."""
+
+    application_id: UUID
+    candidate_id: UUID
+    applicant_name: str
+    applicant_email: str
+    applicant_avatar_url: str | None = None
+    job_title: str
+    job_id: UUID
+    status: ApplicationStatus
+    score: int | None = None
+    feedback: str | None = None
+    match_score: float = Field(description="Semantic similarity score from Qdrant")
+    applied_at: datetime
+    updated_at: datetime
+
+
+class SemanticCandidateSearchResponse(BaseSchema):
+    """Response shape for semantic candidate search."""
+
+    query: str
+    total: int
+    candidates: list[SemanticCandidateSearchResult] = Field(default_factory=list)
+
+
+class SimilarCandidateResult(BaseSchema):
+    """One similar-candidate match."""
+
+    application_id: UUID
+    candidate_id: UUID
+    applicant_name: str
+    applicant_email: str
+    applicant_avatar_url: str | None = None
+    job_title: str
+    job_id: UUID
+    status: ApplicationStatus
+    score: int | None = None
+    similarity_score: float = Field(
+        description="Cosine similarity to the reference candidate"
+    )
+    applied_at: datetime
+    updated_at: datetime
+
+
+class SimilarCandidatesResponse(BaseSchema):
+    """Response shape for "find similar candidates" endpoint."""
+
+    reference_application_id: UUID
+    reference_candidate_name: str
+    total: int
+    candidates: list[SimilarCandidateResult] = Field(default_factory=list)

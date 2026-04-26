@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
@@ -25,10 +25,9 @@ import {
   useSendAllDraftsMutation,
   useUpdateDraftMutation,
 } from '@/store/services/outreachApi'
-import { ChevronRight, MoreHorizontal } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Mail, MoreHorizontal } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import MediaBadge from '@/components/common/MediaBadge'
 
 import styles from './outreach.module.css'
 
@@ -77,6 +76,12 @@ function getDerivedOutreachStatus(
 
 function getApplicationLabel(status: ApplicationStatus) {
   return getApplicationStatusLabel(status)
+}
+
+function getAvatarColor(name: string): string {
+  const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return colors[seed % colors.length]
 }
 
 function formatTimestamp(value: string) {
@@ -476,6 +481,11 @@ export default function RecruiterOutreachPage() {
   return (
     <div className="dash-content container container--app-shell">
       <div className={styles.page}>
+        <Link href="/recruiter/screening" className="jd-back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Screening
+        </Link>
+
         <div className="dash-page-header">
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Outreach</h2>
@@ -490,13 +500,6 @@ export default function RecruiterOutreachPage() {
 
             {!showJobMissingState ? (
               <>
-                <Link
-                  href="/recruiter/screening"
-                  className={`btn btn--ghost btn--sm ${styles.backLink}`}
-                >
-                  Back to screening
-                </Link>
-
                 {hasDrafts ? (
                   <div className={styles.generateMenuWrap}>
                     <button
@@ -705,33 +708,49 @@ export default function RecruiterOutreachPage() {
                         onClick={() => setSelectedApplicationId(candidate.application.id)}
                       >
                         <div className={styles.draftRow}>
-                          <MediaBadge
-                            src={candidate.application.applicant_avatar_url}
-                            alt={candidate.application.applicant_name}
-                            fallback={getInitials(candidate.application.applicant_name)}
-                            className={styles.draftAvatar}
-                            sizes="46px"
-                          />
+                          <div
+                            className="cell-user__avatar"
+                            style={
+                              {
+                                '--avatar-bg':
+                                  getAvatarColor(candidate.application.applicant_name) + '1A',
+                                '--avatar-color': getAvatarColor(
+                                  candidate.application.applicant_name,
+                                ),
+                                backgroundImage: candidate.application.applicant_avatar_url
+                                  ? `url(${candidate.application.applicant_avatar_url})`
+                                  : undefined,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                              } as CSSProperties
+                            }
+                          >
+                            {!candidate.application.applicant_avatar_url &&
+                              getInitials(candidate.application.applicant_name)}
+                          </div>
                           <div className={styles.draftBody}>
                             <div className={styles.draftTop}>
                               <div>
                                 <div className={styles.draftName}>
                                   {candidate.application.applicant_name}
                                 </div>
-                                <div className={styles.draftMetaText}>
-                                  {candidate.application.applicant_email}
+                                <div className="recruiter-candidates-table__meta">
+                                  <span>
+                                    <Mail size={12} aria-hidden="true" />
+                                    {candidate.application.applicant_email}
+                                  </span>
                                 </div>
                               </div>
                               <div className={styles.draftTopActions}>
                                 <span
-                                  className={`${styles.softStatusPill} ${
+                                  className={`status-dot ${
                                     getDerivedOutreachStatus(candidate.application, {
                                       finalShortlistCompleted:
                                         activeJob?.final_shortlist_completed ?? false,
                                       shortlistThreshold: activeJob?.shortlist_threshold ?? 70,
                                     }) === 'shortlisted'
-                                      ? styles.softStatusPositive
-                                      : styles.softStatusNegative
+                                      ? 'status-dot--success'
+                                      : 'status-dot--danger'
                                   }`}
                                 >
                                   {getApplicationLabel(
@@ -809,12 +828,39 @@ export default function RecruiterOutreachPage() {
                     {selectedCandidate ? (
                       <>
                         <div className={styles.detailTop}>
-                          <div>
-                            <div className="dash-card__title">
-                              {selectedCandidate.application.applicant_name}
+                          <div className="cell-user">
+                            <div
+                              className="cell-user__avatar"
+                              style={
+                                {
+                                  '--avatar-bg':
+                                    getAvatarColor(selectedCandidate.application.applicant_name) +
+                                    '1A',
+                                  '--avatar-color': getAvatarColor(
+                                    selectedCandidate.application.applicant_name,
+                                  ),
+                                  backgroundImage: selectedCandidate.application
+                                    .applicant_avatar_url
+                                    ? `url(${selectedCandidate.application.applicant_avatar_url})`
+                                    : undefined,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                } as CSSProperties
+                              }
+                            >
+                              {!selectedCandidate.application.applicant_avatar_url &&
+                                getInitials(selectedCandidate.application.applicant_name)}
                             </div>
-                            <div className={`dash-card__subtitle ${styles.detailHeaderMeta}`}>
-                              <span>{selectedCandidate.application.applicant_email}</span>
+                            <div className="recruiter-candidates-table__identity">
+                              <div className="recruiter-candidates-table__name">
+                                {selectedCandidate.application.applicant_name}
+                              </div>
+                              <div className="recruiter-candidates-table__meta">
+                                <span>
+                                  <Mail size={12} aria-hidden="true" />
+                                  {selectedCandidate.application.applicant_email}
+                                </span>
+                              </div>
                             </div>
                           </div>
 

@@ -8,6 +8,7 @@ interface UiState {
     message: string | null
     lastDetectedAt: string | null
   }
+  isRecruiterChatOpen: boolean
 }
 
 const initialState: UiState = {
@@ -18,6 +19,7 @@ const initialState: UiState = {
     message: null,
     lastDetectedAt: null,
   },
+  isRecruiterChatOpen: false,
 }
 
 const uiSlice = createSlice({
@@ -43,6 +45,12 @@ const uiSlice = createSlice({
       state.backendConnection.message = null
       state.backendConnection.lastDetectedAt = null
     },
+    toggleRecruiterChat(state) {
+      state.isRecruiterChatOpen = !state.isRecruiterChatOpen
+    },
+    setRecruiterChatOpen(state, action: PayloadAction<boolean>) {
+      state.isRecruiterChatOpen = action.payload
+    },
   },
 })
 
@@ -52,5 +60,7 @@ export const {
   setTheme,
   reportBackendConnectionIssue,
   clearBackendConnectionIssue,
+  toggleRecruiterChat,
+  setRecruiterChatOpen,
 } = uiSlice.actions
 export default uiSlice.reducer

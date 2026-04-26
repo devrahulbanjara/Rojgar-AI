@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
 import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
 import {
@@ -75,6 +75,9 @@ function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationSt
 
 export default function RecruiterCandidateDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromChat = searchParams.get('from') === 'chat'
   const applicationId = params.application_id as string
   const { data: resp, isLoading, isError, refetch } = useGetCompanyCandidateByIdQuery(applicationId)
   const [updateApplicationStatus, { isLoading: isUpdatingStatus }] =
@@ -104,10 +107,17 @@ export default function RecruiterCandidateDetailPage() {
 
   return (
     <div className="dash-content container container--app-shell">
-      <Link href="/recruiter/candidates" className="jd-back">
-        <ArrowLeft size={16} aria-hidden="true" />
-        Back to Candidates
-      </Link>
+      {fromChat ? (
+        <button type="button" className="jd-back" onClick={() => router.back()}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Chat
+        </button>
+      ) : (
+        <Link href="/recruiter/candidates" className="jd-back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Candidates
+        </Link>
+      )}
 
       {isLoading ? (
         <CandidateDetailSkeleton />

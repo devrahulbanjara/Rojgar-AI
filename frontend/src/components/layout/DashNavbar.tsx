@@ -94,7 +94,6 @@ function buildNavItems(role: DashRole): NavItem[] {
     { label: 'Screening', href: '/recruiter/screening' },
     { label: 'Interviews', href: '/recruiter/interviews' },
     { label: 'Outreach', href: '/recruiter/outreach' },
-    { label: 'Chat', href: '/recruiter/chat' },
     { label: 'Audit', href: '/recruiter/audit' },
   ]
   if (role === 'recruiter_admin') {

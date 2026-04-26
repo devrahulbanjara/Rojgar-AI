@@ -16,7 +16,19 @@ class ChatResponseType(str, Enum):
     salary_answer = "salary_answer"
     job_list = "job_list"
     job_edit_preview = "job_edit_preview"
+    candidate_search_results = "candidate_search_results"
     out_of_scope = "out_of_scope"
+
+
+class CandidateSearchResultItem(BaseSchema):
+    """One candidate row for chat-driven semantic search."""
+
+    application_id: UUID
+    candidate_name: str
+    job_title: str
+    status: str
+    score: int | None = None
+    match_score: float
 
 
 class PendingActionType(str, Enum):

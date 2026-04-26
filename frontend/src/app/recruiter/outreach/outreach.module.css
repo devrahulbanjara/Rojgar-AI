@@ -15,16 +15,6 @@
   border-bottom: 1px solid rgba(226, 232, 240, 0.95);
 }
 
-.backLink {
-  border-color: transparent;
-  color: #475569;
-}
-
-.backLink:hover {
-  background: rgba(241, 245, 249, 0.95);
-  color: #0f172a;
-}
-
 .contextTop {
   padding: 0;
 }
@@ -251,24 +241,6 @@
   padding: 1rem 0.25rem;
 }
 
-.draftAvatar {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.9rem;
-  height: 2.9rem;
-  overflow: hidden;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(219, 234, 254, 1), rgba(191, 219, 254, 1));
-  color: #1d4ed8;
-  font-weight: 700;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.72),
-    0 10px 22px rgba(15, 23, 42, 0.08);
-}
-
 .draftBody {
   min-width: 0;
   flex: 1 1 auto;
@@ -303,7 +275,6 @@
   line-height: 1.55;
 }
 
-.draftMetaText,
 .helperText,
 .detailTimestamp {
   font-size: 0.78rem;
@@ -507,28 +478,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-}
-
-.softStatusPill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 1.95rem;
-  padding: 0.38rem 0.72rem;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.softStatusPositive {
-  background: rgba(240, 253, 244, 1);
-  color: #15803d;
-}
-
-.softStatusNegative {
-  background: rgba(254, 242, 242, 1);
-  color: #dc2626;
 }
 
 @media (max-width: 980px) {

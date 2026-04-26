@@ -20,6 +20,7 @@ from app.core.cache import (
     invalidate_job_detail_caches,
 )
 from app.infrastructures.email.service import EmailService
+from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import (
@@ -46,6 +47,10 @@ from app.modules.applications.schemas import (
     RecruiterCandidateInterviewView,
     RecruiterCandidateListItem,
     RecruiterApplicationView,
+    SemanticCandidateSearchResponse,
+    SemanticCandidateSearchResult,
+    SimilarCandidateResult,
+    SimilarCandidatesResponse,
     UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
@@ -1400,4 +1405,187 @@ async def respond_to_offer(
         response_word,
         user.id,
         application_id,
+    )
+
+
+async def semantic_search_candidates(
+    db: AsyncSession,
+    user: User,
+    query: str,
+    statuses: list[str] | None,
+    page: int,
+    size: int,
+) -> SemanticCandidateSearchResponse:
+    """
+    Semantic candidate search using the Qdrant candidate-applications collection.
+
+    Converts a free-text query into an embedding and returns the most
+    semantically similar applications within the recruiter's company.
+    """
+    company_id = await _get_active_company_id(db, user)
+
+    qdrant_results = await qdrant_service.search_applications(
+        query=query,
+        company_id=uuid.UUID(str(company_id)),
+        statuses=[s.value if hasattr(s, "value") else str(s) for s in statuses]
+        if statuses
+        else None,
+        limit=size,
+    )
+
+    if not qdrant_results:
+        return SemanticCandidateSearchResponse(query=query, total=0, candidates=[])
+
+    application_ids = [res["application_id"] for res in qdrant_results]
+
+    stmt = (
+        select(Application, User, Job)
+        .join(User, User.id == Application.user_id)
+        .join(Job, Job.id == Application.job_id)
+        .where(Application.id.in_(application_ids))
+    )
+    rows = (await db.execute(stmt)).all()
+
+    row_map: dict[uuid.UUID, tuple[Application, User, Job]] = {
+        app.id: (app, user_row, job) for app, user_row, job in rows
+    }
+
+    candidates: list[SemanticCandidateSearchResult] = []
+    for res in qdrant_results:
+        app_id = res["application_id"]
+        row = row_map.get(app_id)
+        if row is None:
+            continue  # ghost vector
+        application, applicant, job = row
+        candidates.append(
+            SemanticCandidateSearchResult(
+                application_id=application.id,
+                candidate_id=applicant.id,
+                applicant_name=application.shared_full_name or applicant.full_name,
+                applicant_email=application.shared_email_value or applicant.email,
+                applicant_avatar_url=application.shared_avatar_url,
+                job_title=job.title,
+                job_id=job.id,
+                status=application.status,
+                score=application.score,
+                feedback=application.feedback,
+                match_score=round(res["score"], 4),
+                applied_at=application.created_at,
+                updated_at=application.updated_at,
+            )
+        )
+
+    total = len(candidates)
+    start = (page - 1) * size
+    end = start + size
+    paged = candidates[start:end]
+
+    return SemanticCandidateSearchResponse(
+        query=query,
+        total=total,
+        candidates=paged,
+    )
+
+
+async def find_similar_candidates(
+    db: AsyncSession,
+    user: User,
+    application_id: str,
+    limit: int = 10,
+) -> SimilarCandidatesResponse:
+    """
+    Given one application, find the most similar candidates within the
+    same company using the Qdrant vector of the reference application.
+
+    This is useful when a recruiter likes one candidate and wants to
+    surface "more like this" from the talent pool.
+    """
+    company_id = await _get_active_company_id(db, user)
+
+    # Verify the reference application belongs to the company
+    ref_result = await db.execute(
+        select(Application, User, Job)
+        .join(User, User.id == Application.user_id)
+        .join(Job, Job.id == Application.job_id)
+        .where(
+            Application.id == application_id,
+            Job.company_id == company_id,
+        )
+    )
+    ref_row = ref_result.one_or_none()
+    if ref_row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reference application not found or does not belong to your company.",
+        )
+    ref_app, ref_user, ref_job = ref_row
+
+    # Build the same document the sync daemon would have embedded
+    from app.infrastructures.qdrant.service import QdrantService
+
+    qdrant_doc = QdrantService._build_application_document(
+        qdrant_service, ref_app, ref_job
+    )
+
+    qdrant_results = await qdrant_service.search_applications(
+        query=qdrant_doc,
+        company_id=uuid.UUID(str(company_id)),
+        limit=limit + 5,  # extra to drop self + ghosts
+    )
+
+    if not qdrant_results:
+        return SimilarCandidatesResponse(
+            reference_application_id=ref_app.id,
+            reference_candidate_name=ref_app.shared_full_name or ref_user.full_name,
+            total=0,
+            candidates=[],
+        )
+
+    # Drop the reference candidate itself
+    qdrant_results = [r for r in qdrant_results if r["application_id"] != ref_app.id]
+    application_ids = [res["application_id"] for res in qdrant_results]
+
+    stmt = (
+        select(Application, User, Job)
+        .join(User, User.id == Application.user_id)
+        .join(Job, Job.id == Application.job_id)
+        .where(Application.id.in_(application_ids))
+    )
+    rows = (await db.execute(stmt)).all()
+
+    row_map: dict[uuid.UUID, tuple[Application, User, Job]] = {
+        app.id: (app, user_row, job) for app, user_row, job in rows
+    }
+
+    candidates: list[SimilarCandidateResult] = []
+    for res in qdrant_results:
+        app_id = res["application_id"]
+        row = row_map.get(app_id)
+        if row is None:
+            continue
+        application, applicant, job = row
+        candidates.append(
+            SimilarCandidateResult(
+                application_id=application.id,
+                candidate_id=applicant.id,
+                applicant_name=application.shared_full_name or applicant.full_name,
+                applicant_email=application.shared_email_value or applicant.email,
+                applicant_avatar_url=application.shared_avatar_url,
+                job_title=job.title,
+                job_id=job.id,
+                status=application.status,
+                score=application.score,
+                similarity_score=round(res["score"], 4),
+                applied_at=application.created_at,
+                updated_at=application.updated_at,
+            )
+        )
+        if len(candidates) >= limit:
+            break
+
+    return SimilarCandidatesResponse(
+        reference_application_id=ref_app.id,
+        reference_candidate_name=ref_app.shared_full_name or ref_user.full_name,
+        total=len(candidates),
+        candidates=candidates,
     )

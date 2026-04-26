@@ -21,7 +21,7 @@ function JobRow({ job }: { job: CompanyJobData }) {
     <button
       type="button"
       className="recruiter-chat-job-mini-row"
-      onClick={() => router.push(`/recruiter/jobs/${job.job_id}`)}
+      onClick={() => router.push(`/recruiter/jobs/${job.job_id}?from=chat`)}
     >
       <div className="recruiter-chat-job-mini-row__main">
         <div className="recruiter-chat-job-mini-row__header">
