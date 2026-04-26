@@ -7,7 +7,9 @@ import {
   type CandidateDashboardAnalyticsTimeseriesPoint,
 } from '@/store/services/dashboardApi'
 
-import CandidateMetricCard, { buildAreaPath, buildLinePath } from './CandidateMetricCard'
+import DonutChart, { type DonutSegment } from '@/components/common/DonutChart'
+
+import CandidateMetricCard from './CandidateMetricCard'
 
 type RangeKey = '7d' | '30d' | '90d'
 
@@ -26,8 +28,6 @@ type CandidateDashboardInsightsProps = {
   readiness: CandidateDashboardReadiness
 }
 
-type ActivitySeriesKey = 'applications' | 'shortlisted' | 'interviews' | 'offers' | 'rejected'
-
 const RANGE_OPTIONS: Array<{ label: string; value: RangeKey }> = [
   { label: '7D', value: '7d' },
   { label: '30D', value: '30d' },
@@ -44,11 +44,17 @@ const FUNNEL_LABELS: Record<string, string> = {
 }
 
 const SERIES_META = [
-  { key: 'applications', label: 'Applications', tone: 'primary' },
-  { key: 'shortlisted', label: 'Shortlisted', tone: 'secondary' },
-  { key: 'interviews', label: 'Interviews', tone: 'success' },
-  { key: 'offers', label: 'Offers', tone: 'accent' },
-  { key: 'rejected', label: 'Rejected', tone: 'danger' },
+  { key: 'applications' as const, label: 'Applications', tone: 'primary' as const },
+  { key: 'shortlisted' as const, label: 'Shortlisted', tone: 'success' as const },
+  { key: 'interviews' as const, label: 'Interviews', tone: 'secondary' as const },
+  { key: 'offers' as const, label: 'Offers', tone: 'accent' as const },
+  { key: 'rejected' as const, label: 'Rejected', tone: 'danger' as const },
+]
+
+const ACTIVITY_GROUPS = [
+  { key: 'applications' as const, tone: 'primary', label: 'Applied' },
+  { key: 'shortlisted' as const, tone: 'success', label: 'Shortlisted' },
+  { key: 'interviews' as const, tone: 'blue', label: 'Interviews' },
 ] as const
 
 function formatDayLabel(value: string, rangeKey: RangeKey): string {
@@ -56,15 +62,83 @@ function formatDayLabel(value: string, rangeKey: RangeKey): string {
     rangeKey === '90d'
       ? { month: 'short' as const }
       : { month: 'short' as const, day: 'numeric' as const }
-
   return new Date(value).toLocaleDateString('en-US', format)
+}
+
+function sampleTimeseries<T>(data: T[], maxPoints: number): T[] {
+  if (data.length <= maxPoints) return data
+  const step = Math.ceil(data.length / maxPoints)
+  return data.filter((_, i) => i % step === 0 || i === data.length - 1)
 }
 
 function sumSeries(
   data: CandidateDashboardAnalyticsTimeseriesPoint[],
-  key: ActivitySeriesKey,
+  key: (typeof SERIES_META)[number]['key'],
 ): number {
   return data.reduce((total, point) => total + point[key], 0)
+}
+
+function buildOutcomeSegments(analytics: CandidateDashboardAnalyticsData): DonutSegment[] {
+  const { stats } = analytics
+  const accounted =
+    stats.screening + stats.shortlisted + stats.interviews + stats.offers + stats.rejected
+  const pending = Math.max(stats.total_applications - accounted, 0)
+  return [
+    { label: 'Screening', value: stats.screening, tone: 'blue' },
+    { label: 'Shortlisted', value: stats.shortlisted, tone: 'success' },
+    { label: 'Interviews', value: stats.interviews, tone: 'primary' },
+    { label: 'Offers', value: stats.offers, tone: 'accent' },
+    { label: 'Rejected', value: stats.rejected, tone: 'danger' },
+    { label: 'Pending', value: pending, tone: 'gray' },
+  ]
+}
+
+function ActivityGroupedBar({
+  data,
+  rangeKey,
+}: {
+  data: CandidateDashboardAnalyticsTimeseriesPoint[]
+  rangeKey: RangeKey
+}) {
+  const maxPoints = rangeKey === '7d' ? 7 : 14
+  const sampled = sampleTimeseries(data, maxPoints)
+  const maxValue = Math.max(
+    ...sampled.flatMap((point) => ACTIVITY_GROUPS.map((g) => point[g.key])),
+    1,
+  )
+
+  return (
+    <div>
+      <div className="dashboard-chart-legend" style={{ marginBottom: '0.75rem' }}>
+        {ACTIVITY_GROUPS.map((g) => (
+          <span key={g.key} className="dashboard-chart-legend__item">
+            <span
+              className={`dashboard-chart-legend__swatch dashboard-chart-legend__swatch--${g.tone}`}
+            />
+            {g.label}
+          </span>
+        ))}
+      </div>
+      <div className="dashboard-grouped-bar">
+        {sampled.map((point) => (
+          <div key={point.date} className="dashboard-grouped-bar__group">
+            <div className="dashboard-grouped-bar__bars">
+              {ACTIVITY_GROUPS.map((g) => (
+                <div
+                  key={g.key}
+                  className={`dashboard-grouped-bar__bar dashboard-grouped-bar__bar--${g.tone}`}
+                  style={{ height: `${(point[g.key] / maxValue) * 100}%` }}
+                />
+              ))}
+            </div>
+            <div className="dashboard-grouped-bar__label">
+              {formatDayLabel(point.date, rangeKey)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function InsightsSkeleton() {
@@ -115,6 +189,22 @@ function InsightsSkeleton() {
         <div className="dash-card" aria-hidden="true">
           <div className="dash-card__header">
             <div>
+              <div className="dash-card__title">Outcome breakdown</div>
+              <div className="dash-card__subtitle">
+                Distribution of applications by current status.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body candidate-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+      </div>
+
+      <div className="dash-grid dash-grid--2col">
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
               <div className="dash-card__title">Readiness</div>
               <div className="dash-card__subtitle">
                 Profile strength and search posture from your latest setup.
@@ -125,19 +215,19 @@ function InsightsSkeleton() {
             <div className="skeleton-block dashboard-analytics__chart-skeleton" />
           </div>
         </div>
-      </div>
 
-      <div className="dash-card" aria-hidden="true">
-        <div className="dash-card__header">
-          <div>
-            <div className="dash-card__title">Application activity</div>
-            <div className="dash-card__subtitle">
-              Applications sent and status milestones across the selected range.
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Activity over time</div>
+              <div className="dash-card__subtitle">
+                Applications sent and key milestones by period.
+              </div>
             </div>
           </div>
-        </div>
-        <div className="dash-card__body candidate-dashboard__analytics-body">
-          <div className="skeleton-block dashboard-analytics__chart-skeleton dashboard-analytics__chart-skeleton--tall" />
+          <div className="dash-card__body candidate-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
         </div>
       </div>
     </div>
@@ -163,106 +253,6 @@ function CandidateMetricCards({ analytics }: { analytics: CandidateDashboardAnal
   )
 }
 
-function CandidateActivityChart({
-  data,
-  rangeKey,
-}: {
-  data: CandidateDashboardAnalyticsTimeseriesPoint[]
-  rangeKey: RangeKey
-}) {
-  const width = 640
-  const height = 220
-  const allValues = data.flatMap((point) => [
-    point.applications,
-    point.shortlisted,
-    point.interviews,
-    point.offers,
-    point.rejected,
-  ])
-  const maxValue = Math.max(...allValues, 1)
-  const yLabels = [maxValue, Math.max(Math.round(maxValue / 2), 1), 0]
-
-  return (
-    <div className="dashboard-line-chart">
-      <div className="dashboard-chart-legend">
-        {SERIES_META.map((series) => (
-          <span key={series.key} className="dashboard-chart-legend__item">
-            <span
-              className={`dashboard-chart-legend__swatch dashboard-chart-legend__swatch--${series.tone}`}
-            />
-            {series.label}
-          </span>
-        ))}
-      </div>
-
-      <div className="dashboard-line-chart__frame">
-        <div className="dashboard-line-chart__ylabels">
-          {yLabels.map((label, index) => (
-            <span key={`${label}-${index}`}>{label}</span>
-          ))}
-        </div>
-
-        <svg
-          className="dashboard-line-chart__svg"
-          viewBox={`0 0 ${width} ${height}`}
-          role="img"
-          aria-label="Application activity trend"
-        >
-          {[0.1, 0.5, 0.9].map((fraction) => (
-            <line
-              key={fraction}
-              x1="0"
-              x2={width}
-              y1={height - height * fraction}
-              y2={height - height * fraction}
-              className="dashboard-line-chart__grid"
-            />
-          ))}
-
-          <path
-            d={buildAreaPath(
-              data.map((point) => point.applications),
-              width,
-              height,
-              maxValue,
-            )}
-            className="dashboard-line-chart__area"
-          />
-
-          {SERIES_META.map((series) => (
-            <path
-              key={series.key}
-              d={buildLinePath(
-                data.map((point) => point[series.key]),
-                width,
-                height,
-                maxValue,
-              )}
-              className={`dashboard-line-chart__series dashboard-line-chart__series--${series.tone}`}
-            />
-          ))}
-        </svg>
-      </div>
-
-      <div className="dashboard-line-chart__xlabels">
-        {data.map((point, index) => {
-          const shouldShowLabel =
-            data.length <= 8 ||
-            index === 0 ||
-            index === data.length - 1 ||
-            index % Math.max(Math.floor(data.length / 4), 1) === 0
-
-          return (
-            <span key={point.date}>
-              {shouldShowLabel ? formatDayLabel(point.date, rangeKey) : ''}
-            </span>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 export default function CandidateDashboardInsights({
   analytics,
   isLoading,
@@ -279,6 +269,7 @@ export default function CandidateDashboardInsights({
   }
 
   const funnelMax = Math.max(...analytics.funnel.map((item) => item.count), 1)
+  const outcomeSegments = buildOutcomeSegments(analytics)
   const progressStyle = {
     '--dashboard-progress': `${readiness.completion}%`,
   } as CSSProperties
@@ -300,6 +291,7 @@ export default function CandidateDashboardInsights({
 
       <CandidateMetricCards analytics={analytics} />
 
+      {/* Row 1: Funnel + Outcome donut */}
       <div className="dash-grid dash-grid--2col">
         <div className="dash-card">
           <div className="dash-card__header">
@@ -330,6 +322,23 @@ export default function CandidateDashboardInsights({
           </div>
         </div>
 
+        <div className="dash-card">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Outcome breakdown</div>
+              <div className="dash-card__subtitle">
+                Distribution of applications by current status.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body candidate-dashboard__analytics-body">
+            <DonutChart segments={outcomeSegments} size={148} strokeWidth={26} />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: Readiness + Activity bar */}
+      <div className="dash-grid dash-grid--2col">
         <div className="dash-card">
           <div className="dash-card__header">
             <div>
@@ -392,19 +401,19 @@ export default function CandidateDashboardInsights({
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="dash-card">
-        <div className="dash-card__header">
-          <div>
-            <div className="dash-card__title">Application activity</div>
-            <div className="dash-card__subtitle">
-              Applications sent and status milestones across the selected range.
+        <div className="dash-card">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Activity over time</div>
+              <div className="dash-card__subtitle">
+                Applications sent and key milestones by period.
+              </div>
             </div>
           </div>
-        </div>
-        <div className="dash-card__body candidate-dashboard__analytics-body">
-          <CandidateActivityChart data={analytics.timeseries} rangeKey={rangeKey} />
+          <div className="dash-card__body candidate-dashboard__analytics-body">
+            <ActivityGroupedBar data={analytics.timeseries} rangeKey={rangeKey} />
+          </div>
         </div>
       </div>
     </div>

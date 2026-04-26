@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from copy import deepcopy
@@ -154,6 +155,7 @@ class AIService:
             model=model or settings.groq_model_recruiter_chat,
             temperature=temperature,
             api_key=settings.groq_api_key,
+            max_tokens=4096,
         )
 
     async def generate_structured(
@@ -181,34 +183,42 @@ class AIService:
 
         # Groq-specific implementation (swap this block for OpenAI/Anthropic)
         try:
-            response = await self._llm_client.chat.completions.create(
-                model=model or self._llm_model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            f"{system_prompt.strip()}\n\n"
-                            "Output requirements:\n"
-                            "- Return exactly one JSON object matching the schema.\n"
-                            "- Do not wrap the result in another object.\n"
-                            "- Do not echo the input payload.\n"
-                            "- Do not include prose, markdown, or explanations."
-                        ),
+            async with asyncio.timeout(30):
+                response = await self._llm_client.chat.completions.create(
+                    model=model or self._llm_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                f"{system_prompt.strip()}\n\n"
+                                "Output requirements:\n"
+                                "- Return exactly one JSON object matching the schema.\n"
+                                "- Do not wrap the result in another object.\n"
+                                "- Do not echo the input payload.\n"
+                                "- Do not include prose, markdown, or explanations."
+                            ),
+                        },
+                        {
+                            "role": "user",
+                            "content": json.dumps(user_payload, ensure_ascii=False),
+                        },
+                    ],
+                    response_format={
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": schema_model.__name__,
+                            "strict": True,
+                            "schema": schema,
+                        },
                     },
-                    {
-                        "role": "user",
-                        "content": json.dumps(user_payload, ensure_ascii=False),
-                    },
-                ],
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": schema_model.__name__,
-                        "strict": True,
-                        "schema": schema,
-                    },
-                },
-            )
+                    max_tokens=4096,
+                )
+        except TimeoutError:
+            logger.error("Groq structured generation timed out after 30s")
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="The AI service did not respond in time. Please try again.",
+            ) from None
         except (APIStatusError, BadRequestError) as exc:
             message = _extract_groq_error_message(exc)
             if _is_groq_rate_limit(exc):
@@ -243,10 +253,15 @@ class AIService:
             HumanMessage(content=json.dumps(user_payload, ensure_ascii=False)),
         ]
 
-        async for chunk in llm.astream(messages):
-            content = getattr(chunk, "content", None)
-            if isinstance(content, str) and content:
-                yield content
+        try:
+            async with asyncio.timeout(60):
+                async for chunk in llm.astream(messages):
+                    content = getattr(chunk, "content", None)
+                    if isinstance(content, str) and content:
+                        yield content
+        except TimeoutError:
+            logger.error("Groq streaming timed out after 60s")
+            return
 
 
 ai_service = AIService()

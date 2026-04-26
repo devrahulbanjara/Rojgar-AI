@@ -1,14 +1,57 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+
 import type { CandidateSearchResult } from '@/lib/types/recruiterChat'
-import { BriefcaseBusiness, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
 import { getInitials, getStatusTone } from './utils'
 
+function CandidateRow({ candidate }: { candidate: CandidateSearchResult['candidates'][number] }) {
+  const router = useRouter()
+  const tone = getStatusTone(candidate.application_status)
+  const status = (candidate.application_status ?? '').replace(/_/g, ' ')
+  const score = candidate.match_score != null ? `${Math.round(candidate.match_score * 100)}%` : null
+
+  return (
+    <button
+      type="button"
+      className="recruiter-chat-job-mini-row recruiter-chat-candidate-mini-row"
+      onClick={() => router.push(`/recruiter/candidates/${candidate.application_id}?from=chat`)}
+    >
+      <MediaBadge
+        src={candidate.avatar_url}
+        alt={candidate.full_name}
+        fallback={getInitials(candidate.full_name)}
+        className="recruiter-chat-candidate-mini-avatar"
+        sizes="28px"
+      />
+
+      <div className="recruiter-chat-job-mini-row__main">
+        <div className="recruiter-chat-job-mini-row__header">
+          <div className="recruiter-chat-job-mini-row__title">{candidate.full_name}</div>
+          {status && <span className={`status-dot status-dot--${tone}`}>{status}</span>}
+        </div>
+
+        <div className="recruiter-chat-candidate-mini-row__sub">
+          <span className="recruiter-chat-candidate-mini-row__sub-job">
+            {candidate.applied_for_job}
+          </span>
+          {score && (
+            <span className="recruiter-chat-candidate-mini-row__score">&middot; {score}</span>
+          )}
+        </div>
+      </div>
+
+      <ChevronRight size={14} className="recruiter-chat-candidate-row__chevron" />
+    </button>
+  )
+}
+
 export function CandidateCardGrid({ data }: { data: CandidateSearchResult }) {
-  if (!data.candidates.length) {
+  if (!data.candidates?.length) {
     return (
       <section className="recruiter-chat-card recruiter-chat-card--empty-state">
         <p>No matching candidates were found for that request.</p>
@@ -22,46 +65,13 @@ export function CandidateCardGrid({ data }: { data: CandidateSearchResult }) {
         {data.total} candidate{data.total === 1 ? '' : 's'} found
       </div>
 
-      <div className="recruiter-chat-candidate-list">
-        {data.candidates.map((candidate) => {
-          return (
-            <button
-              key={`${candidate.user_id}-${candidate.application_id}`}
-              type="button"
-              className="recruiter-chat-card recruiter-chat-card--candidate-row"
-            >
-              <div className="recruiter-chat-candidate-row__main">
-                <MediaBadge
-                  src={candidate.avatar_url}
-                  alt={candidate.full_name}
-                  fallback={getInitials(candidate.full_name)}
-                  className="recruiter-chat-avatar recruiter-chat-avatar--candidate recruiter-chat-avatar--candidate-row"
-                  sizes="40px"
-                />
-
-                <div className="recruiter-chat-candidate-row__copy">
-                  <div className="recruiter-chat-candidate-row__name">{candidate.full_name}</div>
-                  <div className="recruiter-chat-candidate-row__job">
-                    <BriefcaseBusiness size={14} />
-                    <span>{candidate.applied_for_job}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="recruiter-chat-candidate-row__meta">
-                <span
-                  className={`status-dot status-dot--${getStatusTone(candidate.application_status)}`}
-                >
-                  {candidate.application_status.replace(/_/g, ' ')}
-                </span>
-                <span className="recruiter-chat-candidate-row__score">
-                  {Math.round(candidate.match_score * 100)}%
-                </span>
-                <ChevronRight size={16} className="recruiter-chat-candidate-row__chevron" />
-              </div>
-            </button>
-          )
-        })}
+      <div className="recruiter-chat-job-mini-list">
+        {data.candidates.map((candidate) => (
+          <CandidateRow
+            key={`${candidate.user_id}-${candidate.application_id}`}
+            candidate={candidate}
+          />
+        ))}
       </div>
     </section>
   )

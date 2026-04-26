@@ -6,6 +6,7 @@ export type RecruiterChatUiType =
   | 'salary_answer'
   | 'job_list'
   | 'job_edit_preview'
+  | 'candidate_search_results'
   | 'out_of_scope'
   | null
 

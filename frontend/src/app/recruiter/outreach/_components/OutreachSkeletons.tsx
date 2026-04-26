@@ -18,9 +18,9 @@ export function OutreachDraftListSkeleton({ rows = 5 }: { rows?: number }) {
             <div className={styles.draftRow}>
               <SkeletonBlock
                 style={{
-                  width: '2.9rem',
-                  height: '2.9rem',
-                  borderRadius: '999px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
                   flexShrink: 0,
                 }}
               />
@@ -40,9 +40,12 @@ export function OutreachDraftListSkeleton({ rows = 5 }: { rows?: number }) {
                     />
                   </div>
                   <div className={styles.draftTopActions}>
-                    <SkeletonBlock
-                      style={{ width: '5.5rem', height: '1.9rem', borderRadius: '999px' }}
-                    />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <SkeletonBlock style={{ width: 7, height: 7, borderRadius: '50%' }} />
+                      <SkeletonBlock
+                        style={{ width: '4rem', height: '0.8rem', borderRadius: '999px' }}
+                      />
+                    </div>
                     <SkeletonBlock
                       style={{ width: '2rem', height: '2rem', borderRadius: '999px' }}
                     />
@@ -64,10 +67,22 @@ export function OutreachDraftDetailSkeleton() {
         <div className="dash-card__title">Draft editor</div>
       </div>
       <div className="dash-card__body">
-        <SkeletonBlock style={{ width: '10rem', height: '16px', borderRadius: '999px' }} />
-        <SkeletonBlock
-          style={{ width: '12rem', height: '13px', borderRadius: '999px', marginTop: '0.45rem' }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <SkeletonBlock
+            style={{ width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0 }}
+          />
+          <div>
+            <SkeletonBlock style={{ width: '10rem', height: '14px', borderRadius: '999px' }} />
+            <SkeletonBlock
+              style={{
+                width: '12rem',
+                height: '12px',
+                borderRadius: '999px',
+                marginTop: '0.35rem',
+              }}
+            />
+          </div>
+        </div>
         <SkeletonBlock
           style={{
             width: '100%',

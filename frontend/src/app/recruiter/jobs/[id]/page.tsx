@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
 import { type JobDetail, useGetJobByIdQuery } from '@/store/services/jobsApi'
 import { ArrowLeft, Briefcase, Building, Clock, MapPin, Pencil, Share2 } from 'lucide-react'
@@ -46,6 +46,8 @@ function formatDate(iso: string): string {
 export default function RecruiterJobDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromChat = searchParams.get('from') === 'chat'
   const jobId = params.id as string
 
   const { data: resp, isLoading, isError, refetch } = useGetJobByIdQuery(jobId)
@@ -55,10 +57,17 @@ export default function RecruiterJobDetailPage() {
     return (
       <div className="dash-content container container--app-shell">
         <div className="jd-page-wrap">
-          <Link href="/recruiter/jobs" className="jd-back">
-            <ArrowLeft size={16} aria-hidden="true" />
-            Back to Jobs
-          </Link>
+          {fromChat ? (
+            <button type="button" className="jd-back" onClick={() => router.back()}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              Back to Chat
+            </button>
+          ) : (
+            <Link href="/recruiter/jobs" className="jd-back">
+              <ArrowLeft size={16} aria-hidden="true" />
+              Back to Jobs
+            </Link>
+          )}
           <CompanyJobDetailSkeleton />
         </div>
       </div>
@@ -68,10 +77,17 @@ export default function RecruiterJobDetailPage() {
   if (isError || !job) {
     return (
       <div className="dash-content container container--app-shell">
-        <Link href="/recruiter/jobs" className="jd-back">
-          <ArrowLeft size={16} aria-hidden="true" />
-          Back to Jobs
-        </Link>
+        {fromChat ? (
+          <button type="button" className="jd-back" onClick={() => router.back()}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to Chat
+          </button>
+        ) : (
+          <Link href="/recruiter/jobs" className="jd-back">
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to Jobs
+          </Link>
+        )}
         <div className="dash-card" style={{ textAlign: 'center', padding: '3rem' }}>
           <Briefcase style={{ width: 40, height: 40, color: '#9ca3af' }} />
           <p style={{ marginTop: '1rem', color: '#6b7280' }}>
@@ -94,10 +110,17 @@ export default function RecruiterJobDetailPage() {
   return (
     <div className="dash-content container container--app-shell">
       <div className="jd-page-wrap">
-        <Link href="/recruiter/jobs" className="jd-back">
-          <ArrowLeft size={16} aria-hidden="true" />
-          Back to Jobs
-        </Link>
+        {fromChat ? (
+          <button type="button" className="jd-back" onClick={() => router.back()}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to Chat
+          </button>
+        ) : (
+          <Link href="/recruiter/jobs" className="jd-back">
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to Jobs
+          </Link>
+        )}
 
         <div className="jd-page">
           {/* ── Hero ── */}

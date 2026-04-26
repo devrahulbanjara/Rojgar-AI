@@ -1,6 +1,14 @@
 'use client'
 
-import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type CSSProperties,
+  Fragment,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import type { SetStateAction } from 'react'
 import { toast } from 'react-toastify'
 
@@ -29,10 +37,15 @@ import {
 import { X as ClearSearchIcon, Search as SearchFieldIcon } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import MediaBadge from '@/components/common/MediaBadge'
 
 import { ScreeningControlsSkeleton, ScreeningTableSkeleton } from './_components/ScreeningSkeletons'
 import styles from './screening.module.css'
+
+function getAvatarColor(name: string): string {
+  const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return colors[seed % colors.length]
+}
 
 type ReviewDraft = {
   score: string
@@ -92,30 +105,11 @@ function hasCompleteReview(application: Pick<RecruiterApplicationView, 'score' |
   return application.score != null && Boolean(application.feedback?.trim())
 }
 
-function getAvatarTone(name: string) {
-  const tones = [
-    styles.avatarBlue,
-    styles.avatarAmber,
-    styles.avatarRose,
-    styles.avatarTeal,
-    styles.avatarSlate,
-  ]
-  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-  return tones[seed % tones.length]
-}
-
 function getScoreTone(score: number | null) {
   if (score == null) return styles.scoreMuted
   if (score >= 75) return styles.scoreGreen
   if (score >= 50) return styles.scoreAmber
   return styles.scoreRed
-}
-
-function getScoreBarTone(score: number | null) {
-  if (score == null) return styles.scoreBarMuted
-  if (score >= 75) return styles.scoreBarGreen
-  if (score >= 50) return styles.scoreBarAmber
-  return styles.scoreBarRed
 }
 
 function getReviewState(
@@ -927,7 +921,6 @@ export default function RecruiterScreeningPage() {
                         const isExpanded = expandedApplicationId === application.id
                         const draft = getReviewDraft(application)
                         const scoreTone = getScoreTone(application.score)
-                        const scoreBarTone = getScoreBarTone(application.score)
                         const statusOptions = getRecruiterTransitionOptions(application.status)
                         const statusValue = statusSelectValues[application.id] ?? application.status
                         const isStatusLocked =
@@ -948,14 +941,27 @@ export default function RecruiterScreeningPage() {
                               }
                             >
                               <td>
-                                <div className={styles.candidateCell}>
-                                  <MediaBadge
-                                    src={application.applicant_avatar_url}
-                                    alt={application.applicant_name}
-                                    fallback={getInitials(application.applicant_name)}
-                                    className={`${styles.avatar} ${getAvatarTone(application.applicant_name)}`}
-                                    sizes="50px"
-                                  />
+                                <div className="cell-user">
+                                  <div
+                                    className="cell-user__avatar"
+                                    style={
+                                      {
+                                        '--avatar-bg':
+                                          getAvatarColor(application.applicant_name) + '1A',
+                                        '--avatar-color': getAvatarColor(
+                                          application.applicant_name,
+                                        ),
+                                        backgroundImage: application.applicant_avatar_url
+                                          ? `url(${application.applicant_avatar_url})`
+                                          : undefined,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                      } as CSSProperties
+                                    }
+                                  >
+                                    {!application.applicant_avatar_url &&
+                                      getInitials(application.applicant_name)}
+                                  </div>
                                   <div className={styles.candidateMeta}>
                                     <div className={styles.candidateName}>
                                       {application.applicant_name}
@@ -1007,20 +1013,10 @@ export default function RecruiterScreeningPage() {
                                   {application.score == null ? (
                                     <span className={styles.scoreDash}>-</span>
                                   ) : (
-                                    <>
-                                      <div className={`${styles.scoreBadge} ${scoreTone}`}>
-                                        {application.score}
-                                        <span className={styles.scoreSuffix}>/100</span>
-                                      </div>
-                                      <div className={styles.scoreBarTrack}>
-                                        <span
-                                          className={`${styles.scoreBarFill} ${scoreBarTone}`}
-                                          style={{
-                                            width: `${Math.min(Math.max(application.score, 0), 100)}%`,
-                                          }}
-                                        />
-                                      </div>
-                                    </>
+                                    <div className={`${styles.scoreBadge} ${scoreTone}`}>
+                                      {application.score}
+                                      <span className={styles.scoreSuffix}>/100</span>
+                                    </div>
                                   )}
                                 </div>
                               </td>
