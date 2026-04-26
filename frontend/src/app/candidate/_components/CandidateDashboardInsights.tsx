@@ -7,8 +7,6 @@ import {
   type CandidateDashboardAnalyticsTimeseriesPoint,
 } from '@/store/services/dashboardApi'
 
-import DonutChart, { type DonutSegment } from '@/components/common/DonutChart'
-
 import CandidateMetricCard from './CandidateMetricCard'
 
 type RangeKey = '7d' | '30d' | '90d'
@@ -78,21 +76,6 @@ function sumSeries(
   return data.reduce((total, point) => total + point[key], 0)
 }
 
-function buildOutcomeSegments(analytics: CandidateDashboardAnalyticsData): DonutSegment[] {
-  const { stats } = analytics
-  const accounted =
-    stats.screening + stats.shortlisted + stats.interviews + stats.offers + stats.rejected
-  const pending = Math.max(stats.total_applications - accounted, 0)
-  return [
-    { label: 'Screening', value: stats.screening, tone: 'blue' },
-    { label: 'Shortlisted', value: stats.shortlisted, tone: 'success' },
-    { label: 'Interviews', value: stats.interviews, tone: 'primary' },
-    { label: 'Offers', value: stats.offers, tone: 'accent' },
-    { label: 'Rejected', value: stats.rejected, tone: 'danger' },
-    { label: 'Pending', value: pending, tone: 'gray' },
-  ]
-}
-
 function ActivityGroupedBar({
   data,
   rangeKey,
@@ -160,18 +143,15 @@ function InsightsSkeleton() {
       <div className="dashboard-metric-grid dashboard-metric-grid--candidate-top">
         {SERIES_META.map((series) => (
           <div key={series.key} className="stat-card dashboard-metric-card" aria-hidden="true">
-            <div className="dashboard-metric-card__header">
-              <div className="dashboard-metric-card__copy">
-                <div className="skeleton-block dashboard-card-skeleton__value" />
-                <div className="stat-card__label">{series.label}</div>
-              </div>
-              <div className="skeleton-block dashboard-card-skeleton__metric-sparkline" />
+            <div className="dashboard-metric-card__copy">
+              <div className="skeleton-block dashboard-card-skeleton__value" />
+              <div className="stat-card__label">{series.label}</div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="dash-grid dash-grid--2col">
+      <div className="dash-grid dash-grid--6040">
         <div className="dash-card" aria-hidden="true">
           <div className="dash-card__header">
             <div>
@@ -189,22 +169,6 @@ function InsightsSkeleton() {
         <div className="dash-card" aria-hidden="true">
           <div className="dash-card__header">
             <div>
-              <div className="dash-card__title">Outcome breakdown</div>
-              <div className="dash-card__subtitle">
-                Distribution of applications by current status.
-              </div>
-            </div>
-          </div>
-          <div className="dash-card__body candidate-dashboard__analytics-body">
-            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
-          </div>
-        </div>
-      </div>
-
-      <div className="dash-grid dash-grid--2col">
-        <div className="dash-card" aria-hidden="true">
-          <div className="dash-card__header">
-            <div>
               <div className="dash-card__title">Readiness</div>
               <div className="dash-card__subtitle">
                 Profile strength and search posture from your latest setup.
@@ -215,19 +179,19 @@ function InsightsSkeleton() {
             <div className="skeleton-block dashboard-analytics__chart-skeleton" />
           </div>
         </div>
+      </div>
 
-        <div className="dash-card" aria-hidden="true">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Activity over time</div>
-              <div className="dash-card__subtitle">
-                Applications sent and key milestones by period.
-              </div>
+      <div className="dash-card" aria-hidden="true">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Activity over time</div>
+            <div className="dash-card__subtitle">
+              Applications sent and key milestones by period.
             </div>
           </div>
-          <div className="dash-card__body candidate-dashboard__analytics-body">
-            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
-          </div>
+        </div>
+        <div className="dash-card__body candidate-dashboard__analytics-body">
+          <div className="skeleton-block dashboard-analytics__chart-skeleton" />
         </div>
       </div>
     </div>
@@ -237,18 +201,14 @@ function InsightsSkeleton() {
 function CandidateMetricCards({ analytics }: { analytics: CandidateDashboardAnalyticsData }) {
   return (
     <div className="dashboard-metric-grid dashboard-metric-grid--candidate-top">
-      {SERIES_META.map((series) => {
-        const values = analytics.timeseries.map((point) => point[series.key])
-        return (
-          <CandidateMetricCard
-            key={series.key}
-            label={series.label}
-            value={sumSeries(analytics.timeseries, series.key)}
-            tone={series.tone}
-            values={values}
-          />
-        )
-      })}
+      {SERIES_META.map((series) => (
+        <CandidateMetricCard
+          key={series.key}
+          label={series.label}
+          value={sumSeries(analytics.timeseries, series.key)}
+          tone={series.tone}
+        />
+      ))}
     </div>
   )
 }
@@ -269,7 +229,6 @@ export default function CandidateDashboardInsights({
   }
 
   const funnelMax = Math.max(...analytics.funnel.map((item) => item.count), 1)
-  const outcomeSegments = buildOutcomeSegments(analytics)
   const progressStyle = {
     '--dashboard-progress': `${readiness.completion}%`,
   } as CSSProperties
@@ -291,8 +250,8 @@ export default function CandidateDashboardInsights({
 
       <CandidateMetricCards analytics={analytics} />
 
-      {/* Row 1: Funnel + Outcome donut */}
-      <div className="dash-grid dash-grid--2col">
+      {/* Row 1: Funnel (60%) + Readiness (40%) */}
+      <div className="dash-grid dash-grid--6040">
         <div className="dash-card">
           <div className="dash-card__header">
             <div>
@@ -322,23 +281,6 @@ export default function CandidateDashboardInsights({
           </div>
         </div>
 
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Outcome breakdown</div>
-              <div className="dash-card__subtitle">
-                Distribution of applications by current status.
-              </div>
-            </div>
-          </div>
-          <div className="dash-card__body candidate-dashboard__analytics-body">
-            <DonutChart segments={outcomeSegments} size={148} strokeWidth={26} />
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Readiness + Activity bar */}
-      <div className="dash-grid dash-grid--2col">
         <div className="dash-card">
           <div className="dash-card__header">
             <div>
@@ -401,19 +343,20 @@ export default function CandidateDashboardInsights({
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Activity over time</div>
-              <div className="dash-card__subtitle">
-                Applications sent and key milestones by period.
-              </div>
+      {/* Row 2: Full-width Activity bar */}
+      <div className="dash-card">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Activity over time</div>
+            <div className="dash-card__subtitle">
+              Applications sent and key milestones by period.
             </div>
           </div>
-          <div className="dash-card__body candidate-dashboard__analytics-body">
-            <ActivityGroupedBar data={analytics.timeseries} rangeKey={rangeKey} />
-          </div>
+        </div>
+        <div className="dash-card__body candidate-dashboard__analytics-body">
+          <ActivityGroupedBar data={analytics.timeseries} rangeKey={rangeKey} />
         </div>
       </div>
     </div>

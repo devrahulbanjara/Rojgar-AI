@@ -233,6 +233,7 @@ function RecruiterJobCard({
 }
 
 function RecruiterAIDraftCard({ draft }: { draft: JobAIDraftRecord }) {
+  const router = useRouter()
   const jobDraft = draft.latest_draft
   const draftTitle = getAIDraftTitle(draft)
   const locationLabel = jobDraft?.location
@@ -240,7 +241,10 @@ function RecruiterAIDraftCard({ draft }: { draft: JobAIDraftRecord }) {
     : LOCATION_TYPE_LABELS[jobDraft?.location_type ?? 'remote']
 
   return (
-    <div className="company-job-card company-job-card--grid">
+    <div
+      className="company-job-card company-job-card--clickable company-job-card--grid"
+      onClick={() => router.push(`/recruiter/jobs/new?draftId=${draft.id}`)}
+    >
       <div className="company-job-card__top-row">
         <div className="cell-actions" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
           <span
@@ -280,15 +284,6 @@ function RecruiterAIDraftCard({ draft }: { draft: JobAIDraftRecord }) {
             <FileText size={13} aria-hidden="true" />
             <span>{draft.mode === 'clone' ? 'Cloned with AI' : 'Drafted with AI'}</span>
           </span>
-        </div>
-
-        <div className="company-job-card__actions">
-          <Link
-            href={`/recruiter/jobs/new?draftId=${draft.id}`}
-            className="btn btn--outline btn--sm"
-          >
-            Open Draft
-          </Link>
         </div>
       </div>
     </div>

@@ -356,10 +356,15 @@
   background: $color-white;
   border: 1px solid $color-gray-200;
   border-radius: $radius-xl;
-  padding: $space-5 $space-6;
+  padding: $space-4 $space-5;
   display: flex;
   flex-direction: column;
   gap: $space-2;
+
+  &--compact {
+    padding: $space-3 $space-4;
+  }
+
   transition: box-shadow $transition-fast;
 
   &:hover {
@@ -640,7 +645,7 @@
   }
 
   &__header {
-    padding: $space-5 $space-6;
+    padding: $space-4 $space-5;
     border-bottom: 1px solid $color-gray-200;
     display: flex;
     align-items: center;
@@ -662,11 +667,11 @@
   }
 
   &__body {
-    padding: $space-6;
+    padding: $space-5;
   }
 
   &__footer {
-    padding: $space-4 $space-6;
+    padding: $space-3 $space-5;
     border-top: 1px solid $color-gray-200;
     background: $color-gray-100;
     display: flex;
@@ -2348,6 +2353,14 @@
   &--sidebar-left {
     grid-template-columns: 260px 1fr;
   }
+
+  &--6040 {
+    grid-template-columns: 3fr 2fr;
+  }
+
+  &--3070 {
+    grid-template-columns: 3fr 7fr;
+  }
 }
 
 // ── Jobs Layout ──────────────────────────────────────────────
@@ -3524,7 +3537,7 @@
 }
 
 .dash-card__body--activity {
-  padding: 0 $space-6;
+  padding: 0 $space-5;
 }
 
 .recruiter-summary__body {
@@ -4759,6 +4772,16 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &--link {
+      text-decoration: none;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $color-primary;
+        text-decoration: underline;
+      }
+    }
   }
 
   &__company {
@@ -13863,6 +13886,54 @@
   }
 }
 
+// ── Admin team management row ─────────────────────────────
+.dashboard-admin-team-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-4;
+}
+
+// ── Outreach stat rows (condensed text layout) ────────────
+.dashboard-outreach-row {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: $space-2;
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    padding: $space-2 $space-3;
+    border-radius: $radius-md;
+    background: $color-gray-100;
+
+    strong {
+      font-size: $font-size-lg;
+      color: $color-gray-900;
+    }
+
+    span {
+      font-size: $font-size-xs;
+      color: $color-text-muted;
+      text-transform: capitalize;
+    }
+  }
+}
+
 @media (max-width: $bp-md) {
   .dashboard-metric-grid {
     grid-template-columns: 1fr;
@@ -13897,6 +13968,19 @@
 
   .dashboard-job-health__stats {
     justify-content: flex-start;
+  }
+
+  .dash-grid--6040,
+  .dash-grid--3070 {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-admin-team-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-outreach-row__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

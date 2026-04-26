@@ -81,7 +81,6 @@ function buildNavItems(role: DashRole): NavItem[] {
       { label: 'Jobs', href: '/candidate/jobs' },
       { label: 'Applications', href: '/candidate/applications' },
       { label: 'Interviews', href: '/candidate/interviews' },
-      { label: 'Audit', href: '/candidate/audit' },
       { label: 'Resumes', href: '/candidate/resume' },
       { label: 'Profile', href: '/candidate/profile' },
     ]
@@ -94,9 +93,9 @@ function buildNavItems(role: DashRole): NavItem[] {
     { label: 'Screening', href: '/recruiter/screening' },
     { label: 'Interviews', href: '/recruiter/interviews' },
     { label: 'Outreach', href: '/recruiter/outreach' },
-    { label: 'Audit', href: '/recruiter/audit' },
   ]
   if (role === 'recruiter_admin') {
+    items.push({ label: 'Audit', href: '/recruiter/audit' })
     items.push({ label: 'Recruiters', href: '/recruiter/recruiters' })
   }
   return items
