@@ -87,8 +87,9 @@ function InterviewCard({
   const accent = getCompanyAccent(interview.company_name)
 
   return (
-    <div
-      className="candidate-interview-card content-stagger-item"
+    <Link
+      href={`/candidate/applications/${interview.application_id}`}
+      className="candidate-interview-card candidate-interview-card--clickable content-stagger-item"
       style={{ '--stagger-index': index, opacity: muted ? 0.72 : 1 } as CSSProperties}
     >
       <div className="candidate-interview-card__left">
@@ -130,19 +131,8 @@ function InterviewCard({
         </div>
       </div>
 
-      <div
-        className="candidate-interview-card__aside"
-        style={{ flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}
-      >
-        <StatusPill kind="application" status={interview.application_status} />
-        <Link
-          href={`/candidate/applications/${interview.application_id}`}
-          className="btn btn--outline btn--primary btn--sm"
-        >
-          View Application
-        </Link>
-      </div>
-    </div>
+      <StatusPill kind="application" status={interview.application_status} />
+    </Link>
   )
 }
 

@@ -5,8 +5,6 @@ import {
   type RecruiterDashboardAnalyticsTimeseriesPoint,
 } from '@/store/services/dashboardApi'
 
-import DonutChart, { type DonutSegment } from '@/components/common/DonutChart'
-
 type RangeKey = '7d' | '30d' | '90d'
 
 type RecruiterDashboardInsightsProps = {
@@ -47,6 +45,8 @@ const TOP_METRICS = [
   { key: 'drafts', label: 'Drafts to approve', tone: 'warning' },
 ] as const
 
+const OUTREACH_KEYS = ['sent', 'approved', 'drafted', 'discarded'] as const
+
 function formatShortDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US', {
     month: 'short',
@@ -58,47 +58,6 @@ function sampleTimeseries<T>(data: T[], maxPoints: number): T[] {
   if (data.length <= maxPoints) return data
   const step = Math.ceil(data.length / maxPoints)
   return data.filter((_, i) => i % step === 0 || i === data.length - 1)
-}
-
-function buildLinePath(
-  values: number[],
-  width: number,
-  height: number,
-  maxValue: number,
-  padding?: { x?: number; y?: number },
-): string {
-  if (values.length === 0) return ''
-  const padX = padding?.x ?? 0
-  const padY = padding?.y ?? 0
-  const drawableWidth = Math.max(width - padX * 2, 1)
-  const drawableHeight = Math.max(height - padY * 2, 1)
-
-  if (values.length === 1) {
-    const y = height - padY - (values[0] / maxValue) * drawableHeight
-    return `M ${padX} ${y} L ${width - padX} ${y}`
-  }
-
-  return values
-    .map((value, index) => {
-      const x = padX + (index / (values.length - 1)) * drawableWidth
-      const y = height - padY - (value / maxValue) * drawableHeight
-      return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
-    })
-    .join(' ')
-}
-
-function buildAreaPath(
-  values: number[],
-  width: number,
-  height: number,
-  maxValue: number,
-  padding?: { x?: number; y?: number },
-): string {
-  const padX = padding?.x ?? 0
-  const padY = padding?.y ?? 0
-  const linePath = buildLinePath(values, width, height, maxValue, padding)
-  if (!linePath || values.length === 0) return ''
-  return `${linePath} L ${width - padX} ${height - padY} L ${padX} ${height - padY} Z`
 }
 
 function sumSeries(
@@ -113,74 +72,37 @@ function getValueClassName(tone: RecruiterMetricTone): string {
   return 'stat-card__value'
 }
 
-function buildFlatSeries(value: number, length: number): number[] {
-  return Array.from({ length: Math.max(length, 2) }, () => value)
-}
-
-function MetricSparkline({ values, tone }: { values: number[]; tone: RecruiterMetricTone }) {
-  const width = 88
-  const height = 36
-  const maxValue = Math.max(...values, 1)
-  const padding = { x: 4, y: 5 }
-
-  return (
-    <svg
-      className="dashboard-metric-card__sparkline"
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-hidden="true"
-    >
-      <path
-        d={buildAreaPath(values, width, height, maxValue, padding)}
-        className="dashboard-metric-card__sparklineArea"
-      />
-      <path
-        d={buildLinePath(values, width, height, maxValue, padding)}
-        className={`dashboard-metric-card__sparklineLine dashboard-metric-card__sparklineLine--${tone}`}
-      />
-    </svg>
-  )
-}
-
 function RecruiterMetricCards({ analytics }: { analytics: RecruiterDashboardAnalyticsData }) {
-  const seriesLength = analytics.applications_timeseries.length
-  const offerValues = buildFlatSeries(analytics.stats.offers, seriesLength)
-  const draftValues = buildFlatSeries(analytics.stats.pending_drafts, seriesLength)
   const cards = [
     {
       key: 'applicants',
       label: 'Applicants',
       value: sumSeries(analytics.applications_timeseries, 'new_applicants'),
       tone: 'primary' as const,
-      values: analytics.applications_timeseries.map((point) => point.new_applicants),
     },
     {
       key: 'reviews',
       label: 'Reviews',
       value: sumSeries(analytics.applications_timeseries, 'completed_reviews'),
       tone: 'secondary' as const,
-      values: analytics.applications_timeseries.map((point) => point.completed_reviews),
     },
     {
       key: 'interviews',
       label: 'Interviews',
       value: sumSeries(analytics.applications_timeseries, 'interviews_scheduled'),
       tone: 'success' as const,
-      values: analytics.applications_timeseries.map((point) => point.interviews_scheduled),
     },
     {
       key: 'offers',
       label: 'Offers',
       value: analytics.stats.offers,
       tone: 'accent' as const,
-      values: offerValues,
     },
     {
       key: 'drafts',
       label: 'Drafts to approve',
       value: analytics.stats.pending_drafts,
       tone: 'warning' as const,
-      values: draftValues,
     },
   ]
 
@@ -188,12 +110,9 @@ function RecruiterMetricCards({ analytics }: { analytics: RecruiterDashboardAnal
     <div className="dashboard-metric-grid dashboard-metric-grid--recruiter-top">
       {cards.map((card) => (
         <div key={card.key} className="stat-card dashboard-metric-card">
-          <div className="dashboard-metric-card__header">
-            <div className="dashboard-metric-card__copy">
-              <div className={getValueClassName(card.tone)}>{card.value}</div>
-              <div className="stat-card__label">{card.label}</div>
-            </div>
-            <MetricSparkline values={card.values} tone={card.tone} />
+          <div className="dashboard-metric-card__copy">
+            <div className={getValueClassName(card.tone)}>{card.value}</div>
+            <div className="stat-card__label">{card.label}</div>
           </div>
         </div>
       ))}
@@ -247,18 +166,26 @@ function HiringActivityGroupedBar({
   )
 }
 
-function buildOutreachSegments(breakdown: {
-  drafted: number
-  approved: number
-  sent: number
-  discarded: number
-}): DonutSegment[] {
-  return [
-    { label: 'Sent', value: breakdown.sent, tone: 'success' },
-    { label: 'Approved', value: breakdown.approved, tone: 'primary' },
-    { label: 'Drafted', value: breakdown.drafted, tone: 'gray' },
-    { label: 'Discarded', value: breakdown.discarded, tone: 'danger' },
-  ]
+function OutreachStatRow({
+  label,
+  breakdown,
+}: {
+  label: string
+  breakdown: { drafted: number; approved: number; sent: number; discarded: number }
+}) {
+  return (
+    <div className="dashboard-outreach-row">
+      <div className="dashboard-outreach-row__label">{label}</div>
+      <div className="dashboard-outreach-row__stats">
+        {OUTREACH_KEYS.map((key) => (
+          <div key={key} className="dashboard-outreach-row__stat">
+            <strong>{breakdown[key]}</strong>
+            <span>{key}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function InsightsSkeleton() {
@@ -280,19 +207,16 @@ function InsightsSkeleton() {
       <div className="dashboard-metric-grid dashboard-metric-grid--recruiter-top">
         {TOP_METRICS.map((item) => (
           <div key={item.key} className="stat-card dashboard-metric-card" aria-hidden="true">
-            <div className="dashboard-metric-card__header">
-              <div className="dashboard-metric-card__copy">
-                <div className="skeleton-block dashboard-card-skeleton__value" />
-                <div className="stat-card__label">{item.label}</div>
-              </div>
-              <div className="skeleton-block dashboard-card-skeleton__metric-sparkline" />
+            <div className="dashboard-metric-card__copy">
+              <div className="skeleton-block dashboard-card-skeleton__value" />
+              <div className="stat-card__label">{item.label}</div>
             </div>
           </div>
         ))}
       </div>
 
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        {['Company funnel', 'Outreach summary'].map((title) => (
+        {['Company funnel', 'Pipeline velocity'].map((title) => (
           <div key={title} className="dash-card" aria-hidden="true">
             <div className="dash-card__header">
               <div>
@@ -306,23 +230,8 @@ function InsightsSkeleton() {
         ))}
       </div>
 
-      <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        {['Score distribution', 'Pipeline velocity'].map((title) => (
-          <div key={title} className="dash-card" aria-hidden="true">
-            <div className="dash-card__header">
-              <div>
-                <div className="dash-card__title">{title}</div>
-              </div>
-            </div>
-            <div className="dash-card__body recruiter-dashboard__analytics-body">
-              <div className="skeleton-block dashboard-analytics__chart-skeleton" />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        {['Hiring activity', 'Interview load'].map((title) => (
+      <div className="dash-grid dash-grid--3070 recruiter-dashboard__grid">
+        {['Outreach summary', 'Hiring activity'].map((title) => (
           <div key={title} className="dash-card" aria-hidden="true">
             <div className="dash-card__header">
               <div>
@@ -354,10 +263,6 @@ export default function RecruiterDashboardInsights({
   }
 
   const funnelMax = Math.max(...analytics.funnel.map((item) => item.count), 1)
-  const scoreMax = Math.max(...analytics.score_distribution.buckets.map((item) => item.count), 1)
-  const interviewMax = Math.max(...analytics.interview_load.map((item) => item.count), 1)
-  const shortlistSegments = buildOutreachSegments(analytics.outreach.shortlist)
-  const rejectionSegments = buildOutreachSegments(analytics.outreach.rejection)
 
   return (
     <div className="recruiter-dashboard__analytics">
@@ -376,7 +281,7 @@ export default function RecruiterDashboardInsights({
 
       <RecruiterMetricCards analytics={analytics} />
 
-      {/* Row 1: Funnel + Outreach donuts */}
+      {/* Row 1: Company funnel + Pipeline velocity */}
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
         <div className="dash-card">
           <div className="dash-card__header">
@@ -401,75 +306,6 @@ export default function RecruiterDashboardInsights({
                     />
                   </div>
                   <div className="dashboard-funnel-list__value">{item.count}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Outreach summary</div>
-              <div className="dash-card__subtitle">
-                Email state breakdown for shortlist and rejection outreach.
-              </div>
-            </div>
-          </div>
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-donut__pair">
-              <DonutChart
-                segments={shortlistSegments}
-                size={130}
-                strokeWidth={22}
-                title="Shortlist"
-                showLegend={false}
-              />
-              <DonutChart
-                segments={rejectionSegments}
-                size={130}
-                strokeWidth={22}
-                title="Rejection"
-                showLegend={false}
-              />
-            </div>
-            <div className="dashboard-donut__legend" style={{ marginTop: '0.75rem' }}>
-              {shortlistSegments.map((seg) => (
-                <div key={seg.label} className="dashboard-donut__legend-item">
-                  <span
-                    className={`dashboard-donut__legend-dot dashboard-donut__legend-dot--${seg.tone}`}
-                  />
-                  <span>{seg.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Score distribution + Pipeline velocity */}
-      <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Score distribution</div>
-              <div className="dash-card__subtitle">
-                Current screening score mix across company applications.
-              </div>
-            </div>
-          </div>
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-bar-cluster">
-              {analytics.score_distribution.buckets.map((bucket) => (
-                <div key={bucket.label} className="dashboard-bar-cluster__item">
-                  <div className="dashboard-bar-cluster__value">{bucket.count}</div>
-                  <div className="dashboard-bar-cluster__track">
-                    <span
-                      className="dashboard-bar-cluster__fill"
-                      style={{ height: `${(bucket.count / scoreMax) * 100}%` }}
-                    />
-                  </div>
-                  <div className="dashboard-bar-cluster__label">{bucket.label}</div>
                 </div>
               ))}
             </div>
@@ -519,8 +355,21 @@ export default function RecruiterDashboardInsights({
         </div>
       </div>
 
-      {/* Row 3: Hiring activity grouped bar + Interview load */}
-      <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+      {/* Row 2: Outreach summary (condensed) + Hiring activity */}
+      <div className="dash-grid dash-grid--3070 recruiter-dashboard__grid">
+        <div className="dash-card">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Outreach summary</div>
+              <div className="dash-card__subtitle">Email state for shortlist and rejection.</div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <OutreachStatRow label="Shortlist" breakdown={analytics.outreach.shortlist} />
+            <OutreachStatRow label="Rejection" breakdown={analytics.outreach.rejection} />
+          </div>
+        </div>
+
         <div className="dash-card">
           <div className="dash-card__header">
             <div>
@@ -535,33 +384,6 @@ export default function RecruiterDashboardInsights({
               data={analytics.applications_timeseries}
               rangeKey={rangeKey}
             />
-          </div>
-        </div>
-
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Interview load</div>
-              <div className="dash-card__subtitle">
-                Scheduled interviews over the next two weeks.
-              </div>
-            </div>
-          </div>
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-bar-cluster dashboard-bar-cluster--wide">
-              {analytics.interview_load.map((point) => (
-                <div key={point.date} className="dashboard-bar-cluster__item">
-                  <div className="dashboard-bar-cluster__value">{point.count}</div>
-                  <div className="dashboard-bar-cluster__track">
-                    <span
-                      className="dashboard-bar-cluster__fill dashboard-bar-cluster__fill--success"
-                      style={{ height: `${(point.count / interviewMax) * 100}%` }}
-                    />
-                  </div>
-                  <div className="dashboard-bar-cluster__label">{formatShortDate(point.date)}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

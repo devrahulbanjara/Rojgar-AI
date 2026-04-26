@@ -421,7 +421,13 @@ export default function ApplicationsPage() {
                       />
                       <div className="app-item__body">
                         <div className="app-item__top">
-                          <div className="app-item__role">{application.job_title}</div>
+                          <Link
+                            href={`/candidate/jobs/${application.job_id}`}
+                            className="app-item__role app-item__role--link"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {application.job_title}
+                          </Link>
                           <StatusPill kind="application" status={application.status} />
                         </div>
                         <div className="app-item__company">
@@ -433,14 +439,6 @@ export default function ApplicationsPage() {
                           <span>{getLocationTypeLabel(application.location_type)}</span>
                           <span className="app-item__sep">·</span>
                           <span>Applied {formatRelativeDate(application.created_at)}</span>
-                          <Link
-                            href={`/candidate/jobs/${application.job_id}`}
-                            className="btn btn--outline btn--primary btn--sm"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ marginLeft: 'auto' }}
-                          >
-                            View Job
-                          </Link>
                         </div>
                         {getReviewFeedback(application.feedback) ? (
                           <div
