@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useSyncExternalStore } from 'react'
+import type { WheelEvent } from 'react'
+import { useCallback, useState, useSyncExternalStore } from 'react'
 
 import Image from 'next/image'
 
@@ -29,6 +30,11 @@ export default function FloatingRecruiterChat() {
 
   const [historyOpen, setHistoryOpen] = useState(false)
 
+  // Trap wheel events inside panel so page behind never scrolls
+  const handlePanelWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+  }, [])
+
   // useSyncExternalStore returns false on server, true on client — avoids hydration mismatch
   const isRendered = useSyncExternalStore(
     () => () => {},
@@ -46,6 +52,9 @@ export default function FloatingRecruiterChat() {
     dispatch(setRecruiterChatOpen(false))
   }
 
+  // Panel stays mounted (hidden via CSS) so ChatAreaWithAgent doesn't remount/re-fetch
+  const hasInitialized = !isLoading || sessions.length > 0
+
   return (
     <>
       <button
@@ -54,25 +63,24 @@ export default function FloatingRecruiterChat() {
         onClick={handleToggle}
         aria-label={isOpen ? 'Close recruiter chat' : 'Open recruiter chat'}
       >
-        {isOpen ? (
-          <X size={24} />
-        ) : (
-          <Image
-            src="/logo/icon-light.png"
-            alt="Chat"
-            width={32}
-            height={32}
-            className="floating-chat-fab__icon"
-          />
-        )}
+        <Image
+          src="/logo/icon-light.png"
+          alt="Chat"
+          width={48}
+          height={48}
+          className="floating-chat-fab__icon"
+        />
       </button>
 
-      {isOpen && (
-        <div className="floating-chat-panel">
+      {hasInitialized && (
+        <div
+          className={`floating-chat-panel${isOpen ? '' : ' floating-chat-panel--hidden'}`}
+          onWheel={handlePanelWheel}
+        >
           <div className="floating-chat-panel__header">
             <div className="floating-chat-panel__header-left">
               <Image
-                src="/logo/icon-dark.png"
+                src="/logo/icon-light.png"
                 alt=""
                 width={20}
                 height={20}
@@ -81,6 +89,18 @@ export default function FloatingRecruiterChat() {
               <span className="floating-chat-panel__title">ConvexHire Assistant</span>
             </div>
             <div className="floating-chat-panel__header-right">
+              <button
+                type="button"
+                className="floating-chat-panel__icon-btn"
+                onClick={() => {
+                  void createSession()
+                  setHistoryOpen(false)
+                }}
+                aria-label="New chat"
+                title="New Chat"
+              >
+                <Plus size={16} />
+              </button>
               <button
                 type="button"
                 className="floating-chat-panel__icon-btn"

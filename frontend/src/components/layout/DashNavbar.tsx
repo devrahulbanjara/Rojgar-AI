@@ -319,7 +319,7 @@ export default function DashNavbar({
                   {notificationsCount > 0 ? (
                     <button
                       type="button"
-                      className="auth__inline-link"
+                      className="dash-navbar__mark-read-btn"
                       onClick={() => void markAllNotificationsRead()}
                     >
                       Mark all read
