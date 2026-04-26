@@ -2805,6 +2805,10 @@
   }
 
   &__notifications-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
     padding: $space-3 $space-4;
     border-top: 1px solid $color-gray-200;
     background: $color-white;
@@ -2820,6 +2824,19 @@
       &:hover {
         text-decoration: underline;
       }
+    }
+  }
+
+  &__mark-read-btn {
+    all: unset;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    &:hover {
+      color: $color-primary;
+      text-decoration: underline;
     }
   }
 
@@ -7525,7 +7542,7 @@
 }
 
 .recruiter-chat-bubble--user {
-  background: linear-gradient(135deg, #0f766e, #1d4ed8);
+  background: $color-primary;
   color: $color-white;
 }
 
@@ -13725,21 +13742,27 @@
   &__segment--primary {
     stroke: rgba($color-primary, 0.9);
   }
+
   &__segment--blue {
     stroke: #3d8de0;
   }
+
   &__segment--success {
     stroke: #1d9e75;
   }
+
   &__segment--warning {
     stroke: #f0a63b;
   }
+
   &__segment--danger {
     stroke: #e24b4a;
   }
+
   &__segment--accent {
     stroke: $color-secondary;
   }
+
   &__segment--gray {
     stroke: $color-gray-300;
   }
@@ -13748,21 +13771,27 @@
   &__legend-dot--primary {
     background: rgba($color-primary, 0.9);
   }
+
   &__legend-dot--blue {
     background: #3d8de0;
   }
+
   &__legend-dot--success {
     background: #1d9e75;
   }
+
   &__legend-dot--warning {
     background: #f0a63b;
   }
+
   &__legend-dot--danger {
     background: #e24b4a;
   }
+
   &__legend-dot--accent {
     background: $color-secondary;
   }
+
   &__legend-dot--gray {
     background: $color-gray-300;
   }
@@ -13801,18 +13830,23 @@
     &--primary {
       background: rgba($color-primary, 0.82);
     }
+
     &--secondary {
       background: rgba($color-secondary, 0.65);
     }
+
     &--success {
       background: rgba(#1d9e75, 0.82);
     }
+
     &--blue {
       background: rgba(#3d8de0, 0.82);
     }
+
     &--warning {
       background: rgba(#f0a63b, 0.82);
     }
+
     &--danger {
       background: rgba(#e24b4a, 0.75);
     }
@@ -14804,4 +14838,1309 @@
     margin-top: $space-2;
     border-radius: $radius-lg;
   }
+}
+
+// ============================================================
+// FLOATING RECRUITER CHAT — FAB + panel system
+// ============================================================
+
+// ── Animations ───────────────────────────────────────────────
+
+@keyframes floating-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes floating-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes recruiter-chat-dot-pulse {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+@keyframes recruiter-chat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ── FAB button ───────────────────────────────────────────────
+
+.floating-chat-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 1.5px solid $color-gray-200;
+  border-radius: $radius-lg;
+  background: transparent;
+  color: $color-white;
+  cursor: pointer;
+  box-shadow: none;
+  padding: 0;
+  transition: transform $transition-fast;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.floating-chat-fab__icon {
+  border-radius: 0;
+  overflow: visible;
+}
+
+// ── Panel ────────────────────────────────────────────────────
+
+.floating-chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: calc(56px + 24px + 12px);
+  z-index: 590;
+  display: flex;
+  flex-direction: column;
+  width: 540px;
+  height: 78vh;
+  overscroll-behavior: contain;
+  max-height: 720px;
+  min-height: 400px;
+  overflow: hidden;
+  background: $color-white;
+  border: 1px solid rgba($color-black, 0.06);
+  border-radius: $radius-2xl;
+  box-shadow:
+    0 24px 64px rgb(15 23 42 / 18%),
+    0 4px 12px rgb(15 23 42 / 8%);
+  transform-origin: bottom right;
+  animation: floating-panel-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  &--hidden {
+    display: none;
+  }
+}
+
+// ── Panel header ─────────────────────────────────────────────
+
+.floating-chat-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  flex-shrink: 0;
+  padding: 0 $space-4;
+  border-bottom: 1px solid rgba($color-black, 0.06);
+  background: $color-white;
+}
+
+.floating-chat-panel__header-left {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  min-width: 0;
+}
+
+.floating-chat-panel__logo {
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.floating-chat-panel__title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-gray-900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.floating-chat-panel__header-right {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  flex-shrink: 0;
+}
+
+.floating-chat-panel__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: $radius-md;
+  background: transparent;
+  color: $color-gray-400;
+  cursor: pointer;
+  transition:
+    background-color $transition-fast,
+    color $transition-fast;
+
+  &:hover {
+    background: $color-gray-100;
+    color: $color-gray-700;
+  }
+}
+
+// ── Panel body ───────────────────────────────────────────────
+
+.floating-chat-panel__body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// ── Session history drawer ────────────────────────────────────
+
+.floating-chat-panel__drawer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: $color-white;
+  animation: floating-drawer-in 180ms ease both;
+
+  // ChatSidebar overrides inside the drawer
+  .recruiter-chat-sidebar {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+}
+
+// ── Main chat area ────────────────────────────────────────────
+
+.floating-chat-panel__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+
+  // Flatten the chat shell inside the panel
+  .recruiter-chat-area {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  // Tighten thread padding at narrower width
+  .recruiter-chat-message-view {
+    padding: $space-3;
+    gap: $space-3;
+  }
+
+  // Force single column for grids inside panel
+  .recruiter-chat-candidate-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recruiter-chat-edit-diff__grid,
+  .recruiter-chat-edit-diff__scalar {
+    grid-template-columns: 1fr;
+  }
+
+  // Full-width bubbles
+  .recruiter-chat-user-bubble,
+  .recruiter-chat-assistant-bubble {
+    max-width: 100%;
+  }
+}
+
+// ── Panel empty state ─────────────────────────────────────────
+
+.floating-chat-panel__empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: $space-6;
+}
+
+.floating-chat-panel__empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-4;
+  text-align: center;
+
+  p {
+    margin: 0;
+    color: $color-gray-500;
+    font-size: $font-size-sm;
+    line-height: 1.6;
+  }
+}
+
+// ── Mobile responsive ─────────────────────────────────────────
+
+@media (width <= 480px) {
+  .floating-chat-panel {
+    right: 8px;
+    bottom: calc(56px + 8px + 12px);
+    width: calc(100vw - 16px);
+  }
+
+  .floating-chat-fab {
+    right: 8px;
+    bottom: 8px;
+  }
+}
+
+// ============================================================
+// RECRUITER CHAT — Chat area layout (ChatAreaWithAgent)
+// ============================================================
+
+.recruiter-chat-area {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.recruiter-chat-thread-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.recruiter-chat-scroll-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba($color-primary, 0.3) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba($color-primary, 0.3);
+    border-radius: 999px;
+  }
+}
+
+.recruiter-chat-message-view {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  padding: $space-5;
+  min-height: 100%;
+}
+
+// ── Message rows ──────────────────────────────────────────────
+
+.recruiter-chat-message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-2;
+  width: 100%;
+}
+
+.recruiter-chat-assistant-row {
+  justify-content: flex-start;
+}
+
+.recruiter-chat-user-row {
+  justify-content: flex-end;
+}
+
+// ── Message bubbles ───────────────────────────────────────────
+
+.recruiter-chat-user-bubble {
+  max-width: min(100%, 32rem);
+  padding: 0.75rem 1rem;
+  border-radius: 1.25rem 1.25rem 0.35rem;
+  background: $color-primary;
+  color: $color-white;
+  font-size: $font-size-sm;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.recruiter-chat-assistant-bubble {
+  max-width: min(100%, 40rem);
+  padding: 0.75rem 1rem;
+  border-radius: 0.35rem 1.25rem 1.25rem;
+  background: $color-gray-100;
+  color: $color-gray-800;
+  font-size: $font-size-sm;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+
+  &--inline {
+    position: relative;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+
+    .recruiter-chat-copy-btn {
+      opacity: 0;
+      transition: opacity 150ms ease;
+    }
+
+    &:hover .recruiter-chat-copy-btn {
+      opacity: 1;
+    }
+  }
+
+  &--cursor {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: 0.6rem 0.85rem;
+    background: $color-gray-100;
+  }
+}
+
+// ── Copy button ───────────────────────────────────────────────
+
+.recruiter-chat-copy-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-md;
+  background: $color-white;
+  color: $color-gray-400;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+
+  &:hover {
+    color: $color-gray-700;
+    border-color: $color-gray-300;
+    background: $color-gray-100;
+  }
+
+  &--copied {
+    color: #16a34a;
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+
+    &:hover {
+      color: #16a34a;
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+  }
+}
+
+.recruiter-chat-tool-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: $space-3;
+  min-width: 0;
+  max-width: min(100%, 44rem);
+}
+
+.recruiter-chat-combo-card {
+  width: 100%;
+}
+
+// ── Bot avatar badge ──────────────────────────────────────────
+
+.recruiter-chat-message-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+.recruiter-chat-message-avatar--assistant {
+  background: transparent;
+}
+
+.recruiter-chat-bot-mark {
+  border-radius: 0;
+}
+
+// ── Thinking / cursor indicator ───────────────────────────────
+
+.recruiter-chat-cursor-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.recruiter-chat-cursor-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentcolor;
+  opacity: 0.35;
+  animation: recruiter-chat-dot-pulse 1s ease-in-out infinite;
+
+  &--2 {
+    animation-delay: 120ms;
+  }
+
+  &--3 {
+    animation-delay: 240ms;
+  }
+}
+
+.recruiter-chat-cursor-label {
+  font-size: $font-size-xs;
+  color: $color-gray-500;
+}
+
+// ── Stream error ──────────────────────────────────────────────
+
+.recruiter-chat-stream-error {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: 0.75rem 1rem;
+  border-radius: $radius-lg;
+  background: rgb(254 242 242 / 90%);
+  border: 1px solid rgb(254 202 202 / 90%);
+}
+
+.recruiter-chat-stream-error__title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: #b91c1c;
+}
+
+.recruiter-chat-stream-error__body {
+  font-size: $font-size-sm;
+  color: #b91c1c;
+  line-height: 1.55;
+}
+
+.recruiter-chat-stream-error__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+  padding: 0.35rem 0.75rem;
+  border: 0;
+  border-radius: $radius-full;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  width: fit-content;
+  transition: background-color $transition-fast;
+
+  &:hover {
+    background: #fecaca;
+  }
+}
+
+// ── Input composer ────────────────────────────────────────────
+
+// `.recruiter-chat-composer` already defined above — these extend it
+.recruiter-chat-input-shell {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-3;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgb(15 23 42 / 10%);
+  border-radius: $radius-xl;
+  background: $color-white;
+  transition: border-color $transition-fast;
+
+  &:focus-within {
+    border-color: rgba($color-primary, 0.4);
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.07);
+  }
+}
+
+.recruiter-chat-input-textarea {
+  flex: 1;
+  min-height: 1.5rem;
+  max-height: 6rem;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: $color-gray-900;
+  font-size: $font-size-sm;
+  font-family: inherit;
+  line-height: 1.6;
+
+  &::placeholder {
+    color: $color-gray-400;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.recruiter-chat-send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  background: $color-primary;
+  color: $color-white;
+  cursor: pointer;
+  transition:
+    background-color $transition-fast,
+    transform $transition-fast,
+    opacity $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($color-primary, $lightness: -8%);
+    transform: scale(1.06);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &--stop {
+    background: $color-gray-700;
+
+    &:hover:not(:disabled) {
+      background: $color-gray-900;
+    }
+  }
+}
+
+// ── Markdown rendering ────────────────────────────────────────
+
+.recruiter-chat-markdown-container {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  font-size: $font-size-sm;
+  line-height: 1.65;
+  color: $color-gray-800;
+  overflow-wrap: anywhere;
+}
+
+.recruiter-chat-markdown-paragraph {
+  margin: 0;
+}
+
+.recruiter-chat-markdown-strong {
+  font-weight: $font-weight-semibold;
+  color: $color-gray-900;
+}
+
+.recruiter-chat-markdown-link {
+  color: $color-primary;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: color.adjust($color-primary, $lightness: -10%);
+  }
+}
+
+.recruiter-chat-markdown-code {
+  padding: 0.15em 0.4em;
+  border-radius: $radius-sm;
+  background: $color-gray-100;
+  color: #0f766e;
+  font-family: $font-mono;
+  font-size: 0.85em;
+}
+
+.recruiter-chat-markdown-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  &--ordered {
+    list-style: decimal;
+  }
+}
+
+.recruiter-chat-markdown-item {
+  line-height: 1.65;
+}
+
+// ── Citations / sources ───────────────────────────────────────
+
+.recruiter-chat-inline-citations {
+  display: inline;
+}
+
+.recruiter-chat-sources-list {
+  display: inline;
+}
+
+// ── Clarification card variants ───────────────────────────────
+
+.recruiter-chat-card--clarification {
+  border-color: rgba($color-primary, 0.12);
+  background: linear-gradient(180deg, rgba($color-primary, 0.03), $color-white);
+}
+
+.recruiter-chat-card-title {
+  margin: 0 0 $space-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-gray-900;
+}
+
+.recruiter-chat-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.recruiter-chat-job-mini-row {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-3;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-lg;
+  background: $color-white;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color $transition-fast,
+    background $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.25);
+    background: rgba($color-primary, 0.03);
+  }
+}
+
+.recruiter-chat-job-mini-row__title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-gray-900;
+  line-height: 1.4;
+}
+
+.recruiter-chat-job-mini-row__meta {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  margin-top: 0.2rem;
+  font-size: $font-size-xs;
+  color: $color-gray-500;
+}
+
+.recruiter-chat-job-mini-row__location {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ============================================================
+// RECRUITER CHAT — Sidebar (ChatSidebar component)
+// ============================================================
+
+// Override base `.recruiter-chat-sidebar` for the new layout
+.recruiter-chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: $color-white;
+}
+
+.recruiter-chat-sidebar__header {
+  display: flex;
+  align-items: center;
+  padding: $space-3 $space-4;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba($color-black, 0.06);
+}
+
+.recruiter-chat-sidebar__new-chat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-lg;
+  background: $color-white;
+  color: $color-gray-700;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition:
+    background-color $transition-fast,
+    border-color $transition-fast,
+    color $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $color-gray-100;
+    border-color: $color-gray-300;
+    color: $color-gray-900;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.recruiter-chat-sidebar__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: $space-2 $space-3;
+  scrollbar-width: thin;
+  scrollbar-color: $color-gray-200 transparent;
+}
+
+.recruiter-chat-sidebar__skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-2;
+}
+
+// ── Session skeletons ─────────────────────────────────────────
+
+.recruiter-chat-session-skeleton {
+  height: 1rem;
+  border-radius: $radius-full;
+  background: $color-gray-200;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+
+  &--full {
+    width: 100%;
+  }
+
+  &--wide {
+    width: 80%;
+  }
+
+  &--medium {
+    width: 60%;
+  }
+}
+
+// ── Session groups ────────────────────────────────────────────
+
+.recruiter-chat-session-group {
+  margin-bottom: $space-1;
+}
+
+.recruiter-chat-session-group__label {
+  padding: $space-2 $space-2 $space-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: $color-gray-400;
+}
+
+.recruiter-chat-session-group__items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+// ── Session items ─────────────────────────────────────────────
+
+.recruiter-chat-session-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  transition: background-color $transition-fast;
+
+  &:hover {
+    background: $color-gray-100;
+
+    .recruiter-chat-session-item__delete {
+      opacity: 1;
+    }
+  }
+
+  &--active {
+    background: rgba($color-primary, 0.08);
+
+    .recruiter-chat-session-item__title {
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.recruiter-chat-session-item__trigger {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem $space-2;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.recruiter-chat-session-item__title {
+  font-size: $font-size-sm;
+  color: $color-gray-800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &--muted {
+    color: $color-gray-400;
+    font-style: italic;
+  }
+}
+
+.recruiter-chat-session-item__meta {
+  font-size: $font-size-xs;
+  color: $color-gray-400;
+  white-space: nowrap;
+}
+
+.recruiter-chat-session-item__delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: $space-1;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity $transition-fast;
+
+  &--visible {
+    opacity: 1;
+  }
+}
+
+// ── Icon buttons ──────────────────────────────────────────────
+
+.recruiter-chat-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: $radius-md;
+  background: transparent;
+  color: $color-gray-400;
+  cursor: pointer;
+  transition:
+    background-color $transition-fast,
+    color $transition-fast;
+
+  &:hover {
+    background: $color-gray-100;
+    color: $color-gray-700;
+  }
+
+  &--delete:hover {
+    background: rgb(254 242 242);
+    color: #b91c1c;
+  }
+}
+
+// ── Spin animation ────────────────────────────────────────────
+
+.recruiter-chat-spin {
+  animation: recruiter-chat-spin 0.7s linear infinite;
+}
+
+// ── Sidebar footer ────────────────────────────────────────────
+
+.recruiter-chat-sidebar__footer {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-3 $space-4;
+  flex-shrink: 0;
+  border-top: 1px solid rgba($color-black, 0.06);
+}
+
+.recruiter-chat-avatar--sidebar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.recruiter-chat-sidebar__user {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.recruiter-chat-sidebar__user-name {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-gray-700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ============================================================
+// RECRUITER CHAT — Skeleton system
+// ============================================================
+
+// ── Base skeleton element ─────────────────────────────────────
+
+.recruiter-chat-skeleton {
+  height: 0.85rem;
+  border-radius: $radius-full;
+  background: $color-gray-200;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+
+  // Width variants
+  &--w-25 {
+    width: 25%;
+  }
+
+  &--w-30 {
+    width: 30%;
+  }
+
+  &--w-35 {
+    width: 35%;
+  }
+
+  &--w-40 {
+    width: 40%;
+  }
+
+  &--w-45 {
+    width: 45%;
+  }
+
+  &--w-50 {
+    width: 50%;
+  }
+
+  &--w-55 {
+    width: 55%;
+  }
+
+  &--w-70 {
+    width: 70%;
+  }
+
+  &--w-75 {
+    width: 75%;
+  }
+
+  &--w-80 {
+    width: 80%;
+  }
+
+  &--w-85 {
+    width: 85%;
+  }
+
+  // Avatar variants
+  &--avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &--avatar-sm {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &--avatar-lg {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  // Shape variants
+  &--chip {
+    width: 4rem;
+    height: 1.5rem;
+    border-radius: $radius-full;
+  }
+
+  &--pill {
+    width: 5rem;
+    height: 1.5rem;
+    border-radius: $radius-full;
+  }
+
+  &--bar {
+    width: 100%;
+    height: 0.75rem;
+    border-radius: $radius-full;
+  }
+
+  &--block {
+    width: 100%;
+    height: 2.5rem;
+    border-radius: $radius-md;
+  }
+
+  &--send {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  // Font size modifier
+  &--title-sm {
+    height: 0.75rem;
+  }
+}
+
+// ── Panel-level skeleton layout ───────────────────────────────
+
+.recruiter-chat-panel-skeleton {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.recruiter-chat-panel-skeleton__thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.recruiter-chat-panel-skeleton__scroll-view {
+  flex: 1;
+  overflow: hidden;
+}
+
+.recruiter-chat-panel-skeleton__message-view {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  padding: $space-5;
+}
+
+.recruiter-chat-panel-skeleton__row {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-2;
+
+  &--user {
+    justify-content: flex-end;
+  }
+
+  &--assistant {
+    justify-content: flex-start;
+  }
+}
+
+.recruiter-chat-panel-skeleton__user-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: 0.75rem 1rem;
+  border-radius: 1.25rem 1.25rem 0.35rem;
+  background: $color-gray-200;
+  width: 55%;
+}
+
+.recruiter-chat-panel-skeleton__assistant-stack {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: $space-3;
+  min-width: 0;
+}
+
+.recruiter-chat-panel-skeleton__assistant-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: 0.75rem 1rem;
+  border-radius: 0.35rem 1.25rem 1.25rem;
+  background: $color-gray-100;
+}
+
+.recruiter-chat-panel-skeleton__tool-card {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: 0.85rem 1rem;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  background: $color-white;
+}
+
+.recruiter-chat-panel-skeleton__mini-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.recruiter-chat-panel-skeleton__mini-card {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid $color-gray-100;
+  border-radius: $radius-lg;
+  background: $color-gray-100;
+}
+
+.recruiter-chat-panel-skeleton__composer {
+  flex-shrink: 0;
+  padding: $space-3 $space-4;
+  border-top: 1px solid rgba($color-black, 0.06);
+  background: $color-white;
+}
+
+.recruiter-chat-panel-skeleton__input-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+}
+
+.recruiter-chat-panel-skeleton__input-line {
+  height: 0.75rem;
+}
+
+// ── Skeleton row/stack helpers ────────────────────────────────
+
+.recruiter-chat-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+
+  &--start {
+    align-items: flex-start;
+  }
+
+  &--between {
+    justify-content: space-between;
+  }
+}
+
+.recruiter-chat-skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &--grow {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+// ── Diff grid ─────────────────────────────────────────────────
+
+.recruiter-chat-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-3;
+
+  &--preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.recruiter-chat-diff-pane {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+// ── button-spinner helper (used in ChatSidebar new-chat button) ──
+
+.button-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $font-size-sm;
+}
+
+.button-spinner__icon {
+  animation: btn-spin 0.65s linear infinite;
 }

@@ -1,5 +1,7 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+
 import { useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery } from '@/store/services/authApi'
 import { useLogoutMutation } from '@/store/services/authApi'
@@ -7,6 +9,11 @@ import { Clock, ShieldOff } from 'lucide-react'
 
 import AuthGuard from '@/components/common/AuthGuard'
 import DashNavbar from '@/components/layout/DashNavbar'
+
+const FloatingRecruiterChat = dynamic(
+  () => import('@/components/recruiter-chat/FloatingRecruiterChat'),
+  { ssr: false },
+)
 
 function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
   const { user } = useAppSelector((s) => s.auth)
@@ -94,6 +101,7 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
     <>
       <DashNavbar role="recruiter_admin" />
       <main className="dash-page">{children}</main>
+      <FloatingRecruiterChat />
     </>
   )
 }

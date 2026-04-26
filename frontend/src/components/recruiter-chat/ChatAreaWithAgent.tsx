@@ -18,11 +18,13 @@ import type {
   JobOption,
   PendingAction,
   RecruiterChatStreamEvent,
+  RecruiterChatUiType,
+  SalaryResearchResult,
   SourceItem,
 } from '@/lib/types/recruiterChat'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '@/store/slices/uiSlice'
-import { ArrowUp, RotateCcw, Square } from 'lucide-react'
+import { ArrowUp, Check, Copy, RotateCcw, Square } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
 
 import { CandidateCardGrid } from './CandidateCardGrid'
@@ -113,6 +115,105 @@ function MarkdownMessage({ content, footer }: { content: string; footer?: React.
   )
 }
 
+function serializeMessageForCopy(
+  content: string,
+  responseType: RecruiterChatUiType,
+  data: Record<string, unknown> | null | undefined,
+): string {
+  const parts: string[] = [content]
+
+  if (!data) return parts.join('\n\n')
+
+  if (responseType === 'candidate_search_results') {
+    const result = asCandidateSearchResult(data)
+    if (result.candidates.length) {
+      parts.push(`${result.total} candidates found\n`)
+      for (const c of result.candidates) {
+        const score = c.match_score ? ` — ${Math.round(c.match_score * 100)}%` : ''
+        parts.push(`- **${c.full_name}** · ${c.application_status}${score}\n  ${c.applied_for_job}`)
+      }
+    }
+  } else if (responseType === 'job_list') {
+    const result = asJobListResult(data)
+    if (result.jobs?.length) {
+      parts.push(`${result.total} job(s)\n`)
+      for (const j of result.jobs) {
+        const loc = [j.location_type, j.location].filter(Boolean).join(', ')
+        const salary =
+          j.salary_min && j.salary_max
+            ? ` · ${j.currency ?? ''} ${j.salary_min.toLocaleString()}–${j.salary_max.toLocaleString()}`
+            : ''
+        parts.push(`- **${j.title}** [${j.status}]${loc ? ` · ${loc}` : ''}${salary}`)
+      }
+    }
+  } else if (responseType === 'job_edit_preview') {
+    const preview = asJobEditPreviewData(data)
+    if (preview.diffs?.length) {
+      parts.push(`Job: ${preview.job_title}\n`)
+      for (const d of preview.diffs) {
+        parts.push(`- **${d.field}**: ${String(d.before)} → ${String(d.after)}`)
+      }
+    }
+  } else if (responseType === 'salary_answer') {
+    const salary = data as unknown as SalaryResearchResult
+    if (salary.recommended_min != null && salary.recommended_max != null) {
+      const cur = salary.currency ?? ''
+      parts.push(
+        `**${salary.role}** (${salary.country})\n` +
+          `Range: ${cur} ${salary.recommended_min.toLocaleString()} – ${salary.recommended_max.toLocaleString()}\n` +
+          `Confidence: ${salary.confidence}\n` +
+          salary.rationale,
+      )
+    }
+  }
+
+  return parts.filter(Boolean).join('\n\n')
+}
+
+function CopyMarkdownButton({
+  content,
+  responseType,
+  data,
+}: {
+  content: string
+  responseType?: RecruiterChatUiType
+  data?: Record<string, unknown> | null
+}) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    const text = serializeMessageForCopy(content, responseType ?? null, data)
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className={`recruiter-chat-copy-btn${copied ? ' recruiter-chat-copy-btn--copied' : ''}`}
+      onClick={() => void handleCopy()}
+      aria-label={copied ? 'Copied' : 'Copy response'}
+      title={copied ? 'Copied!' : 'Copy'}
+    >
+      {copied ? <Check size={13} /> : <Copy size={13} />}
+    </button>
+  )
+}
+
 function ThinkingBubble() {
   return (
     <div className="recruiter-chat-assistant-bubble recruiter-chat-assistant-bubble--cursor">
@@ -130,10 +231,16 @@ function AssistantMessage({
   content,
   sources,
   footer,
+  showCopy = true,
+  responseType,
+  data,
 }: {
   content: string
   sources: SourceItem[]
   footer?: React.ReactNode
+  showCopy?: boolean
+  responseType?: RecruiterChatUiType
+  data?: Record<string, unknown> | null
 }) {
   const resolvedFooter =
     footer || (sources.length ? <SourcesFooter sources={sources} /> : undefined)
@@ -141,6 +248,9 @@ function AssistantMessage({
   return (
     <div className="recruiter-chat-assistant-bubble recruiter-chat-assistant-bubble--inline">
       <MarkdownMessage content={content} footer={resolvedFooter} />
+      {showCopy && content.trim() ? (
+        <CopyMarkdownButton content={content} responseType={responseType} data={data} />
+      ) : null}
     </div>
   )
 }
@@ -766,6 +876,8 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
                       content={message.content}
                       sources={sources}
                       footer={inlineJobCard ?? undefined}
+                      responseType={message.response_type}
+                      data={message.data}
                     />
                     {card ? <div className="recruiter-chat-combo-card">{card}</div> : null}
                   </div>
