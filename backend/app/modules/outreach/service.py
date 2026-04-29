@@ -9,12 +9,12 @@ from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.config import settings
 from app.core.cache import (
     invalidate_candidate_read_caches,
     invalidate_company_application_caches,
     invalidate_company_dashboard_caches,
 )
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.infrastructures.email.service import EmailService
 from app.modules.activity.service import create_activity_event
@@ -118,7 +118,8 @@ async def _get_application_for_company(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found.",
         )
-    return row
+    application, job = row
+    return application, job
 
 
 def _resolve_outreach_status(

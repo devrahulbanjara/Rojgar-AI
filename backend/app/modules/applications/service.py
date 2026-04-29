@@ -2,6 +2,8 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
+from typing import Any
+from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -10,8 +12,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.core.config import settings
-from app.core.database import AsyncSessionLocal
 from app.core.cache import (
     invalidate_candidate_read_caches,
     invalidate_company_application_caches,
@@ -19,34 +19,29 @@ from app.core.cache import (
     invalidate_interview_list_caches,
     invalidate_job_detail_caches,
 )
+from app.core.config import settings
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
-from app.modules.applications.models import Application
-from app.modules.applications.sync import (
-    enqueue_application_sync_event,
-    process_sync_event as process_application_sync_event,
-)
+from app.modules.activity.schemas import ActivityEventResponse
 from app.modules.activity.service import (
     create_activity_event,
     list_application_timeline,
 )
-from app.modules.activity.schemas import ActivityEventResponse
-from app.modules.auth.enums import MembershipStatus
-from app.modules.auth.models import User
+from app.modules.applications.models import Application
 from app.modules.applications.schemas import (
-    ApplicationOutreachAuditItem,
     ApplicantSummary,
     ApplicationListItem,
+    ApplicationOutreachAuditItem,
     ApplicationResponse,
     ApplyRequest,
-    CandidateShareSettings,
     CandidateApplicationView,
+    CandidateShareSettings,
+    RecruiterApplicationView,
     RecruiterCandidateApplicationSummary,
     RecruiterCandidateDetailView,
     RecruiterCandidateInterviewView,
     RecruiterCandidateListItem,
-    RecruiterApplicationView,
     SemanticCandidateSearchResponse,
     SemanticCandidateSearchResult,
     SimilarCandidateResult,
@@ -54,13 +49,21 @@ from app.modules.applications.schemas import (
     UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
-from app.modules.companies.models import Company
-from app.modules.companies.models import CompanyMembership
+from app.modules.applications.sync import (
+    enqueue_application_sync_event,
+)
+from app.modules.applications.sync import (
+    process_sync_event as process_application_sync_event,
+)
+from app.modules.auth.enums import MembershipStatus
+from app.modules.auth.models import User
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
+from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, JobStatus
 
 RECRUITER_SETTABLE = {
@@ -332,16 +335,8 @@ def _build_shared_profile_snapshot(
 
 
 def _background_database_url(db: AsyncSession) -> str:
-    """Extract a renderable DB URL for background tasks needing a new session."""
-    bind = db.bind
-    if bind is not None and hasattr(bind, "url"):
-        return bind.url.render_as_string(hide_password=False)
-
-    fallback_bind = AsyncSessionLocal.kw.get("bind")
-    if fallback_bind is not None and hasattr(fallback_bind, "url"):
-        return fallback_bind.url.render_as_string(hide_password=False)
-
-    raise RuntimeError("Database bind is not configured for background task execution.")
+    """Return the configured async DB URL for background tasks needing a new session."""
+    return settings.database_url
 
 
 def _job_is_open_for_auto_shortlisting(job: Job) -> bool:
@@ -510,7 +505,7 @@ def _app_to_list_item(app: Application) -> ApplicationListItem:
     )
 
 
-async def _get_active_company_id(db: AsyncSession, user: User) -> str:
+async def _get_active_company_id(db: AsyncSession, user: User) -> UUID:
     """Return the user's active company ID or raise HTTP 403."""
     result = await db.execute(
         select(CompanyMembership.company_id).where(
@@ -677,7 +672,7 @@ async def list_company_candidates(
 
     stmt = stmt.order_by(Application.updated_at.desc(), Application.created_at.desc())
     rows = (await db.execute(stmt)).all()
-    grouped: dict[str, dict[str, object]] = {}
+    grouped: dict[str, dict[str, Any]] = {}
 
     for application, applicant, job in rows:
         bucket = grouped.get(str(applicant.id))
@@ -820,7 +815,9 @@ async def get_company_candidate_detail(
         interview=RecruiterCandidateInterviewView.model_validate(interview)
         if interview
         else None,
-        resume=application.resume,
+        resume=ResumeResponse.model_validate(application.resume)
+        if application.resume
+        else None,
         share_settings=share,
         timeline=timeline,
         outreach_audit=outreach_audit,
@@ -921,7 +918,9 @@ async def get_application(
             updated_at=application.updated_at,
             score=application.score,
             feedback=application.feedback,
-            resume=application.resume,
+            resume=ResumeResponse.model_validate(application.resume)
+            if application.resume
+            else None,
             job_title=job.title if job is not None else None,
             company_name=company.name if company is not None else None,
             company_logo_url=company.logo_url if company is not None else None,
@@ -970,7 +969,9 @@ async def get_application(
                 updated_at=application.updated_at,
                 score=application.score,
                 feedback=application.feedback,
-                resume=application.resume,
+                resume=ResumeResponse.model_validate(application.resume)
+                if application.resume
+                else None,
                 job_title=job.title,
                 company_name=company.name if company is not None else None,
                 company_logo_url=company.logo_url if company is not None else None,
@@ -1427,9 +1428,7 @@ async def semantic_search_candidates(
     qdrant_results = await qdrant_service.search_applications(
         query=query,
         company_id=uuid.UUID(str(company_id)),
-        statuses=[s.value if hasattr(s, "value") else str(s) for s in statuses]
-        if statuses
-        else None,
+        statuses=statuses,
         limit=size,
     )
 

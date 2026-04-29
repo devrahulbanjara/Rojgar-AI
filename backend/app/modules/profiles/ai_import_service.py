@@ -5,6 +5,7 @@ import uuid
 from collections.abc import Iterable
 from copy import deepcopy
 from pathlib import Path
+from typing import Literal, cast
 from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile, status
@@ -28,6 +29,7 @@ from app.modules.profiles.models import ResumeImportTask
 from app.modules.profiles.schemas import ProfileUpdate
 from app.modules.resumes import service as resumes_service
 from app.modules.resumes.schemas import ResumeUpdate
+from app.shared.schemas import EducationBase, ExperienceBase, SkillBase
 
 
 def _dedupe_texts(values: Iterable[str]) -> list[str]:
@@ -87,9 +89,10 @@ def _inline_local_refs(schema: dict) -> dict:
         return node
 
     flattened = resolve(schema)
-    if isinstance(flattened, dict):
-        flattened.pop("$defs", None)
-        flattened["additionalProperties"] = False
+    if not isinstance(flattened, dict):
+        raise TypeError(f"Expected dict from schema resolution, got {type(flattened)}")
+    flattened.pop("$defs", None)
+    flattened["additionalProperties"] = False
     return flattened
 
 
@@ -144,9 +147,13 @@ def _to_profile_update(data: ImportedCandidateDocument) -> ProfileUpdate:
         portfolio_url=data.portfolio_url,
         years_of_experience=data.years_of_experience,
         target_roles=_dedupe_texts(data.target_roles),
-        experiences=list(data.experiences),
-        educations=list(data.educations),
-        skills=list(data.skills),
+        experiences=[
+            ExperienceBase.model_validate(e.model_dump()) for e in data.experiences
+        ],
+        educations=[
+            EducationBase.model_validate(e.model_dump()) for e in data.educations
+        ],
+        skills=[SkillBase.model_validate(e.model_dump()) for e in data.skills],
     )
 
 
@@ -165,9 +172,13 @@ def _to_resume_update(
         github_url=data.github_url,
         portfolio_url=data.portfolio_url,
         years_of_experience=data.years_of_experience,
-        experiences=list(data.experiences),
-        educations=list(data.educations),
-        skills=list(data.skills),
+        experiences=[
+            ExperienceBase.model_validate(e.model_dump()) for e in data.experiences
+        ],
+        educations=[
+            EducationBase.model_validate(e.model_dump()) for e in data.educations
+        ],
+        skills=[SkillBase.model_validate(e.model_dump()) for e in data.skills],
     )
 
 
@@ -208,7 +219,7 @@ async def start_resume_import_task(
     db.add(task)
     await db.commit()
 
-    suffix = Path(task.source_file_name).suffix or ".pdf"
+    suffix = Path(task.source_file_name or "resume.pdf").suffix or ".pdf"
     temp_file = tempfile.NamedTemporaryFile(
         delete=False,
         prefix=f"resume-import-{task.id}-",
@@ -255,7 +266,9 @@ async def get_resume_import_task_status(
     )
     return AiImportTaskStatusResponse(
         task_id=task.id,
-        status=task.status,
+        status=cast(
+            Literal["pending", "processing", "completed", "failed"], task.status
+        ),
         source_file_name=task.source_file_name,
         result=result,
         error=task.error_message,

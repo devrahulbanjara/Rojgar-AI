@@ -30,7 +30,7 @@ class RedisService:
                 socket_keepalive=True,
                 health_check_interval=30,
             )
-            await self._client.ping()
+            await self._client.ping()  # type: ignore[misc]
             logger.info("Successfully connected to Redis.")
         except Exception as exc:
             logger.error("Failed to connect to Redis: {}", exc)

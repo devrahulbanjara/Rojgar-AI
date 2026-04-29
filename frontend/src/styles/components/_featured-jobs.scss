@@ -76,6 +76,8 @@
 
   // ── Card entrance animation (CSS-only, no IntersectionObserver) ──
   &__card-enter {
+    display: flex;
+    flex-direction: column;
     animation: featured-jobs-fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
     animation-delay: var(--stagger, 0s);
   }

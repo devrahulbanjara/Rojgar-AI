@@ -10,6 +10,7 @@ from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import selectinload
 
+from app.agents.shortlisting import evaluate_application_with_shortlisting_agent
 from app.core.cache import (
     invalidate_candidate_read_caches,
     invalidate_candidate_read_caches_for_users,
@@ -17,6 +18,7 @@ from app.core.cache import (
     invalidate_company_dashboard_caches,
 )
 from app.core.database import AsyncSessionLocal
+from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.enums import MembershipStatus
@@ -30,9 +32,6 @@ from app.modules.shortlisting.schemas import (
     TriggerShortlistResponse,
 )
 from app.shared.enums import ApplicationStatus, JobStatus, ShortlistStatus, SyncAction
-from app.infrastructures.redis.service import redis_service
-from app.agents.shortlisting import evaluate_application_with_shortlisting_agent
-
 
 SHORTLISTING_STALE_AFTER = timedelta(minutes=2)
 
@@ -501,7 +500,9 @@ async def finalize_shortlist(
     job.final_shortlist_completed = True
     await db.commit()
 
-    changed_user_ids = [str(row[1]) for row in shortlisted_rows + rejected_rows]
+    changed_user_ids = [
+        str(row[1]) for row in list(shortlisted_rows) + list(rejected_rows)
+    ]
     await invalidate_candidate_read_caches_for_users(changed_user_ids)
     await invalidate_company_application_caches(str(company_id))
     await invalidate_company_dashboard_caches(db, str(company_id))

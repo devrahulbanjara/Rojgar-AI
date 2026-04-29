@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from pydantic import Field, model_validator
+
 from app.core.schemas import BaseSchema
 from app.shared.enums import JobStatus, LocationType
-from pydantic import Field, model_validator
 
 
 class JobBase(BaseSchema):
@@ -48,10 +49,10 @@ class JobBase(BaseSchema):
 class JobCreate(JobBase):
     """All required fields must be provided on creation."""
 
-    title: str = Field(min_length=1, max_length=255)
-    location_type: LocationType = LocationType.onsite
-    currency: str = Field(default="NPR", max_length=10)
-    status: JobStatus = JobStatus.draft
+    title: str = Field(min_length=1, max_length=255)  # type: ignore[override]
+    location_type: LocationType = LocationType.onsite  # type: ignore[override]
+    currency: str = Field(default="NPR", max_length=10)  # type: ignore[override]
+    status: JobStatus = JobStatus.draft  # type: ignore[override]
 
 
 class JobUpdate(JobBase):

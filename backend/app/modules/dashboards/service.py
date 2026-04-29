@@ -1,25 +1,25 @@
 from __future__ import annotations
 
-from collections import defaultdict
 import uuid
+from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.companies.models import Company, CompanyMembership
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.dashboards.schemas import (
     ApplicationPipelineItem,
     CandidateAnalyticsStats,
     CandidateAnalyticsTimeseriesPoint,
     CandidateAnalyticsVelocity,
     CandidateDashboardAnalyticsResponse,
-    CandidateInterviewItem,
     CandidateDashboardResponse,
+    CandidateInterviewItem,
     InterviewLoadPoint,
     JobPipelineItem,
     JoinRequestItem,
@@ -81,7 +81,7 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _today_utc() -> datetime.date:
+def _today_utc() -> date:
     """Return today's date in UTC."""
     return _utcnow().date()
 
@@ -1176,7 +1176,7 @@ async def _get_membership_breakdown(
         await db.execute(
             select(
                 CompanyMembership.status,
-                func.count(CompanyMembership.id).label("count"),
+                func.count(CompanyMembership.id).label("total"),
             )
             .where(CompanyMembership.company_id == company_id)
             .group_by(CompanyMembership.status)
@@ -1189,7 +1189,7 @@ async def _get_membership_breakdown(
         MembershipStatus.rejected: 0,
     }
     for row in rows:
-        counts[row.status] = row.count or 0
+        counts[row.status] = row.total or 0
 
     return [
         MembershipBreakdownPoint(status=status, count=count)
@@ -1278,7 +1278,6 @@ async def get_recruiter_admin_dashboard_analytics(
             join_request_timeseries=[],
             membership_breakdown=[],
             team_activity=[],
-            portfolio_health=[],
             velocity=RecruiterAnalyticsVelocity(),
         )
         await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)

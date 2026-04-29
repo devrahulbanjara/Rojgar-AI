@@ -16,10 +16,10 @@ from app.core.cache import (
     invalidate_interview_list_caches,
     invalidate_job_detail_caches,
 )
+from app.core.config import settings
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
-from app.modules.applications.models import Application
-from app.modules.applications.models import ApplicationSyncEvent
+from app.modules.applications.models import Application, ApplicationSyncEvent
 from app.modules.applications.sync import (
     process_sync_event as process_application_sync_event,
 )
@@ -85,12 +85,8 @@ def _should_be_searchable(job: Job) -> bool:
 
 
 def _background_database_url(db: AsyncSession) -> str:
-    """Extract a database URL for background worker tasks."""
-    bind = db.bind
-    if bind is not None and hasattr(bind, "url"):
-        return str(bind.url)
-
-    raise RuntimeError("Database bind is not configured for background task execution.")
+    """Return the configured async DB URL for background worker tasks."""
+    return settings.database_url
 
 
 async def expire_due_jobs(db: AsyncSession) -> int:
