@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 import { LOCATION_TYPE_LABELS, formatDate, formatSalary, getCompanyAccent } from '@/lib/jobHelpers'
 import type { JobListItem } from '@/store/services/jobsApi'
-import { Briefcase, Clock, MapPin } from 'lucide-react'
+import { Briefcase, ChevronRight, Clock, MapPin } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -49,26 +49,16 @@ export default function PublicJobCard({ job }: { job: JobListItem }) {
         </div>
       </div>
 
-      <div className="job-meta">
-        <span className="job-meta__item">{LOCATION_TYPE_LABELS[job.location_type]}</span>
-        {salary && (
-          <>
-            <span className="job-meta__sep" aria-hidden="true">
-              ·
-            </span>
-            <span className="job-meta__item job-meta__item--salary">{salary}</span>
-          </>
-        )}
-        <span className="job-meta__sep" aria-hidden="true">
-          ·
-        </span>
-        <span className="job-meta__item job-meta__item--time">
-          <Clock size={11} aria-hidden="true" />
-          {formatDate(job.created_at)}
-        </span>
+      <div className="pub-job-card__footer">
+        <div className="pub-job-card__meta-row">
+          {salary && <span className="job-meta__item job-meta__item--salary">{salary}</span>}
+          <span className="job-meta__item job-meta__item--time">
+            <Clock size={11} aria-hidden="true" />
+            {formatDate(job.created_at)}
+          </span>
+        </div>
+        <ChevronRight size={16} className="pub-job-card__chevron" aria-hidden="true" />
       </div>
-
-      <div className="pub-job-card__hint">Sign in to apply &rarr;</div>
     </Link>
   )
 }

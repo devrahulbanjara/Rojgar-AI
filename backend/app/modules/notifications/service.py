@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.enums import MembershipStatus, UserRole
@@ -148,7 +149,7 @@ async def mark_notification_read(
 
 async def mark_all_notifications_read(db: AsyncSession, user: User) -> int:
     """Mark all unread notifications as read for a user."""
-    result = await db.execute(
+    result: CursorResult = await db.execute(  # type: ignore[assignment]
         update(Notification)
         .where(Notification.is_read.is_(False), Notification.user_id == user.id)
         .values(is_read=True, read_at=_utcnow())

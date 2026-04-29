@@ -25,6 +25,7 @@ from app.modules.resumes.models import (
 )
 from app.modules.resumes.schemas import ResumeListItem, ResumeResponse, ResumeUpdate
 from app.shared.enums import SyncAction
+from app.shared.schemas import EducationResponse, ExperienceResponse, SkillResponse
 
 
 def _resume_list_cache_key(user_id: str) -> str:
@@ -65,9 +66,9 @@ def _resume_to_response(resume: Resume) -> ResumeResponse:
         github_url=resume.github_url,
         portfolio_url=resume.portfolio_url,
         years_of_experience=resume.years_of_experience,
-        experiences=resume.experiences,
-        educations=resume.educations,
-        skills=resume.skills,
+        experiences=[ExperienceResponse.model_validate(e) for e in resume.experiences],
+        educations=[EducationResponse.model_validate(e) for e in resume.educations],
+        skills=[SkillResponse.model_validate(s) for s in resume.skills],
         created_at=resume.created_at,
         updated_at=resume.updated_at,
     )

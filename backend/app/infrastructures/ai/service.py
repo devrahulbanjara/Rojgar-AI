@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-from copy import deepcopy
 from collections.abc import AsyncIterator
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Type, TypeVar
 
 from fastapi import HTTPException, status
@@ -12,10 +12,9 @@ from groq import APIStatusError, AsyncGroq, BadRequestError
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
 from app.core.config import settings
-
 
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
 
@@ -119,7 +118,7 @@ class AIService:
 
             self._embeddings = GoogleGenerativeAIEmbeddings(
                 model=settings.embedding_model,
-                google_api_key=settings.google_api_key,
+                api_key=SecretStr(settings.google_api_key),
             )
 
         return self._embeddings
@@ -154,7 +153,7 @@ class AIService:
         return ChatGroq(
             model=model or settings.groq_model_recruiter_chat,
             temperature=temperature,
-            api_key=settings.groq_api_key,
+            api_key=SecretStr(settings.groq_api_key),
             max_tokens=4096,
         )
 
@@ -235,6 +234,11 @@ class AIService:
             ) from exc
 
         content = response.choices[0].message.content
+        if content is None:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="The AI service returned an empty response.",
+            )
         data = json.loads(content)
         return schema_model.model_validate(data)
 

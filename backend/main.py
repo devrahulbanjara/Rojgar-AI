@@ -49,12 +49,18 @@ setup_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Run startup and shutdown tasks for the FastAPI application lifecycle."""
+    # vector store — job/candidate search and recruiter chat
     await qdrant_service.initialize()
+    # LangGraph runner — job drafting AI
     await job_ai_runtime.start()
+    # cache layer — jobs, applications, companies
     await redis_service.connect()
+    # marks any overdue active jobs as expired on boot
     await run_job_expiry_startup_check()
 
+    # background loop — retries failed qdrant sync events every 60s
     daemon_task = asyncio.create_task(sync_daemon_loop())
+    # daily cron — marks overdue active jobs as expired
     job_expiry_scheduler = create_job_expiry_scheduler()
     job_expiry_scheduler.start()
 
@@ -93,10 +99,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(RequestContextMiddleware)
+app.add_middleware(
+    RequestContextMiddleware
+)  # attaches request context to every request
 
-register_exception_handlers(app)
+register_exception_handlers(app)  # registers global exception handlers
 
+# mounts all route modules
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(audit_router)
 app.include_router(activity_router)

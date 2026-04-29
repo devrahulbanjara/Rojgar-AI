@@ -101,7 +101,7 @@ class QdrantService:
                     collection_name=collection_name,
                     field_name=field,
                     field_schema=models.TextIndexParams(
-                        type="text",
+                        type=models.TextIndexType.TEXT,
                         tokenizer=models.TokenizerType.WORD,
                         min_token_len=2,
                         max_token_len=20,
@@ -354,7 +354,7 @@ class QdrantService:
             key="expires_at_ts",
             range=models.Range(gt=now_ts),
         )
-        base_must = [active_condition, expires_condition]
+        base_must: list[models.Condition] = [active_condition, expires_condition]
 
         filters: list[models.Condition] = []
         if location:
@@ -402,7 +402,7 @@ class QdrantService:
         )
 
         results = [
-            {"job_id": uuid.UUID(hit.id), "score": hit.score, "is_fallback": False}
+            {"job_id": uuid.UUID(str(hit.id)), "score": hit.score, "is_fallback": False}
             for hit in strict_response.points
         ]
 
@@ -431,7 +431,11 @@ class QdrantService:
             )
 
             results.extend(
-                {"job_id": uuid.UUID(hit.id), "score": hit.score, "is_fallback": True}
+                {
+                    "job_id": uuid.UUID(str(hit.id)),
+                    "score": hit.score,
+                    "is_fallback": True,
+                }
                 for hit in fallback_response.points
             )
 
@@ -485,7 +489,7 @@ class QdrantService:
             with_payload=False,
         )
         return [
-            {"application_id": uuid.UUID(hit.id), "score": hit.score}
+            {"application_id": uuid.UUID(str(hit.id)), "score": hit.score}
             for hit in response.points
         ]
 

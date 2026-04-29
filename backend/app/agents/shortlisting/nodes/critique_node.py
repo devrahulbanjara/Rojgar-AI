@@ -1,3 +1,5 @@
+from typing import cast
+
 from app.agents.shortlisting.prompts import CRITIQUE_PROMPT
 from app.agents.shortlisting.schemas import JudgeResponse, ShortlistState
 from app.infrastructures.aws.bedrock import get_bedrock_llm
@@ -10,7 +12,7 @@ async def critique_node(state: ShortlistState) -> dict:
         cto_eval=state["cto_evals"][-1].model_dump_json(),
         hr_eval=state["hr_evals"][-1].model_dump_json(),
     )
-    response = await judge_llm.ainvoke(prompt)
+    response = cast(JudgeResponse, await judge_llm.ainvoke(prompt))
     return {
         "critiques": [response.critique],
         "is_satisfied": response.is_satisfied,

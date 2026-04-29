@@ -18,7 +18,7 @@ from app.modules.resume_gap.schemas import (
 from app.modules.resumes import service as resumes_service
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeUpdate
-
+from app.shared.schemas import SkillBase
 
 _provider = GroqGapAnalysisProvider()
 CACHE_TTL_SECONDS = 600
@@ -136,14 +136,14 @@ async def auto_patch_resume(
 
     existing_skills = [skill.skill_name for skill in resume.skills]
     seen = {skill_name.strip().lower() for skill_name in existing_skills}
-    merged_skills = [{"skill_name": skill_name} for skill_name in existing_skills]
+    merged_skills: list[SkillBase] = [SkillBase(skill_name=s) for s in existing_skills]
     added_skill_names: list[str] = []
     for skill_name in patch.skills_to_add:
         normalized = skill_name.strip()
         if not normalized or normalized.lower() in seen:
             continue
         seen.add(normalized.lower())
-        merged_skills.append({"skill_name": normalized})
+        merged_skills.append(SkillBase(skill_name=normalized))
         added_skill_names.append(normalized)
         if len(added_skill_names) >= 5:
             break

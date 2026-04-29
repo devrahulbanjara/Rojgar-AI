@@ -2,8 +2,8 @@ import asyncio
 import json
 import uuid
 from collections import defaultdict
-from enum import Enum
 from datetime import date, datetime, timedelta, timezone
+from enum import Enum
 from pathlib import Path
 
 from fastapi.encoders import jsonable_encoder
@@ -182,36 +182,36 @@ def _queue_seed_audit_log(
 
 COMPANIES = [
     {
-        "name": "Pinnacle Tech Nepal Pvt. Ltd.",
+        "name": "F1Soft International Pvt. Ltd.",
         "industry": "Fintech & Digital Banking",
         "company_size": "201-500",
         "location": "Hattisar, Kathmandu",
-        "website_url": "https://pinnacletech.com.np",
-        "domain": "pinnacletech.com.np",
-        "cal_booking_url": "https://cal.com/pinnacletech-hiring",
-        "cal_organizer_email": "hiring@pinnacletech.com.np",
+        "website_url": "https://f1soft.com",
+        "domain": "f1soft.com",
+        "cal_booking_url": "https://cal.com/f1soft-hiring",
+        "cal_organizer_email": "hiring@f1soft.com",
         "description": (
-            "Pinnacle Tech Nepal is a leading fintech company building the next generation of "
-            "digital payment infrastructure for Nepal and South Asia. Founded in 2015, we power "
-            "real-time payment rails, mobile banking platforms, and lending APIs used by over "
-            "40 banks and financial institutions. Our engineering team operates at the intersection "
-            "of distributed systems, financial compliance, and mobile-first product design. "
-            "We are headquartered in Hattisar, Kathmandu with a satellite office in Pokhara."
+            "F1Soft International is a dominant force in Nepal's fintech landscape, responsible for "
+            "developing nearly 90% of the digital banking systems in the country. We are the parent "
+            "company of eSewa (Nepal's leading digital wallet) and Fonepay (the national payment network). "
+            "Our engineering team operates at the intersection of distributed systems, financial compliance, "
+            "and mobile-first product design, powering real-time payment rails and mobile banking platforms "
+            "used by millions across Nepal and South Asia."
         ),
         "admin": {
             "full_name": "Bikash Shrestha",
-            "email": "bikash.shrestha@pinnacletech.com.np",
+            "email": "bikash.shrestha@f1soft.com",
             "job_title": "Chief Technology Officer",
         },
         "recruiters": [
             {
                 "full_name": "Priya Maharjan",
-                "email": "priya.maharjan@pinnacletech.com.np",
+                "email": "priya.maharjan@f1soft.com",
                 "job_title": "Head of Talent Acquisition",
             },
             {
                 "full_name": "Roshan Karki",
-                "email": "roshan.karki@pinnacletech.com.np",
+                "email": "roshan.karki@f1soft.com",
                 "job_title": "Technical Recruiter",
             },
         ],
@@ -388,7 +388,7 @@ COMPANIES = [
                 "salary_max": 200000,
                 "currency": "NPR",
                 "overview": (
-                    "Pinnacle Tech's infrastructure team manages a multi-region AWS footprint that "
+                    "F1Soft's infrastructure team manages a multi-region AWS footprint that "
                     "serves real-time financial transactions. We are looking for a DevOps & Cloud "
                     "Infrastructure Engineer who can drive automation, improve deployment reliability, "
                     "and ensure our systems meet the security standards demanded by NRB and partner banks. "
@@ -546,37 +546,37 @@ COMPANIES = [
         ],
     },
     {
-        "name": "NovaMind AI Solutions Pvt. Ltd.",
+        "name": "Leapfrog Technology Inc.",
         "industry": "Artificial Intelligence & Data Science",
         "company_size": "51-200",
         "location": "Kumaripati, Lalitpur",
-        "website_url": "https://novamind.ai",
-        "domain": "novamind.ai",
-        "cal_booking_url": "https://cal.com/novamind-interviews",
-        "cal_organizer_email": "interviews@novamind.ai",
+        "website_url": "https://lftechnology.com",
+        "domain": "lftechnology.com",
+        "cal_booking_url": "https://cal.com/leapfrog-interviews",
+        "cal_organizer_email": "interviews@lftechnology.com",
         "description": (
-            "NovaMind AI Solutions is Nepal's fastest-growing applied AI company, building "
-            "machine learning products for healthcare, agritech, and enterprise automation. "
-            "Spun out of research at Kathmandu University in 2019, we now serve clients across "
-            "Nepal, India, and the United States. Our team of 80+ engineers, data scientists, "
-            "and ML researchers work on everything from custom LLM fine-tuning to computer vision "
-            "systems deployed on edge devices in remote health posts. We are backed by South Asian "
-            "venture capital and are scaling rapidly."
+            "Leapfrog Technology Inc. is a premier software development firm known for its strong "
+            "engineering culture and technical excellence. We specialize in healthcare technology, "
+            "AI-driven solutions, and digital transformation for global clients across the United States, "
+            "Europe, and Asia. Our team of engineers, data scientists, and product designers work on "
+            "cutting-edge projects ranging from healthcare platforms and machine learning systems to "
+            "enterprise automation and mobile applications. We are committed to building world-class "
+            "software while fostering a culture of continuous learning and innovation."
         ),
         "admin": {
             "full_name": "Dr. Samjhana Poudel",
-            "email": "samjhana.poudel@novamind.ai",
+            "email": "samjhana.poudel@lftechnology.com",
             "job_title": "CEO & Co-Founder",
         },
         "recruiters": [
             {
                 "full_name": "Anil Thapa Magar",
-                "email": "anil.thapamagar@novamind.ai",
+                "email": "anil.thapamagar@lftechnology.com",
                 "job_title": "People Operations Manager",
             },
             {
                 "full_name": "Sunita Rai",
-                "email": "sunita.rai@novamind.ai",
+                "email": "sunita.rai@lftechnology.com",
                 "job_title": "Senior Technical Recruiter",
             },
         ],
@@ -589,7 +589,7 @@ COMPANIES = [
                 "salary_max": 250000,
                 "currency": "NPR",
                 "overview": (
-                    "NovaMind is building a Nepali-language AI assistant for the public health sector, "
+                    "Leapfrog is building a Nepali-language AI assistant for the public health sector, "
                     "funded by the Ministry of Health and Population. We need a Machine Learning Engineer "
                     "with hands-on experience in LLM fine-tuning and NLP to join the core model team. "
                     "You will work on Nepali language tokenization, fine-tuning open-weight models like "
@@ -671,7 +671,7 @@ COMPANIES = [
                 "salary_max": 185000,
                 "currency": "NPR",
                 "overview": (
-                    "NovaMind's data platform ingests health records, lab results, and epidemiological "
+                    "Leapfrog's data platform ingests health records, lab results, and epidemiological "
                     "datasets from over 200 health facilities across Nepal. We are hiring a Data Engineer "
                     "to build and maintain the pipelines that make this data clean, reliable, and accessible "
                     "for our ML and analytics teams. You will own the data warehouse architecture, orchestrate "
@@ -753,7 +753,7 @@ COMPANIES = [
                 "currency": "NPR",
                 "overview": (
                     "We are building a SaaS platform that allows healthcare organizations and agritech "
-                    "startups to deploy NovaMind's AI models via a no-code interface. Think: drag-and-drop "
+                    "startups to deploy Leapfrog's AI models via a no-code interface. Think: drag-and-drop "
                     "pipeline builder, model performance dashboards, and automated alert systems. "
                     "You will be a core engineer on this product, owning both the FastAPI backend and the "
                     "React frontend. This is a greenfield product — expect to make real architectural "
@@ -834,7 +834,7 @@ COMPANIES = [
                 "salary_max": 220000,
                 "currency": "NPR",
                 "overview": (
-                    "NovaMind's agritech division is deploying AI-powered pest and disease detection "
+                    "Leapfrog's agritech division is deploying AI-powered pest and disease detection "
                     "systems to farming cooperatives across Nepal's Terai region. We are looking for a "
                     "Computer Vision Engineer who can train, optimize, and deploy object detection and "
                     "classification models on edge devices (Raspberry Pi, Jetson Nano). This role combines "
@@ -912,11 +912,287 @@ COMPANIES = [
             },
         ],
     },
+    {
+        "name": "Sastodeal Technology Pvt. Ltd.",
+        "industry": "E-commerce & Marketplace",
+        "company_size": "101-200",
+        "location": "Tinkune, Kathmandu",
+        "website_url": "https://sastodeal.com",
+        "domain": "sastodeal.com",
+        "cal_booking_url": "https://cal.com/sastodeal-hiring",
+        "cal_organizer_email": "careers@sastodeal.com",
+        "description": (
+            "Sastodeal is Nepal's leading online marketplace connecting buyers and sellers across "
+            "electronics, fashion, home goods, and groceries. Founded in 2011, we process over "
+            "50,000 orders monthly and operate fulfillment centers in Kathmandu, Pokhara, and Biratnagar. "
+            "Our engineering team builds high-scale inventory management, payment processing, logistics "
+            "optimization, and seller onboarding platforms."
+        ),
+        "admin": {
+            "full_name": "Sanjay Agrawal",
+            "email": "sanjay.agrawal@sastodeal.com",
+            "job_title": "VP of Engineering",
+        },
+        "recruiters": [
+            {
+                "full_name": "Anjali Thapa",
+                "email": "anjali.thapa@sastodeal.com",
+                "job_title": "Senior Technical Recruiter",
+            },
+        ],
+        "jobs": [
+            {
+                "title": "Senior Backend Engineer – Marketplace Platform (Python/Django)",
+                "location": "Tinkune, Kathmandu",
+                "location_type": LocationType.hybrid,
+                "salary_min": 150000,
+                "salary_max": 230000,
+                "currency": "NPR",
+                "overview": (
+                    "Join our Marketplace Platform team to build the core systems that power Nepal's "
+                    "largest e-commerce platform. You'll work on inventory sync, order orchestration, "
+                    "payment processing, and seller analytics serving 50,000+ monthly transactions."
+                ),
+                "responsibilities": [
+                    "Design and maintain Django REST APIs for product catalog, cart, and checkout flows",
+                    "Build real-time inventory sync systems integrating with 2,000+ seller accounts",
+                    "Optimize PostgreSQL queries for product search and recommendation engines",
+                    "Implement fraud detection and payment reconciliation workflows",
+                ],
+                "requirements": [
+                    "5+ years Python backend experience, 3+ years with Django or FastAPI",
+                    "Strong PostgreSQL skills including indexing and query optimization",
+                    "Experience with Redis, Celery, and background job processing",
+                    "Understanding of e-commerce domain: inventory, orders, payments",
+                ],
+                "preferred_qualifications": [
+                    "Prior e-commerce or marketplace platform experience",
+                    "Knowledge of Elasticsearch for product search",
+                    "Experience with payment gateway integrations (eSewa, Khalti, IME Pay)",
+                ],
+                "benefits": [
+                    "Monthly salary: NPR 1,50,000 – 2,30,000",
+                    "Festival bonuses (Dashain, Tihar)",
+                    "Health insurance for family",
+                    "Hybrid work: 3 days office, 2 days remote",
+                ],
+                "shortlist_threshold": 65,
+                "evaluation_criteria": [
+                    {
+                        "key": "backend_depth",
+                        "label": "Backend Engineering",
+                        "max_score": 10,
+                        "weight": 2.0,
+                    },
+                    {
+                        "key": "ecommerce_domain",
+                        "label": "E-commerce Domain",
+                        "max_score": 10,
+                        "weight": 1.5,
+                    },
+                    {
+                        "key": "system_design",
+                        "label": "System Design",
+                        "max_score": 10,
+                        "weight": 1.0,
+                    },
+                    {
+                        "key": "communication",
+                        "label": "Communication",
+                        "max_score": 10,
+                        "weight": 0.5,
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        "name": "Verisk Nepal Pvt. Ltd.",
+        "industry": "Data Analytics & Insurance Tech",
+        "company_size": "501-1000",
+        "location": "Thapathali, Kathmandu",
+        "website_url": "https://verisk.com/nepal",
+        "domain": "verisk.com",
+        "cal_booking_url": "https://cal.com/verisk-nepal",
+        "cal_organizer_email": "recruitment.nepal@verisk.com",
+        "description": (
+            "Verisk Nepal is the Kathmandu-based development center for Verisk Analytics, a global "
+            "data analytics and risk assessment company serving insurance, energy, and financial services "
+            "markets. Our 500+ person engineering team builds predictive models, data pipelines, and "
+            "SaaS platforms used by Fortune 500 clients worldwide."
+        ),
+        "admin": {
+            "full_name": "Ramesh Dhakal",
+            "email": "ramesh.dhakal@verisk.com",
+            "job_title": "Director of Engineering",
+        },
+        "recruiters": [
+            {
+                "full_name": "Kritika Pradhan",
+                "email": "kritika.pradhan@verisk.com",
+                "job_title": "Lead Technical Recruiter",
+            },
+        ],
+        "jobs": [
+            {
+                "title": "Data Engineer – Insurance Analytics Platform (Spark/Airflow)",
+                "location": "Thapathali, Kathmandu",
+                "location_type": LocationType.onsite,
+                "salary_min": 160000,
+                "salary_max": 250000,
+                "currency": "NPR",
+                "overview": (
+                    "Build large-scale data pipelines processing billions of insurance claims, policy "
+                    "records, and risk assessment data for US and European insurance carriers."
+                ),
+                "responsibilities": [
+                    "Design and maintain Spark jobs processing 10TB+ daily data volumes",
+                    "Build Airflow DAGs for ETL orchestration across 50+ data sources",
+                    "Optimize Snowflake warehouse performance and cost efficiency",
+                    "Implement data quality checks and monitoring for critical datasets",
+                ],
+                "requirements": [
+                    "4+ years data engineering experience",
+                    "Strong Python and SQL skills",
+                    "Hands-on Spark (PySpark) and Airflow experience",
+                    "Experience with cloud data warehouses (Snowflake, BigQuery, Redshift)",
+                ],
+                "preferred_qualifications": [
+                    "Insurance or healthcare data experience",
+                    "Knowledge of dbt for analytics engineering",
+                ],
+                "benefits": [
+                    "Monthly salary: NPR 1,60,000 – 2,50,000",
+                    "Annual performance bonus up to 20%",
+                    "Comprehensive health insurance",
+                    "International training opportunities",
+                ],
+                "shortlist_threshold": 70,
+                "evaluation_criteria": [
+                    {
+                        "key": "data_eng",
+                        "label": "Data Engineering",
+                        "max_score": 10,
+                        "weight": 2.0,
+                    },
+                    {
+                        "key": "spark_airflow",
+                        "label": "Spark & Airflow",
+                        "max_score": 10,
+                        "weight": 1.5,
+                    },
+                    {
+                        "key": "sql",
+                        "label": "SQL & Data Modeling",
+                        "max_score": 10,
+                        "weight": 1.0,
+                    },
+                    {
+                        "key": "communication",
+                        "label": "Communication",
+                        "max_score": 10,
+                        "weight": 0.5,
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        "name": "Khalti Digital Wallet Pvt. Ltd.",
+        "industry": "Digital Payments & Fintech",
+        "company_size": "51-100",
+        "location": "Jawalakhel, Lalitpur",
+        "website_url": "https://khalti.com",
+        "domain": "khalti.com",
+        "cal_booking_url": "https://cal.com/khalti-careers",
+        "cal_organizer_email": "jobs@khalti.com",
+        "description": (
+            "Khalti is Nepal's fastest-growing digital wallet with 5+ million users. We enable "
+            "instant payments, bill payments, mobile recharge, and merchant transactions across Nepal. "
+            "Our engineering team builds mobile-first payment experiences, fraud detection systems, "
+            "and merchant onboarding platforms."
+        ),
+        "admin": {
+            "full_name": "Manish Poudel",
+            "email": "manish.poudel@khalti.com",
+            "job_title": "CTO",
+        },
+        "recruiters": [
+            {
+                "full_name": "Shreya Karmacharya",
+                "email": "shreya.karmacharya@khalti.com",
+                "job_title": "Talent Acquisition Lead",
+            },
+        ],
+        "jobs": [
+            {
+                "title": "Mobile Engineer – Flutter (iOS & Android)",
+                "location": "Jawalakhel, Lalitpur",
+                "location_type": LocationType.hybrid,
+                "salary_min": 130000,
+                "salary_max": 200000,
+                "currency": "NPR",
+                "overview": (
+                    "Own the Khalti mobile app used by 5 million Nepalis for payments, recharge, "
+                    "and bill payments. Build features, optimize performance, and ensure security."
+                ),
+                "responsibilities": [
+                    "Develop and maintain Khalti Flutter app for iOS and Android",
+                    "Implement payment flows, QR scanning, and biometric authentication",
+                    "Optimize app performance for low-end Android devices",
+                    "Integrate with backend APIs and handle offline-first scenarios",
+                ],
+                "requirements": [
+                    "3+ years mobile development experience",
+                    "Strong Flutter and Dart skills",
+                    "Experience with state management (Riverpod, Bloc, Provider)",
+                    "Understanding of mobile security best practices",
+                ],
+                "preferred_qualifications": [
+                    "Fintech or payment app experience",
+                    "Knowledge of Nepal's mobile ecosystem",
+                ],
+                "benefits": [
+                    "Monthly salary: NPR 1,30,000 – 2,00,000",
+                    "ESOPs for early team members",
+                    "Festival bonuses",
+                    "Health insurance",
+                ],
+                "shortlist_threshold": 65,
+                "evaluation_criteria": [
+                    {
+                        "key": "flutter",
+                        "label": "Flutter Expertise",
+                        "max_score": 10,
+                        "weight": 2.0,
+                    },
+                    {
+                        "key": "mobile_perf",
+                        "label": "Mobile Performance",
+                        "max_score": 10,
+                        "weight": 1.5,
+                    },
+                    {
+                        "key": "security",
+                        "label": "Security Awareness",
+                        "max_score": 10,
+                        "weight": 1.0,
+                    },
+                    {
+                        "key": "communication",
+                        "label": "Communication",
+                        "max_score": 10,
+                        "weight": 0.5,
+                    },
+                ],
+            },
+        ],
+    },
 ]
 
 
 # ============================================================================
-# CANDIDATE DATA (5 candidates, each with 2 resume variants)
+# CANDIDATE DATA (9 candidates, each with 1-2 resume variants)
 # ============================================================================
 
 CANDIDATES = [
@@ -1862,6 +2138,384 @@ CANDIDATES = [
             },
         ],
     },
+    {
+        "full_name": "Nischal Basnet",
+        "email": "nischal.basnet@gmail.com",
+        "years_of_experience": 4,
+        "headline": "Full Stack Engineer | React & Node.js | E-commerce Specialist",
+        "summary": (
+            "Full stack engineer with 4 years building e-commerce and marketplace platforms. "
+            "Strong in React, Node.js, PostgreSQL, and payment gateway integrations. Experience "
+            "at Daraz and Sastodeal building seller tools and checkout flows."
+        ),
+        "phone": "+977-9851-112233",
+        "location": "Baluwatar, Kathmandu",
+        "linkedin_url": "https://linkedin.com/in/nischalbasnet",
+        "github_url": "https://github.com/nischal-basnet",
+        "portfolio_url": "https://nischalbasnet.com.np",
+        "target_roles": [
+            "Full Stack Engineer",
+            "Backend Engineer",
+            "E-commerce Engineer",
+        ],
+        "is_open_to_work": True,
+        "skills": [
+            "JavaScript",
+            "TypeScript",
+            "React",
+            "Node.js",
+            "Express",
+            "PostgreSQL",
+            "MongoDB",
+            "Redis",
+            "Docker",
+            "AWS",
+            "Payment Gateways",
+            "REST APIs",
+            "GraphQL",
+            "Jest",
+            "Cypress",
+        ],
+        "experiences": [
+            {
+                "company_name": "Daraz Nepal",
+                "title": "Full Stack Engineer",
+                "start_date": date(2022, 1, 1),
+                "end_date": None,
+                "description": [
+                    "Built seller dashboard features for inventory and order management",
+                    "Integrated eSewa, Khalti, and IME Pay payment gateways",
+                    "Optimized checkout flow reducing cart abandonment by 15%",
+                    "Developed GraphQL APIs for mobile app integration",
+                ],
+            },
+            {
+                "company_name": "Sastodeal Technology",
+                "title": "Junior Full Stack Developer",
+                "start_date": date(2020, 6, 1),
+                "end_date": date(2021, 12, 31),
+                "description": [
+                    "Developed product listing and search features using React and Node.js",
+                    "Built admin tools for content moderation and seller onboarding",
+                    "Implemented Redis caching for product catalog queries",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Kathmandu University (KU), Dhulikhel",
+                "degree": "Bachelor of Computer Science",
+                "field_of_study": "Computer Science",
+                "start_date": date(2016, 8, 1),
+                "end_date": date(2020, 8, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "Full Stack E-commerce Profile",
+                "headline": "Full Stack Engineer | React & Node.js | E-commerce",
+                "summary": "Full stack engineer specializing in e-commerce platforms and payment integrations.",
+            },
+        ],
+    },
+    {
+        "full_name": "Aakriti Shrestha",
+        "email": "aakriti.shrestha@gmail.com",
+        "years_of_experience": 6,
+        "headline": "Senior QA Engineer | Test Automation | Selenium & Cypress",
+        "summary": (
+            "QA engineer with 6 years experience in test automation, CI/CD integration, "
+            "and quality assurance for fintech and e-commerce products. Built automated test "
+            "suites reducing regression testing time by 80%."
+        ),
+        "phone": "+977-9862-334455",
+        "location": "Pulchowk, Lalitpur",
+        "linkedin_url": "https://linkedin.com/in/aakritishrestha",
+        "github_url": "https://github.com/aakriti-shrestha",
+        "portfolio_url": None,
+        "target_roles": ["Senior QA Engineer", "QA Automation Lead", "SDET"],
+        "is_open_to_work": True,
+        "skills": [
+            "Selenium",
+            "Cypress",
+            "Playwright",
+            "Python",
+            "JavaScript",
+            "Pytest",
+            "Jest",
+            "CI/CD",
+            "Jenkins",
+            "GitHub Actions",
+            "API Testing",
+            "Postman",
+            "JMeter",
+            "Performance Testing",
+            "Test Strategy",
+        ],
+        "experiences": [
+            {
+                "company_name": "F1Soft International Pvt. Ltd.",
+                "title": "Senior QA Engineer",
+                "start_date": date(2021, 3, 1),
+                "end_date": None,
+                "description": [
+                    "Built automated test suites for eSewa payment flows using Selenium and Pytest",
+                    "Reduced regression testing time from 3 days to 4 hours through automation",
+                    "Integrated tests into CI/CD pipeline achieving 95% code coverage",
+                    "Led QA team of 3 engineers and established testing best practices",
+                ],
+            },
+            {
+                "company_name": "Leapfrog Technology",
+                "title": "QA Engineer",
+                "start_date": date(2018, 7, 1),
+                "end_date": date(2021, 2, 28),
+                "description": [
+                    "Developed Selenium test automation framework for web applications",
+                    "Performed manual and automated testing for US-based SaaS clients",
+                    "Created API test suites using Postman and Newman",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Tribhuvan University",
+                "degree": "Bachelor of Computer Application",
+                "field_of_study": "Computer Application",
+                "start_date": date(2014, 8, 1),
+                "end_date": date(2018, 8, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "QA Automation Specialist",
+                "headline": "Senior QA Engineer | Test Automation | Selenium & Cypress",
+                "summary": "QA automation specialist with strong fintech testing background.",
+            },
+        ],
+    },
+    {
+        "full_name": "Bibek Ghimire",
+        "email": "bibek.ghimire@gmail.com",
+        "years_of_experience": 5,
+        "headline": "DevOps Engineer | Kubernetes & AWS | Infrastructure Automation",
+        "summary": (
+            "DevOps engineer with 5 years managing cloud infrastructure, CI/CD pipelines, "
+            "and Kubernetes clusters for high-traffic applications. Strong AWS and Terraform expertise."
+        ),
+        "phone": "+977-9843-556677",
+        "location": "Naxal, Kathmandu",
+        "linkedin_url": "https://linkedin.com/in/bibekghimire",
+        "github_url": "https://github.com/bibek-ghimire",
+        "portfolio_url": None,
+        "target_roles": ["DevOps Engineer", "SRE", "Cloud Engineer"],
+        "is_open_to_work": True,
+        "skills": [
+            "Kubernetes",
+            "Docker",
+            "AWS",
+            "Terraform",
+            "Ansible",
+            "Jenkins",
+            "GitHub Actions",
+            "Prometheus",
+            "Grafana",
+            "ELK Stack",
+            "Linux",
+            "Python",
+            "Bash",
+            "CI/CD",
+            "Infrastructure as Code",
+        ],
+        "experiences": [
+            {
+                "company_name": "CloudFactory Nepal",
+                "title": "DevOps Engineer",
+                "start_date": date(2021, 1, 1),
+                "end_date": None,
+                "description": [
+                    "Managed EKS clusters serving 100+ microservices across multiple environments",
+                    "Built Terraform modules for infrastructure provisioning reducing setup time by 70%",
+                    "Implemented monitoring and alerting with Prometheus and Grafana",
+                    "Automated deployment processes using GitHub Actions and ArgoCD",
+                ],
+            },
+            {
+                "company_name": "Leapfrog Technology",
+                "title": "Junior DevOps Engineer",
+                "start_date": date(2019, 6, 1),
+                "end_date": date(2020, 12, 31),
+                "description": [
+                    "Maintained CI/CD pipelines for multiple client projects using Jenkins",
+                    "Automated deployment processes reducing release time by 60%",
+                    "Managed AWS infrastructure including EC2, RDS, and S3",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+                "degree": "Bachelor of Engineering",
+                "field_of_study": "Computer Engineering",
+                "start_date": date(2014, 11, 1),
+                "end_date": date(2018, 11, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "DevOps & Cloud Infrastructure",
+                "headline": "DevOps Engineer | Kubernetes & AWS | Infrastructure Automation",
+                "summary": "DevOps engineer specializing in Kubernetes, AWS, and infrastructure automation.",
+            },
+        ],
+    },
+    {
+        "full_name": "Kritika Adhikari",
+        "email": "kritika.adhikari@gmail.com",
+        "years_of_experience": 3,
+        "headline": "Mobile Developer | Flutter | Cross-platform Apps",
+        "summary": (
+            "Mobile developer with 3 years building Flutter apps for fintech and e-commerce. "
+            "Experience with payment integrations, offline-first architecture, and performance optimization."
+        ),
+        "phone": "+977-9814-778899",
+        "location": "Sanepa, Lalitpur",
+        "linkedin_url": "https://linkedin.com/in/kritikaadhikari",
+        "github_url": "https://github.com/kritika-adhikari",
+        "portfolio_url": "https://kritikaadhikari.dev",
+        "target_roles": ["Mobile Developer", "Flutter Developer", "Mobile Engineer"],
+        "is_open_to_work": True,
+        "skills": [
+            "Flutter",
+            "Dart",
+            "Firebase",
+            "REST APIs",
+            "State Management",
+            "Riverpod",
+            "Bloc",
+            "SQLite",
+            "Git",
+            "CI/CD",
+            "App Store Deployment",
+            "Google Play",
+            "Mobile Security",
+            "Performance Optimization",
+        ],
+        "experiences": [
+            {
+                "company_name": "IME Digital Solution",
+                "title": "Flutter Developer",
+                "start_date": date(2022, 4, 1),
+                "end_date": None,
+                "description": [
+                    "Developed IME Pay mobile wallet app features for 2M+ users",
+                    "Implemented biometric authentication and secure payment flows",
+                    "Optimized app performance for low-end Android devices",
+                    "Integrated with backend APIs using REST and WebSocket",
+                ],
+            },
+            {
+                "company_name": "Sastodeal Technology",
+                "title": "Junior Mobile Developer",
+                "start_date": date(2021, 3, 1),
+                "end_date": date(2022, 3, 31),
+                "description": [
+                    "Built Sastodeal mobile app features using Flutter",
+                    "Implemented product search and cart functionality",
+                    "Integrated eSewa and Khalti payment gateways",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Kathmandu University (KU), Dhulikhel",
+                "degree": "Bachelor of Computer Engineering",
+                "field_of_study": "Computer Engineering",
+                "start_date": date(2016, 8, 1),
+                "end_date": date(2020, 8, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "Flutter Mobile Developer",
+                "headline": "Mobile Developer | Flutter | Cross-platform Apps",
+                "summary": "Flutter developer specializing in fintech and e-commerce mobile applications.",
+            },
+        ],
+    },
+    {
+        "full_name": "Rajesh Tamang",
+        "email": "rajesh.tamang@gmail.com",
+        "years_of_experience": 8,
+        "headline": "Engineering Manager | Team Leadership | Fintech & Payments",
+        "summary": (
+            "Engineering manager with 8 years experience leading backend and platform teams. "
+            "Built and scaled engineering teams from 3 to 15 people. Strong technical background "
+            "in distributed systems and payment infrastructure."
+        ),
+        "phone": "+977-9801-998877",
+        "location": "Lazimpat, Kathmandu",
+        "linkedin_url": "https://linkedin.com/in/rajeshtamang",
+        "github_url": "https://github.com/rajesh-tamang",
+        "portfolio_url": None,
+        "target_roles": ["Engineering Manager", "Tech Lead", "Director of Engineering"],
+        "is_open_to_work": True,
+        "skills": [
+            "Team Leadership",
+            "Engineering Management",
+            "System Design",
+            "Python",
+            "Java",
+            "Microservices",
+            "AWS",
+            "Agile",
+            "Hiring",
+            "Mentoring",
+            "Technical Strategy",
+            "Stakeholder Management",
+        ],
+        "experiences": [
+            {
+                "company_name": "F1Soft International Pvt. Ltd.",
+                "title": "Engineering Manager - Payments Platform",
+                "start_date": date(2020, 1, 1),
+                "end_date": None,
+                "description": [
+                    "Lead team of 12 engineers building eSewa payment processing platform",
+                    "Scaled team from 5 to 12 engineers through strategic hiring",
+                    "Drove architectural decisions for microservices migration",
+                    "Improved team velocity by 40% through process improvements",
+                ],
+            },
+            {
+                "company_name": "Khalti Digital Wallet",
+                "title": "Senior Backend Engineer",
+                "start_date": date(2017, 6, 1),
+                "end_date": date(2019, 12, 31),
+                "description": [
+                    "Built core payment processing APIs handling 100K+ daily transactions",
+                    "Led technical design for merchant onboarding platform",
+                    "Mentored 3 junior engineers",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Tribhuvan University, Pulchowk Campus",
+                "degree": "Bachelor of Engineering",
+                "field_of_study": "Electronics and Communication Engineering",
+                "start_date": date(2010, 11, 1),
+                "end_date": date(2014, 11, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "Engineering Leadership Profile",
+                "headline": "Engineering Manager | Team Leadership | Fintech & Payments",
+                "summary": "Engineering manager with proven track record building and scaling high-performing teams.",
+            },
+        ],
+    },
 ]
 
 
@@ -1872,13 +2526,14 @@ CANDIDATES = [
 #           score, feedback, status, share_overrides)
 #
 # candidate_idx: 0=Aashish, 1=Dipika, 2=Suraj, 3=Nisha, 4=Rajan,
-#                5=Nischal, 6=Samikshya, 7=Binod, 8=Prabesh
-# company_idx: 0=Pinnacle, 1=NovaMind
-# job_idx: per-company index (0-3)
+#                5=Nischal(old), 6=Samikshya, 7=Binod, 8=Prabesh,
+#                9=Nischal(new), 10=Aakriti, 11=Bibek, 12=Kritika, 13=Rajesh
+# company_idx: 0=F1Soft, 1=Leapfrog, 2=Sastodeal, 3=Verisk, 4=Khalti
+# job_idx: per-company index (0-3 for F1Soft/Leapfrog, 0 for new companies)
 # resume_variant_idx: 0 or 1
 
 APPLICATIONS = [
-    # --- Pinnacle Tech Jobs ---
+    # --- F1Soft Jobs ---
     # Job 0: Senior Backend Engineer (Python/FastAPI)
     (
         0,
@@ -1993,7 +2648,7 @@ APPLICATIONS = [
         ApplicationStatus.rejected,
         {"share_avatar": False},
     ),
-    # --- NovaMind AI Jobs ---
+    # --- Leapfrog AI Jobs ---
     # Job 0: ML Engineer – NLP & LLM Fine-tuning
     (
         1,
@@ -2138,6 +2793,112 @@ APPLICATIONS = [
         ApplicationStatus.rejected,
         {"share_location": False, "share_email": False},
     ),
+    # --- Sastodeal Jobs ---
+    # Job 0: Senior Backend Engineer – Marketplace Platform
+    (
+        0,
+        2,
+        0,
+        0,
+        89,
+        "Strong match. Aashish has 7 years backend experience with Python/Django at F1Soft. While his experience is in fintech rather than e-commerce, his technical depth in PostgreSQL, Redis, and API design translates well. Strong candidate for marketplace platform work.",
+        ApplicationStatus.offer_accepted,
+        {},
+    ),
+    (
+        9,
+        2,
+        0,
+        0,
+        92,
+        "Excellent match. Nischal has direct e-commerce experience at Daraz and Sastodeal. Built seller dashboards, integrated payment gateways, and optimized checkout flows. Perfect domain fit and strong technical skills in React, Node.js, and PostgreSQL.",
+        ApplicationStatus.offer,
+        {},
+    ),
+    (
+        8,
+        2,
+        0,
+        0,
+        76,
+        "Good match. Prabesh has strong backend API and integration experience. While his background is more in merchant APIs than e-commerce, his technical skills align well with marketplace platform needs.",
+        ApplicationStatus.interview_completed,
+        {},
+    ),
+    (
+        3,
+        2,
+        0,
+        0,
+        58,
+        "Moderate match. Nisha has full-stack experience but lacks e-commerce domain knowledge and the senior-level depth needed for this role.",
+        ApplicationStatus.rejected,
+        {},
+    ),
+    # --- Verisk Jobs ---
+    # Job 0: Data Engineer – Insurance Analytics Platform
+    (
+        7,
+        3,
+        0,
+        0,
+        94,
+        "Outstanding match. Binod has 6 years data engineering experience with direct fintech analytics background at F1Soft. Deep expertise in Airflow, dbt, Spark, and Snowflake. His payments analytics work translates perfectly to insurance data pipelines.",
+        ApplicationStatus.offer_accepted,
+        {},
+    ),
+    (
+        2,
+        3,
+        0,
+        0,
+        88,
+        "Excellent match. Suraj has healthcare data engineering experience at Cotiviti Nepal with Airflow, dbt, and Snowflake expertise. Direct healthcare domain knowledge is a strong advantage for insurance analytics.",
+        ApplicationStatus.offer_declined,
+        {},
+    ),
+    (
+        0,
+        3,
+        0,
+        0,
+        62,
+        "Partial match. Aashish has strong backend and SQL skills but lacks the data engineering orchestration and warehouse modeling depth required for this role.",
+        ApplicationStatus.screening,
+        {},
+    ),
+    # --- Khalti Jobs ---
+    # Job 0: Mobile Engineer – Flutter
+    (
+        12,
+        4,
+        0,
+        0,
+        96,
+        "Perfect match. Kritika has 3 years Flutter experience building fintech mobile apps at IME Digital. Direct experience with payment flows, biometric auth, and mobile wallet features. Ideal candidate for Khalti.",
+        ApplicationStatus.offer,
+        {},
+    ),
+    (
+        6,
+        4,
+        0,
+        0,
+        45,
+        "Poor match. Samikshya is a frontend web engineer with React and Next.js experience but no mobile development or Flutter background.",
+        ApplicationStatus.rejected,
+        {},
+    ),
+    (
+        3,
+        4,
+        0,
+        0,
+        68,
+        "Moderate match. Nisha has some React Native experience from her full-stack work but lacks the Flutter expertise and fintech mobile domain knowledge needed.",
+        ApplicationStatus.screening,
+        {},
+    ),
 ]
 
 
@@ -2161,7 +2922,7 @@ EXTRA_COMPANY_JOBS = {
             "shortlist_status": ShortlistStatus.in_progress,
             "final_shortlist_completed": False,
             "expires_at": NOW + timedelta(days=12),
-            "overview": "Own developer-platform APIs, observability tooling, and production diagnostics that keep Pinnacle Tech's payment workloads healthy.",
+            "overview": "Own developer-platform APIs, observability tooling, and production diagnostics that keep F1Soft's payment workloads healthy.",
             "responsibilities": [
                 "Build internal platform APIs and tooling for backend teams",
                 "Improve tracing, metrics, alerting, and incident diagnostics",
@@ -2333,7 +3094,7 @@ EXTRA_COMPANY_JOBS = {
             "shortlist_status": ShortlistStatus.in_progress,
             "final_shortlist_completed": False,
             "expires_at": NOW + timedelta(days=16),
-            "overview": "Own merchant onboarding APIs, partner integrations, webhook delivery, and the internal tooling that supports commercial rollout for Pinnacle's payment products.",
+            "overview": "Own merchant onboarding APIs, partner integrations, webhook delivery, and the internal tooling that supports commercial rollout for F1Soft's payment products.",
             "responsibilities": [
                 "Build and maintain merchant-facing APIs and partner onboarding flows",
                 "Own webhook reliability, retry behavior, and integration diagnostics",
@@ -2397,7 +3158,7 @@ EXTRA_COMPANY_JOBS = {
             "shortlist_status": ShortlistStatus.in_progress,
             "final_shortlist_completed": False,
             "expires_at": NOW + timedelta(days=21),
-            "overview": "Build the data platform that powers transaction risk analytics, merchant monitoring, and finance-ready reporting across Pinnacle's payment operations.",
+            "overview": "Build the data platform that powers transaction risk analytics, merchant monitoring, and finance-ready reporting across F1Soft's payment operations.",
             "responsibilities": [
                 "Develop ingestion and warehouse models for risk and transaction analytics",
                 "Own Airflow orchestration, dbt transformations, and data quality checks",
@@ -2461,7 +3222,7 @@ EXTRA_COMPANY_JOBS = {
             "shortlist_status": ShortlistStatus.in_progress,
             "final_shortlist_completed": False,
             "expires_at": NOW + timedelta(days=24),
-            "overview": "Lead a cross-functional payments platform team spanning backend services, platform reliability, and delivery execution for Pinnacle's core transaction products.",
+            "overview": "Lead a cross-functional payments platform team spanning backend services, platform reliability, and delivery execution for F1Soft's core transaction products.",
             "responsibilities": [
                 "Lead a multi-disciplinary engineering team delivering payment infrastructure and internal platform capabilities",
                 "Own hiring, technical planning, and delivery quality for a core product area",
@@ -2677,6 +3438,162 @@ EXTRA_COMPANY_JOBS = {
                     "label": "Analytics & Experiments",
                     "max_score": 10,
                     "weight": 1.3,
+                },
+            ],
+        },
+    ],
+    2: [
+        {
+            "seed_key": "marketplace_backend_active",
+            "poster_slot": 0,
+            "title": "Senior Backend Engineer – Marketplace Platform (Python/Django)",
+            "location": "Tinkune, Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 150000,
+            "salary_max": 230000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": True,
+            "shortlist_threshold": 65,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=20),
+            "overview": "Build core marketplace systems for Nepal's largest e-commerce platform.",
+            "responsibilities": [
+                "Design Django REST APIs for catalog and checkout",
+                "Build inventory sync for 2,000+ sellers",
+                "Optimize PostgreSQL for product search",
+            ],
+            "requirements": [
+                "5+ years Python backend experience",
+                "Strong PostgreSQL and Redis skills",
+                "E-commerce domain knowledge",
+            ],
+            "preferred_qualifications": [
+                "Prior marketplace experience",
+                "Payment gateway integration experience",
+            ],
+            "benefits": [
+                "Hybrid work",
+                "Festival bonuses",
+                "Health insurance",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "backend",
+                    "label": "Backend Engineering",
+                    "max_score": 10,
+                    "weight": 2.0,
+                },
+                {
+                    "key": "ecommerce",
+                    "label": "E-commerce Domain",
+                    "max_score": 10,
+                    "weight": 1.5,
+                },
+            ],
+        },
+    ],
+    3: [
+        {
+            "seed_key": "insurance_data_eng_active",
+            "poster_slot": 0,
+            "title": "Data Engineer – Insurance Analytics Platform (Spark/Airflow)",
+            "location": "Thapathali, Kathmandu",
+            "location_type": LocationType.onsite,
+            "salary_min": 160000,
+            "salary_max": 250000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": True,
+            "shortlist_threshold": 70,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=25),
+            "overview": "Build large-scale data pipelines for insurance analytics.",
+            "responsibilities": [
+                "Design Spark jobs processing 10TB+ daily",
+                "Build Airflow DAGs for ETL orchestration",
+                "Optimize Snowflake performance",
+            ],
+            "requirements": [
+                "4+ years data engineering experience",
+                "Strong Python and SQL",
+                "Spark and Airflow expertise",
+            ],
+            "preferred_qualifications": [
+                "Insurance or healthcare data experience",
+                "dbt knowledge",
+            ],
+            "benefits": [
+                "Annual performance bonus up to 20%",
+                "Comprehensive health insurance",
+                "International training",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "data_eng",
+                    "label": "Data Engineering",
+                    "max_score": 10,
+                    "weight": 2.0,
+                },
+                {
+                    "key": "spark",
+                    "label": "Spark & Airflow",
+                    "max_score": 10,
+                    "weight": 1.5,
+                },
+            ],
+        },
+    ],
+    4: [
+        {
+            "seed_key": "flutter_mobile_active",
+            "poster_slot": 0,
+            "title": "Mobile Engineer – Flutter (iOS & Android)",
+            "location": "Jawalakhel, Lalitpur",
+            "location_type": LocationType.hybrid,
+            "salary_min": 130000,
+            "salary_max": 200000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": True,
+            "shortlist_threshold": 65,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=18),
+            "overview": "Own Khalti mobile app used by 5 million Nepalis.",
+            "responsibilities": [
+                "Develop Flutter app for iOS and Android",
+                "Implement payment flows and biometric auth",
+                "Optimize for low-end devices",
+            ],
+            "requirements": [
+                "3+ years mobile development",
+                "Strong Flutter and Dart skills",
+                "Mobile security best practices",
+            ],
+            "preferred_qualifications": [
+                "Fintech or payment app experience",
+                "Nepal mobile ecosystem knowledge",
+            ],
+            "benefits": [
+                "ESOPs for early team",
+                "Festival bonuses",
+                "Health insurance",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "flutter",
+                    "label": "Flutter Expertise",
+                    "max_score": 10,
+                    "weight": 2.0,
+                },
+                {
+                    "key": "mobile_perf",
+                    "label": "Mobile Performance",
+                    "max_score": 10,
+                    "weight": 1.5,
                 },
             ],
         },
@@ -3363,7 +4280,7 @@ AI_DRAFT_BLUEPRINTS = [
         "thread_id": "job-ai-risk-analytics-lead",
         "status": "awaiting_human",
         "mode": "create",
-        "source_prompt": "Draft a senior risk analytics platform role for Pinnacle's transaction monitoring, reconciliation, and finance reporting stack.",
+        "source_prompt": "Draft a senior risk analytics platform role for F1Soft's transaction monitoring, reconciliation, and finance reporting stack.",
         "locked_fields": ["currency", "location"],
         "latest_draft": {
             "title": "Senior Risk Analytics Platform Engineer",
@@ -3433,7 +4350,7 @@ AI_DRAFT_BLUEPRINTS = [
         "thread_id": "job-ai-merchant-platform-followup",
         "status": "draft_saved",
         "mode": "create",
-        "source_prompt": "Draft a follow-up backend role focused on merchant platform tooling, partner enablement, and operational integrations for Pinnacle.",
+        "source_prompt": "Draft a follow-up backend role focused on merchant platform tooling, partner enablement, and operational integrations for F1Soft.",
         "locked_fields": ["currency"],
         "latest_draft": {
             "title": "Backend Engineer (Merchant Platform Tooling)",
@@ -3444,7 +4361,7 @@ AI_DRAFT_BLUEPRINTS = [
             "currency": "NPR",
             "status": JobStatus.draft,
             "shortlist_threshold": 68,
-            "overview": "Build the internal APIs, onboarding workflows, and operational support tools that help Pinnacle scale merchant integrations cleanly.",
+            "overview": "Build the internal APIs, onboarding workflows, and operational support tools that help F1Soft scale merchant integrations cleanly.",
             "responsibilities": [
                 "Ship partner enablement APIs and merchant tooling improvements",
                 "Improve diagnostics and internal workflows for merchant operations teams",
@@ -3970,12 +4887,14 @@ async def seed_company(
     )
     db.add(company)
     await db.flush()
+    print(f"  ✓ Company created: {company.name} ({company.industry})")
 
     db.add(
         make_membership(
             admin.id, company.id, MembershipRole.admin, admin_info["job_title"]
         )
     )
+    print(f"    • Admin: {admin.full_name} ({admin.email})")
 
     recruiter_users = []
     for rec in company_data["recruiters"]:
@@ -3988,10 +4907,12 @@ async def seed_company(
             )
         )
         recruiter_users.append(r)
+        print(f"    • Recruiter: {r.full_name} ({r.email})")
 
     created_jobs: list[Job] = []
     extra_jobs: dict[str, Job] = {}
     posters = [admin] + recruiter_users
+    print(f"  ✓ Creating {len(company_data['jobs'])} jobs for {company.name}...")
     for i, job_data in enumerate(company_data["jobs"]):
         job_created_at, job_expires_at = get_historical_job_dates(company_index, i)
         job = await create_job_with_schema(
@@ -4008,6 +4929,7 @@ async def seed_company(
         job.created_at = job_created_at
         job.updated_at = job_expires_at - timedelta(days=1)
         created_jobs.append(job)
+        print(f"      • Job {i + 1}: {job.title[:60]}... (status: {job.status.value})")
 
     for request in MEMBERSHIP_REQUESTS.get(company_index, []):
         request_user = make_user(
@@ -4130,7 +5052,7 @@ async def seed_candidate(db, data: dict) -> tuple[User, list[Resume]]:
         resumes.append(resume)
 
     print(
-        f"  ✓ Candidate: {data['full_name']} ({data['email']}) — profile + {len(resumes)} resumes"
+        f"  ✓ Candidate: {data['full_name']} ({data['email']}) — profile + {len(resumes)} resume(s)"
     )
     return user, resumes
 
@@ -4217,6 +5139,24 @@ async def seed_applications(
             )
         )
         application_counter += 1
+
+        # Log application creation
+        status_emoji = {
+            ApplicationStatus.applied: "📝",
+            ApplicationStatus.screening: "🔍",
+            ApplicationStatus.shortlisted: "⭐",
+            ApplicationStatus.rejected: "❌",
+            ApplicationStatus.interview_booked: "📅",
+            ApplicationStatus.interview_completed: "✅",
+            ApplicationStatus.offer: "🎁",
+            ApplicationStatus.offer_accepted: "🎉",
+            ApplicationStatus.offer_declined: "🙅",
+        }
+        emoji = status_emoji.get(target_status, "•")
+        print(
+            f"    {emoji} {CANDIDATES[cand_idx]['full_name']} → {job.title[:50]}... "
+            f"[score={score}, status={target_status.value}]"
+        )
 
         # Create outreach email draft
         if target_status == ApplicationStatus.interview_booked:
@@ -4696,14 +5636,16 @@ async def seed_preferences_and_activity(
             preference_counter += 1
 
     await db.flush()
+    await db.commit()
 
-    applications_result = await db.execute(
-        select(Application, Job, Company, User)
-        .join(Job, Job.id == Application.job_id)
-        .join(Company, Company.id == Job.company_id)
-        .join(User, User.id == Application.user_id)
-        .order_by(Application.created_at.asc())
-    )
+    with db.no_autoflush:
+        applications_result = await db.execute(
+            select(Application, Job, Company, User)
+            .join(Job, Job.id == Application.job_id)
+            .join(Company, Company.id == Job.company_id)
+            .join(User, User.id == Application.user_id)
+            .order_by(Application.created_at.asc())
+        )
     for application, job, company, candidate in applications_result.all():
         company_context = company_context_by_id.get(company.id)
         if company_context is None:
@@ -4818,14 +5760,21 @@ async def seed_preferences_and_activity(
             )
             activity_counter += 1
 
-    drafts_result = await db.execute(
-        select(EmailDraft, Application, Job, Company, User)
-        .join(Application, Application.id == EmailDraft.application_id)
-        .join(Job, Job.id == Application.job_id)
-        .join(Company, Company.id == Job.company_id)
-        .join(User, User.id == Application.user_id)
-        .order_by(EmailDraft.created_at.asc())
-    )
+        # Commit every 50 events to avoid deadlock
+        if activity_counter % 50 == 0:
+            await db.commit()
+
+    await db.commit()
+
+    with db.no_autoflush:
+        drafts_result = await db.execute(
+            select(EmailDraft, Application, Job, Company, User)
+            .join(Application, Application.id == EmailDraft.application_id)
+            .join(Job, Job.id == Application.job_id)
+            .join(Company, Company.id == Job.company_id)
+            .join(User, User.id == Application.user_id)
+            .order_by(EmailDraft.created_at.asc())
+        )
     for draft, application, job, company, candidate in drafts_result.all():
         company_context = company_context_by_id.get(company.id)
         if company_context is None:
@@ -4941,14 +5890,21 @@ async def seed_preferences_and_activity(
             )
             activity_counter += 1
 
-    interviews_result = await db.execute(
-        select(Interview, Application, Job, Company, User)
-        .join(Application, Application.id == Interview.application_id)
-        .join(Job, Job.id == Application.job_id)
-        .join(Company, Company.id == Job.company_id)
-        .join(User, User.id == Application.user_id)
-        .order_by(Interview.created_at.asc())
-    )
+        # Commit every 50 events to avoid deadlock
+        if activity_counter % 50 == 0:
+            await db.commit()
+
+    await db.commit()
+
+    with db.no_autoflush:
+        interviews_result = await db.execute(
+            select(Interview, Application, Job, Company, User)
+            .join(Application, Application.id == Interview.application_id)
+            .join(Job, Job.id == Application.job_id)
+            .join(Company, Company.id == Job.company_id)
+            .join(User, User.id == Application.user_id)
+            .order_by(Interview.created_at.asc())
+        )
     for interview, application, job, company, candidate in interviews_result.all():
         company_context = company_context_by_id.get(company.id)
         if company_context is None:
@@ -4991,13 +5947,20 @@ async def seed_preferences_and_activity(
         )
         activity_counter += 1
 
-    memberships_result = await db.execute(
-        select(CompanyMembership, Company, User)
-        .join(Company, Company.id == CompanyMembership.company_id)
-        .join(User, User.id == CompanyMembership.user_id)
-        .where(
-            CompanyMembership.role == MembershipRole.recruiter,
-            CompanyMembership.status.in_(
+        # Commit every 50 events to avoid deadlock
+        if activity_counter % 50 == 0:
+            await db.commit()
+
+    await db.commit()
+
+    with db.no_autoflush:
+        memberships_result = await db.execute(
+            select(CompanyMembership, Company, User)
+            .join(Company, Company.id == CompanyMembership.company_id)
+            .join(User, User.id == CompanyMembership.user_id)
+            .where(
+                CompanyMembership.role == MembershipRole.recruiter,
+                CompanyMembership.status.in_(
                 [MembershipStatus.pending, MembershipStatus.rejected]
             ),
         )
@@ -5034,7 +5997,11 @@ async def seed_preferences_and_activity(
             )
             activity_counter += 1
 
-    await db.flush()
+        # Commit every 50 events to avoid deadlock
+        if activity_counter % 50 == 0:
+            await db.commit()
+
+    await db.commit()
     print(f"  ✓ Recruiter preferences: {preference_counter}")
     print(f"  ✓ Activity events: {activity_counter}")
 
@@ -5988,9 +6955,10 @@ async def seed_audit_history(
         if application is None:
             continue
         job = jobs_by_id.get(application.job_id)
-        actor = actor_by_user_id.get(
-            draft.generated_by_user_id or (job.posted_by if job is not None else None)
+        _actor_key = draft.generated_by_user_id or (
+            job.posted_by if job is not None else None
         )
+        actor = actor_by_user_id.get(_actor_key) if _actor_key is not None else None
         company_id = job.company_id if job is not None else None
         generated_at = (
             draft.approved_at
@@ -6218,9 +7186,10 @@ async def seed_audit_history(
         if application is None:
             continue
         job = jobs_by_id.get(score.job_id)
-        actor = actor_by_user_id.get(
-            score.submitted_by_user_id or (job.posted_by if job is not None else None)
+        _actor_key = score.submitted_by_user_id or (
+            job.posted_by if job is not None else None
         )
+        actor = actor_by_user_id.get(_actor_key) if _actor_key is not None else None
         record(
             created_at=(application.updated_at or application.created_at)
             + timedelta(hours=4),
@@ -6429,6 +7398,11 @@ async def seed() -> None:
     async with AsyncSessionLocal() as db:
         db.sync_session.info["audit_logs_disabled"] = True
         print("\n🚀 Seeding ConvexHire – Nepal IT Hiring Platform\n")
+        print(f"📊 Data Overview:")
+        print(f"   • Companies: {len(COMPANIES)}")
+        print(f"   • Candidates: {len(CANDIDATES)}")
+        print(f"   • Applications: {len(APPLICATIONS)}")
+        print()
 
         # --- Companies, Admins, Recruiters, Jobs ---
         print(
@@ -6463,7 +7437,8 @@ async def seed() -> None:
         # --- Candidates ---
         print("\n👤 Seeding candidates with profiles and resumes...")
         candidate_users: list[tuple[User, list[Resume]]] = []
-        for candidate_data in CANDIDATES:
+        for idx, candidate_data in enumerate(CANDIDATES):
+            print(f"  [{idx+1}/{len(CANDIDATES)}] Processing: {candidate_data['full_name']}...")
             user_resume_pair = await seed_candidate(db, candidate_data)
             candidate_users.append(user_resume_pair)
 
@@ -6555,7 +7530,7 @@ async def seed() -> None:
         ) or 0
 
         print("\n" + "=" * 70)
-        print("✅ Seeding complete!")
+        print("✅ SEEDING COMPLETE!")
         print("=" * 70)
         print(f"  Companies           : {len(COMPANIES)}")
         print(f"  Admins              : {len(COMPANIES)}")
@@ -6572,6 +7547,31 @@ async def seed() -> None:
         print(f"  Applications        : {total_applications}")
         print(f"    → Shortlisted     : {shortlisted} (with interview bookings)")
         print(f"    → Rejected        : {rejected} (with rejection emails)")
+
+        # Count offer states
+        offer_accepted_count = (
+            await db.scalar(
+                select(func.count(Application.id)).where(
+                    Application.status == ApplicationStatus.offer_accepted
+                )
+            )
+        ) or 0
+        offer_declined_count = (
+            await db.scalar(
+                select(func.count(Application.id)).where(
+                    Application.status == ApplicationStatus.offer_declined
+                )
+            )
+        ) or 0
+        offer_pending_count = (
+            await db.scalar(
+                select(func.count(Application.id)).where(
+                    Application.status == ApplicationStatus.offer
+                )
+            )
+        ) or 0
+
+        print(f"    → Offers          : {offer_pending_count} pending, {offer_accepted_count} accepted, {offer_declined_count} declined")
         print(f"  Email drafts        : {total_email_drafts}")
         print(f"  Interview bookings  : {total_interviews}")
         print(f"  Interview recordings: {total_recordings}")
@@ -6584,18 +7584,20 @@ async def seed() -> None:
         print(f"  Recruiter prefs     : {total_preferences}")
         print(f"  Credentials file    : {credentials_path}")
         print()
-        print(f"  Login credentials for all accounts: {DEFAULT_LOGIN_PASSWORD}")
+        print(f"  🔑 Login credentials for all accounts: {DEFAULT_LOGIN_PASSWORD}")
         print()
         print("  📧 Recruiter Admin logins:")
         for c in COMPANIES:
-            print(f"     {c['admin']['email']}")
+            print(f"     • {c['admin']['email']} ({c['name']})")
+        print()
         print("  📧 Recruiter logins:")
         for c in COMPANIES:
             for r in c["recruiters"]:
-                print(f"     {r['email']}")
+                print(f"     • {r['email']} ({c['name']})")
+        print()
         print("  📧 Candidate logins:")
         for c in CANDIDATES:
-            print(f"     {c['email']}")
+            print(f"     • {c['email']} ({c['headline'][:50]}...)")
         print("=" * 70 + "\n")
 
 

@@ -18,7 +18,6 @@ from app.modules.auth.enums import MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 
-
 REDACTED_VALUE = "[REDACTED]"
 _AUDIT_COLLECTING_KEY = "audit_logs_collecting"
 _AUDIT_DISABLED_KEY = "audit_logs_disabled"
@@ -118,7 +117,7 @@ def _entity_type_for_instance(instance: Any) -> str:
         "RefreshToken": "refresh_token",
         "OAuthAccount": "oauth_account",
     }
-    return mapping.get(name, name.lower())
+    return mapping[name] if name in mapping else name.lower()
 
 
 def _serialize_model(instance: Any) -> dict[str, Any]:

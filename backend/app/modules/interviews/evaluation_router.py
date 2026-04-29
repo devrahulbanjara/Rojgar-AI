@@ -116,7 +116,7 @@ async def fetch_combined_evaluation(
         data=CombinedEvaluationResponse(
             application_id=application.id,
             job_id=application.job_id,
-            evaluation_schema=JobEvaluationSchemaResponse.model_validate(schema)
+            schema=JobEvaluationSchemaResponse.model_validate(schema)
             if schema
             else None,
             human=EvaluationScoreResponse.model_validate(human) if human else None,
