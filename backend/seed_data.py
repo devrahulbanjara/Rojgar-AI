@@ -5961,10 +5961,10 @@ async def seed_preferences_and_activity(
             .where(
                 CompanyMembership.role == MembershipRole.recruiter,
                 CompanyMembership.status.in_(
-                [MembershipStatus.pending, MembershipStatus.rejected]
-            ),
+                    [MembershipStatus.pending, MembershipStatus.rejected]
+                ),
+            )
         )
-    )
     for membership, company, recruiter in memberships_result.all():
         await create_seed_event(
             created_at=membership.created_at,
@@ -7398,7 +7398,7 @@ async def seed() -> None:
     async with AsyncSessionLocal() as db:
         db.sync_session.info["audit_logs_disabled"] = True
         print("\n🚀 Seeding ConvexHire – Nepal IT Hiring Platform\n")
-        print(f"📊 Data Overview:")
+        print("📊 Data Overview:")
         print(f"   • Companies: {len(COMPANIES)}")
         print(f"   • Candidates: {len(CANDIDATES)}")
         print(f"   • Applications: {len(APPLICATIONS)}")
@@ -7438,7 +7438,9 @@ async def seed() -> None:
         print("\n👤 Seeding candidates with profiles and resumes...")
         candidate_users: list[tuple[User, list[Resume]]] = []
         for idx, candidate_data in enumerate(CANDIDATES):
-            print(f"  [{idx+1}/{len(CANDIDATES)}] Processing: {candidate_data['full_name']}...")
+            print(
+                f"  [{idx + 1}/{len(CANDIDATES)}] Processing: {candidate_data['full_name']}..."
+            )
             user_resume_pair = await seed_candidate(db, candidate_data)
             candidate_users.append(user_resume_pair)
 
@@ -7571,7 +7573,9 @@ async def seed() -> None:
             )
         ) or 0
 
-        print(f"    → Offers          : {offer_pending_count} pending, {offer_accepted_count} accepted, {offer_declined_count} declined")
+        print(
+            f"    → Offers          : {offer_pending_count} pending, {offer_accepted_count} accepted, {offer_declined_count} declined"
+        )
         print(f"  Email drafts        : {total_email_drafts}")
         print(f"  Interview bookings  : {total_interviews}")
         print(f"  Interview recordings: {total_recordings}")

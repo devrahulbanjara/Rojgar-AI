@@ -112,12 +112,11 @@ export default function ExploreCategories() {
               prevEl: '.explore__nav--prev',
               nextEl: '.explore__nav--next',
             }}
-            slidesPerView={1.3}
+            slidesPerView={1}
             spaceBetween={16}
             breakpoints={{
-              640: { slidesPerView: 2.2, spaceBetween: 16 },
-              1024: { slidesPerView: 3.2, spaceBetween: 20 },
-              1280: { slidesPerView: 3.4, spaceBetween: 20 },
+              640: { slidesPerView: 2, spaceBetween: 16 },
+              1024: { slidesPerView: 3, spaceBetween: 20 },
             }}
             loop
             className="explore__swiper"

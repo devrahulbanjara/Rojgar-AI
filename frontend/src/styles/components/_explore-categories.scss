@@ -60,7 +60,7 @@
   &__stat {
     display: flex;
     flex-direction: column;
-    gap: $space-1;
+    gap: $space-2;
     padding: $space-5 $space-4;
 
     &:nth-child(odd) {
@@ -122,12 +122,12 @@
   }
 
   &__stat-desc {
-    font-size: $font-size-sm;
-    color: $color-text-muted;
-    font-weight: $font-weight-medium;
+    font-size: $font-size-base;
+    color: $color-gray-600;
+    font-weight: $font-weight-semibold;
 
     @include md {
-      font-size: $font-size-base;
+      font-size: $font-size-lg;
     }
   }
 

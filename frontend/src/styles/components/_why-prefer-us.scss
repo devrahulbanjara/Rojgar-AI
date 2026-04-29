@@ -137,6 +137,23 @@ $block-colors: (
     object-position: center top;
   }
 
+  // Consistent tinted overlay to unify different illustration styles
+  &__img-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.12;
+    mix-blend-mode: multiply;
+  }
+
+  @each $key, $val in $block-colors {
+    &__img-wrap--#{$key}::after {
+      background: $val;
+    }
+  }
+
   // ── Text half ────────────────────────────────────────────
   &__text {
     display: flex;

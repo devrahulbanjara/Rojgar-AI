@@ -95,19 +95,26 @@
       background-color: rgba($color-primary, 0.7);
     }
 
-    // Featured (middle) card — full-opacity border, bigger elevation
+    // Featured (middle) card — real border, lift, scale bump
     &--featured {
-      padding: 2px;
-      background-color: $color-primary;
-      transform: translateY(-$space-3);
-      box-shadow: $shadow-xl;
+      padding: 0;
+      background-color: transparent;
+      border: 2px solid $color-primary;
+      transform: translateY(-$space-3) scale(1.03);
+      box-shadow:
+        $shadow-xl,
+        0 8px 32px rgba($color-primary, 0.2);
 
       @include lg {
-        transform: translateY(-$space-6);
+        transform: translateY(-$space-6) scale(1.04);
       }
 
       &:hover {
-        background-color: color.adjust($color-primary, $lightness: -8%);
+        background-color: transparent;
+        border-color: color.adjust($color-primary, $lightness: -8%);
+        box-shadow:
+          $shadow-xl,
+          0 12px 40px rgba($color-primary, 0.3);
       }
     }
   }
@@ -308,15 +315,17 @@
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
-    padding: $space-1 $space-4;
+    padding: $space-2 $space-5;
     background-color: $color-primary;
     color: $color-white;
-    font-size: $font-size-xs;
+    font-size: $font-size-sm;
     font-weight: $font-weight-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     border-radius: $radius-full;
-    box-shadow: $shadow-md;
+    box-shadow:
+      $shadow-md,
+      0 4px 16px rgba($color-primary, 0.3);
     z-index: 2;
   }
 
