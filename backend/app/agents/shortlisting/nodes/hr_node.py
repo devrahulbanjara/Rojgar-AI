@@ -1,4 +1,7 @@
+from typing import Any, cast
+
 from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
 
 from app.agents.shortlisting.prompts import HR_PROMPT
 from app.agents.shortlisting.schemas import PersonaEvaluation, ShortlistState
@@ -23,5 +26,7 @@ async def hr_node(state: ShortlistState) -> dict:
         response_format=PersonaEvaluation,
         system_prompt="You are the HR evaluator in a structured hiring workflow.",
     )
-    response = await agent.ainvoke({"messages": [("human", prompt)]})
+    response = await agent.ainvoke(
+        cast(Any, {"messages": [HumanMessage(content=prompt)]})
+    )  # type: ignore[arg-type]
     return {"hr_evals": [response["structured_response"]]}

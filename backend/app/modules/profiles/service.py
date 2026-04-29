@@ -7,7 +7,6 @@ from sqlalchemy.orm import selectinload
 
 from app.core.cache import invalidate_profile_read_caches
 from app.infrastructures.redis.service import redis_service
-
 from app.modules.auth.models import User
 from app.modules.profiles.models import (
     Profile,
@@ -40,26 +39,9 @@ def _profile_to_response(
     profile: Profile, avatar_url: str | None = None
 ) -> ProfileResponse:
     """Convert a Profile ORM instance to a response schema."""
-    return ProfileResponse(
-        id=profile.id,
-        user_id=profile.user_id,
-        avatar_url=avatar_url,
-        headline=profile.headline,
-        summary=profile.summary,
-        phone=profile.phone,
-        location=profile.location,
-        linkedin_url=profile.linkedin_url,
-        github_url=profile.github_url,
-        portfolio_url=profile.portfolio_url,
-        years_of_experience=profile.years_of_experience,
-        target_roles=profile.target_roles or [],
-        is_open_to_work=profile.is_open_to_work,
-        experiences=profile.experiences,
-        educations=profile.educations,
-        skills=profile.skills,
-        created_at=profile.created_at,
-        updated_at=profile.updated_at,
-    )
+    response = ProfileResponse.model_validate(profile)
+    response.avatar_url = avatar_url
+    return response
 
 
 async def invalidate_profile_reads(user_id: str) -> None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any, cast
 
 from loguru import logger
 
@@ -143,5 +144,5 @@ async def evaluate_application_with_shortlisting_agent(
         application.id,
         job.id,
     )
-    result = await workflow.ainvoke(inputs)
+    result = await workflow.ainvoke(cast(Any, inputs))
     return build_shortlisting_result(result)

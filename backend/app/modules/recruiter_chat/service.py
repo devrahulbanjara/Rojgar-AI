@@ -14,11 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.infrastructures.ai.service import ai_service
+from app.infrastructures.qdrant.service import qdrant_service
 from app.modules.auth.models import User
 from app.modules.job_ai.prompts import SALARY_SYNTHESIS_SYSTEM_PROMPT
 from app.modules.job_ai.schemas import SalaryResearch
 from app.modules.job_ai.tools import get_salary_research_data
-from app.infrastructures.qdrant.service import qdrant_service
 from app.modules.jobs.models import Job
 from app.modules.recruiter_chat.models import RecruiterChatSession
 from app.modules.recruiter_chat.prompts import (
@@ -47,7 +47,6 @@ from app.modules.recruiter_chat.schemas import (
     PendingActionType,
     RecruiterChatResponse,
 )
-from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.modules.recruiter_chat.tools import (
     build_job_counts,
     build_source_items,
@@ -61,8 +60,8 @@ from app.modules.recruiter_chat.tools import (
     serialize_job_list_item,
     serialize_job_option,
 )
+from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.shared.enums import JobStatus
-
 
 EDITABLE_JOB_FIELDS: frozenset[str] = frozenset(
     {
@@ -1135,8 +1134,8 @@ async def _handle_candidate_search(
         return _serialize_response(ChatResponseType.text, reply)
 
     from app.modules.applications.models import Application
-    from app.modules.jobs.models import Job
     from app.modules.auth.models import User as UserModel
+    from app.modules.jobs.models import Job
 
     application_ids = [res["application_id"] for res in qdrant_results]
     stmt = (
@@ -1810,14 +1809,11 @@ def _final_exchange_payload(
     state: dict[str, Any],
 ) -> dict[str, Any]:
     """Build the final streamed payload for a recruiter chat exchange."""
+    pending = _pending_action_from_state(state)
     return {
         "reply": reply.model_dump(mode="json"),
         "history": [item.model_dump(mode="json") for item in _history_to_schema(state)],
-        "pending_action": (
-            _pending_action_from_state(state).model_dump(mode="json")
-            if _pending_action_from_state(state)
-            else None
-        ),
+        "pending_action": pending.model_dump(mode="json") if pending else None,
     }
 
 

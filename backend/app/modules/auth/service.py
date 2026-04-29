@@ -1,5 +1,6 @@
 import secrets
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -13,17 +14,17 @@ from app.core.cache import (
 )
 from app.core.config import settings
 from app.core.request_context import bind_actor
-from app.infrastructures.email.service import EmailService
-from app.infrastructures.redis.service import redis_service
 from app.core.security import (
-    create_tokens,
     create_pending_signup_token,
+    create_tokens,
     decode_pending_signup_token,
     decode_refresh_token,
     decode_signup_token,
     hash_password,
     verify_password,
 )
+from app.infrastructures.email.service import EmailService
+from app.infrastructures.redis.service import redis_service
 from app.modules.activity.service import create_activity_event
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
@@ -32,7 +33,6 @@ from app.modules.auth.models import (
     RefreshToken,
     User,
 )
-from app.modules.companies.models import Company, CompanyMembership
 from app.modules.auth.schemas import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -46,6 +46,7 @@ from app.modules.auth.schemas import (
     VerifyEmailRequest,
 )
 from app.modules.auth.utils import build_user_dict, get_membership_status
+from app.modules.companies.models import Company, CompanyMembership
 
 
 async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
@@ -65,7 +66,7 @@ async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
     await redis_service.delete(f"company:recruiters:{company_id}")
 
 
-async def _get_active_company_id_for_user(db: AsyncSession, user_id) -> str | None:
+async def _get_active_company_id_for_user(db: AsyncSession, user_id) -> UUID | None:
     """Return the active company ID for a user when one exists."""
     return await db.scalar(
         select(CompanyMembership.company_id).where(

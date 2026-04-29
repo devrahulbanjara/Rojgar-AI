@@ -69,10 +69,16 @@ def build_job_ai_graph():
             ),
             "salary_research": state["salary_research"],
             "locked_fields": state["locked_fields"],
-            "allowed_location_types": state["company_context"][
-                "allowed_location_types"
-            ],
-            "default_status": state["company_context"]["default_status"],
+            "allowed_location_types": (
+                state["company_context"]["allowed_location_types"]
+                if state["company_context"]
+                else None
+            ),
+            "default_status": (
+                state["company_context"]["default_status"]
+                if state["company_context"]
+                else None
+            ),
         }
 
         draft = await ai_service.generate_structured(

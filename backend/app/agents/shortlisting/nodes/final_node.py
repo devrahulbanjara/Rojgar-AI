@@ -1,3 +1,5 @@
+from typing import cast
+
 from app.agents.shortlisting.prompts import FINAL_PROMPT
 from app.agents.shortlisting.schemas import FinalResponse, ShortlistState
 from app.infrastructures.aws.bedrock import get_bedrock_llm
@@ -11,7 +13,7 @@ async def final_node(state: ShortlistState) -> dict:
         cto_eval=state["cto_evals"][-1].model_dump_json(),
         hr_eval=state["hr_evals"][-1].model_dump_json(),
     )
-    response = await summary_llm.ainvoke(prompt)
+    response = cast(FinalResponse, await summary_llm.ainvoke(prompt))
     return {
         "final_score": response.score,
         "final_reason": response.reason,

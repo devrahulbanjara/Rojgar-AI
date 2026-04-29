@@ -1,42 +1,31 @@
 import uuid
-
-from typing import Any
-
+from typing import Any, cast
 
 from fastapi import BackgroundTasks, HTTPException, status
-
+from langchain_core.runnables import RunnableConfig
 from langgraph.types import Command
-
 from sqlalchemy import select
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 from app.modules.auth.enums import UserRole
-
 from app.modules.auth.models import User
-
+from app.modules.job_ai.graph import JobAgentState
 from app.modules.job_ai.models import JobAIDraft
-
 from app.modules.job_ai.runtime import job_ai_runtime
-
 from app.modules.job_ai.schemas import (
     CommitDraftRequest,
     GenerateJobDraftRequest,
     HumanDecision,
     JobAIDraftResponse,
 )
-
 from app.modules.job_ai.tools import (
     get_company_context,
     get_recruiter_company_id,
-    get_source_job_context,
     get_salary_research_data,
+    get_source_job_context,
 )
 from app.modules.jobs import service as jobs_service
-
 from app.modules.jobs.schemas import JobCreate
-
 from app.shared.enums import JobStatus, LocationType
 
 
@@ -197,7 +186,10 @@ async def create_draft(
         "human_decision": None,
     }
 
-    result = await graph.ainvoke(state_input, config=config)
+    result = await graph.ainvoke(
+        cast(JobAgentState, state_input),
+        config=cast(RunnableConfig, config),
+    )
 
     interrupt_payload = _extract_interrupt_payload(result)
 
@@ -326,7 +318,7 @@ async def respond_to_draft(
 
     result = await graph.ainvoke(
         Command(resume=decision.model_dump(mode="json")),
-        config=config,
+        config=cast(RunnableConfig, config),
     )
 
     interrupt_payload = _extract_interrupt_payload(result)

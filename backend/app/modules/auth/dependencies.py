@@ -119,8 +119,8 @@ async def require_active_membership(
     Use this on endpoints where a pending or rejected recruiter must be blocked
     (e.g. posting jobs, viewing applications).
     """
-    from app.modules.auth.utils import get_membership_status
     from app.modules.auth.enums import MembershipStatus as MS
+    from app.modules.auth.utils import get_membership_status
 
     ms = await get_membership_status(db, user)
     if ms != MS.active:
@@ -133,7 +133,7 @@ async def require_active_membership(
 
 async def require_admin(user: User = Depends(get_current_user)) -> User:
     """Require the authenticated user to have the admin role."""
-    if user.primary_role != UserRole.admin:
+    if user.primary_role != UserRole.recruiter_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: Admin role required",

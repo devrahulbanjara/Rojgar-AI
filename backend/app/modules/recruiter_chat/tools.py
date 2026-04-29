@@ -11,9 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructures.search.service import search_service
 from app.modules.auth.enums import MembershipStatus
-from app.modules.companies.models import Company
-from app.modules.companies.models import CompanyMembership
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
+from app.modules.recruiter_chat.schemas import CompanyJobData
 from app.shared.enums import JobStatus
 
 
@@ -156,21 +156,21 @@ def serialize_job_option(job: Job) -> dict[str, Any]:
     }
 
 
-def serialize_job_list_item(job: Job) -> dict[str, Any]:
+def serialize_job_list_item(job: Job) -> CompanyJobData:
     """Serialize a job for recruiter chat list responses."""
-    return {
-        "job_id": str(job.id),
-        "title": job.title,
-        "location": job.location,
-        "location_type": job.location_type.value if job.location_type else None,
-        "status": effective_job_status(job),
-        "salary_min": job.salary_min,
-        "salary_max": job.salary_max,
-        "currency": job.currency,
-        "expires_at": job.expires_at.isoformat() if job.expires_at else None,
-        "created_at": job.created_at.isoformat(),
-        "updated_at": job.updated_at.isoformat(),
-    }
+    return CompanyJobData(
+        job_id=job.id,
+        title=job.title,
+        location=job.location,
+        location_type=job.location_type,
+        status=effective_job_status(job),
+        salary_min=job.salary_min,
+        salary_max=job.salary_max,
+        currency=job.currency,
+        expires_at=job.expires_at,
+        created_at=job.created_at,
+        updated_at=job.updated_at,
+    )
 
 
 def build_job_counts(jobs: list[Job]) -> dict[str, int]:

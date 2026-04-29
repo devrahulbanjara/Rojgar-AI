@@ -1267,27 +1267,57 @@
 
 // ── Public Job Card (unauthenticated landing/browse) ──────────
 .pub-job-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   color: inherit;
   overflow: hidden;
   min-width: 0;
 
-  // Reuse shared .job-meta with a top margin
-  .job-meta {
-    margin-top: $space-4;
+  // Align logo to top of title block, not centered
+  .job-card__header {
+    align-items: flex-start;
   }
 
-  &__hint {
-    margin-top: $space-3;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+  // Footer: salary/date left, chevron right — pushed to card bottom
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: $space-4;
+    gap: $space-3;
+  }
+
+  &__meta-row {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex-wrap: wrap;
+    min-width: 0;
+
+    .job-meta__item {
+      white-space: nowrap;
+    }
+
+    // Separator dot between salary and date
+    .job-meta__item--salary::after {
+      content: '·';
+      margin-left: $space-2;
+      color: $color-gray-300;
+      font-weight: $font-weight-regular;
+    }
+  }
+
+  &__chevron {
+    flex-shrink: 0;
+    color: $color-gray-300;
+    transition: all $transition-fast;
+  }
+
+  &:hover &__chevron {
     color: $color-primary;
-    opacity: 0;
-    transition: opacity $transition-fast;
-  }
-
-  &:hover &__hint {
-    opacity: 1;
+    transform: translateX(2px);
   }
 }
 

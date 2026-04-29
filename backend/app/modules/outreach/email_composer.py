@@ -3,8 +3,9 @@ from __future__ import annotations
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
-from app.core.config import settings
+from pydantic import SecretStr
 
+from app.core.config import settings
 from app.shared.enums import ApplicationStatus
 
 _SHORTLIST_SYSTEM = """
@@ -39,7 +40,7 @@ Rules:
 _llm = ChatGroq(
     model=settings.groq_model_recruiter_chat,
     temperature=0.7,
-    api_key=settings.groq_api_key,
+    api_key=SecretStr(settings.groq_api_key),
 )
 
 _shortlist_chain = (
