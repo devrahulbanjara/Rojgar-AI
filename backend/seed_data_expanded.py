@@ -71,9 +71,24 @@ ADDITIONAL_COMPANIES = [
                 ],
                 "shortlist_threshold": 65,
                 "evaluation_criteria": [
-                    {"key": "backend_depth", "label": "Backend Engineering", "max_score": 10, "weight": 2.0},
-                    {"key": "ecommerce_domain", "label": "E-commerce Domain", "max_score": 10, "weight": 1.5},
-                    {"key": "system_design", "label": "System Design", "max_score": 10, "weight": 1.0},
+                    {
+                        "key": "backend_depth",
+                        "label": "Backend Engineering",
+                        "max_score": 10,
+                        "weight": 2.0,
+                    },
+                    {
+                        "key": "ecommerce_domain",
+                        "label": "E-commerce Domain",
+                        "max_score": 10,
+                        "weight": 1.5,
+                    },
+                    {
+                        "key": "system_design",
+                        "label": "System Design",
+                        "max_score": 10,
+                        "weight": 1.0,
+                    },
                 ],
             },
         ],
@@ -148,8 +163,18 @@ ADDITIONAL_COMPANIES = [
                 ],
                 "shortlist_threshold": 70,
                 "evaluation_criteria": [
-                    {"key": "data_eng", "label": "Data Engineering", "max_score": 10, "weight": 2.0},
-                    {"key": "spark_airflow", "label": "Spark & Airflow", "max_score": 10, "weight": 1.5},
+                    {
+                        "key": "data_eng",
+                        "label": "Data Engineering",
+                        "max_score": 10,
+                        "weight": 2.0,
+                    },
+                    {
+                        "key": "spark_airflow",
+                        "label": "Spark & Airflow",
+                        "max_score": 10,
+                        "weight": 1.5,
+                    },
                 ],
             },
         ],
@@ -217,8 +242,18 @@ ADDITIONAL_COMPANIES = [
                 ],
                 "shortlist_threshold": 65,
                 "evaluation_criteria": [
-                    {"key": "flutter", "label": "Flutter Expertise", "max_score": 10, "weight": 2.0},
-                    {"key": "mobile_perf", "label": "Mobile Performance", "max_score": 10, "weight": 1.5},
+                    {
+                        "key": "flutter",
+                        "label": "Flutter Expertise",
+                        "max_score": 10,
+                        "weight": 2.0,
+                    },
+                    {
+                        "key": "mobile_perf",
+                        "label": "Mobile Performance",
+                        "max_score": 10,
+                        "weight": 1.5,
+                    },
                 ],
             },
         ],
@@ -242,11 +277,25 @@ ADDITIONAL_CANDIDATES = [
         "linkedin_url": "https://linkedin.com/in/nischalbasnet",
         "github_url": "https://github.com/nischal-basnet",
         "portfolio_url": "https://nischalbasnet.com.np",
-        "target_roles": ["Full Stack Engineer", "Backend Engineer", "E-commerce Engineer"],
+        "target_roles": [
+            "Full Stack Engineer",
+            "Backend Engineer",
+            "E-commerce Engineer",
+        ],
         "is_open_to_work": True,
         "skills": [
-            "JavaScript", "TypeScript", "React", "Node.js", "Express", "PostgreSQL",
-            "MongoDB", "Redis", "Docker", "AWS", "Payment Gateways", "REST APIs"
+            "JavaScript",
+            "TypeScript",
+            "React",
+            "Node.js",
+            "Express",
+            "PostgreSQL",
+            "MongoDB",
+            "Redis",
+            "Docker",
+            "AWS",
+            "Payment Gateways",
+            "REST APIs",
         ],
         "experiences": [
             {
@@ -305,8 +354,18 @@ ADDITIONAL_CANDIDATES = [
         "target_roles": ["Senior QA Engineer", "QA Automation Lead", "SDET"],
         "is_open_to_work": True,
         "skills": [
-            "Selenium", "Cypress", "Playwright", "Python", "JavaScript", "Pytest",
-            "Jest", "CI/CD", "Jenkins", "GitHub Actions", "API Testing", "Postman"
+            "Selenium",
+            "Cypress",
+            "Playwright",
+            "Python",
+            "JavaScript",
+            "Pytest",
+            "Jest",
+            "CI/CD",
+            "Jenkins",
+            "GitHub Actions",
+            "API Testing",
+            "Postman",
         ],
         "experiences": [
             {
@@ -365,8 +424,19 @@ ADDITIONAL_CANDIDATES = [
         "target_roles": ["DevOps Engineer", "SRE", "Cloud Engineer"],
         "is_open_to_work": True,
         "skills": [
-            "Kubernetes", "Docker", "AWS", "Terraform", "Ansible", "Jenkins",
-            "GitHub Actions", "Prometheus", "Grafana", "ELK Stack", "Linux", "Python", "Bash"
+            "Kubernetes",
+            "Docker",
+            "AWS",
+            "Terraform",
+            "Ansible",
+            "Jenkins",
+            "GitHub Actions",
+            "Prometheus",
+            "Grafana",
+            "ELK Stack",
+            "Linux",
+            "Python",
+            "Bash",
         ],
         "experiences": [
             {
