@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { useReveal } from '@/hooks/useReveal'
 import { ROLE_DASHBOARDS } from '@/lib/roleRoutes'
 import { useAppSelector } from '@/store/hooks'
-import { MapPin, Search } from 'lucide-react'
+import { ArrowRight, MapPin, Search } from 'lucide-react'
 
 import ExploreCategories from '@/components/sections/ExploreCategories'
 import FAQ from '@/components/sections/FAQ'
@@ -72,8 +73,8 @@ export default function Home() {
               <input
                 className="homepage__search-input"
                 type="text"
-                placeholder="Job title or keyword"
-                aria-label="Job title or keyword"
+                placeholder="Search job title, skills, or company"
+                aria-label="Search job title, skills, or company"
                 value={heroQuery}
                 onChange={(e) => setHeroQuery(e.target.value)}
               />
@@ -84,13 +85,14 @@ export default function Home() {
               <input
                 className="homepage__search-input"
                 type="text"
-                placeholder="Location"
-                aria-label="Location"
+                placeholder="City or remote"
+                aria-label="City or remote"
                 value={heroLocation}
                 onChange={(e) => setHeroLocation(e.target.value)}
               />
             </div>
             <button className="homepage__search-btn" type="submit" aria-label="Search jobs">
+              <Search size={16} aria-hidden="true" />
               Search
             </button>
           </form>
@@ -123,11 +125,54 @@ export default function Home() {
 
       <FeaturedJobs />
 
+      {/* Mid-page CTA */}
+      <section className="mid-cta" data-reveal>
+        <div className="container mid-cta__inner">
+          <h2 className="mid-cta__heading">Ready to take the next step?</h2>
+          <p className="mid-cta__sub">
+            Whether you&apos;re hiring or job hunting, ConvexHire gets you there faster.
+          </p>
+          <div className="mid-cta__actions">
+            <Link href="/signup" className="mid-cta__btn mid-cta__btn--primary">
+              Sign Up Free
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+            <Link href="/jobs" className="mid-cta__btn mid-cta__btn--outline">
+              Browse Jobs
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <WhyPreferUs />
 
       <Pricing />
 
       <FAQ />
+
+      {/* Closing CTA */}
+      <section className="closing-cta" data-reveal>
+        <div className="container closing-cta__inner">
+          <h2 className="closing-cta__heading">Still have questions?</h2>
+          <p className="closing-cta__sub">
+            Our team is here to help. Or jump in and see for yourself.
+          </p>
+          <div className="closing-cta__actions">
+            <Link href="/signup" className="closing-cta__btn closing-cta__btn--primary">
+              Get Started Free
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+            <Link
+              href="https://wa.me/9779866121812"
+              className="closing-cta__btn closing-cta__btn--outline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Talk to Us
+            </Link>
+          </div>
+        </div>
+      </section>
     </section>
   )
 }

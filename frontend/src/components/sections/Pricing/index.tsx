@@ -81,7 +81,7 @@ const TIERS: PricingTier[] = [
     featured: false,
     ctaVariant: 'outline',
     cta: 'Contact Sales',
-    ctaHref: 'https://wa.me/9779823527078',
+    ctaHref: 'https://wa.me/9779866121812',
     ctaExternal: true,
     features: [
       { text: 'Everything in Company — for your whole team', included: true },

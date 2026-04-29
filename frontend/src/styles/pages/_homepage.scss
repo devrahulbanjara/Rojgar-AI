@@ -156,16 +156,27 @@
     overflow: hidden;
     z-index: 0;
     flex-shrink: 0;
-    padding: $space-3 $space-6;
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-3 $space-8;
     border-radius: $radius-full;
     background: $color-primary;
     color: $color-white;
     font-family: $font-body;
     font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.02em;
     cursor: pointer;
     border: none;
+    box-shadow: 0 4px 14px rgba($color-primary, 0.4);
     @include focus-ring($color-primary);
+
+    svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
 
     // Fill layer — darker gradient, slides up on hover
     &::before {
@@ -190,7 +201,7 @@
     }
 
     @include md {
-      padding: $space-3 $space-8;
+      padding: $space-4 $space-10;
       font-size: $font-size-base;
     }
   }
@@ -239,6 +250,168 @@
       width: 100%;
       height: auto;
       display: block;
+    }
+  }
+}
+
+// ── Mid-page CTA banner ────────────────────────────────────────
+.mid-cta {
+  background: $color-white;
+  border-top: 1px solid $color-gray-100;
+  border-bottom: 1px solid $color-gray-100;
+
+  &__inner {
+    text-align: center;
+    padding-block: $space-16;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+  }
+
+  &__heading {
+    font-family: $font-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    letter-spacing: -0.02em;
+
+    @include md {
+      font-size: $font-size-3xl;
+    }
+  }
+
+  &__sub {
+    font-size: $font-size-base;
+    color: $color-text-muted;
+    max-width: 440px;
+    line-height: $line-height-loose;
+    margin: 0;
+
+    @include md {
+      font-size: $font-size-lg;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-3;
+    justify-content: center;
+    margin-top: $space-2;
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-3 $space-8;
+    border-radius: $radius-full;
+    font-family: $font-body;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    text-decoration: none;
+    transition: all $transition-base;
+
+    &--primary {
+      background: $color-primary;
+      color: $color-white;
+      box-shadow: 0 4px 14px rgba($color-primary, 0.35);
+
+      &:hover {
+        background: color.adjust($color-primary, $lightness: -8%);
+        box-shadow: 0 6px 20px rgba($color-primary, 0.45);
+        transform: translateY(-1px);
+      }
+    }
+
+    &--outline {
+      background: $color-white;
+      color: $color-primary;
+      border: 1.5px solid rgba($color-primary, 0.4);
+
+      &:hover {
+        border-color: $color-primary;
+        background: rgba($color-primary, 0.04);
+      }
+    }
+  }
+}
+
+// ── Closing CTA (after FAQ) ──────────────────────────────────────
+.closing-cta {
+  background: $color-gray-100;
+
+  &__inner {
+    text-align: center;
+    padding-block: $space-16;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+  }
+
+  &__heading {
+    font-family: $font-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    letter-spacing: -0.02em;
+
+    @include md {
+      font-size: $font-size-3xl;
+    }
+  }
+
+  &__sub {
+    font-size: $font-size-base;
+    color: $color-text-muted;
+    max-width: 440px;
+    line-height: $line-height-loose;
+    margin: 0;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-3;
+    justify-content: center;
+    margin-top: $space-2;
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-3 $space-8;
+    border-radius: $radius-full;
+    font-family: $font-body;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    text-decoration: none;
+    transition: all $transition-base;
+
+    &--primary {
+      background: $color-primary;
+      color: $color-white;
+      box-shadow: 0 4px 14px rgba($color-primary, 0.35);
+
+      &:hover {
+        background: color.adjust($color-primary, $lightness: -8%);
+        box-shadow: 0 6px 20px rgba($color-primary, 0.45);
+        transform: translateY(-1px);
+      }
+    }
+
+    &--outline {
+      background: $color-white;
+      color: $color-gray-700;
+      border: 1.5px solid $color-gray-300;
+
+      &:hover {
+        border-color: $color-gray-500;
+        color: $color-gray-900;
+      }
     }
   }
 }
