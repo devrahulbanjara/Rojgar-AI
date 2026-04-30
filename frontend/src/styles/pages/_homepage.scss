@@ -340,9 +340,35 @@
 
 // ── Closing CTA (after FAQ) ──────────────────────────────────────
 .closing-cta {
+  position: relative;
+  overflow: hidden;
   background: $color-gray-100;
 
+  &__bg-left {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 400px;
+    height: auto;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &__bg-right {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 400px;
+    height: auto;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   &__inner {
+    position: relative;
+    z-index: 1;
     text-align: center;
     padding-block: $space-16;
     display: flex;

@@ -62,6 +62,39 @@
     }
   }
 
+  // ── View toggle (pill switcher) ───────────────────────────
+  &__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-1;
+    background-color: $color-gray-50;
+    border-radius: $radius-full;
+    margin-top: $space-6;
+  }
+
+  &__toggle-btn {
+    padding: $space-2 $space-6;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-600;
+    background-color: transparent;
+    border: none;
+    border-radius: $radius-full;
+    cursor: pointer;
+    @include transition(all, $transition-base);
+
+    &:hover {
+      color: $color-gray-900;
+    }
+
+    &--active {
+      color: $color-white;
+      background-color: $color-primary;
+      box-shadow: $shadow-sm;
+    }
+  }
+
   // ── Cards grid ────────────────────────────────────────────
   &__grid {
     position: relative;
@@ -115,6 +148,22 @@
         box-shadow:
           $shadow-xl,
           0 12px 40px rgba($color-primary, 0.3);
+      }
+    }
+
+    // Credits card — dashed border, lighter appearance
+    &--credits {
+      padding: 0;
+      background-color: transparent;
+      border: 2px dashed $color-gray-300;
+
+      &:hover {
+        background-color: transparent;
+        border-color: $color-gray-400;
+      }
+
+      .pricing__card {
+        background-color: $color-gray-50;
       }
     }
   }
@@ -233,6 +282,23 @@
       color: $color-gray-400;
       text-decoration: line-through;
     }
+
+    &--credits {
+      font-weight: $font-weight-medium;
+      color: $color-gray-700;
+    }
+  }
+
+  // ── Note below candidate pricing ──────────────────────────
+  &__note {
+    text-align: center;
+    font-size: $font-size-sm;
+    color: $color-gray-600;
+    font-style: italic;
+    margin-top: $space-8;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   // ── CTA button ────────────────────────────────────────────
