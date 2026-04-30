@@ -32,4 +32,6 @@ class AuditLogResponse(BaseSchema):
     after_json: dict | None = None
     diff_json: dict | None = None
     metadata: dict | None = Field(default=None, validation_alias="metadata_json")
+    category: str | None = None
+    message: str | None = None
     created_at: datetime

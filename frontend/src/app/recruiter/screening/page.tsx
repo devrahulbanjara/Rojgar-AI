@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation'
 
 import { getApplicationStatusLabel, getApplicationStatusVariant } from '@/lib/applicationStatus'
 import { getInitials } from '@/lib/mediaValidation'
+import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
 import {
   type ApplicationStatus,
   type RecruiterApplicationView,
@@ -65,22 +66,6 @@ const STATUS_LABELS: Record<ApplicationStatus, string> = {
   offer_accepted: 'Offer accepted',
   offer_declined: 'Offer declined',
   rejected: 'Rejected',
-}
-
-function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationStatus[] {
-  switch (status) {
-    case 'applied':
-    case 'screening':
-      return ['shortlisted', 'rejected']
-    case 'shortlisted':
-      return ['rejected']
-    case 'interview_booked':
-      return ['interview_completed']
-    case 'interview_completed':
-      return ['offer', 'rejected']
-    default:
-      return []
-  }
 }
 
 function getJobOptionLabel(job: JobListItem) {
@@ -169,21 +154,6 @@ function EditIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.35"
-      />
-    </svg>
-  )
-}
-
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path
-        d="M5 7V5.7a3 3 0 116 0V7M4.5 7h7a1 1 0 011 1v4a1 1 0 01-1 1h-7a1 1 0 01-1-1V8a1 1 0 011-1z"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.25"
       />
     </svg>
   )
@@ -921,16 +891,8 @@ export default function RecruiterScreeningPage() {
                         const isExpanded = expandedApplicationId === application.id
                         const draft = getReviewDraft(application)
                         const scoreTone = getScoreTone(application.score)
-                        const statusOptions = getRecruiterTransitionOptions(application.status)
+                        const statusOptions = getAllRecruiterSelectableStatuses(application.status)
                         const statusValue = statusSelectValues[application.id] ?? application.status
-                        const isStatusLocked =
-                          !activeJobExpired || Boolean(summary?.final_shortlist_completed)
-                        const statusLockLabel = summary?.final_shortlist_completed
-                          ? 'Finalized'
-                          : 'After expiry'
-                        const statusLockTitle = summary?.final_shortlist_completed
-                          ? 'Shortlisting is finalized for this job.'
-                          : 'Shortlisting decisions unlock after the job expires.'
 
                         return (
                           <Fragment key={application.id}>
@@ -1030,9 +992,7 @@ export default function RecruiterScreeningPage() {
                                     <select
                                       className={`resume-field__input ${styles.statusSelect}`}
                                       value={statusValue}
-                                      disabled={
-                                        isStatusLocked || updatingStatusId === application.id
-                                      }
+                                      disabled={updatingStatusId === application.id}
                                       onChange={(event) =>
                                         void handleStatus(
                                           application.id,
@@ -1051,12 +1011,6 @@ export default function RecruiterScreeningPage() {
                                       ))}
                                     </select>
                                   </div>
-                                  {isStatusLocked ? (
-                                    <span className={styles.lockHint} title={statusLockTitle}>
-                                      <LockIcon />
-                                      {statusLockLabel}
-                                    </span>
-                                  ) : null}
                                 </div>
                               </td>
                             </tr>

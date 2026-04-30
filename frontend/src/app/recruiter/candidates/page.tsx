@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
+import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
@@ -55,22 +56,6 @@ const STATUS_LABELS: Record<ApplicationStatus, string> = {
   offer_accepted: 'Offer accepted',
   offer_declined: 'Offer declined',
   rejected: 'Rejected',
-}
-
-function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationStatus[] {
-  switch (status) {
-    case 'applied':
-    case 'screening':
-      return ['shortlisted', 'rejected']
-    case 'shortlisted':
-      return ['rejected']
-    case 'interview_booked':
-      return ['interview_completed']
-    case 'interview_completed':
-      return ['offer', 'rejected']
-    default:
-      return []
-  }
 }
 
 export default function RecruiterCandidatesPage() {
@@ -363,7 +348,7 @@ export default function RecruiterCandidatesPage() {
                                     statusSelectValues[application.application_id] ??
                                     application.status
                                   const applicationTransitions =
-                                    getRecruiterTransitionOptions(applicationValue)
+                                    getAllRecruiterSelectableStatuses(applicationValue)
 
                                   return (
                                     <button
@@ -398,10 +383,7 @@ export default function RecruiterCandidatesPage() {
                                             event.stopPropagation()
                                           }}
                                           onMouseDown={(event) => event.stopPropagation()}
-                                          disabled={
-                                            applicationTransitions.length === 0 ||
-                                            updatingStatusId === application.application_id
-                                          }
+                                          disabled={updatingStatusId === application.application_id}
                                         >
                                           <option value={applicationValue} disabled>
                                             Current: {STATUS_LABELS[applicationValue]}
