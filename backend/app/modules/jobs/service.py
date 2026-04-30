@@ -23,6 +23,7 @@ from app.modules.applications.models import Application, ApplicationSyncEvent
 from app.modules.applications.sync import (
     process_sync_event as process_application_sync_event,
 )
+from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
@@ -290,6 +291,16 @@ async def create_job(
     # 1. Transactionally write the outbox event alongside the job
     event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
     db.add(event)
+    await create_custom_audit_log(
+        db,
+        entity_type="job",
+        action_type="job_created",
+        category="jobs",
+        message=f"Job '{job.title}' created as draft by {user.full_name}",
+        entity_id=job.id,
+        company_id=company_id,
+        metadata={"job_title": job.title, "status": job.status.value},
+    )
     await db.commit()
 
     # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
@@ -546,6 +557,7 @@ async def update_job(
 
     was_auto_shortlist_enabled = job.auto_shortlist
     was_open_for_auto_shortlist = _should_be_searchable(job)
+    old_status = job.status
     update_data = payload.model_dump(exclude_unset=True)
 
     if "expires_at" in update_data:
@@ -571,6 +583,31 @@ async def update_job(
     # 1. Transactionally write the outbox event alongside the update
     event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
     db.add(event)
+    published = old_status == JobStatus.draft and job.status == JobStatus.active
+    if published:
+        await create_custom_audit_log(
+            db,
+            entity_type="job",
+            action_type="job_published",
+            category="jobs",
+            message=f"Job '{job.title}' published by {user.full_name}",
+            entity_id=job.id,
+            company_id=company_id,
+            metadata={"job_title": job.title},
+        )
+    else:
+        changed_fields = list(update_data.keys())
+        await create_custom_audit_log(
+            db,
+            entity_type="job",
+            action_type="job_edited",
+            category="jobs",
+            message=f"Job '{job.title}' edited by {user.full_name}",
+            entity_id=job.id,
+            company_id=company_id,
+            diff_json={f: {"after": update_data[f]} for f in changed_fields},
+            metadata={"job_title": job.title, "changed_fields": changed_fields},
+        )
     await db.commit()
 
     now_open_for_auto_shortlist = job.auto_shortlist and _should_be_searchable(job)
@@ -629,6 +666,17 @@ async def delete_job(
     )
     applicant_user_ids = await get_job_applicant_user_ids(db, job_id)
     job_title = job.title  # capture before deletion
+    job_company_id = job.company_id
+    await create_custom_audit_log(
+        db,
+        entity_type="job",
+        action_type="job_deleted",
+        category="jobs",
+        message=f"Job '{job_title}' deleted by {user.full_name}",
+        entity_id=job_id,
+        company_id=job_company_id,
+        metadata={"job_title": job_title},
+    )
     await db.delete(job)
 
     application_sync_events = [

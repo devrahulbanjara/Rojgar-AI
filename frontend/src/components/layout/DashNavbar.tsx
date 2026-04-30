@@ -14,7 +14,7 @@ import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
 } from '@/store/services/notificationsApi'
-import { Bell, ChevronDown, FileText, LogOut, User, X } from 'lucide-react'
+import { Bell, ChevronDown, ClipboardList, FileText, LogOut, User, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -95,7 +95,6 @@ function buildNavItems(role: DashRole): NavItem[] {
     { label: 'Outreach', href: '/recruiter/outreach' },
   ]
   if (role === 'recruiter_admin') {
-    items.push({ label: 'Audit', href: '/recruiter/audit' })
     items.push({ label: 'Recruiters', href: '/recruiter/recruiters' })
   }
   return items
@@ -389,14 +388,26 @@ export default function DashNavbar({
                     My Resume
                   </Link>
                 ) : (
-                  <Link
-                    href="/recruiter/settings"
-                    className="dash-navbar__dropdown-item"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <FileText size={15} />
-                    Recruiter Settings
-                  </Link>
+                  <>
+                    <Link
+                      href="/recruiter/settings"
+                      className="dash-navbar__dropdown-item"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <FileText size={15} />
+                      Recruiter Settings
+                    </Link>
+                    {activeRole === 'recruiter_admin' ? (
+                      <Link
+                        href="/recruiter/audit"
+                        className="dash-navbar__dropdown-item"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <ClipboardList size={15} />
+                        Audit Trail
+                      </Link>
+                    ) : null}
+                  </>
                 )}
 
                 <div className="dash-navbar__dropdown-divider" />

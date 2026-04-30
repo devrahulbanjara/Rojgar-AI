@@ -21,6 +21,7 @@ from app.core.database import AsyncSessionLocal
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_events
+from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import CompanyMembership
 from app.modules.jobs.models import Job
@@ -406,6 +407,16 @@ async def trigger_shortlisting(
 
     job.shortlist_status = ShortlistStatus.in_progress
     job.final_shortlist_completed = False
+    await create_custom_audit_log(
+        db,
+        entity_type="job",
+        action_type="screening_triggered",
+        category="pipeline",
+        message=f"AI screening triggered for {job.title}",
+        entity_id=job_id,
+        company_id=company_id,
+        metadata={"job_title": job.title, "total_applications": total_applications},
+    )
     await db.commit()
 
     # INVALIDATE CACHE

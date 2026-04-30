@@ -17,6 +17,7 @@ from app.infrastructures.redis.service import redis_service
 from app.core.security import create_pending_signup_token, decode_pending_signup_token
 from app.infrastructures.email.service import EmailService
 from app.modules.activity.service import create_activity_event
+from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
@@ -307,6 +308,24 @@ async def update_recruiter_status(
 
     membership, recruiter_user = row
     membership.status = payload.status
+    action_label = (
+        "approved" if payload.status == MembershipStatus.active else "rejected"
+    )
+    await create_custom_audit_log(
+        db,
+        entity_type="membership",
+        action_type=f"recruiter_{action_label}",
+        category="auth",
+        message=(f"Admin {action_label} {recruiter_user.full_name}"),
+        entity_id=membership.id,
+        company_id=company.id,
+        target_user_id=recruiter_user.id,
+        metadata={
+            "recruiter_name": recruiter_user.full_name,
+            "recruiter_email": recruiter_user.email,
+            "action": action_label,
+        },
+    )
     await create_activity_event(
         db,
         event_type=(
@@ -393,6 +412,25 @@ async def remove_recruiter(db: AsyncSession, user: User, membership_id: str) -> 
             detail="Recruiter membership not found.",
         )
 
+    removed_user_result = await db.execute(
+        select(User).where(User.id == membership.user_id)
+    )
+    removed_user = removed_user_result.scalar_one_or_none()
+    removed_name = removed_user.full_name if removed_user else str(membership.user_id)
+    await create_custom_audit_log(
+        db,
+        entity_type="membership",
+        action_type="recruiter_removed",
+        category="auth",
+        message=f"Admin removed {removed_name} from team",
+        entity_id=membership.id,
+        company_id=company.id,
+        target_user_id=membership.user_id,
+        metadata={
+            "recruiter_name": removed_name,
+            "membership_id": membership_id,
+        },
+    )
     await create_activity_event(
         db,
         event_type="membership_removed",

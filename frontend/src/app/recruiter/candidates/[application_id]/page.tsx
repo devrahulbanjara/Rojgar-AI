@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
 import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
+import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
 import {
   type ApplicationStatus,
   useGetCompanyCandidateByIdQuery,
@@ -57,22 +58,6 @@ const STATUS_LABELS: Record<ApplicationStatus, string> = {
   rejected: 'Rejected',
 }
 
-function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationStatus[] {
-  switch (status) {
-    case 'applied':
-    case 'screening':
-      return ['shortlisted', 'rejected']
-    case 'shortlisted':
-      return ['rejected']
-    case 'interview_booked':
-      return ['interview_completed']
-    case 'interview_completed':
-      return ['offer', 'rejected']
-    default:
-      return []
-  }
-}
-
 export default function RecruiterCandidateDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -84,7 +69,7 @@ export default function RecruiterCandidateDetailPage() {
     useUpdateApplicationStatusMutation()
   const candidate = resp?.data
   const interview = candidate?.interview
-  const transitionOptions = candidate ? getRecruiterTransitionOptions(candidate.status) : []
+  const transitionOptions = candidate ? getAllRecruiterSelectableStatuses(candidate.status) : []
 
   const renderedResume = useMemo(() => mapRecruiterCandidateResume(candidate), [candidate])
 
@@ -182,7 +167,7 @@ export default function RecruiterCandidateDetailPage() {
                       const nextStatus = event.target.value
                       void handleStatusChange(nextStatus)
                     }}
-                    disabled={isUpdatingStatus || transitionOptions.length === 0}
+                    disabled={isUpdatingStatus}
                   >
                     <option value={candidate.status} disabled>
                       Current: {STATUS_LABELS[candidate.status]}

@@ -11,6 +11,8 @@ export interface AuditLogItem {
   parent_entity_type: string | null
   parent_entity_id: string | null
   action_type: string
+  category: string | null
+  message: string | null
   request_id: string | null
   request_path: string | null
   request_method: string | null
@@ -29,26 +31,23 @@ export interface AuditLogItem {
 
 export type CompanyAuditParams = {
   limit?: number
-  entity_type?: string
-  action_type?: string
+  category?: string
   actor_user_id?: string
-  target_user_id?: string
   start_at?: string
   end_at?: string
 }
 
+export const AUDIT_CATEGORIES = [
+  { value: '', label: 'All categories' },
+  { value: 'auth', label: 'Auth & Access' },
+  { value: 'jobs', label: 'Jobs' },
+  { value: 'pipeline', label: 'Pipeline' },
+  { value: 'outreach', label: 'Outreach' },
+  { value: 'interviews', label: 'Interviews' },
+] as const
+
 export const auditApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getMyAuditLogs: builder.query<
-      ApiResponse<AuditLogItem[]>,
-      { limit?: number; entity_type?: string; action_type?: string } | void
-    >({
-      query: (params) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/audit/me`,
-        params: params ?? undefined,
-      }),
-      providesTags: ['Audit'],
-    }),
     getCompanyAuditLogs: builder.query<ApiResponse<AuditLogItem[]>, CompanyAuditParams | void>({
       query: (params) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/audit/company`,
@@ -70,5 +69,4 @@ export const auditApi = baseApi.injectEndpoints({
   }),
 })
 
-export const { useGetMyAuditLogsQuery, useGetCompanyAuditLogsQuery, useGetEntityAuditTrailQuery } =
-  auditApi
+export const { useGetCompanyAuditLogsQuery, useGetEntityAuditTrailQuery } = auditApi

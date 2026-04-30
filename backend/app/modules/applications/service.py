@@ -57,6 +57,7 @@ from app.modules.applications.sync import (
 )
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
+from app.modules.audit.service import create_custom_audit_log
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
@@ -65,13 +66,6 @@ from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, JobStatus
-
-RECRUITER_SETTABLE = {
-    ApplicationStatus.shortlisted,
-    ApplicationStatus.rejected,
-    ApplicationStatus.interview_completed,
-    ApplicationStatus.offer,
-}
 
 
 def _application_detail_href(application_id: str) -> str:
@@ -1073,66 +1067,6 @@ async def update_application_status(
             detail="This application's job does not belong to your company.",
         )
 
-    if payload.status not in RECRUITER_SETTABLE:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Status '{payload.status.value}' cannot be set manually.",
-        )
-
-    if payload.status == ApplicationStatus.shortlisted:
-        if application.status not in {
-            ApplicationStatus.applied,
-            ApplicationStatus.screening,
-        }:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only applied or screening applications can be shortlisted.",
-            )
-        if job.status != JobStatus.expired and (
-            job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Shortlist and reject actions are only available after the job expires.",
-            )
-
-    if payload.status == ApplicationStatus.rejected:
-        if application.status in {
-            ApplicationStatus.applied,
-            ApplicationStatus.screening,
-        }:
-            if job.status != JobStatus.expired and (
-                job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Shortlist and reject actions are only available after the job expires.",
-                )
-        elif application.status not in {
-            ApplicationStatus.shortlisted,
-            ApplicationStatus.interview_completed,
-        }:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    "Rejection is only valid after screening decisions or interview evaluation."
-                ),
-            )
-
-    if payload.status == ApplicationStatus.interview_completed:
-        if application.status != ApplicationStatus.interview_booked:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Can only mark interview as completed when status is 'interview_booked'.",
-            )
-
-    if payload.status == ApplicationStatus.offer:
-        if application.status != ApplicationStatus.interview_completed:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Offer or reject is only valid after interview is completed.",
-            )
-
     company = await db.scalar(select(Company).where(Company.id == company_id))
     application.status = payload.status
     candidate_title, candidate_description = _status_event_copy(
@@ -1171,6 +1105,47 @@ async def update_application_status(
             "candidate_name": application.user.full_name,
         },
     )
+    _PIPELINE_AUDIT_STATUSES = {
+        ApplicationStatus.shortlisted,
+        ApplicationStatus.rejected,
+        ApplicationStatus.interview_completed,
+        ApplicationStatus.offer,
+        ApplicationStatus.offer_accepted,
+        ApplicationStatus.offer_declined,
+    }
+    if payload.status in _PIPELINE_AUDIT_STATUSES:
+        _action_map = {
+            ApplicationStatus.shortlisted: "candidate_shortlisted",
+            ApplicationStatus.rejected: "candidate_rejected",
+            ApplicationStatus.interview_completed: "interview_completed",
+            ApplicationStatus.offer: "offer_given",
+            ApplicationStatus.offer_accepted: "offer_accepted",
+            ApplicationStatus.offer_declined: "offer_declined",
+        }
+        _msg_map = {
+            ApplicationStatus.shortlisted: f"Candidate {application.user.full_name} shortlisted for {job.title} by {user.full_name}",
+            ApplicationStatus.rejected: f"Candidate {application.user.full_name} rejected for {job.title} by {user.full_name}",
+            ApplicationStatus.interview_completed: f"Interview marked complete for {application.user.full_name} on {job.title} by {user.full_name}",
+            ApplicationStatus.offer: f"Offer given to {application.user.full_name} for {job.title} by {user.full_name}",
+            ApplicationStatus.offer_accepted: f"Offer accepted by {application.user.full_name} for {job.title}",
+            ApplicationStatus.offer_declined: f"Offer declined by {application.user.full_name} for {job.title}",
+        }
+        await create_custom_audit_log(
+            db,
+            entity_type="application",
+            action_type=_action_map[payload.status],
+            category="pipeline",
+            message=_msg_map[payload.status],
+            entity_id=application.id,
+            company_id=company_id,
+            target_user_id=application.user_id,
+            metadata={
+                "candidate_name": application.user.full_name,
+                "job_title": job.title,
+                "status": payload.status.value,
+            },
+        )
+
     if payload.status in _EMAIL_STATUSES:
         subject, html_body = _status_email_html(
             payload.status,
@@ -1250,6 +1225,7 @@ async def update_application_review(
             detail="Provide a score, feedback, or both.",
         )
 
+    old_score = application.score
     if payload.score is not None:
         application.score = payload.score
     if payload.feedback is not None:
@@ -1261,6 +1237,24 @@ async def update_application_review(
         if job is not None
         else None
     )
+    if payload.score is not None and old_score != payload.score:
+        await create_custom_audit_log(
+            db,
+            entity_type="application",
+            action_type="score_overridden",
+            category="pipeline",
+            message=f"AI score overridden for {application.user.full_name} on {job.title if job else 'unknown job'} by {user.full_name}",
+            entity_id=application.id,
+            company_id=company_id,
+            target_user_id=application.user_id,
+            before_json={"score": old_score},
+            after_json={"score": payload.score},
+            diff_json={"score": {"before": old_score, "after": payload.score}},
+            metadata={
+                "candidate_name": application.user.full_name,
+                "job_title": job.title if job else None,
+            },
+        )
     await create_activity_event(
         db,
         event_type="application_review_updated",
