@@ -3700,27 +3700,40 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    border: 1px solid $color-gray-200;
-    border-radius: $radius-full;
+    gap: $space-2;
     padding-right: $space-4;
     flex-shrink: 0;
 
+    &::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: $radius-full;
+      flex-shrink: 0;
+    }
+
     &--active {
-      background: rgba($color-success, 0.1);
-      border-color: rgba($color-success, 0.2);
-      color: color.adjust($color-success, $lightness: -10%);
+      color: color.adjust($color-success, $lightness: -18%);
+
+      &::before {
+        background: color.adjust($color-success, $lightness: -8%);
+      }
     }
 
     &--draft {
-      background: rgba($color-warning, 0.14);
-      border-color: rgba($color-warning, 0.25);
-      color: #b7791f;
+      color: $color-gray-500;
+
+      &::before {
+        background: $color-gray-400;
+      }
     }
 
     &--expired {
-      background: rgba($color-error, 0.08);
-      border-color: rgba($color-error, 0.18);
-      color: color.adjust($color-error, $lightness: -4%);
+      color: color.adjust($color-error, $lightness: -8%);
+
+      &::before {
+        background: color.adjust($color-error, $lightness: -2%);
+      }
     }
   }
 
@@ -3730,9 +3743,9 @@
     background: transparent;
     color: inherit;
     font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    padding: 7px $space-3;
-    padding-right: $space-2;
+    font-weight: $font-weight-medium;
+    padding: 0;
+    padding-right: $space-1;
     cursor: pointer;
 
     &:focus {
@@ -3748,15 +3761,15 @@
   &__status-label {
     display: inline-flex;
     align-items: center;
-    padding: 7px $space-3;
+    padding: 0;
     font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    font-weight: $font-weight-medium;
     line-height: 1.2;
   }
 
   &__status-chevron {
     position: absolute;
-    right: $space-2;
+    right: 0;
     pointer-events: none;
   }
 

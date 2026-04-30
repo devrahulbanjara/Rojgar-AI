@@ -152,6 +152,24 @@ export default function Home() {
 
       {/* Closing CTA */}
       <section className="closing-cta" data-reveal>
+        <Image
+          src="/bg/bg-ui.svg"
+          alt=""
+          width={400}
+          height={400}
+          className="closing-cta__bg-left"
+          aria-hidden="true"
+          priority={false}
+        />
+        <Image
+          src="/bg/bg-ui-v2.svg"
+          alt=""
+          width={400}
+          height={400}
+          className="closing-cta__bg-right"
+          aria-hidden="true"
+          priority={false}
+        />
         <div className="container closing-cta__inner">
           <h2 className="closing-cta__heading">Still have questions?</h2>
           <p className="closing-cta__sub">
