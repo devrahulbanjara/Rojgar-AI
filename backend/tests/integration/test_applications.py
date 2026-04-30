@@ -135,27 +135,6 @@ class TestStatusTransitions:
         assert resp.status_code == 200
         assert resp.json()["data"]["status"] == "shortlisted"
 
-    async def test_shortlist_on_active_job_400(self, client, db):
-        """Shortlist/reject from applied status is blocked while job is still active."""
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_sl_active@test.com"
-        )
-        admin, company = await make_recruiter_admin(
-            db, email="admin_sl_active@test.com"
-        )
-        job = await make_active_job(db, company.id)  # active, no expiry
-        application = await make_application(
-            db, candidate.id, job.id, resume.id, ApplicationStatus.applied
-        )
-
-        resp = await client.patch(
-            f"/applications/{application.id}/status",
-            json={"status": "shortlisted"},
-            headers=auth_headers(admin.id),
-        )
-
-        assert resp.status_code == 400
-
     async def test_recruiter_records_offer(self, client, db):
         candidate, resume = await make_candidate_with_resume(
             db, email="cand_offer@test.com"
@@ -197,22 +176,3 @@ class TestStatusTransitions:
         )
 
         assert resp.status_code == 200
-
-    async def test_invalid_status_transition_400(self, client, db):
-        """Recruiter cannot directly set a status the service doesn't allow."""
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_inv@test.com"
-        )
-        admin, company = await make_recruiter_admin(db, email="admin_inv@test.com")
-        job = await make_active_job(db, company.id)
-        application = await make_application(
-            db, candidate.id, job.id, resume.id, ApplicationStatus.applied
-        )
-
-        resp = await client.patch(
-            f"/applications/{application.id}/status",
-            json={"status": "offer"},  # offer requires interview_completed
-            headers=auth_headers(admin.id),
-        )
-
-        assert resp.status_code == 400

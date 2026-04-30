@@ -18,6 +18,7 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.infrastructures.email.service import EmailService
 from app.modules.activity.service import create_activity_event
+from app.modules.audit.service import create_custom_audit_log
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.enums import MembershipStatus
@@ -626,6 +627,30 @@ async def approve_draft(
         draft.approved_at = _utcnow()
         draft.sent_by_user_id = user_id
         draft.sent_at = _utcnow()
+        _draft_job = await db.scalar(
+            select(Job).where(Job.id == draft.application.job_id)
+        )
+        _draft_job_title = _draft_job.title if _draft_job else "unknown job"
+        _email_type = (
+            "shortlist"
+            if draft.application.status.value in ("shortlisted", "screening", "applied")
+            else "rejection"
+        )
+        await create_custom_audit_log(
+            db,
+            entity_type="email_draft",
+            action_type=f"{_email_type}_email_sent",
+            category="outreach",
+            message=f"{'Shortlist' if _email_type == 'shortlist' else 'Rejection'} email sent to {draft.application.user.full_name} for {_draft_job_title}",
+            entity_id=draft.id,
+            company_id=company_id,
+            target_user_id=draft.application.user_id,
+            metadata={
+                "candidate_name": draft.application.user.full_name,
+                "job_title": _draft_job_title,
+                "draft_id": str(draft.id),
+            },
+        )
         await create_activity_event(
             db,
             event_type="outreach_draft_approved",

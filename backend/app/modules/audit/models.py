@@ -47,6 +47,8 @@ class AuditLog(Base):
     before_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     after_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     diff_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    category: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)
     metadata_json: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
