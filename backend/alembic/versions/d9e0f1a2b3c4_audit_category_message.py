@@ -1,7 +1,7 @@
 """add category and message columns to audit_logs
 
-Revision ID: a1b2c3d4e5f6
-Revises: h1i2j3k4l5m6
+Revision ID: d9e0f1a2b3c4
+Revises: c4b8e1d9f2a7
 Create Date: 2026-04-30
 """
 
@@ -10,8 +10,8 @@ from __future__ import annotations
 import sqlalchemy as sa
 from alembic import op
 
-revision = "a1b2c3d4e5f6"
-down_revision = "h1i2j3k4l5m6"
+revision = "d9e0f1a2b3c4"
+down_revision = "c4b8e1d9f2a7"
 branch_labels = None
 depends_on = None
 

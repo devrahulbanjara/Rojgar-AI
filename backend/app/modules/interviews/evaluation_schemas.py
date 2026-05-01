@@ -66,8 +66,33 @@ class JobEvaluationSchemaResponse(BaseSchema):
 
 
 class SubmitHumanEvaluationRequest(BaseSchema):
-    scores: dict[str, float]
+    evaluator_label: str = Field(min_length=1, max_length=200)
+    scores: dict[str, float | None]
     notes: str | None = None
+
+    @field_validator("evaluator_label")
+    @classmethod
+    def normalize_label(cls, value: str) -> str:
+        """Trim and require non-empty evaluator label."""
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Evaluator name is required.")
+        return normalized
+
+
+class UpdateHumanEvaluationRequest(BaseSchema):
+    evaluator_label: str = Field(min_length=1, max_length=200)
+    scores: dict[str, float | None]
+    notes: str | None = None
+
+    @field_validator("evaluator_label")
+    @classmethod
+    def normalize_label(cls, value: str) -> str:
+        """Trim and require non-empty evaluator label."""
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Evaluator name is required.")
+        return normalized
 
 
 class EvaluationScoreResponse(BaseSchema):
@@ -77,13 +102,31 @@ class EvaluationScoreResponse(BaseSchema):
     schema_id: UUID | None = None
     schema_version: int
     evaluator_type: Literal["human", "llm"]
-    scores: dict[str, float]
+    evaluator_label: str | None = None
+    scores: dict[str, float | None]
     criteria_snapshot: list[EvaluationCriterion]
     notes: str | None = None
     weighted_total: float | None = None
     submitted_by_user_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class EvaluatorIdentity(BaseSchema):
+    id: UUID
+    full_name: str
+    email: str
+    avatar_url: str | None = None
+
+
+class HumanEvaluatorScoreResponse(EvaluationScoreResponse):
+    submitted_by: EvaluatorIdentity | None = None
+
+
+class HumanAverageResponse(BaseSchema):
+    per_criterion: dict[str, float | None]
+    weighted_total: float | None = None
+    evaluator_count: int
 
 
 class CombinedEvaluationResponse(BaseSchema):
@@ -94,7 +137,8 @@ class CombinedEvaluationResponse(BaseSchema):
         alias="schema",
         serialization_alias="schema",
     )
-    human: EvaluationScoreResponse | None = None
+    humans: list[HumanEvaluatorScoreResponse] = Field(default_factory=list)
+    human_average: HumanAverageResponse | None = None
     llm: EvaluationScoreResponse | None = None
     final_score: float | None = None
 

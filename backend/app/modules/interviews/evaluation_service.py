@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from dataclasses import dataclass
 
 from fastapi import HTTPException
 from loguru import logger
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructures.ai.service import ai_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
+from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 from app.modules.interviews.evaluation_models import (
     CandidateEvaluationScore,
@@ -19,6 +21,15 @@ from app.modules.interviews.evaluation_models import (
 from app.modules.interviews.recording_model import InterviewRecording
 from app.modules.jobs.models import Job
 from app.shared.enums import RecordingStatus
+
+
+@dataclass
+class HumanAggregate:
+    """Per-criterion average + weighted total across all human evaluators."""
+
+    per_criterion: dict[str, float | None]
+    weighted_total: float | None
+    evaluator_count: int
 
 
 async def _get_company_membership(
@@ -125,15 +136,53 @@ async def get_job_schema(
     return result.scalar_one_or_none()
 
 
-async def submit_human_score(
+async def create_human_score(
     db: AsyncSession,
     recruiter_user_id: uuid.UUID,
     application_id: uuid.UUID,
     *,
-    scores: dict[str, float],
+    evaluator_label: str,
+    scores: dict[str, float | None],
     notes: str | None,
 ) -> CandidateEvaluationScore:
-    """Persist recruiter-provided evaluation scores for an application."""
+    """Create a new free-form recruiter evaluation row."""
+    application = await _get_application_for_company(
+        db, recruiter_user_id, application_id
+    )
+    schema = await _get_schema_or_400(db, application.job_id)
+    validated_scores = _coerce_scores(scores, schema.criteria)
+    weighted_total = _compute_weighted_total(validated_scores, schema.criteria)
+
+    row = CandidateEvaluationScore(
+        application_id=application.id,
+        job_id=application.job_id,
+        schema_id=schema.id,
+        schema_version=schema.version,
+        evaluator_type="human",
+        evaluator_label=evaluator_label.strip(),
+        scores=validated_scores,
+        criteria_snapshot=schema.criteria,
+        notes=notes.strip() if notes else None,
+        weighted_total=weighted_total,
+        submitted_by_user_id=recruiter_user_id,
+    )
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+    return row
+
+
+async def update_human_score(
+    db: AsyncSession,
+    recruiter_user_id: uuid.UUID,
+    application_id: uuid.UUID,
+    score_id: uuid.UUID,
+    *,
+    evaluator_label: str,
+    scores: dict[str, float | None],
+    notes: str | None,
+) -> CandidateEvaluationScore:
+    """Update an existing recruiter evaluation row by id."""
     application = await _get_application_for_company(
         db, recruiter_user_id, application_id
     )
@@ -143,39 +192,50 @@ async def submit_human_score(
 
     result = await db.execute(
         select(CandidateEvaluationScore).where(
+            CandidateEvaluationScore.id == score_id,
             CandidateEvaluationScore.application_id == application.id,
             CandidateEvaluationScore.evaluator_type == "human",
         )
     )
     row = result.scalar_one_or_none()
+    if not row:
+        raise HTTPException(status_code=404, detail="Evaluation row not found.")
 
-    if row:
-        row.job_id = application.job_id
-        row.schema_id = schema.id
-        row.schema_version = schema.version
-        row.scores = validated_scores
-        row.criteria_snapshot = schema.criteria
-        row.notes = notes.strip() if notes else None
-        row.weighted_total = weighted_total
-        row.submitted_by_user_id = recruiter_user_id
-    else:
-        row = CandidateEvaluationScore(
-            application_id=application.id,
-            job_id=application.job_id,
-            schema_id=schema.id,
-            schema_version=schema.version,
-            evaluator_type="human",
-            scores=validated_scores,
-            criteria_snapshot=schema.criteria,
-            notes=notes.strip() if notes else None,
-            weighted_total=weighted_total,
-            submitted_by_user_id=recruiter_user_id,
-        )
-        db.add(row)
-
+    row.job_id = application.job_id
+    row.schema_id = schema.id
+    row.schema_version = schema.version
+    row.evaluator_label = evaluator_label.strip()
+    row.scores = validated_scores
+    row.criteria_snapshot = schema.criteria
+    row.notes = notes.strip() if notes else None
+    row.weighted_total = weighted_total
     await db.commit()
     await db.refresh(row)
     return row
+
+
+async def delete_human_score(
+    db: AsyncSession,
+    recruiter_user_id: uuid.UUID,
+    application_id: uuid.UUID,
+    score_id: uuid.UUID,
+) -> None:
+    """Delete a recruiter evaluation row by id (any company member with access)."""
+    application = await _get_application_for_company(
+        db, recruiter_user_id, application_id
+    )
+    result = await db.execute(
+        select(CandidateEvaluationScore).where(
+            CandidateEvaluationScore.id == score_id,
+            CandidateEvaluationScore.application_id == application.id,
+            CandidateEvaluationScore.evaluator_type == "human",
+        )
+    )
+    row = result.scalar_one_or_none()
+    if not row:
+        raise HTTPException(status_code=404, detail="Evaluation row not found.")
+    await db.delete(row)
+    await db.commit()
 
 
 async def run_llm_evaluation(
@@ -183,7 +243,7 @@ async def run_llm_evaluation(
     recruiter_user_id: uuid.UUID,
     application_id: uuid.UUID,
 ) -> CandidateEvaluationScore:
-    """Generate and persist LLM evaluation scores from a transcript."""
+    """Generate and persist LLM evaluation scores from the latest transcript."""
     application = await _get_application_for_company(
         db, recruiter_user_id, application_id
     )
@@ -214,12 +274,14 @@ async def run_llm_evaluation(
     )
     prompt = (
         "You are an expert interviewer evaluator.\n"
-        "Review the transcript and score the candidate against the exact schema below.\n"
+        "Review the transcript and score the candidate against the schema below.\n"
         "Return one JSON object with this shape only:\n"
-        '{"scores":{"criterion_key":number},"notes":"short summary"}\n'
+        '{"scores":{"criterion_key":number_or_null},"notes":"short summary"}\n'
         "Rules:\n"
         "- Use every criterion key exactly once.\n"
         "- Keep scores within 0 and the provided max_score.\n"
+        "- If the transcript does not provide enough evidence for a criterion, "
+        "return null for that key (do not guess).\n"
         "- notes must be short plain text.\n"
         "- Do not include markdown.\n\n"
         f"Criteria:\n{criteria_lines}\n\n"
@@ -294,11 +356,12 @@ async def get_combined_evaluation(
 ) -> tuple[
     Application,
     JobEvaluationSchema | None,
-    CandidateEvaluationScore | None,
+    list[CandidateEvaluationScore],
+    HumanAggregate | None,
     CandidateEvaluationScore | None,
     float | None,
 ]:
-    """Return application evaluation artifacts and the blended final score."""
+    """Return application, schema, all human rows, the aggregate, the LLM row, and final score."""
     application = await _get_application_for_company(
         db, recruiter_user_id, application_id
     )
@@ -311,22 +374,53 @@ async def get_combined_evaluation(
     schema = schema_result.scalar_one_or_none()
 
     rows = (
-        await db.execute(
-            select(CandidateEvaluationScore).where(
-                CandidateEvaluationScore.application_id == application.id
+        (
+            await db.execute(
+                select(CandidateEvaluationScore)
+                .where(CandidateEvaluationScore.application_id == application.id)
+                .order_by(CandidateEvaluationScore.created_at.asc())
             )
         )
-    ).scalars()
-    human = None
-    llm = None
+        .scalars()
+        .all()
+    )
+
+    humans: list[CandidateEvaluationScore] = []
+    llm: CandidateEvaluationScore | None = None
     for row in rows:
         if row.evaluator_type == "human":
-            human = row
+            humans.append(row)
         elif row.evaluator_type == "llm":
             llm = row
 
-    final_score = _compute_final_score(human, llm, schema)
-    return application, schema, human, llm, final_score
+    human_aggregate = (
+        _compute_human_aggregate(humans, schema.criteria) if schema else None
+    )
+
+    final_score = _compute_final_score(human_aggregate, llm, schema)
+    return application, schema, humans, human_aggregate, llm, final_score
+
+
+async def list_humans_with_users(
+    db: AsyncSession, application_id: uuid.UUID
+) -> list[tuple[CandidateEvaluationScore, User | None]]:
+    """Return human evaluation rows joined with their submitting users."""
+    rows = (
+        await db.execute(
+            select(CandidateEvaluationScore, User)
+            .join(
+                User,
+                User.id == CandidateEvaluationScore.submitted_by_user_id,
+                isouter=True,
+            )
+            .where(
+                CandidateEvaluationScore.application_id == application_id,
+                CandidateEvaluationScore.evaluator_type == "human",
+            )
+            .order_by(CandidateEvaluationScore.created_at.asc())
+        )
+    ).all()
+    return [(score, user) for score, user in rows]
 
 
 async def _get_schema_or_400(
@@ -345,11 +439,11 @@ async def _get_schema_or_400(
 
 
 def _coerce_scores(
-    scores: dict[str, float] | dict[str, int],
+    scores: dict[str, float | int | None],
     criteria: list[dict],
-) -> dict[str, float]:
-    """Validate and clamp submitted scores against the schema criteria."""
-    normalized: dict[str, float] = {}
+) -> dict[str, float | None]:
+    """Validate scores against schema criteria; allow null for unrated criteria."""
+    normalized: dict[str, float | None] = {}
     allowed_keys = {criterion["key"] for criterion in criteria}
 
     extra_keys = set(scores.keys()) - allowed_keys
@@ -362,10 +456,12 @@ def _coerce_scores(
     for criterion in criteria:
         key = criterion["key"]
         max_score = float(criterion["max_score"])
-        if key not in scores:
-            raise HTTPException(status_code=400, detail=f"Missing score for '{key}'.")
+        raw = scores.get(key, None)
+        if raw is None:
+            normalized[key] = None
+            continue
         try:
-            value = float(scores[key])
+            value = float(raw)
         except (TypeError, ValueError) as exc:
             raise HTTPException(
                 status_code=400, detail=f"Invalid score for '{key}'."
@@ -375,39 +471,71 @@ def _coerce_scores(
     return normalized
 
 
-def _compute_weighted_total(scores: dict[str, float], criteria: list[dict]) -> float:
-    """Compute the weighted normalized total for one evaluator."""
-    total_weight = sum(float(criterion["weight"]) for criterion in criteria)
-    if total_weight <= 0:
-        return 0.0
-
+def _compute_weighted_total(
+    scores: dict[str, float | None], criteria: list[dict]
+) -> float | None:
+    """Weighted normalized total, renormalized across criteria the evaluator rated."""
+    rated_weight = 0.0
     weighted_sum = 0.0
     for criterion in criteria:
         key = criterion["key"]
         max_score = float(criterion["max_score"])
         weight = float(criterion["weight"])
-        value = float(scores.get(key, 0))
-        normalized = (value / max_score) * 100 if max_score > 0 else 0
-        weighted_sum += normalized * (weight / total_weight)
+        if weight <= 0 or max_score <= 0:
+            continue
+        value = scores.get(key)
+        if value is None:
+            continue
+        normalized = (float(value) / max_score) * 100
+        weighted_sum += normalized * weight
+        rated_weight += weight
 
-    return round(weighted_sum, 2)
+    if rated_weight <= 0:
+        return None
+    return round(weighted_sum / rated_weight, 2)
+
+
+def _compute_human_aggregate(
+    rows: list[CandidateEvaluationScore], criteria: list[dict]
+) -> HumanAggregate:
+    """Average each criterion across all submitted humans, ignoring nulls."""
+    per_criterion: dict[str, float | None] = {}
+    for criterion in criteria:
+        key = criterion["key"]
+        values = [
+            float(row.scores.get(key))
+            for row in rows
+            if row.scores.get(key) is not None
+        ]
+        per_criterion[key] = round(sum(values) / len(values), 2) if values else None
+
+    weighted_total = _compute_weighted_total(per_criterion, criteria) if rows else None
+    return HumanAggregate(
+        per_criterion=per_criterion,
+        weighted_total=weighted_total,
+        evaluator_count=len(rows),
+    )
 
 
 def _compute_final_score(
-    human: CandidateEvaluationScore | None,
+    human_aggregate: HumanAggregate | None,
     llm: CandidateEvaluationScore | None,
     schema: JobEvaluationSchema | None,
 ) -> float | None:
-    """Blend human and LLM totals using the schema weights."""
+    """Blend the human average and the LLM score using the schema weights."""
     if not schema:
         return None
 
     available_weights = 0.0
     blended_total = 0.0
 
-    if human and human.weighted_total is not None:
+    if (
+        human_aggregate
+        and human_aggregate.weighted_total is not None
+        and human_aggregate.evaluator_count > 0
+    ):
         available_weights += schema.human_weight
-        blended_total += human.weighted_total * schema.human_weight
+        blended_total += human_aggregate.weighted_total * schema.human_weight
 
     if llm and llm.weighted_total is not None:
         available_weights += schema.llm_weight

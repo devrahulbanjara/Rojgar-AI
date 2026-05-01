@@ -299,6 +299,7 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
         httponly=True,
         secure=settings.environment.lower() == "prod",
         samesite="lax",
+        path="/",
         expires=refresh_expires_at,
     )
 
@@ -394,6 +395,7 @@ async def google_register(
         httponly=True,
         secure=settings.environment == "prod",
         samesite="lax",
+        path="/",
         expires=refresh_expires_at,
     )
     db.add(RefreshToken(user_id=user.id, jti=jti, expires_at=refresh_expires_at))
@@ -501,6 +503,7 @@ async def refresh_tokens(
         # Set secure=True only in production (requires HTTPS)
         secure=settings.environment == "prod",
         samesite="lax",
+        path="/",
         expires=new_expires_at,
     )
 
@@ -534,7 +537,7 @@ async def logout(
             await db.commit()
 
     # 2. Clear the cookie from the browser
-    response.delete_cookie("refresh_token")
+    response.delete_cookie("refresh_token", path="/")
     return {"message": "Logged out successfully"}
 
 
@@ -602,6 +605,6 @@ async def delete_my_account(
     user.is_deleted = True
     user.deleted_at = datetime.now(timezone.utc)
     await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
-    response.delete_cookie("refresh_token")
+    response.delete_cookie("refresh_token", path="/")
     await db.commit()
     logger.info(f"Account deleted: {user.email}")
