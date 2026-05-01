@@ -29,7 +29,6 @@ import { AlertTriangle, Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import DashboardTabs from '@/components/common/DashboardTabs'
 
 import { ProfileDataSkeleton } from './_components/ProfileSkeletons'
 import ResumeImportModal from './_components/ResumeImportModal'
@@ -996,13 +995,28 @@ export default function ProfilePage() {
           {/* ── Main: tabs + sections ── */}
           <div className="profile-layout__main">
             {/* Tabs */}
-            <DashboardTabs
-              options={SECTIONS.map((section) => ({ label: section, value: section }))}
-              activeValue={activeSection}
-              onChange={setActiveSection}
-              className="content-stagger-item"
+            <div
+              className="team-tabs content-stagger-item"
+              role="tablist"
+              aria-label="Profile sections"
               style={{ '--stagger-index': 1 } as React.CSSProperties}
-            />
+            >
+              {SECTIONS.map((section) => {
+                const isActive = activeSection === section
+                return (
+                  <button
+                    key={section}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`team-tabs__btn ${isActive ? 'team-tabs__btn--active' : ''}`}
+                    onClick={() => setActiveSection(section)}
+                  >
+                    <span>{section}</span>
+                  </button>
+                )
+              })}
+            </div>
 
             {/* ── Overview ──────────────────────────────────────────────── */}
             {activeSection === 'Overview' && (

@@ -1,79 +1,93 @@
 export function RecruiterProfileDataSkeleton() {
   return (
-    <div className="profile-layout" aria-hidden="true">
-      {/* ── Aside: avatar + info card skeleton ── */}
-      <aside className="profile-layout__aside">
-        <div className="profile-aside-card profile-aside-card--skeleton">
-          <div className="profile-media-control">
-            <div className="skeleton-block profile-skeleton__avatar" />
-            <div className="profile-media-actions">
-              <div className="skeleton-block profile-skeleton__button profile-skeleton__button--sm" />
-              <div className="skeleton-block profile-skeleton__button profile-skeleton__button--sm" />
-            </div>
+    <>
+      <div className="team-tabs" role="tablist" aria-label="Profile sections" aria-hidden="true">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className="team-tabs__btn"
+            style={{ opacity: 0.5, pointerEvents: 'none' }}
+          >
+            <div className="skeleton-block" style={{ width: '60px', height: '14px' }} />
           </div>
-          <div className="skeleton-block profile-skeleton__name" />
-          <div className="skeleton-block profile-skeleton__headline" />
-          <div className="profile-aside-card__divider" />
-          <div className="profile-aside-card__location">
-            <div className="skeleton-block profile-skeleton__line profile-skeleton__line--icon" />
-          </div>
-          <div className="profile-aside-card__location">
-            <div className="skeleton-block profile-skeleton__line profile-skeleton__line--icon" />
-          </div>
-          <div className="profile-aside-card__location">
-            <div className="skeleton-block profile-skeleton__line profile-skeleton__line--icon" />
-          </div>
-        </div>
-      </aside>
+        ))}
+      </div>
 
-      {/* ── Main: sections skeleton ── */}
-      <div className="profile-layout__main">
-        <div className="profile-section profile-section--skeleton">
-          {/* Basic Info block */}
-          <div className="profile-block profile-block--skeleton">
-            <div className="profile-block__header profile-skeleton__block-header">
-              <div className="skeleton-block profile-skeleton__block-title" />
-              <div className="skeleton-block profile-skeleton__button" />
+      <div className="profile-layout" aria-hidden="true">
+        {/* ── Aside: avatar + info card skeleton ── */}
+        <aside className="profile-layout__aside">
+          <div className="profile-aside-card profile-aside-card--skeleton">
+            <div className="profile-media-control">
+              <div className="skeleton-block profile-skeleton__avatar" />
+              <div className="profile-media-actions">
+                <div className="skeleton-block profile-skeleton__button profile-skeleton__button--sm" />
+                <div className="skeleton-block profile-skeleton__button profile-skeleton__button--sm" />
+              </div>
             </div>
-            <div className="resume-form-grid">
-              <div className="resume-field">
-                <div className="skeleton-block profile-skeleton__info-label" />
-                <div className="skeleton-block profile-skeleton__info-value" />
-              </div>
-              <div className="resume-field">
-                <div className="skeleton-block profile-skeleton__info-label" />
-                <div className="skeleton-block profile-skeleton__info-value" />
-              </div>
+            <div className="skeleton-block profile-skeleton__name" />
+            <div className="skeleton-block profile-skeleton__headline" />
+            <div className="profile-aside-card__divider" />
+            <div className="profile-aside-card__location">
+              <div className="skeleton-block profile-skeleton__line profile-skeleton__line--icon" />
+            </div>
+            <div className="profile-aside-card__location">
+              <div className="skeleton-block profile-skeleton__line profile-skeleton__line--icon" />
+            </div>
+            <div className="profile-aside-card__location">
+              <div className="skeleton-block profile-skeleton__line profile-skeleton__line--icon" />
             </div>
           </div>
+        </aside>
 
-          {/* Password block */}
-          <div className="profile-block profile-block--skeleton">
-            <div className="profile-block__header profile-skeleton__block-header">
-              <div className="skeleton-block profile-skeleton__block-title" />
-              <div className="skeleton-block profile-skeleton__button" />
-            </div>
-            <div className="profile-skeleton__copy">
-              <div className="skeleton-block profile-skeleton__line" />
-            </div>
-            <div className="resume-form-grid">
-              <div className="resume-field">
-                <div className="skeleton-block profile-skeleton__info-label" />
-                <div className="skeleton-block profile-skeleton__info-value" />
+        {/* ── Main: sections skeleton ── */}
+        <div className="profile-layout__main">
+          <div className="profile-section profile-section--skeleton">
+            {/* Basic Info block */}
+            <div className="profile-block profile-block--skeleton">
+              <div className="profile-block__header profile-skeleton__block-header">
+                <div className="skeleton-block profile-skeleton__block-title" />
+                <div className="skeleton-block profile-skeleton__button" />
               </div>
-              <div className="resume-field">
-                <div className="skeleton-block profile-skeleton__info-label" />
-                <div className="skeleton-block profile-skeleton__info-value" />
+              <div className="resume-form-grid">
+                <div className="resume-field">
+                  <div className="skeleton-block profile-skeleton__info-label" />
+                  <div className="skeleton-block profile-skeleton__info-value" />
+                </div>
+                <div className="resume-field">
+                  <div className="skeleton-block profile-skeleton__info-label" />
+                  <div className="skeleton-block profile-skeleton__info-value" />
+                </div>
               </div>
-              <div className="resume-field">
-                <div className="skeleton-block profile-skeleton__info-label" />
-                <div className="skeleton-block profile-skeleton__info-value" />
+            </div>
+
+            {/* Password block */}
+            <div className="profile-block profile-block--skeleton">
+              <div className="profile-block__header profile-skeleton__block-header">
+                <div className="skeleton-block profile-skeleton__block-title" />
+                <div className="skeleton-block profile-skeleton__button" />
+              </div>
+              <div className="profile-skeleton__copy">
+                <div className="skeleton-block profile-skeleton__line" />
+              </div>
+              <div className="resume-form-grid">
+                <div className="resume-field">
+                  <div className="skeleton-block profile-skeleton__info-label" />
+                  <div className="skeleton-block profile-skeleton__info-value" />
+                </div>
+                <div className="resume-field">
+                  <div className="skeleton-block profile-skeleton__info-label" />
+                  <div className="skeleton-block profile-skeleton__info-value" />
+                </div>
+                <div className="resume-field">
+                  <div className="skeleton-block profile-skeleton__info-label" />
+                  <div className="skeleton-block profile-skeleton__info-value" />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
