@@ -1010,23 +1010,6 @@
   gap: 0.3rem;
   font-size: $font-size-sm;
   color: $color-gray-700;
-
-  &__remove {
-    display: inline-flex;
-    align-items: center;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    color: $color-gray-400;
-    font-size: 0.95rem;
-    line-height: 1;
-    transition: color $transition-fast;
-
-    &:hover {
-      color: $color-accent;
-    }
-  }
 }
 
 .skills-wrap {
@@ -1211,26 +1194,6 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-    }
-  }
-
-  &__bookmark {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-lg;
-    border: 1px solid $color-gray-200;
-    background: $color-white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: $color-gray-400;
-    flex-shrink: 0;
-    transition: all $transition-fast;
-
-    &:hover {
-      border-color: $color-primary;
-      color: $color-primary;
     }
   }
 
@@ -2723,27 +2686,6 @@
     gap: 0;
     transition: all $transition-base;
 
-    &-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: $radius-lg;
-      border: 1px solid $color-gray-200;
-      background: $color-white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: $color-gray-500;
-      flex-shrink: 0;
-      transition: all $transition-fast;
-      z-index: 1;
-
-      &:hover {
-        border-color: $color-primary;
-        color: $color-primary;
-      }
-    }
-
     &-input {
       width: 0;
       max-width: 0;
@@ -2770,13 +2712,6 @@
       padding: 0 $space-3 0 0;
       box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
 
-      .dash-navbar__search-btn {
-        border: none;
-        background: none;
-        border-radius: $radius-lg 0 0 $radius-lg;
-        color: $color-primary;
-      }
-
       .dash-navbar__search-input {
         width: 220px;
         max-width: 220px;
@@ -2784,35 +2719,6 @@
         pointer-events: auto;
         padding: 0 $space-2;
       }
-    }
-  }
-
-  // ── Icon buttons ────────────────────────────────────────────
-  &__icon-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: $radius-lg;
-    border: 1px solid $color-gray-200;
-    background: $color-white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: $color-gray-500;
-    transition: all $transition-fast;
-    position: relative;
-    flex-shrink: 0;
-
-    &:hover {
-      border-color: $color-primary;
-      color: $color-primary;
-    }
-
-    &--active {
-      border-color: $color-primary;
-      color: $color-primary;
-      background: rgba($color-primary, 0.06);
-      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
     }
   }
 
@@ -2869,26 +2775,6 @@
     color: $color-text-muted;
   }
 
-  &__notifications-close {
-    width: 32px;
-    height: 32px;
-    border-radius: $radius-lg;
-    border: 1px solid transparent;
-    background: transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: $color-gray-400;
-    cursor: pointer;
-    transition: all $transition-fast;
-
-    &:hover {
-      color: $color-primary;
-      border-color: rgba($color-primary, 0.14);
-      background: rgba($color-primary, 0.05);
-    }
-  }
-
   &__notifications-body {
     max-height: min(26rem, calc(100vh - 8rem));
     overflow-y: auto;
@@ -2924,39 +2810,9 @@
     }
   }
 
-  &__mark-read-btn {
-    all: unset;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    color: $color-text-muted;
-    cursor: pointer;
-
-    &:hover {
-      color: $color-primary;
-      text-decoration: underline;
-    }
-  }
-
   // ── Profile ─────────────────────────────────────────────────
   &__profile {
     position: relative;
-  }
-
-  &__avatar-btn {
-    display: flex;
-    align-items: center;
-    gap: $space-2;
-    background: none;
-    border: 1px solid $color-gray-200;
-    border-radius: $radius-full;
-    padding: 3px 10px 3px 3px;
-    cursor: pointer;
-    transition: all $transition-fast;
-
-    &:hover {
-      border-color: $color-primary;
-      background: rgba($color-primary, 0.04);
-    }
   }
 
   &__avatar {
@@ -3052,51 +2908,6 @@
     height: 1px;
     background: $color-gray-200;
     margin: $space-1 0;
-  }
-
-  &__dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: $space-3;
-    padding: $space-3 $space-4;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $color-gray-700;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all $transition-fast;
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-
-    svg {
-      color: $color-gray-400;
-      flex-shrink: 0;
-      transition: color $transition-fast;
-    }
-
-    &:hover {
-      background: rgba($color-primary, 0.05);
-      color: $color-primary;
-
-      svg {
-        color: $color-primary;
-      }
-    }
-
-    &--danger {
-      color: $color-accent;
-
-      svg {
-        color: $color-accent;
-      }
-
-      &:hover {
-        background: rgba($color-accent, 0.06);
-        color: $color-accent;
-      }
-    }
   }
 }
 
@@ -3910,32 +3721,6 @@
     flex-shrink: 0;
   }
 
-  &__icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border: none;
-    background: transparent;
-    color: $color-gray-400;
-    border-radius: $radius-full;
-    cursor: pointer;
-    transition:
-      color $transition-fast,
-      background-color $transition-fast;
-
-    &:hover {
-      color: $color-primary;
-      background: rgba($color-primary, 0.08);
-    }
-
-    &--danger:hover {
-      color: $color-error;
-      background: rgba($color-error, 0.08);
-    }
-  }
-
   &--skeleton {
     pointer-events: none;
 
@@ -4173,65 +3958,11 @@
   background: rgba($color-white, 0.92);
 }
 
-.job-editor-list__add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: $space-2;
-  padding: 0.8rem 1rem;
-  border: 1px solid rgba($color-primary, 0.18);
-  border-radius: $radius-lg;
-  background: rgba($color-primary, 0.08);
-  color: $color-primary;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  cursor: pointer;
-  transition:
-    background $transition-fast,
-    border-color $transition-fast,
-    color $transition-fast;
-
-  &:hover:not(:disabled) {
-    background: rgba($color-primary, 0.12);
-    border-color: rgba($color-primary, 0.28);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-  }
-}
-
 .job-editor-list__remove {
   position: absolute;
   top: 50%;
   right: $space-3;
   transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0;
-  border: none;
-  border-radius: $radius-full;
-  background: transparent;
-  color: $color-error;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition:
-    color $transition-fast,
-    background $transition-fast;
-
-  &:hover {
-    color: color.adjust($color-error, $lightness: -8%);
-    background: rgba($color-error, 0.08);
-  }
-
-  &:disabled {
-    color: $color-gray-400;
-    cursor: not-allowed;
-  }
 }
 
 .recruiter-job-editor-modal {
@@ -4305,9 +4036,210 @@
   border-radius: $radius-full;
 }
 
+.jd-detail-skeleton {
+  &__logo {
+    width: 68px;
+    height: 68px;
+    border-radius: $radius-full;
+    border: 1px solid $color-gray-200;
+    box-shadow: $shadow-sm;
+    margin-bottom: $space-4;
+    background-color: $color-gray-100;
+  }
+
+  &__date {
+    width: 7.5rem;
+    height: 0.875rem;
+    margin-bottom: $space-3;
+    border-radius: $radius-sm;
+  }
+
+  &__title {
+    width: min(64%, 34rem);
+    height: 2.4rem;
+    margin-bottom: $space-4;
+    border-radius: $radius-md;
+  }
+
+  &__meta-line {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    margin-bottom: $space-2;
+  }
+
+  &__meta-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: $radius-full;
+    flex-shrink: 0;
+  }
+
+  &__company {
+    width: min(38%, 18rem);
+    height: 1rem;
+    border-radius: $radius-sm;
+  }
+
+  &__location {
+    width: min(46%, 22rem);
+    height: 1rem;
+    border-radius: $radius-sm;
+  }
+
+  &__chips {
+    margin-top: $space-4;
+  }
+
+  &__chip {
+    width: 5.25rem;
+    height: 1.5rem;
+    border-radius: $radius-full;
+
+    &--wide {
+      width: 8rem;
+    }
+
+    &--time {
+      width: 9.5rem;
+    }
+  }
+
+  &__primary-action {
+    width: 8.75rem;
+    height: 2.75rem;
+    border-radius: $radius-full;
+  }
+
+  &__secondary-action {
+    width: 5.75rem;
+    height: 2.25rem;
+    border-radius: $radius-full;
+  }
+
+  &__view-tabs {
+    display: flex;
+    gap: $space-1;
+    border-bottom: 1px solid $color-gray-200;
+    margin-top: $space-5;
+    margin-bottom: $space-6;
+  }
+
+  &__view-tab {
+    width: 6.25rem;
+    height: 2.5rem;
+    border-radius: $radius-md $radius-md 0 0;
+
+    &--active {
+      width: 5.5rem;
+    }
+  }
+
+  &__pipeline-tabs {
+    display: flex;
+    gap: $space-1;
+    border-bottom: 1px solid $color-gray-200;
+    margin-bottom: $space-6;
+    overflow: hidden;
+  }
+
+  &__pipeline-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: 0.625rem 0.875rem;
+    min-width: 6.75rem;
+  }
+
+  &__stage-label {
+    width: 4.25rem;
+    height: 0.875rem;
+    border-radius: $radius-sm;
+  }
+
+  &__stage-count {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: $radius-full;
+  }
+
+  &__pipeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__candidate-row {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr 4rem 1fr 6.5rem;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-lg;
+    background: $color-white;
+  }
+
+  &__avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: $radius-full;
+  }
+
+  &__identity {
+    min-width: 0;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  &__name {
+    width: min(70%, 13rem);
+    height: 0.95rem;
+    border-radius: $radius-sm;
+  }
+
+  &__email {
+    width: min(84%, 16rem);
+    height: 0.75rem;
+    border-radius: $radius-sm;
+  }
+
+  &__score {
+    width: 2.75rem;
+    height: 1.1rem;
+    border-radius: $radius-sm;
+  }
+
+  &__feedback {
+    width: min(86%, 22rem);
+    height: 0.875rem;
+    border-radius: $radius-sm;
+  }
+
+  &__applied {
+    width: 5.75rem;
+    height: 0.75rem;
+    justify-self: end;
+    border-radius: $radius-sm;
+  }
+}
+
 @media (max-width: $bp-lg) {
   .company-jobs-cards--grid {
     grid-template-columns: 1fr;
+  }
+
+  .jd-detail-skeleton {
+    &__title,
+    &__company,
+    &__location {
+      width: 100%;
+      max-width: 30rem;
+    }
+
+    &__pipeline-tabs {
+      flex-wrap: wrap;
+    }
   }
 }
 
@@ -4336,6 +4268,17 @@
   .job-editor-form__grid,
   .job-editor-form__grid--salary {
     grid-template-columns: 1fr;
+  }
+
+  .jd-detail-skeleton {
+    &__candidate-row {
+      grid-template-columns: 2.25rem 1fr 4rem;
+    }
+
+    &__feedback,
+    &__applied {
+      display: none;
+    }
   }
 
   .job-editor-toggle {
@@ -4511,52 +4454,29 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-  }
 
-  &__stage {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: $space-2 $space-3;
-    border-radius: $radius-lg;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $color-gray-700;
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: all $transition-fast;
-    width: 100%;
-    text-align: left;
-
-    &:hover {
-      background: rgba($color-primary, 0.06);
-      color: $color-primary;
-    }
-
-    &--active {
-      background: rgba($color-primary, 0.1);
-      color: $color-primary;
-      font-weight: $font-weight-semibold;
-    }
-
-    &-label {
-      flex: 1;
+    .btn {
+      justify-content: space-between;
       text-align: left;
     }
-
-    &-count {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      padding: 1px 7px;
-      border-radius: $radius-full;
-      background: $color-gray-100;
-      color: $color-gray-500;
-      margin-left: $space-2;
-    }
   }
 
-  &--active &__stage-count {
+  &__stage-label {
+    flex: 1;
+    text-align: left;
+  }
+
+  &__stage-count {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    padding: 1px 7px;
+    border-radius: $radius-full;
+    background: $color-gray-100;
+    color: $color-gray-500;
+    margin-left: $space-2;
+  }
+
+  .btn[aria-pressed='true'] &__stage-count {
     background: rgba($color-primary, 0.15);
     color: $color-primary;
   }
@@ -4571,30 +4491,10 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-  }
 
-  &__type-btn {
-    text-align: left;
-    padding: $space-2 $space-3;
-    border-radius: $radius-lg;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $color-gray-700;
-    background: none;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    transition: all $transition-fast;
-
-    &:hover {
-      background: rgba($color-primary, 0.06);
-      color: $color-primary;
-    }
-
-    &--active {
-      background: rgba($color-primary, 0.1);
-      color: $color-primary;
-      font-weight: $font-weight-semibold;
+    .btn {
+      justify-content: flex-start;
+      text-align: left;
     }
   }
 }
@@ -4654,24 +4554,6 @@
     right: $space-3;
     top: 50%;
     transform: translateY(-50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: $radius-full;
-    background: transparent;
-    color: $color-gray-400;
-    cursor: pointer;
-    transition:
-      background $transition-fast,
-      color $transition-fast;
-
-    &:hover {
-      background: $color-gray-100;
-      color: $color-gray-700;
-    }
   }
 
   &__submit {
@@ -4812,6 +4694,9 @@
   background: $color-white;
   border: 1px solid $color-gray-200;
   border-radius: $radius-xl;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
   cursor: pointer;
   transition:
     border-color $transition-fast,
@@ -4823,7 +4708,7 @@
     box-shadow: $shadow-sm;
   }
 
-  &--active {
+  &[aria-pressed='true'] {
     border-color: $color-primary;
     box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
   }
@@ -6809,12 +6694,6 @@
     }
   }
 
-  &__bar .jd-back {
-    margin-bottom: 0;
-    min-height: 2.25rem;
-    color: $color-gray-600;
-  }
-
   @media (max-width: $bp-md) {
     &__bar-title {
       order: -1;
@@ -7368,32 +7247,6 @@
 
   &:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.recruiter-chat-topbar__icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: 0;
-  border-radius: $radius-md;
-  background: transparent;
-  color: $color-gray-400;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast;
-
-  &:hover:not(:disabled) {
-    background: $color-gray-100;
-    color: $color-gray-600;
-  }
-
-  &:disabled {
-    opacity: 0.4;
     cursor: not-allowed;
   }
 }
@@ -8395,71 +8248,6 @@
   gap: $space-2;
 }
 
-.recruiter-chat-sidebar__icon-btn,
-.recruiter-chat-sidebar__delete-btn,
-.recruiter-chat-sidebar__new-btn {
-  border: 0;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast,
-    opacity $transition-fast,
-    transform $transition-fast;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-    transform: none;
-  }
-}
-
-.recruiter-chat-sidebar__icon-btn,
-.recruiter-chat-sidebar__delete-btn {
-  width: 2.25rem;
-  height: 2.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: transparent;
-  color: $color-gray-500;
-
-  &:hover:not(:disabled) {
-    background: rgb(15 23 42 / 6%);
-    color: $color-gray-900;
-  }
-}
-
-.recruiter-chat-sidebar__new-btn {
-  flex: 1;
-  min-width: 0;
-  min-height: 2.75rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: $space-2;
-  padding: 0.75rem 0.95rem;
-  border-radius: 1rem;
-  background: linear-gradient(
-    135deg,
-    $color-primary,
-    color.adjust($color-primary, $lightness: -12%)
-  );
-  color: $color-white;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  box-shadow: 0 14px 28px rgb(15 23 42 / 16%);
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    background: linear-gradient(
-      135deg,
-      color.adjust($color-primary, $lightness: -6%),
-      color.adjust($color-primary, $lightness: -18%)
-    );
-  }
-}
-
 .recruiter-chat-sidebar__spinner {
   animation: recruiter-chat-pulse 1s ease-in-out infinite;
 }
@@ -8535,12 +8323,6 @@
     box-shadow: inset 0 0 0 1px rgb(148 163 184 / 16%);
   }
 
-  &:hover .recruiter-chat-sidebar__delete-btn,
-  &:focus-within .recruiter-chat-sidebar__delete-btn {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
   &--active {
     background:
       linear-gradient(135deg, rgb(15 118 110 / 12%), rgb(59 130 246 / 10%)), rgb(255 255 255 / 92%);
@@ -8548,21 +8330,6 @@
       inset 0 0 0 1px rgb(45 212 191 / 20%),
       0 10px 24px rgb(15 23 42 / 6%);
   }
-}
-
-.recruiter-chat-sidebar__thread-btn {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: $space-3;
-  padding: 0.8rem 2.9rem 0.8rem 0.9rem;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  color: $color-gray-800;
 }
 
 .recruiter-chat-sidebar__thread-icon {
@@ -8598,15 +8365,6 @@
 .recruiter-chat-sidebar__thread-meta {
   color: $color-gray-500;
   font-size: 0.76rem;
-}
-
-.recruiter-chat-sidebar__delete-btn {
-  position: absolute;
-  top: 50%;
-  right: $space-2;
-  transform: translateY(-50%);
-  opacity: 0;
-  pointer-events: none;
 }
 
 .recruiter-chat-sidebar__empty {
@@ -8653,13 +8411,7 @@
     width: 100%;
   }
 
-  .recruiter-chat-sidebar__thread-btn {
-    justify-content: center;
-    padding: 0.75rem;
-  }
-
-  .recruiter-chat-sidebar__thread-copy,
-  .recruiter-chat-sidebar__delete-btn {
+  .recruiter-chat-sidebar__thread-copy {
     display: none;
   }
 }
@@ -9882,10 +9634,6 @@
     padding: $space-3;
   }
 
-  .recruiter-chat-sidebar__thread-btn {
-    padding-left: 0.8rem;
-  }
-
   .recruiter-chat-shell {
     min-height: calc(100vh - 10rem);
     border-radius: $radius-xl;
@@ -10613,64 +10361,6 @@
 .jobs-filter-dropdown {
   position: relative;
 
-  &__trigger {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $space-2;
-    padding: $space-3 $space-4;
-    border: 1.5px solid $color-gray-200;
-    border-radius: $radius-full;
-    font-size: $font-size-sm;
-    font-family: $font-body;
-    background: $color-white;
-    color: $color-gray-600;
-    cursor: pointer;
-    transition: all $transition-fast;
-    text-align: left;
-
-    span {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    &:hover {
-      border-color: rgba($color-primary, 0.4);
-      color: $color-primary;
-      background: rgba($color-primary, 0.04);
-    }
-
-    &--open {
-      border-color: $color-primary;
-      background: rgba($color-primary, 0.06);
-      box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
-      color: $color-primary;
-    }
-
-    &:active {
-      transform: scale(0.98);
-    }
-
-    &--active {
-      background: $color-primary;
-      border-color: $color-primary;
-      color: $color-white;
-
-      span {
-        color: $color-white;
-        font-weight: $font-weight-medium;
-      }
-
-      .jobs-filter-dropdown__chevron {
-        color: rgba($color-white, 0.8);
-      }
-    }
-  }
-
   &__chevron {
     flex-shrink: 0;
     color: $color-gray-400;
@@ -10707,45 +10397,13 @@
     }
   }
 
-  &__option {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: $space-2;
-    padding: 9px $space-4;
-    font-size: $font-size-sm;
-    font-family: $font-body;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: $color-gray-600;
-    text-align: left;
-    transition: background $transition-fast;
-    transition:
-      background $transition-fast,
-      color $transition-fast,
-      transform $transition-fast;
-
-    &:hover {
-      background: rgba($color-primary, 0.05);
-      color: $color-primary;
-      transform: translateX(3px);
-    }
-
-    &--active {
-      color: $color-primary;
-      font-weight: $font-weight-medium;
-      background: rgba($color-primary, 0.08);
-    }
-
-    &-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: $radius-full;
-      background: currentcolor;
-      opacity: 0.4;
-      flex-shrink: 0;
-    }
+  &__option-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: $radius-full;
+    background: currentcolor;
+    opacity: 0.4;
+    flex-shrink: 0;
   }
 }
 
@@ -11050,22 +10708,6 @@
 }
 
 // ── Job Detail Page — Back link ───────────────────────────────
-.jd-back {
-  display: inline-flex;
-  align-items: center;
-  gap: $space-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $color-gray-500;
-  text-decoration: none;
-  margin-bottom: $space-6;
-  transition: color $transition-fast;
-
-  &:hover {
-    color: $color-primary;
-  }
-}
-
 // ── Job Detail Page — Hero ────────────────────────────────────
 .jd-hero {
   background: $color-white;
@@ -11156,52 +10798,6 @@
     align-items: flex-end;
     gap: $space-2;
     padding-top: $space-4;
-  }
-
-  &__apply-btn {
-    padding: $space-3 $space-8;
-    border-radius: $radius-full;
-    background: $color-primary;
-    color: $color-white;
-    border: none;
-    font-family: $font-heading;
-    font-weight: $font-weight-semibold;
-    font-size: $font-size-base;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background $transition-fast;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: color.adjust($color-primary, $lightness: -12%);
-      transform: scaleY(0);
-      transform-origin: top;
-      transition: transform $transition-base;
-      z-index: 0;
-    }
-
-    span {
-      position: relative;
-      z-index: 1;
-    }
-
-    &:hover::before {
-      transform: scaleY(1);
-      transform-origin: bottom;
-    }
-
-    &:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-
-      &::before {
-        display: none;
-      }
-    }
   }
 
   &__chips {
@@ -11761,46 +11357,6 @@
   justify-content: flex-end;
 }
 
-.job-ai-field__lock-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border: 1px solid $color-gray-200;
-  border-radius: $radius-full;
-  background: $color-white;
-  color: $color-gray-600;
-  cursor: pointer;
-  transition:
-    color $transition-fast,
-    border-color $transition-fast,
-    background-color $transition-fast,
-    box-shadow $transition-fast;
-
-  &:hover:not(:disabled) {
-    color: $color-primary;
-    border-color: rgba($color-primary, 0.3);
-    background: rgba($color-primary, 0.06);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 4px rgba($color-primary, 0.08);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-
-  &--active {
-    color: $color-error;
-    border-color: rgba($color-error, 0.24);
-    background: rgba($color-error, 0.08);
-  }
-}
-
 .job-ai-instruction {
   display: flex;
   flex-direction: column;
@@ -11976,66 +11532,6 @@
   background: rgba($color-white, 0.92);
 }
 
-.job-ai-list-editor__add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: $space-2;
-  padding: 0.8rem 1rem;
-  border: 1px solid rgba($color-primary, 0.18);
-  border-radius: $radius-lg;
-  background: rgba($color-primary, 0.08);
-  color: $color-primary;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    border-color $transition-fast,
-    color $transition-fast;
-
-  &:hover:not(:disabled) {
-    background: rgba($color-primary, 0.12);
-    border-color: rgba($color-primary, 0.28);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-  }
-}
-
-.job-ai-list-editor__remove {
-  position: absolute;
-  top: 50%;
-  right: $space-3;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 0;
-  border-radius: $radius-full;
-  background: transparent;
-  color: $color-gray-500;
-  cursor: pointer;
-  transition:
-    color $transition-fast,
-    background-color $transition-fast;
-
-  &:hover:not(:disabled) {
-    color: $color-error;
-    background: rgba($color-error, 0.08);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-}
-
 @media (width <= 1279px) {
   .job-ai-page {
     grid-template-columns: minmax(0, 1fr) 320px;
@@ -12126,62 +11622,6 @@
     .open-to-work-status__text {
       font-size: $font-size-sm;
       font-weight: $font-weight-regular;
-    }
-
-    .open-to-work-status__toggle {
-      color: $color-gray-400;
-      font-weight: $font-weight-regular;
-      text-decoration: none;
-      margin-left: $space-2;
-
-      &:hover {
-        color: $color-primary;
-        text-decoration: underline;
-      }
-    }
-  }
-
-  &__toggle {
-    margin-left: $space-1;
-    background: none;
-    border: none;
-    padding: 0;
-    color: $color-primary;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    transition: all $transition-base;
-
-    &:hover {
-      color: color.adjust($color-primary, $lightness: -10%);
-      text-decoration: none;
-    }
-
-    &:disabled {
-      cursor: wait;
-      opacity: 0.6;
-      text-decoration: none;
-    }
-
-    &--loading {
-      position: relative;
-      padding-right: 18px;
-
-      &::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 50%;
-        margin-top: -6px;
-        width: 12px;
-        height: 12px;
-        border: 2px solid transparent;
-        border-top-color: currentcolor;
-        border-radius: 50%;
-        animation: open-to-work-spin 0.6s linear infinite;
-      }
     }
   }
 }
@@ -13031,15 +12471,6 @@
   flex-wrap: wrap;
 }
 
-.recruiters-remove-btn {
-  color: $color-gray-500;
-
-  &:hover:not(:disabled) {
-    color: #dc2626;
-    background: rgb(254 242 242 / 92%);
-  }
-}
-
 .recruiter-job-bar {
   display: flex;
   gap: 4px;
@@ -13165,26 +12596,6 @@
   border: 1px solid rgba($color-gray-200, 0.9);
   border-radius: $radius-full;
   background: rgba($color-white, 0.95);
-
-  &__button {
-    min-height: 2.1rem;
-    padding: 0.42rem 0.85rem;
-    border: 0;
-    border-radius: $radius-full;
-    background: transparent;
-    color: $color-text-muted;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    cursor: pointer;
-    transition:
-      background $transition-fast,
-      color $transition-fast;
-
-    &--active {
-      background: rgba($color-primary, 0.1);
-      color: $color-primary;
-    }
-  }
 }
 
 .dashboard-analytics__chart-skeleton {
@@ -14500,30 +13911,6 @@
     min-height: 8rem;
   }
 
-  &__startBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: $space-2;
-    padding: $space-3 $space-6;
-    border: 1.5px solid rgba($color-primary, 0.18);
-    border-radius: $radius-xl;
-    background: rgba($color-primary, 0.06);
-    color: $color-primary;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    cursor: pointer;
-    transition:
-      background $transition-fast,
-      border-color $transition-fast,
-      box-shadow $transition-fast;
-
-    &:hover {
-      background: rgba($color-primary, 0.12);
-      border-color: rgba($color-primary, 0.35);
-      box-shadow: 0 4px 16px rgba($color-primary, 0.12);
-    }
-  }
-
   &__recording {
     display: flex;
     flex-direction: column;
@@ -14609,69 +13996,6 @@
     align-items: center;
     gap: $space-2;
     flex-wrap: wrap;
-  }
-
-  &__actionBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: $space-2 $space-3;
-    border: 1px solid $color-gray-200;
-    border-radius: $radius-lg;
-    background: $color-white;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    color: $color-gray-700;
-    cursor: pointer;
-    transition:
-      background $transition-fast,
-      border-color $transition-fast,
-      color $transition-fast;
-
-    &:hover:not(:disabled) {
-      background: $color-gray-100;
-      border-color: $color-gray-300;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-
-  &__actionBtn--primary {
-    background: rgba($color-primary, 0.08);
-    border-color: rgba($color-primary, 0.2);
-    color: $color-primary;
-
-    &:hover:not(:disabled) {
-      background: rgba($color-primary, 0.15);
-      border-color: rgba($color-primary, 0.35);
-    }
-  }
-
-  &__actionBtn--secondary {
-    background: $color-gray-100;
-  }
-
-  &__actionBtn--stop {
-    background: rgba(#ef4444, 0.08);
-    border-color: rgba(#ef4444, 0.2);
-    color: #ef4444;
-
-    &:hover:not(:disabled) {
-      background: rgba(#ef4444, 0.15);
-      border-color: rgba(#ef4444, 0.35);
-    }
-  }
-
-  &__actionBtn--cancel {
-    color: $color-gray-500;
-
-    &:hover:not(:disabled) {
-      color: #dc2626;
-      background: rgba(#fef2f2, 0.92);
-    }
   }
 
   &__preview {
@@ -14812,20 +14136,6 @@
     letter-spacing: 0.06em;
   }
 
-  &__toggle {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: $color-primary;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    cursor: pointer;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
   &__text {
     margin: $space-2 0 0;
     font-size: $font-size-sm;
@@ -14898,28 +14208,12 @@
     overflow-y: auto;
   }
 
-  &__item {
+  &__item--skeleton {
     width: 100%;
     border: 1px solid $color-gray-200;
     border-radius: $radius-lg;
     background: $color-white;
     padding: $space-3;
-    text-align: left;
-    cursor: pointer;
-    transition:
-      border-color 0.18s ease,
-      background-color 0.18s ease,
-      box-shadow 0.18s ease;
-
-    &:hover,
-    &--active {
-      border-color: rgba($color-primary, 0.28);
-      background: rgba($color-primary, 0.04);
-      box-shadow: 0 10px 30px rgba($color-primary, 0.08);
-    }
-  }
-
-  &__item--skeleton {
     cursor: default;
     pointer-events: none;
   }
@@ -15073,35 +14367,6 @@
 
 // ── FAB button ───────────────────────────────────────────────
 
-.floating-chat-fab {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  border: 1.5px solid $color-gray-200;
-  border-radius: $radius-lg;
-  background: transparent;
-  color: $color-white;
-  cursor: pointer;
-  box-shadow: none;
-  padding: 0;
-  transition: transform $transition-fast;
-
-  &:hover {
-    transform: scale(1.1);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-}
-
 .floating-chat-fab__icon {
   border-radius: 0;
   overflow: visible;
@@ -15176,27 +14441,6 @@
   align-items: center;
   gap: $space-1;
   flex-shrink: 0;
-}
-
-.floating-chat-panel__icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: $radius-md;
-  background: transparent;
-  color: $color-gray-400;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast;
-
-  &:hover {
-    background: $color-gray-100;
-    color: $color-gray-700;
-  }
 }
 
 // ── Panel body ───────────────────────────────────────────────
@@ -15306,7 +14550,7 @@
     width: calc(100vw - 16px);
   }
 
-  .floating-chat-fab {
+  .btn.fab {
     right: 8px;
     bottom: 8px;
   }
@@ -15404,15 +14648,6 @@
     background: transparent;
     padding: 0;
     border-radius: 0;
-
-    .recruiter-chat-copy-btn {
-      opacity: 0;
-      transition: opacity 150ms ease;
-    }
-
-    &:hover .recruiter-chat-copy-btn {
-      opacity: 1;
-    }
   }
 
   &--cursor {
@@ -15421,46 +14656,6 @@
     gap: $space-2;
     padding: 0.6rem 0.85rem;
     background: $color-gray-100;
-  }
-}
-
-// ── Copy button ───────────────────────────────────────────────
-
-.recruiter-chat-copy-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 1px solid $color-gray-200;
-  border-radius: $radius-md;
-  background: $color-white;
-  color: $color-gray-400;
-  cursor: pointer;
-  transition:
-    color 150ms ease,
-    border-color 150ms ease,
-    background 150ms ease;
-
-  &:hover {
-    color: $color-gray-700;
-    border-color: $color-gray-300;
-    background: $color-gray-100;
-  }
-
-  &--copied {
-    color: #16a34a;
-    border-color: #bbf7d0;
-    background: #f0fdf4;
-
-    &:hover {
-      color: #16a34a;
-      border-color: #bbf7d0;
-      background: #f0fdf4;
-    }
   }
 }
 
@@ -15552,26 +14747,6 @@
   line-height: 1.55;
 }
 
-.recruiter-chat-stream-error__retry {
-  display: inline-flex;
-  align-items: center;
-  gap: $space-1;
-  padding: 0.35rem 0.75rem;
-  border: 0;
-  border-radius: $radius-full;
-  background: #fee2e2;
-  color: #991b1b;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  width: fit-content;
-  transition: background-color $transition-fast;
-
-  &:hover {
-    background: #fecaca;
-  }
-}
-
 // ── Input composer ────────────────────────────────────────────
 
 // `.recruiter-chat-composer` already defined above — these extend it
@@ -15611,43 +14786,6 @@
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
-  }
-}
-
-.recruiter-chat-send-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border: 0;
-  border-radius: 50%;
-  background: $color-primary;
-  color: $color-white;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    transform $transition-fast,
-    opacity $transition-fast;
-
-  &:hover:not(:disabled) {
-    background: color.adjust($color-primary, $lightness: -8%);
-    transform: scale(1.06);
-  }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  &--stop {
-    background: $color-gray-700;
-
-    &:hover:not(:disabled) {
-      background: $color-gray-900;
-    }
   }
 }
 
@@ -15801,37 +14939,6 @@
   border-bottom: 1px solid rgba($color-black, 0.06);
 }
 
-.recruiter-chat-sidebar__new-chat {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: $space-2;
-  width: 100%;
-  padding: 0.55rem 0.85rem;
-  border: 1px solid $color-gray-200;
-  border-radius: $radius-lg;
-  background: $color-white;
-  color: $color-gray-700;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    border-color $transition-fast,
-    color $transition-fast;
-
-  &:hover:not(:disabled) {
-    background: $color-gray-100;
-    border-color: $color-gray-300;
-    color: $color-gray-900;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
 .recruiter-chat-sidebar__body {
   flex: 1;
   min-height: 0;
@@ -15961,34 +15068,6 @@
 
   &--visible {
     opacity: 1;
-  }
-}
-
-// ── Icon buttons ──────────────────────────────────────────────
-
-.recruiter-chat-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 0;
-  border-radius: $radius-md;
-  background: transparent;
-  color: $color-gray-400;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast;
-
-  &:hover {
-    background: $color-gray-100;
-    color: $color-gray-700;
-  }
-
-  &--delete:hover {
-    background: rgb(254 242 242);
-    color: #b91c1c;
   }
 }
 
