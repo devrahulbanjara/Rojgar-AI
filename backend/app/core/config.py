@@ -91,9 +91,14 @@ class Settings(BaseSettings):
     shortlisting_reflection_max_iterations: int = 2
     shortlisting_web_search_max_results: int = 3
 
-    # Whisper (transcription)
-    whisper_endpoint_url: str = "https://api.openai.com/v1/audio/transcriptions"
-    whisper_api_key: str = ""
+    # HF Space Whisper (transcription)
+    hf_whisper_url: str = (
+        "https://devrahulbanjara-nepali-whisper-small.hf.space/transcribe"
+    )
+    hf_whisper_timeout_seconds: int = 300
+    hf_whisper_max_retries: int = 4
+    hf_whisper_retry_delays: tuple[int, ...] = (5, 15, 30, 60)
+    hf_whisper_token: str | None = None
 
     @property
     def database_url(self) -> str:
