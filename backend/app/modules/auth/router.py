@@ -68,7 +68,9 @@ async def signup(
     summary="Complete account creation after email verification",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
 )
-async def verify_email(payload: VerifyEmailRequest, db: DbSession) -> UnifiedResponse[None]:
+async def verify_email(
+    payload: VerifyEmailRequest, db: DbSession
+) -> UnifiedResponse[None]:
     """Complete account creation from an email verification token."""
     await service.verify_email(db, payload)
     return ResponseBuilder.success(message="Email verified successfully")
@@ -79,7 +81,9 @@ async def verify_email(payload: VerifyEmailRequest, db: DbSession) -> UnifiedRes
     summary="Authenticate with email and password, return access and refresh tokens",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
 )
-async def login(payload: LoginRequest, response: Response, db: DbSession) -> UnifiedResponse[LoginResponse]:
+async def login(
+    payload: LoginRequest, response: Response, db: DbSession
+) -> UnifiedResponse[LoginResponse]:
     """Authenticate a user and issue tokens."""
     result = await service.login(db, payload, response)
     return ResponseBuilder.success(
@@ -144,7 +148,9 @@ async def forgot_password(
     summary="Complete password reset using token from reset link",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE))))],
 )
-async def reset_password(payload: ResetPasswordRequest, db: DbSession) -> UnifiedResponse[None]:
+async def reset_password(
+    payload: ResetPasswordRequest, db: DbSession
+) -> UnifiedResponse[None]:
     """Complete a password reset using a reset token."""
     await service.reset_password(db, payload)
     return ResponseBuilder.success(
@@ -353,7 +359,6 @@ async def google_callback(
 
 @router.post(
     "/google/register",
-    response_model=UnifiedResponse[LoginResponse | SignupData],
     status_code=status.HTTP_201_CREATED,
     summary="Complete two-phase Google signup: consume signup_token and create account",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE * 5))))],
@@ -362,7 +367,7 @@ async def google_register(
     payload: GoogleRegisterRequest,
     response: Response,
     db: DbSession,
-):
+) -> UnifiedResponse[LoginResponse | SignupData]:
     """Complete a Google signup flow after role selection."""
     result = await service.google_register(db, payload, response)
     return ResponseBuilder.success(

@@ -1,0 +1,80 @@
+// =============================================================
+// Candidate interview detail — modal body styling
+// =============================================================
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  font-family: var(--font-body);
+}
+
+.companyRow {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.companyMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.role {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.company {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-subtle);
+  padding: 0.875rem 1rem;
+}
+
+.scheduleItem {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.scheduleLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.scheduleValue {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}

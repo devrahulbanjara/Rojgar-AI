@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { getCompanyAccent } from '@/lib/companyAccent'
@@ -15,6 +16,7 @@ import { X } from 'lucide-react'
 import Avatar from '@/components/common/Avatar'
 
 import Calendar, { type CalendarView } from './_components/Calendar'
+import detailStyles from './_components/InterviewDetailPanel.module.scss'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -143,64 +145,102 @@ function InterviewDetailPanel({
   const interviewStartTime = formatTime(interview.start_time)
   const interviewEndTime = formatTime(interview.end_time)
 
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKey)
+    }
+  }, [onClose])
+
   return (
-    <dialog open className="candidate-interview-detail-panel">
-      <div className="candidate-interview-detail-panel__header">
-        <h3>Interview Details</h3>
-        <button type="button" className="btn btn--icon btn--sm" onClick={onClose}>
-          <X size={16} />
-        </button>
-      </div>
-      <div className="candidate-interview-detail-panel__body">
-        <div className="candidate-interview-detail-panel__company">
-          <Avatar
-            name={interview.company_name}
-            src={null}
-            seed={interview.company_name}
-            kind="company"
-            className="candidate-interview-detail-panel__avatar"
-            sizes="56px"
-            style={
-              {
-                '--logo-bg': accent.background,
-                '--logo-color': accent.color,
-              } as CSSProperties
-            }
-          />
-          <div>
-            <div className="candidate-interview-detail-panel__role">{interview.job_title}</div>
-            <div className="candidate-interview-detail-panel__companyName">
-              {interview.company_name}
+    <div
+      className="modal-backdrop modal-backdrop--animated"
+      role="presentation"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="interview-detail-title"
+      >
+        <div className="modal__header">
+          <div className="modal__title" id="interview-detail-title">
+            Interview Details
+          </div>
+          <button
+            type="button"
+            className="btn btn--icon btn--sm"
+            aria-label="Close interview details"
+            onClick={onClose}
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="modal__body">
+          <div className={detailStyles.body}>
+            <div className={detailStyles.companyRow}>
+              <Avatar
+                name={interview.company_name}
+                src={null}
+                seed={interview.company_name}
+                kind="company"
+                className={detailStyles.avatar}
+                sizes="48px"
+                style={
+                  {
+                    '--logo-bg': accent.background,
+                    '--logo-color': accent.color,
+                  } as CSSProperties
+                }
+              />
+              <div className={detailStyles.companyMeta}>
+                <p className={detailStyles.role}>{interview.job_title}</p>
+                <p className={detailStyles.company}>{interview.company_name}</p>
+              </div>
+            </div>
+
+            <div className={detailStyles.schedule}>
+              <div className={detailStyles.scheduleItem}>
+                <span className={detailStyles.scheduleLabel}>Date</span>
+                <span className={detailStyles.scheduleValue}>{interviewDate}</span>
+              </div>
+              <div className={detailStyles.scheduleItem}>
+                <span className={detailStyles.scheduleLabel}>Time</span>
+                <span className={detailStyles.scheduleValue}>
+                  {interviewStartTime} – {interviewEndTime}
+                </span>
+              </div>
+              {interview.location && (
+                <div className={detailStyles.scheduleItem}>
+                  <span className={detailStyles.scheduleLabel}>Location</span>
+                  <span className={detailStyles.scheduleValue}>{interview.location}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        <div className="candidate-interview-detail-panel__schedule">
-          <div className="candidate-interview-detail-panel__scheduleItem">
-            <span>Date</span>
-            <strong>{interviewDate}</strong>
-          </div>
-          <div className="candidate-interview-detail-panel__scheduleItem">
-            <span>Time</span>
-            <strong>
-              {interviewStartTime} - {interviewEndTime}
-            </strong>
-          </div>
-          {interview.location && (
-            <div className="candidate-interview-detail-panel__scheduleItem">
-              <span>Location</span>
-              <strong>{interview.location}</strong>
-            </div>
-          )}
+        <div className="modal__footer">
+          <button type="button" className="btn btn--ghost" onClick={onClose}>
+            Close
+          </button>
+          <Link
+            href={`/candidate/applications/${interview.application_id}`}
+            className="btn btn--primary"
+            onClick={onClose}
+          >
+            View Application
+          </Link>
         </div>
-
-        <a
-          href={`/candidate/applications/${interview.application_id}`}
-          className="btn btn--primary btn--full"
-        >
-          View Application
-        </a>
       </div>
-    </dialog>
+    </div>
   )
 }

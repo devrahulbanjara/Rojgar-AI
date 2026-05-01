@@ -2746,20 +2746,38 @@
     background: $color-white;
     border: 1px solid $color-gray-200;
     border-radius: $radius-xl;
-    box-shadow: $shadow-xl;
+    box-shadow:
+      0 12px 32px rgb(15 23 42 / 12%),
+      0 1px 3px rgb(15 23 42 / 6%);
     overflow: hidden;
     z-index: $z-dropdown;
     animation: dash-dropdown-in $transition-fast forwards;
+    font-family: $font-body;
   }
 
   &__notifications-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: $space-3;
-    padding: $space-4 $space-4 $space-3;
+    padding: $space-4;
     background: $color-white;
-    border-bottom: 1px solid $color-gray-200;
+    border-bottom: 1px solid $color-gray-100;
+  }
+
+  &__notifications-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__notifications-eyebrow {
+    font-size: 0.7rem;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-text-muted;
   }
 
   &__notifications-title {
@@ -2769,22 +2787,140 @@
     color: $color-gray-900;
   }
 
-  &__notifications-subtitle {
-    margin-top: 2px;
-    font-size: $font-size-xs;
-    color: $color-text-muted;
+  &__notifications-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__notifications-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.25rem;
+    padding: 0 0.4rem;
+    border-radius: $radius-full;
+    background: $color-primary;
+    color: $color-white;
+    font-size: 0.7rem;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.02em;
   }
 
   &__notifications-body {
-    max-height: min(26rem, calc(100vh - 8rem));
+    max-height: min(28rem, calc(100vh - 8rem));
     overflow-y: auto;
   }
 
   &__notifications-empty {
-    padding: $space-6 $space-4;
+    margin: $space-3 $space-4;
+    padding: $space-5 $space-4;
     font-size: $font-size-sm;
     color: $color-text-muted;
     text-align: center;
+    border: 1px dashed $color-gray-200;
+    border-radius: $radius-lg;
+    background: $color-gray-50;
+  }
+
+  &__notif-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: $space-3;
+    padding: $space-3 $space-4;
+    border-top: 1px solid $color-gray-100;
+    text-decoration: none;
+    color: inherit;
+    transition: background $transition-fast;
+
+    &:first-child {
+      border-top: none;
+    }
+
+    &:hover {
+      background: rgba($color-primary, 0.04);
+    }
+  }
+
+  &__notif-dot-indicator {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: $radius-full;
+    background: $color-gray-300;
+    margin-top: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  &__notif-item--unread &__notif-dot-indicator {
+    background: $color-primary;
+  }
+
+  &__notif-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  &__notif-title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    margin: 0;
+  }
+
+  &__notif-text {
+    font-size: 0.8125rem;
+    color: $color-text-muted;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  &__notif-time {
+    font-size: 0.7rem;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: $font-weight-semibold;
+    margin-top: 0.25rem;
+  }
+
+  &__notif-skeleton-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__notif-skeleton-item {
+    display: flex;
+    gap: $space-3;
+    padding: $space-3 $space-4;
+    border-top: 1px solid $color-gray-100;
+
+    &:first-child {
+      border-top: none;
+    }
+  }
+
+  &__notif-skeleton-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: $radius-full;
+    margin-top: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  &__notif-skeleton-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
   }
 
   &__notifications-footer {
@@ -2793,8 +2929,8 @@
     justify-content: space-between;
     gap: $space-3;
     padding: $space-3 $space-4;
-    border-top: 1px solid $color-gray-200;
-    background: $color-white;
+    border-top: 1px solid $color-gray-100;
+    background: $color-gray-50;
 
     a {
       display: inline-flex;

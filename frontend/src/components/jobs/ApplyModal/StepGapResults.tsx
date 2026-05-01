@@ -1,5 +1,5 @@
 import type { GapAnalysisResult, GapItem } from '@/store/services/resumeGapApi'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Minus, Plus } from 'lucide-react'
 
 import styles from './applyModal.module.scss'
 
@@ -10,105 +10,130 @@ interface StepGapResultsProps {
   onBack: () => void
 }
 
-function scoreTone(score: number) {
-  if (score >= 70) return styles['applyModal__scoreBadge--good']
-  if (score >= 45) return styles['applyModal__scoreBadge--warn']
-  return styles['applyModal__scoreBadge--bad']
+type Tone = 'good' | 'warn' | 'bad'
+
+function scoreTone(score: number): Tone {
+  if (score >= 70) return 'good'
+  if (score >= 45) return 'warn'
+  return 'bad'
 }
 
-function gapTone(severity: GapItem['severity']) {
-  if (severity === 'critical') {
-    return {
-      row: styles['applyModal__gapItem--critical'],
-      badge: styles['applyModal__gapSeverity--critical'],
-      label: 'Required',
-    }
-  }
-  if (severity === 'preferred') {
-    return {
-      row: styles['applyModal__gapItem--preferred'],
-      badge: styles['applyModal__gapSeverity--preferred'],
-      label: 'Preferred',
-    }
-  }
-  return {
-    row: '',
-    badge: '',
-    label: 'Bonus',
-  }
+function severityLabel(severity: GapItem['severity']): string {
+  if (severity === 'critical') return 'Required'
+  if (severity === 'preferred') return 'Preferred'
+  return 'Bonus'
 }
 
-function GapList({ items, title }: { items: GapItem[]; title: string }) {
-  if (items.length === 0) return null
+function severityPillClass(severity: GapItem['severity']): string {
+  if (severity === 'critical') return styles['applyModal__pill--danger']
+  if (severity === 'preferred') return styles['applyModal__pill--warning']
+  return styles['applyModal__pill--muted']
+}
+
+function ScoreRing({ score }: { score: number }) {
+  const tone = scoreTone(score)
+  const bounded = Math.max(0, Math.min(100, score))
+  const radius = 44
+  const circumference = 2 * Math.PI * radius
+  const dashOffset = circumference - (bounded / 100) * circumference
 
   return (
-    <section className={styles.applyModal__section}>
-      <h3 className={styles.applyModal__sectionTitle}>{title}</h3>
-      <div className={styles.applyModal__gapList}>
-        {items.map((item, index) => {
-          const tone = gapTone(item.severity)
-
-          return (
-            <div
-              className={`${styles.applyModal__gapItem} ${tone.row}`}
-              key={`${item.area}-${index}`}
-            >
-              <div className={styles.applyModal__gapTop}>
-                <span className={styles.applyModal__gapArea}>{item.area}</span>
-                <span className={`${styles.applyModal__gapSeverity} ${tone.badge}`}>
-                  {tone.label}
-                </span>
-              </div>
-              <p className={styles.applyModal__gapSuggestion}>{item.suggestion}</p>
-            </div>
-          )
-        })}
+    <div
+      className={styles.applyModal__scoreRing}
+      role="progressbar"
+      aria-valuenow={bounded}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label="Resume match estimate"
+    >
+      <svg viewBox="0 0 104 104" width="104" height="104" aria-hidden="true">
+        <circle cx="52" cy="52" r={radius} className={styles.applyModal__scoreRingTrack} />
+        <circle
+          cx="52"
+          cy="52"
+          r={radius}
+          className={`${styles.applyModal__scoreRingProgress} ${
+            styles[`applyModal__scoreRingProgress--${tone}`]
+          }`}
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          transform="rotate(-90 52 52)"
+        />
+      </svg>
+      <div className={styles.applyModal__scoreRingValue}>
+        <span className={styles.applyModal__scoreRingInner}>
+          <span
+            className={`${styles.applyModal__scoreRingNumber} ${
+              styles[`applyModal__scoreRingNumber--${tone}`]
+            }`}
+          >
+            {score}
+          </span>
+          <span className={styles.applyModal__scoreRingUnit}>/100</span>
+        </span>
       </div>
-    </section>
+    </div>
   )
 }
 
-function TextList({ title, items }: { title: string; items: string[] }) {
-  if (items.length === 0) return null
-
+function GapCard({ item }: { item: GapItem }) {
   return (
-    <section className={`${styles.applyModal__section} ${styles.applyModal__sectionBlock}`}>
-      <h3 className={styles.applyModal__sectionTitle}>{title}</h3>
-      <div className={styles.applyModal__textList}>
+    <div className={styles.applyModal__gapCard}>
+      <div className={styles.applyModal__gapCardHead}>
+        <p className={styles.applyModal__gapCardTitle}>{item.area}</p>
+        <span className={`${styles.applyModal__pill} ${severityPillClass(item.severity)}`}>
+          {severityLabel(item.severity)}
+        </span>
+      </div>
+      <p className={styles.applyModal__gapCardBody}>{item.suggestion}</p>
+    </div>
+  )
+}
+
+function GapSection({ items, title }: { items: GapItem[]; title: string }) {
+  if (items.length === 0) return null
+  return (
+    <section className={styles.applyModal__sectionCard}>
+      <h3 className={styles.applyModal__sectionCardTitle}>{title}</h3>
+      <div className={styles.applyModal__gapCardList}>
         {items.map((item, index) => (
-          <p className={styles.applyModal__textRow} key={`${title}-${index}`}>
-            {item}
-          </p>
+          <GapCard key={`${item.area}-${index}`} item={item} />
         ))}
       </div>
     </section>
   )
 }
 
-function ScoreRing({ score }: { score: number }) {
-  const radius = 28
-  const circumference = 2 * Math.PI * radius
-  const boundedScore = Math.max(0, Math.min(100, score))
-  const offset = circumference - (boundedScore / 100) * circumference
+interface IconListProps {
+  title: string
+  items: string[]
+  icon: 'check' | 'plus' | 'minus'
+  tone: 'good' | 'primary' | 'muted'
+}
+
+function IconList({ title, items, icon, tone }: IconListProps) {
+  if (items.length === 0) return null
+  const Icon = icon === 'check' ? CheckCircle2 : icon === 'plus' ? Plus : Minus
 
   return (
-    <div className={styles.applyModal__scoreRingWrap}>
-      <svg className={styles.applyModal__scoreRing} viewBox="0 0 72 72" aria-hidden="true">
-        <circle className={styles.applyModal__scoreRingTrack} cx="36" cy="36" r={radius} />
-        <circle
-          className={styles.applyModal__scoreRingProgress}
-          cx="36"
-          cy="36"
-          r={radius}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-        />
-      </svg>
-      <div className={styles.applyModal__scoreRingValue}>
-        <span className={styles.applyModal__scoreRingNumber}>{score}</span>
-        <span className={styles.applyModal__scoreRingLabel}>/100</span>
-      </div>
-    </div>
+    <section className={styles.applyModal__sectionCard}>
+      <h3 className={styles.applyModal__sectionCardTitle}>{title}</h3>
+      <ul className={styles.applyModal__iconList}>
+        {items.map((item, index) => (
+          <li
+            className={`${styles.applyModal__iconListItem} ${
+              styles[`applyModal__iconListItem--${tone}`]
+            }`}
+            key={`${title}-${index}`}
+          >
+            <span className={styles.applyModal__iconListIcon}>
+              <Icon size={14} aria-hidden="true" />
+            </span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -123,50 +148,35 @@ export default function StepGapResults({
       <div className={styles.applyModal__hero}>
         <ScoreRing score={result.overall_score_estimate} />
         <div className={styles.applyModal__heroCopy}>
-          <div className={styles.applyModal__heroRow}>
-            <h3 className={styles.applyModal__heroTitle}>How your resume looks right now</h3>
-            <span
-              className={`${styles.applyModal__scoreBadge} ${scoreTone(result.overall_score_estimate)}`}
-            >
-              Match estimate
-            </span>
-          </div>
-          <p className={styles.applyModal__verdict}>{result.overall_verdict}</p>
+          <span className={styles.applyModal__heroEyebrow}>Resume gap analysis</span>
+          <h3 className={styles.applyModal__heroTitle}>How your resume looks right now</h3>
         </div>
       </div>
 
-      <div className={styles.applyModal__resultsGrid}>
-        <div className={styles.applyModal__resultsColumn}>
-          {result.things_already_strong.length > 0 && (
-            <section className={styles.applyModal__section}>
-              <h3 className={styles.applyModal__sectionTitle}>Already working in your favor</h3>
-              <div className={styles.applyModal__checkList}>
-                {result.things_already_strong.map((item, index) => (
-                  <div className={styles.applyModal__checkItem} key={`${item}-${index}`}>
-                    <CheckCircle2 size={12} />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+      <p className={styles.applyModal__verdictCallout}>{result.overall_verdict}</p>
 
-          <TextList
-            title="Consider adding to your summary"
-            items={result.things_to_add_to_summary}
-          />
-          <TextList
-            title="Consider removing or de-emphasizing"
-            items={result.things_to_remove_or_deemphasize}
-          />
-        </div>
-
-        <div className={styles.applyModal__resultsColumn}>
-          <GapList items={result.missing_skills} title="Skills you're missing" />
-        </div>
+      <div className={styles.applyModal__sectionStack}>
+        <IconList
+          title="Already working in your favor"
+          items={result.things_already_strong}
+          icon="check"
+          tone="good"
+        />
+        <GapSection items={result.missing_skills} title="Skills you're missing" />
+        <GapSection items={result.experience_gaps} title="Experience you're missing" />
+        <IconList
+          title="Consider adding to your summary"
+          items={result.things_to_add_to_summary}
+          icon="plus"
+          tone="primary"
+        />
+        <IconList
+          title="Consider removing or de-emphasizing"
+          items={result.things_to_remove_or_deemphasize}
+          icon="minus"
+          tone="muted"
+        />
       </div>
-
-      <GapList items={result.experience_gaps} title="Experience you're missing" />
 
       <div className={styles.applyModal__ctaBar}>
         <button className="btn btn--ghost" onClick={onBack} type="button">

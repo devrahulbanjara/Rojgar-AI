@@ -1,0 +1,338 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// ── Card grid ────────────────────────────────────────────────
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 1rem;
+}
+
+// ── Job card ─────────────────────────────────────────────────
+.card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  min-height: 16rem;
+  font-family: var(--font-body);
+  text-align: left;
+  animation: card-in 320ms ease both;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgb(0 0 0 / 8%);
+    border-color: var(--color-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgb(0 112 243 / 18%);
+  }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  border: 1px solid rgb(0 0 0 / 6%);
+  overflow: hidden;
+}
+
+.titleWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+  line-height: 1.3;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.company {
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.infoStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.125rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+
+  svg {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.rowStrong {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.rowMuted {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.rowDanger {
+  color: #dc2626;
+
+  svg {
+    color: #dc2626;
+  }
+}
+
+.rowWarning {
+  color: #d97706;
+
+  svg {
+    color: #d97706;
+  }
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border-light, #f3f4f6);
+}
+
+// ── Toolbar filter inputs ────────────────────────────────────
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.locationWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.75rem;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  min-width: 130px;
+
+  svg {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+}
+
+.filterInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  width: 100%;
+  min-width: 0;
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+}
+
+.salaryWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.salaryInput {
+  width: 80px;
+  height: 40px;
+  padding: 0 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  background: #fff;
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgb(0 112 243 / 14%);
+  }
+}
+
+.salarySep {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  padding: 0 0.125rem;
+}
+
+// ── Fallback divider ─────────────────────────────────────────
+.fallbackDivider {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+}
+
+// ── Pagination ───────────────────────────────────────────────
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.paginationInfo {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+// ── Empty state ──────────────────────────────────────────────
+.empty {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-body);
+}
+
+.emptyIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--color-text-muted);
+}
+
+.emptyTitle {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  font-size: 1rem;
+}
+
+.emptyCopy {
+  margin: 0;
+  font-size: 0.875rem;
+  max-width: 22rem;
+}
+
+// ── Skeleton ─────────────────────────────────────────────────
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 1rem;
+}
+
+.skeletonCard {
+  height: 14rem;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-muted) 0%,
+    var(--color-border) 50%,
+    var(--color-surface-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-xl);
+}
+
+// ── Responsive ───────────────────────────────────────────────
+@media (width <= 640px) {
+  .filterGroup {
+    display: none;
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

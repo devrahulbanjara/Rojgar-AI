@@ -118,12 +118,12 @@ export default function ApplyModal({
   const isScrollableStep = flow.step === 'share_profile'
   const isWideStep = [
     'analyzing',
-    'gap_results',
     'patching',
     'patch_done',
     'share_profile',
     'submitting',
   ].includes(flow.step)
+  const isResultsStep = flow.step === 'gap_results'
 
   useEffect(() => {
     if (!isOpen) return
@@ -143,13 +143,19 @@ export default function ApplyModal({
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div
+      className={`modal-backdrop ${styles.applyModal__backdrop}`}
+      onClick={onClose}
+      onWheel={(event) => {
+        if (event.target === event.currentTarget) event.preventDefault()
+      }}
+    >
       <div
         aria-labelledby="apply-flow-title"
         aria-modal="true"
         className={`modal ${styles.applyModal__modal} ${
           isWideStep ? styles['applyModal__modal--wide'] : ''
-        }`}
+        } ${isResultsStep ? styles['applyModal__modal--results'] : ''}`}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
@@ -176,14 +182,16 @@ export default function ApplyModal({
               })}
             </div>
           </div>
-          <button aria-label="Close" className="btn btn--ghost btn--sm" onClick={onClose}>
+          <button aria-label="Close" className="btn btn--icon btn--sm" onClick={onClose}>
             <X size={16} />
           </button>
         </div>
 
         <div
           className={`modal__body ${isScrollableStep ? 'modal__body--scroll' : ''} ${
-            isWideStep ? styles['applyModal__body--wide'] : styles.applyModal__bodyFrame
+            isWideStep || isResultsStep
+              ? styles['applyModal__body--wide']
+              : styles.applyModal__bodyFrame
           }`}
         >
           <div className={styles.applyModal__shell}>

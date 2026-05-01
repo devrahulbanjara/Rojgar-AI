@@ -70,16 +70,29 @@ function formatNotificationTime(value: string): string {
 }
 
 function NotificationsSkeleton({ count }: { count: number }) {
-  return Array.from({ length: count }).map((_, index) => (
-    <div key={index} className="activity-item activity-item--panel activity-item--skeleton">
-      <div className="skeleton-block activity-item__dot activity-item__dot--skeleton" />
-      <div className="activity-item__body">
-        <div className="skeleton-block dashboard-activity-skeleton__line" />
-        <div className="skeleton-block dashboard-activity-skeleton__line dashboard-activity-skeleton__line--short" />
-        <div className="skeleton-block dashboard-activity-skeleton__time" />
-      </div>
+  return (
+    <div className="dash-navbar__notif-skeleton-list" aria-hidden="true">
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={index} className="dash-navbar__notif-skeleton-item">
+          <div className="skeleton-block dash-navbar__notif-skeleton-dot" />
+          <div className="dash-navbar__notif-skeleton-body">
+            <div
+              className="skeleton-block"
+              style={{ width: '60%', height: '0.8125rem', borderRadius: 'var(--radius-md)' }}
+            />
+            <div
+              className="skeleton-block"
+              style={{ width: '92%', height: '0.75rem', borderRadius: 'var(--radius-md)' }}
+            />
+            <div
+              className="skeleton-block"
+              style={{ width: '4rem', height: '0.625rem', borderRadius: 'var(--radius-md)' }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
-  ))
+  )
 }
 
 function buildNavItems(role: DashRole): NavItem[] {
@@ -242,51 +255,56 @@ export default function DashNavbar({
                 aria-label="Notifications"
               >
                 <div className="dash-navbar__notifications-header">
-                  <div>
-                    <div className="dash-navbar__notifications-title">Notifications</div>
-                    <div className="dash-navbar__notifications-subtitle">
-                      {notificationsLoading
-                        ? 'Loading recent updates...'
-                        : notifications.length > 0
-                          ? `${notificationsCount} unread update${notificationsCount === 1 ? '' : 's'}`
-                          : 'No new updates right now'}
-                    </div>
+                  <div className="dash-navbar__notifications-heading">
+                    <span className="dash-navbar__notifications-eyebrow">Inbox</span>
+                    <span className="dash-navbar__notifications-title">Notifications</span>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn--icon btn--sm"
-                    aria-label="Close notifications"
-                    onClick={() => setNotificationsOpen(false)}
-                  >
-                    <X size={16} />
-                  </button>
+                  <div className="dash-navbar__notifications-actions">
+                    {notificationsCount > 0 ? (
+                      <span
+                        className="dash-navbar__notifications-count"
+                        aria-label={`${notificationsCount} unread`}
+                      >
+                        {notificationsCount}
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="btn btn--icon btn--sm"
+                      aria-label="Close notifications"
+                      onClick={() => setNotificationsOpen(false)}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="dash-navbar__notifications-body">
                   {notificationsLoading ? (
-                    <div className="activity-list activity-list--panel" aria-hidden="true">
-                      <NotificationsSkeleton count={4} />
-                    </div>
+                    <NotificationsSkeleton count={4} />
                   ) : notifications.length === 0 ? (
                     <div className="dash-navbar__notifications-empty">
-                      Application updates will show up here when there is something new.
+                      You&apos;re all caught up. New updates will appear here.
                     </div>
                   ) : (
-                    <div className="activity-list activity-list--panel">
+                    <div className="dash-navbar__notif-list">
                       {notifications.map((activity) => {
                         const href = activity.href
+                        const itemClass = `dash-navbar__notif-item${
+                          activity.isRead ? '' : ' dash-navbar__notif-item--unread'
+                        }`
 
                         const content = (
                           <>
-                            <div className="activity-item__dot" />
-                            <div className="activity-item__body">
-                              <p className="activity-item__text">
-                                <strong>{activity.title}</strong>
-                              </p>
-                              <p className="activity-item__text">{activity.text}</p>
-                              <div className="activity-item__time">
+                            <span className="dash-navbar__notif-dot-indicator" />
+                            <div className="dash-navbar__notif-body">
+                              <p className="dash-navbar__notif-title">{activity.title}</p>
+                              {activity.text && activity.text !== activity.title ? (
+                                <p className="dash-navbar__notif-text">{activity.text}</p>
+                              ) : null}
+                              <span className="dash-navbar__notif-time">
                                 {formatNotificationTime(activity.time)}
-                              </div>
+                              </span>
                             </div>
                           </>
                         )
@@ -295,7 +313,7 @@ export default function DashNavbar({
                           <Link
                             key={activity.id}
                             href={href}
-                            className="activity-item activity-item--panel activity-item--link"
+                            className={itemClass}
                             onClick={() => {
                               void markNotificationRead(activity.id)
                               setNotificationsOpen(false)
@@ -304,7 +322,7 @@ export default function DashNavbar({
                             {content}
                           </Link>
                         ) : (
-                          <div key={activity.id} className="activity-item activity-item--panel">
+                          <div key={activity.id} className={itemClass}>
                             {content}
                           </div>
                         )
@@ -315,7 +333,7 @@ export default function DashNavbar({
 
                 <div className="dash-navbar__notifications-footer">
                   <Link href={notificationsLink} onClick={() => setNotificationsOpen(false)}>
-                    View all notifications
+                    View all
                   </Link>
                   {notificationsCount > 0 ? (
                     <button

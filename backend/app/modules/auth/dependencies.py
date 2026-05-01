@@ -1,4 +1,6 @@
 # app/modules/auth/dependencies.py
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
@@ -18,8 +20,8 @@ _optional_oauth2_scheme = OAuth2PasswordBearer(
 
 
 async def get_optional_user(
-    token: str | None = Depends(_optional_oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
+    token: Annotated[str | None, Depends(_optional_oauth2_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User | None:
     """Returns the authenticated user if a valid token is supplied, otherwise None."""
     if not token:
@@ -35,8 +37,8 @@ async def get_optional_user(
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     """Validate the Bearer token and return the authenticated user."""
     user_id = decode_access_token(token)
@@ -58,7 +60,7 @@ async def get_current_user(
     return user
 
 
-async def get_verified_user(user: User = Depends(get_current_user)) -> User:
+async def get_verified_user(user: Annotated[User, Depends(get_current_user)]) -> User:
     """Require that the authenticated user's email has been verified."""
     if not user.is_email_verified:
         raise HTTPException(
@@ -67,7 +69,7 @@ async def get_verified_user(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-async def require_candidate(user: User = Depends(get_current_user)) -> User:
+async def require_candidate(user: Annotated[User, Depends(get_current_user)]) -> User:
     """Require the authenticated user to have the candidate role."""
     if user.primary_role != UserRole.candidate:
         raise HTTPException(
@@ -77,7 +79,7 @@ async def require_candidate(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-async def require_recruiter(user: User = Depends(get_current_user)) -> User:
+async def require_recruiter(user: Annotated[User, Depends(get_current_user)]) -> User:
     """Require the authenticated user to have the recruiter role."""
     if user.primary_role != UserRole.recruiter:
         raise HTTPException(
@@ -87,7 +89,9 @@ async def require_recruiter(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-async def require_recruiter_admin(user: User = Depends(get_current_user)) -> User:
+async def require_recruiter_admin(
+    user: Annotated[User, Depends(get_current_user)],
+) -> User:
     """Require the authenticated user to have the recruiter-admin role."""
     if user.primary_role != UserRole.recruiter_admin:
         raise HTTPException(
@@ -97,7 +101,9 @@ async def require_recruiter_admin(user: User = Depends(get_current_user)) -> Use
     return user
 
 
-async def require_recruiter_privileges(user: User = Depends(get_current_user)) -> User:
+async def require_recruiter_privileges(
+    user: Annotated[User, Depends(get_current_user)],
+) -> User:
     """The standard dependency for Job management and Dashboards.
 
     Allows both staff recruiters and company admins.
@@ -111,8 +117,8 @@ async def require_recruiter_privileges(user: User = Depends(get_current_user)) -
 
 
 async def require_active_membership(
-    user: User = Depends(require_recruiter_privileges),
-    db: AsyncSession = Depends(get_db),
+    user: Annotated[User, Depends(require_recruiter_privileges)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     """Higher-security gate: ensures the recruiter holds an *active* company membership.
 
@@ -131,7 +137,7 @@ async def require_active_membership(
     return user
 
 
-async def require_admin(user: User = Depends(get_current_user)) -> User:
+async def require_admin(user: Annotated[User, Depends(get_current_user)]) -> User:
     """Require the authenticated user to have the admin role."""
     if user.primary_role != UserRole.recruiter_admin:
         raise HTTPException(

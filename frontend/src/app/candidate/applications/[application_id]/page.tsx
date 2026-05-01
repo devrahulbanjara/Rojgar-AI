@@ -1,21 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
-import { getApplicationStatusLabel } from '@/lib/applicationStatus'
+import { getCompanyAccent } from '@/lib/companyAccent'
+import { getApplicationStatusLabel } from '@/lib/statusMetadata'
 import {
+  type ActivityEvent,
+  type ApplicationStatus,
   useGetApplicationByIdQuery,
   useRespondToOfferMutation,
 } from '@/store/services/applicationsApi'
-import { ArrowLeft, CalendarDays, Clock3, MapPin } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Clock, ExternalLink, FileText, MapPin } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 import StatusPill from '@/components/common/StatusPill'
+
+import styles from './page.module.scss'
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const PIPELINE_STAGES: Array<{
+  key: Exclude<ApplicationStatus, 'rejected' | 'offer_accepted' | 'offer_declined'>
+  label: string
+}> = [
+  { key: 'applied', label: 'Applied' },
+  { key: 'screening', label: 'Screening' },
+  { key: 'shortlisted', label: 'Shortlisted' },
+  { key: 'interview_booked', label: 'Interview' },
+  { key: 'interview_completed', label: 'Completed' },
+  { key: 'offer', label: 'Offer' },
+]
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('en-US', {
@@ -26,6 +52,123 @@ function formatDateTime(value: string): string {
     minute: '2-digit',
   })
 }
+
+function formatRelative(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const hour = 3600000
+  const day = 86400000
+
+  if (diffMs < hour) {
+    const minutes = Math.max(1, Math.floor(diffMs / 60000))
+    return `${minutes}m ago`
+  }
+  if (diffMs < day) {
+    const hours = Math.max(1, Math.floor(diffMs / hour))
+    return `${hours}h ago`
+  }
+  const days = Math.floor(diffMs / day)
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function getLocationTypeLabel(lt: 'remote' | 'onsite' | 'hybrid' | null): string | null {
+  if (lt === 'remote') return 'Remote'
+  if (lt === 'hybrid') return 'Hybrid'
+  if (lt === 'onsite') return 'On-site'
+  return null
+}
+
+function getStageStatusModifier(stageIndex: number, currentIndex: number): string {
+  if (stageIndex < currentIndex) return styles['step--done']
+  if (stageIndex === currentIndex) return styles['step--current']
+  return ''
+}
+
+function buildNextStepCopy(status: ApplicationStatus, hint: string | null): string {
+  if (hint) return hint
+  switch (status) {
+    case 'applied':
+      return 'Your application is in the queue. The recruiter will review it soon.'
+    case 'screening':
+      return 'The recruiter is reviewing your resume against the job requirements.'
+    case 'shortlisted':
+      return "You've been shortlisted. Expect interview details soon."
+    case 'interview_booked':
+      return 'Prepare for your scheduled interview. Details are below.'
+    case 'interview_completed':
+      return "Interview wrapped up. The team is finalizing their decision — you'll hear back shortly."
+    case 'offer':
+      return 'You have an offer. Review the details and respond when ready.'
+    case 'offer_accepted':
+      return 'You accepted this offer. Congratulations.'
+    case 'offer_declined':
+      return 'You declined this offer.'
+    case 'rejected':
+      return 'This application did not move forward. Keep applying — better fits are out there.'
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function PipelineStepper({ status }: { status: ApplicationStatus }) {
+  const isRejected = status === 'rejected'
+  const isAccepted = status === 'offer_accepted'
+  const isDeclined = status === 'offer_declined'
+  const currentIndex = PIPELINE_STAGES.findIndex((s) => s.key === status)
+
+  return (
+    <div className={styles.stepper}>
+      <div className={styles.stepperRow}>
+        {PIPELINE_STAGES.map((stage, i) => {
+          let modifier = ''
+          if (isRejected) modifier = styles['step--rejected']
+          else if (isAccepted) modifier = styles['step--terminal']
+          else if (isDeclined) modifier = styles['step--rejected']
+          else modifier = getStageStatusModifier(i, currentIndex)
+
+          const labelClass =
+            i === currentIndex && !isRejected && !isAccepted && !isDeclined
+              ? `${styles.stepLabel} ${styles['stepLabel--active']}`
+              : styles.stepLabel
+
+          return (
+            <div className={`${styles.step} ${modifier}`} key={stage.key}>
+              {i > 0 ? <span className={styles.stepBar} style={{ left: '-50%' }} /> : null}
+              <span className={styles.stepDot}>{i + 1}</span>
+              <span className={labelClass}>{stage.label}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function TimelineList({ events }: { events: ActivityEvent[] }) {
+  if (events.length === 0) {
+    return <p className={styles.timelineEmpty}>No activity recorded yet.</p>
+  }
+
+  return (
+    <ul className={styles.timeline}>
+      {events.map((event) => (
+        <li className={styles.timelineItem} key={event.id}>
+          <span className={styles.timelineDot} />
+          <p className={styles.timelineTitle}>{event.title}</p>
+          {event.description ? <p className={styles.timelineDesc}>{event.description}</p> : null}
+          <div className={styles.timelineTime}>{formatDateTime(event.created_at)}</div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function CandidateApplicationDetailPage() {
   const params = useParams()
@@ -47,220 +190,222 @@ export default function CandidateApplicationDetailPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className={`dash-content container container--app-shell ${styles.page}`}>
+        <Link
+          href="/candidate/applications"
+          className={`btn btn--ghost btn--sm ${styles.backLink}`}
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Applications
+        </Link>
+        <div className={styles.skeleton} />
+        <div className={styles.skeleton} />
+      </div>
+    )
+  }
+
+  if (isError || !application) {
+    return (
+      <div className={`dash-content container container--app-shell ${styles.page}`}>
+        <Link
+          href="/candidate/applications"
+          className={`btn btn--ghost btn--sm ${styles.backLink}`}
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Applications
+        </Link>
+        <DashboardErrorState error={error} isRetrying={isFetching} onRetry={() => void refetch()} />
+      </div>
+    )
+  }
+
+  const accent = getCompanyAccent(application.company_name ?? '')
+  const locationLabel = getLocationTypeLabel(application.location_type)
+  const showOfferActions = application.status === 'offer' && respondedAccepted === null
+  const offerWasResolved =
+    respondedAccepted !== null ||
+    application.status === 'offer_accepted' ||
+    application.status === 'offer_declined'
+  const accepted = respondedAccepted ?? application.status === 'offer_accepted'
+
   return (
-    <div className="dash-content container container--app-shell">
-      <Link href="/candidate/applications" className="btn btn--ghost btn--sm">
+    <div className={`dash-content container container--app-shell ${styles.page}`}>
+      <Link href="/candidate/applications" className={`btn btn--ghost btn--sm ${styles.backLink}`}>
         <ArrowLeft size={16} aria-hidden="true" />
         Back to Applications
       </Link>
 
-      {isLoading ? (
-        <div className="dash-card">
-          <div className="dash-card__body">Loading application details...</div>
-        </div>
-      ) : isError || !application ? (
-        <DashboardErrorState error={error} isRetrying={isFetching} onRetry={() => void refetch()} />
-      ) : (
-        <div className="candidate-dashboard">
-          <div className="dash-card">
-            <div className="dash-card__body recruiter-candidate-detail__hero">
-              <div className="recruiter-candidate-detail__copy">
-                <h1 className="recruiter-candidate-detail__title">{application.job_title}</h1>
-                <p className="recruiter-candidate-detail__subtitle">{application.company_name}</p>
-                <div className="recruiter-candidate-detail__contacts">
-                  {application.location ? (
-                    <span className="recruiter-candidate-detail__contactValue">
-                      <MapPin size={12} />
-                      {application.location}
-                    </span>
-                  ) : null}
-                  <span className="recruiter-candidate-detail__contactValue">
-                    <CalendarDays size={12} />
-                    Applied {formatDateTime(application.created_at)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="recruiter-candidate-detail__contactStatus">
-                <StatusPill kind="application" status={application.status} />
-              </div>
-            </div>
-          </div>
-
-          <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Timeline</div>
-                  <div className="dash-card__subtitle">
-                    Every recorded step for this application.
-                  </div>
-                </div>
-              </div>
-              <div className="dash-card__body">
-                <div className="activity-list activity-list--panel">
-                  {application.timeline.map((event) => (
-                    <div key={event.id} className="activity-item activity-item--panel">
-                      <div className="activity-item__dot" />
-                      <div className="activity-item__body">
-                        <p className="activity-item__text">
-                          <strong>{event.title}</strong>
-                        </p>
-                        {event.description ? (
-                          <p className="activity-item__text">{event.description}</p>
-                        ) : null}
-                        <div className="activity-item__time">
-                          {formatDateTime(event.created_at)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">What happens next</div>
-                  <div className="dash-card__subtitle">Guidance based on the current stage.</div>
-                </div>
-              </div>
-              <div className="dash-card__body recruiter-candidate-detail__section">
-                <div className="recruiter-candidate-detail__block">
-                  <div className="recruiter-candidate-detail__label">Current stage</div>
-                  <p>{getApplicationStatusLabel(application.status)}</p>
-                </div>
-                <div className="recruiter-candidate-detail__block">
-                  <div className="recruiter-candidate-detail__label">Next step</div>
-                  <p>
-                    {application.next_step_hint ?? 'Updates will appear here as the process moves.'}
-                  </p>
-                </div>
-                <div className="recruiter-candidate-detail__block">
-                  <div className="recruiter-candidate-detail__label">Review notes</div>
-                  <p>{application.feedback ?? 'No recruiter notes have been shared yet.'}</p>
-                </div>
-
-                {application.status === 'offer' && respondedAccepted === null && (
-                  <div className="recruiter-candidate-detail__block">
-                    <div className="recruiter-candidate-detail__label">Respond to offer</div>
-                    <p style={{ marginBottom: '0.75rem' }}>
-                      A job offer has been recorded for this application. Please respond at your
-                      earliest convenience.
-                    </p>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                      <button
-                        type="button"
-                        className="btn btn--primary btn--sm"
-                        onClick={() => void handleOfferRespond(true)}
-                        disabled={isResponding}
-                      >
-                        {isResponding ? 'Responding…' : 'Accept offer'}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--danger btn--sm"
-                        onClick={() => void handleOfferRespond(false)}
-                        disabled={isResponding}
-                      >
-                        {isResponding ? 'Responding…' : 'Decline offer'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {respondedAccepted !== null && (
-                  <div className="recruiter-candidate-detail__block">
-                    <p>
-                      {respondedAccepted
-                        ? 'You have accepted this offer. Congratulations!'
-                        : 'You have declined this offer.'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Interview details</div>
-                  <div className="dash-card__subtitle">
-                    The current interview booking tied to this application.
-                  </div>
-                </div>
-              </div>
-              <div className="dash-card__body recruiter-candidate-detail__section">
-                {application.interview ? (
-                  <>
-                    <div className="recruiter-candidate-detail__block">
-                      <div className="recruiter-candidate-detail__label">Schedule</div>
-                      <p className="recruiter-candidate-detail__timelineTitle">
-                        <CalendarDays size={14} />{' '}
-                        {formatDateTime(application.interview.start_time)}
-                      </p>
-                      <p className="recruiter-candidate-detail__timelineMeta">
-                        <Clock3 size={14} /> {formatDateTime(application.interview.end_time)}
-                      </p>
-                    </div>
-                    <div className="recruiter-candidate-detail__block">
-                      <div className="recruiter-candidate-detail__label">Location</div>
-                      <p>{application.interview.location ?? 'Not provided'}</p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="dash-navbar__notifications-empty">
-                    No interview has been booked for this application yet.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Resume used</div>
-                  <div className="dash-card__subtitle">
-                    Snapshot of the resume submitted with this application.
-                  </div>
-                </div>
-              </div>
-              <div className="dash-card__body recruiter-candidate-detail__section">
-                {application.resume ? (
-                  <>
-                    <div className="recruiter-candidate-detail__block">
-                      <div className="recruiter-candidate-detail__label">Resume name</div>
-                      <p>{application.resume.resume_name}</p>
-                    </div>
-                    <div className="recruiter-candidate-detail__block">
-                      <div className="recruiter-candidate-detail__label">Headline</div>
-                      <p>{application.resume.headline ?? 'Not provided'}</p>
-                    </div>
-                    <div className="recruiter-candidate-detail__block">
-                      <div className="recruiter-candidate-detail__label">Summary</div>
-                      <p>{application.resume.summary ?? 'Not provided'}</p>
-                    </div>
-                    <div className="recruiter-candidate-detail__block">
-                      <div className="recruiter-candidate-detail__label">Skills</div>
-                      <p>
-                        {application.resume.skills.map((skill) => skill.skill_name).join(', ') ||
-                          'No skills listed'}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="dash-navbar__notifications-empty">
-                    Resume details are not available for this application.
-                  </div>
-                )}
-              </div>
-            </div>
+      {/* Hero */}
+      <div className={styles.hero}>
+        <Avatar
+          name={application.company_name ?? ''}
+          src={application.company_logo_url}
+          seed={application.company_name ?? ''}
+          kind="company"
+          className={styles.heroLogo}
+          sizes="56px"
+          style={
+            {
+              '--app-logo-bg': accent.background,
+              '--app-logo-color': accent.color,
+            } as CSSProperties
+          }
+        />
+        <div className={styles.heroBody}>
+          <h1 className={styles.heroTitle}>{application.job_title ?? 'Application'}</h1>
+          {application.company_name ? (
+            <span className={styles.heroCompany}>{application.company_name}</span>
+          ) : null}
+          <div className={styles.heroMeta}>
+            {application.location ? (
+              <span className={styles.heroMetaItem}>
+                <MapPin size={12} aria-hidden="true" />
+                {application.location}
+              </span>
+            ) : null}
+            {locationLabel ? (
+              <>
+                {application.location ? <span className={styles.heroMetaSep}>·</span> : null}
+                <span className={styles.heroMetaItem}>{locationLabel}</span>
+              </>
+            ) : null}
+            <span className={styles.heroMetaSep}>·</span>
+            <span className={styles.heroMetaItem}>
+              <Clock size={12} aria-hidden="true" />
+              Applied {formatRelative(application.created_at)}
+            </span>
+            {application.score != null ? (
+              <>
+                <span className={styles.heroMetaSep}>·</span>
+                <span className={styles.heroMetaItem}>Match {application.score}</span>
+              </>
+            ) : null}
+            {application.resume?.resume_name ? (
+              <>
+                <span className={styles.heroMetaSep}>·</span>
+                <span className={styles.heroMetaItem}>
+                  <FileText size={12} aria-hidden="true" />
+                  {application.resume.resume_name}
+                </span>
+              </>
+            ) : null}
           </div>
         </div>
-      )}
+        <div className={styles.heroAside}>
+          <StatusPill kind="application" status={application.status} />
+          <Link href={`/candidate/jobs/${application.job_id}`} className="btn btn--ghost btn--sm">
+            View job
+            <ExternalLink size={14} aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Pipeline stepper */}
+      <PipelineStepper status={application.status} />
+
+      {/* Status update */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>Where you stand</div>
+        <h2 className={styles.sectionTitle}>{getApplicationStatusLabel(application.status)}</h2>
+        <p className={styles.sectionBody}>
+          {buildNextStepCopy(application.status, application.next_step_hint)}
+        </p>
+
+        {application.feedback ? (
+          <div className={styles.feedback}>
+            <div className={styles.feedbackLabel}>Recruiter note</div>
+            <p className={styles.feedbackText}>{application.feedback}</p>
+          </div>
+        ) : null}
+
+        {showOfferActions ? (
+          <div className={styles.offerActions}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => void handleOfferRespond(true)}
+              disabled={isResponding}
+            >
+              {isResponding ? 'Responding…' : 'Accept offer'}
+            </button>
+            <button
+              type="button"
+              className="btn btn--danger"
+              onClick={() => void handleOfferRespond(false)}
+              disabled={isResponding}
+            >
+              {isResponding ? 'Responding…' : 'Decline offer'}
+            </button>
+          </div>
+        ) : null}
+
+        {!showOfferActions && offerWasResolved ? (
+          <p className={styles.offerResolved}>
+            {accepted
+              ? 'You accepted this offer. Congratulations on the new role.'
+              : 'You declined this offer.'}
+          </p>
+        ) : null}
+      </section>
+
+      {/* Interview */}
+      {application.interview ? (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>Interview</div>
+          <h2 className={styles.sectionTitle}>
+            {application.interview.title ?? 'Scheduled interview'}
+          </h2>
+          <div className={styles.interviewGrid}>
+            <div className={styles.interviewCell}>
+              <span className={styles.interviewLabel}>Starts</span>
+              <span className={styles.interviewValue}>
+                <CalendarDays size={14} aria-hidden="true" />
+                {formatDateTime(application.interview.start_time)}
+              </span>
+            </div>
+            <div className={styles.interviewCell}>
+              <span className={styles.interviewLabel}>Ends</span>
+              <span className={styles.interviewValue}>
+                <Clock size={14} aria-hidden="true" />
+                {formatDateTime(application.interview.end_time)}
+              </span>
+            </div>
+            {application.interview.location ? (
+              <div className={styles.interviewCell}>
+                <span className={styles.interviewLabel}>Location</span>
+                <span className={styles.interviewValue}>
+                  <MapPin size={14} aria-hidden="true" />
+                  {application.interview.location.startsWith('http') ? (
+                    <a
+                      href={application.interview.location}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Join meeting
+                    </a>
+                  ) : (
+                    application.interview.location
+                  )}
+                </span>
+              </div>
+            ) : null}
+            {application.interview.timezone ? (
+              <div className={styles.interviewCell}>
+                <span className={styles.interviewLabel}>Timezone</span>
+                <span className={styles.interviewValue}>{application.interview.timezone}</span>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Activity */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>Activity</div>
+        <TimelineList events={application.timeline} />
+      </section>
     </div>
   )
 }
