@@ -84,7 +84,19 @@ function CategoryBadge({ category }: { category: string | null }) {
 function DiffTable({ data }: { data: Record<string, unknown> | null }) {
   if (!data || Object.keys(data).length === 0) return <p className="cell-muted">—</p>
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+    <table
+      style={{
+        width: '100%',
+        tableLayout: 'fixed',
+        borderCollapse: 'collapse',
+        fontSize: '0.8rem',
+      }}
+    >
+      <colgroup>
+        <col style={{ width: '28%' }} />
+        <col style={{ width: '36%' }} />
+        <col style={{ width: '36%' }} />
+      </colgroup>
       <tbody>
         {Object.entries(data).map(([key, val]) => {
           const entry = val as { before?: unknown; after?: unknown }
@@ -96,10 +108,12 @@ function DiffTable({ data }: { data: Record<string, unknown> | null }) {
                 style={{
                   padding: '4px 8px 4px 0',
                   color: 'var(--color-muted)',
-                  whiteSpace: 'nowrap',
                   verticalAlign: 'top',
                   fontFamily: 'ui-monospace, monospace',
                   fontSize: '0.75rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {key}
@@ -111,8 +125,9 @@ function DiffTable({ data }: { data: Record<string, unknown> | null }) {
                       padding: '4px 6px',
                       color: '#ef4444',
                       verticalAlign: 'top',
-                      maxWidth: 200,
                       wordBreak: 'break-all',
+                      overflowWrap: 'anywhere',
+                      overflow: 'hidden',
                     }}
                   >
                     {JSON.stringify(entry.before)}
@@ -122,8 +137,9 @@ function DiffTable({ data }: { data: Record<string, unknown> | null }) {
                       padding: '4px 0 4px 6px',
                       color: '#22c55e',
                       verticalAlign: 'top',
-                      maxWidth: 200,
                       wordBreak: 'break-all',
+                      overflowWrap: 'anywhere',
+                      overflow: 'hidden',
                     }}
                   >
                     {JSON.stringify(entry.after)}
@@ -132,7 +148,13 @@ function DiffTable({ data }: { data: Record<string, unknown> | null }) {
               ) : (
                 <td
                   colSpan={2}
-                  style={{ padding: '4px 0 4px 6px', verticalAlign: 'top', wordBreak: 'break-all' }}
+                  style={{
+                    padding: '4px 0 4px 6px',
+                    verticalAlign: 'top',
+                    wordBreak: 'break-all',
+                    overflowWrap: 'anywhere',
+                    overflow: 'hidden',
+                  }}
                 >
                   {JSON.stringify(val)}
                 </td>
@@ -148,7 +170,18 @@ function DiffTable({ data }: { data: Record<string, unknown> | null }) {
 function JsonTable({ data }: { data: Record<string, unknown> | null }) {
   if (!data || Object.keys(data).length === 0) return <p className="cell-muted">—</p>
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+    <table
+      style={{
+        width: '100%',
+        tableLayout: 'fixed',
+        borderCollapse: 'collapse',
+        fontSize: '0.8rem',
+      }}
+    >
+      <colgroup>
+        <col style={{ width: '35%' }} />
+        <col style={{ width: '65%' }} />
+      </colgroup>
       <tbody>
         {Object.entries(data).map(([key, val]) => (
           <tr key={key} style={{ borderBottom: '1px solid var(--color-border)' }}>
@@ -156,10 +189,12 @@ function JsonTable({ data }: { data: Record<string, unknown> | null }) {
               style={{
                 padding: '4px 8px 4px 0',
                 color: 'var(--color-muted)',
-                whiteSpace: 'nowrap',
                 fontFamily: 'ui-monospace, monospace',
                 fontSize: '0.75rem',
                 verticalAlign: 'top',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {key}
@@ -168,7 +203,8 @@ function JsonTable({ data }: { data: Record<string, unknown> | null }) {
               style={{
                 padding: '4px 0 4px 6px',
                 wordBreak: 'break-all',
-                maxWidth: 300,
+                overflowWrap: 'anywhere',
+                overflow: 'hidden',
                 verticalAlign: 'top',
               }}
             >
