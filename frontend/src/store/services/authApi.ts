@@ -143,12 +143,10 @@ export const authApi = baseApi.injectEndpoints({
         body: {},
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-        // Optimistically clear local state before the request resolves
-        dispatch(clearCredentials())
         try {
           await queryFulfilled
-        } catch {
-          // Even if the network call fails, local session is already cleared
+        } finally {
+          dispatch(clearCredentials())
         }
       },
       invalidatesTags: ['User', 'Company', 'Jobs', 'Applications', 'Candidates', 'Interviews'],

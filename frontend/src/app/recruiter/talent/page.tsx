@@ -13,10 +13,10 @@ import { ChevronRight, UserRound } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 import { FilterSelect, SearchInput, Toolbar, ToolbarCount } from '@/components/common/Toolbar'
-import CandidateDossier, {
-  DOSSIER_TABS,
-  type DossierTab,
-} from '@/components/recruiter/CandidateDossier/CandidateDossier'
+import CandidateDrawer, {
+  DRAWER_TABS,
+  type DrawerTab,
+} from '@/components/recruiter/CandidateDrawer/CandidateDrawer'
 
 import styles from './page.module.scss'
 
@@ -37,18 +37,18 @@ export default function RecruiterTalentPage() {
   const searchParams = useSearchParams()
 
   const initialJobId = searchParams.get('job_id') ?? 'all'
-  const dossierAppId = searchParams.get('app')
-  const dossierTabParam = searchParams.get('tab')
-  const dossierTab: DossierTab = (DOSSIER_TABS as readonly string[]).includes(dossierTabParam ?? '')
-    ? (dossierTabParam as DossierTab)
+  const drawerAppId = searchParams.get('app')
+  const drawerTabParam = searchParams.get('tab')
+  const drawerTab: DrawerTab = (DRAWER_TABS as readonly string[]).includes(drawerTabParam ?? '')
+    ? (drawerTabParam as DrawerTab)
     : 'profile'
 
   const [selectedJobId, setSelectedJobId] = useState(initialJobId)
   const [selectedStatus, setSelectedStatus] = useState<'all' | ApplicationStatus>('all')
   const [searchTerm, setSearchTerm] = useState('')
 
-  const updateDossierParams = useCallback(
-    (next: { app: string | null; tab?: DossierTab | null }) => {
+  const updateDrawerParams = useCallback(
+    (next: { app: string | null; tab?: DrawerTab | null }) => {
       const params = new URLSearchParams(searchParams.toString())
       if (next.app) {
         params.set('app', next.app)
@@ -66,17 +66,17 @@ export default function RecruiterTalentPage() {
     [pathname, router, searchParams],
   )
 
-  const openDossier = useCallback(
-    (applicationId: string) => updateDossierParams({ app: applicationId }),
-    [updateDossierParams],
+  const openDrawer = useCallback(
+    (applicationId: string) => updateDrawerParams({ app: applicationId }),
+    [updateDrawerParams],
   )
-  const closeDossier = useCallback(
-    () => updateDossierParams({ app: null, tab: null }),
-    [updateDossierParams],
+  const closeDrawer = useCallback(
+    () => updateDrawerParams({ app: null, tab: null }),
+    [updateDrawerParams],
   )
-  const setDossierTab = useCallback(
-    (tab: DossierTab) => updateDossierParams({ app: dossierAppId, tab }),
-    [dossierAppId, updateDossierParams],
+  const setDrawerTab = useCallback(
+    (tab: DrawerTab) => updateDrawerParams({ app: drawerAppId, tab }),
+    [drawerAppId, updateDrawerParams],
   )
 
   const { data: jobsResp } = useGetCompanyJobsQuery()
@@ -122,7 +122,7 @@ export default function RecruiterTalentPage() {
           <h2 className="dash-page-header__title">Talent</h2>
           <p className="dash-page-header__subtitle">
             Cross-job library of everyone who applied to your company. Click any card to open the
-            full dossier.
+            full drawer.
           </p>
         </div>
       </div>
@@ -183,8 +183,8 @@ export default function RecruiterTalentPage() {
                 type="button"
                 key={candidate.candidate_id}
                 className={styles.card}
-                onClick={() => openDossier(candidate.latest_application_id)}
-                aria-label={`Open dossier for ${candidate.applicant_name}`}
+                onClick={() => openDrawer(candidate.latest_application_id)}
+                aria-label={`Open drawer for ${candidate.applicant_name}`}
               >
                 <Avatar
                   name={candidate.applicant_name}
@@ -209,12 +209,12 @@ export default function RecruiterTalentPage() {
         </div>
       )}
 
-      <CandidateDossier
-        applicationId={dossierAppId}
-        activeTab={dossierTab}
-        onClose={closeDossier}
-        onTabChange={setDossierTab}
-        onApplicationChange={openDossier}
+      <CandidateDrawer
+        applicationId={drawerAppId}
+        activeTab={drawerTab}
+        onClose={closeDrawer}
+        onTabChange={setDrawerTab}
+        onApplicationChange={openDrawer}
       />
     </div>
   )

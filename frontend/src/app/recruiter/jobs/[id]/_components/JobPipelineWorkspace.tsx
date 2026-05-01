@@ -11,10 +11,10 @@ import {
 import { ClipboardCheck, Mail } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
-import CandidateDossier, {
-  DOSSIER_TABS,
-  type DossierTab,
-} from '@/components/recruiter/CandidateDossier/CandidateDossier'
+import CandidateDrawer, {
+  DRAWER_TABS,
+  type DrawerTab,
+} from '@/components/recruiter/CandidateDrawer/CandidateDrawer'
 
 import styles from './JobPipelineWorkspace.module.scss'
 
@@ -59,14 +59,14 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     ? (stageParam as PipelineStage)
     : 'applied'
 
-  const dossierAppId = searchParams.get('app')
-  const dossierTabParam = searchParams.get('tab')
-  const dossierTab: DossierTab = (DOSSIER_TABS as readonly string[]).includes(dossierTabParam ?? '')
-    ? (dossierTabParam as DossierTab)
+  const drawerAppId = searchParams.get('app')
+  const drawerTabParam = searchParams.get('tab')
+  const drawerTab: DrawerTab = (DRAWER_TABS as readonly string[]).includes(drawerTabParam ?? '')
+    ? (drawerTabParam as DrawerTab)
     : 'profile'
 
   const updateParams = useCallback(
-    (next: { stage?: PipelineStage; app?: string | null; tab?: DossierTab | null }) => {
+    (next: { stage?: PipelineStage; app?: string | null; tab?: DrawerTab | null }) => {
       const params = new URLSearchParams(searchParams.toString())
       if (next.stage !== undefined) params.set('stage', next.stage)
       if (next.app !== undefined) {
@@ -90,13 +90,13 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
   )
 
   const setStage = useCallback((stage: PipelineStage) => updateParams({ stage }), [updateParams])
-  const openDossier = useCallback(
-    (applicationId: string, tab?: DossierTab) =>
+  const openDrawer = useCallback(
+    (applicationId: string, tab?: DrawerTab) =>
       updateParams({ app: applicationId, tab: tab ?? null }),
     [updateParams],
   )
-  const closeDossier = useCallback(() => updateParams({ app: null, tab: null }), [updateParams])
-  const setDossierTab = useCallback((tab: DossierTab) => updateParams({ tab }), [updateParams])
+  const closeDrawer = useCallback(() => updateParams({ app: null, tab: null }), [updateParams])
+  const setDrawerTab = useCallback((tab: DrawerTab) => updateParams({ tab }), [updateParams])
 
   const { data, isLoading, isError, refetch } = useGetMyCompanyCandidatesQuery({
     page: 1,
@@ -206,7 +206,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
       ) : (
         <div className={styles.list}>
           {visibleApplications.map((row) => {
-            const defaultTab: DossierTab =
+            const defaultTab: DrawerTab =
               activeStage === 'screening'
                 ? 'evaluation'
                 : activeStage === 'interview'
@@ -219,7 +219,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                 type="button"
                 key={row.application_id}
                 className={styles.row}
-                onClick={() => openDossier(row.application_id, defaultTab)}
+                onClick={() => openDrawer(row.application_id, defaultTab)}
               >
                 <Avatar
                   name={row.applicant_name}
@@ -259,11 +259,11 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         </div>
       )}
 
-      <CandidateDossier
-        applicationId={dossierAppId}
-        activeTab={dossierTab}
-        onClose={closeDossier}
-        onTabChange={setDossierTab}
+      <CandidateDrawer
+        applicationId={drawerAppId}
+        activeTab={drawerTab}
+        onClose={closeDrawer}
+        onTabChange={setDrawerTab}
         onApplicationChange={(appId) => updateParams({ app: appId })}
       />
     </div>

@@ -8,51 +8,51 @@ from app.shared.enums import JobStatus, LocationType
 
 
 class SalaryEvidence(BaseModel):
-    source_name: str = Field(...)
-    url: str = Field(...)
-    country: str = Field(...)
-    currency: str | None = Field(...)
-    quoted_min: float | None = Field(...)
-    quoted_max: float | None = Field(...)
-    notes: str | None = Field(...)
+    source_name: str
+    url: str
+    country: str
+    currency: str | None
+    quoted_min: float | None
+    quoted_max: float | None
+    notes: str | None
 
     model_config = {"extra": "forbid"}
 
 
 class SalaryResearch(BaseModel):
-    role: str = Field(...)
-    country: str = Field(...)
-    currency: str | None = Field(...)
-    recommended_min: float | None = Field(...)
-    recommended_max: float | None = Field(...)
-    confidence: Literal["low", "medium", "high"] = Field(...)
-    rationale: str = Field(...)
-    sources: list[SalaryEvidence] = Field(...)
-    insufficient_evidence: bool = Field(...)
+    role: str
+    country: str
+    currency: str | None
+    recommended_min: float | None
+    recommended_max: float | None
+    confidence: Literal["low", "medium", "high"]
+    rationale: str
+    sources: list[SalaryEvidence]
+    insufficient_evidence: bool
 
     model_config = {"extra": "forbid"}
 
 
 class JobDraft(BaseModel):
-    title: str = Field(..., min_length=1, max_length=255)
-    location: str | None = Field(...)
-    location_type: LocationType = Field(...)
-    salary_min: int | None = Field(...)
-    salary_max: int | None = Field(...)
-    currency: str | None = Field(..., max_length=10)
-    status: JobStatus = Field(...)
+    title: str = Field(min_length=1, max_length=255)
+    location: str | None
+    location_type: LocationType
+    salary_min: int | None
+    salary_max: int | None
+    currency: str | None = Field(max_length=10)
+    status: JobStatus
     shortlist_threshold: int = Field(default=70, ge=0, le=100)
 
-    overview: str = Field(..., min_length=1)
-    responsibilities: list[str] = Field(...)
-    requirements: list[str] = Field(...)
-    preferred_qualifications: list[str] = Field(...)
-    benefits: list[str] = Field(...)
+    overview: str = Field(min_length=1)
+    responsibilities: list[str]
+    requirements: list[str]
+    preferred_qualifications: list[str]
+    benefits: list[str]
     auto_shortlist: bool = Field(default=False)
 
-    assumptions: list[str] = Field(...)
-    missing_fields: list[str] = Field(...)
-    warnings: list[str] = Field(...)
+    assumptions: list[str]
+    missing_fields: list[str]
+    warnings: list[str]
 
     model_config = {"extra": "forbid"}
 

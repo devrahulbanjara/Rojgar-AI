@@ -1,47 +1,44 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
-from app.core.database import get_db
+from fastapi import APIRouter, Query
+
+from app.core.dependencies import CurrentUser, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import get_current_user
-from app.modules.auth.models import User
 from app.modules.notifications import service
 from app.modules.notifications.schemas import NotificationResponse
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 
-@router.get("", response_model=UnifiedResponse[list[NotificationResponse]])
+@router.get("")
 async def get_notifications(
-    limit: int = Query(default=50, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    current_user: CurrentUser = None,
+    db: DbSession = None,
+) -> UnifiedResponse[list[NotificationResponse]]:
     """List notifications for the authenticated user."""
     data = await service.list_notifications(db, current_user, limit=limit)
     return ResponseBuilder.success(data=data, message="Notifications retrieved.")
 
 
-@router.post(
-    "/{notification_id}/read", response_model=UnifiedResponse[NotificationResponse]
-)
+@router.post("/{notification_id}/read")
 async def read_notification(
     notification_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+    current_user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[NotificationResponse]:
     """Mark one notification as read."""
     data = await service.mark_notification_read(db, current_user, notification_id)
     return ResponseBuilder.success(data=data, message="Notification marked as read.")
 
 
-@router.post("/read-all", response_model=UnifiedResponse[dict])
+@router.post("/read-all")
 async def read_all_notifications(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+    current_user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[dict]:
     """Mark all notifications as read for the authenticated user."""
     updated = await service.mark_all_notifications_read(db, current_user)
     return ResponseBuilder.success(

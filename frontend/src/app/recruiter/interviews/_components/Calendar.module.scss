@@ -71,7 +71,9 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-  overflow: hidden;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  height: 36rem;
 }
 
 .calendarHeader {
@@ -79,6 +81,13 @@
   grid-template-columns: 4rem 1fr;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.calendarHeaderSpacer {
+  border-right: 1px solid var(--color-border);
 }
 
 .calendarHeaderInner {
@@ -124,8 +133,6 @@
   display: grid;
   grid-template-columns: 4rem 1fr;
   position: relative;
-  height: 36rem;
-  overflow-y: auto;
 }
 
 .hours {

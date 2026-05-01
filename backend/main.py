@@ -106,34 +106,26 @@ app.add_middleware(
 register_exception_handlers(app)  # registers global exception handlers
 
 # mounts all route modules
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(auth_router)
 app.include_router(audit_router)
 app.include_router(activity_router)
 app.include_router(dash_router)
-app.include_router(companies_router, prefix="/companies", tags=["Companies"])
-app.include_router(profiles_router, prefix="/profiles", tags=["Profiles"])
-app.include_router(resumes_router, prefix="/resumes", tags=["Resumes"])
-app.include_router(job_ai_router, prefix="/jobs/ai", tags=["jobs-ai"])
-app.include_router(
-    recruiter_chat_router, prefix="/recruiter-chat", tags=["recruiter-chat"]
-)
+app.include_router(companies_router)
+app.include_router(profiles_router)
+app.include_router(resumes_router)
+app.include_router(job_ai_router)
+app.include_router(recruiter_chat_router)
 app.include_router(notifications_router)
 app.include_router(recruiter_preferences_router)
-app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
-app.include_router(applications_router, prefix="/applications", tags=["Applications"])
-app.include_router(
-    resume_gap_router, prefix="/resume-gap", tags=["Resume Gap Analysis"]
-)
-app.include_router(shortlisting_router, prefix="/shortlisting", tags=["Shortlisting"])
-app.include_router(interviews_router, prefix="/interviews", tags=["Interviews"])
-app.include_router(evaluation_router, prefix="/interviews", tags=["Evaluation"])
-app.include_router(
-    recording_router,
-    prefix="/interview-recordings",
-    tags=["Interview Recordings"],
-)
-app.include_router(outreach_router, prefix="/outreach", tags=["Outreach"])
-app.include_router(cal_webhook_router, tags=["Webhooks"])
+app.include_router(jobs_router)
+app.include_router(applications_router)
+app.include_router(resume_gap_router)
+app.include_router(shortlisting_router)
+app.include_router(interviews_router)
+app.include_router(evaluation_router)
+app.include_router(recording_router)
+app.include_router(outreach_router)
+app.include_router(cal_webhook_router)
 
 
 @app.get("/", tags=["System"], response_model=UnifiedResponse[dict])

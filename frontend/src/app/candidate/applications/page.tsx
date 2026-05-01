@@ -12,11 +12,12 @@ import {
   type CandidateApplicationView,
   useGetMyApplicationsQuery,
 } from '@/store/services/applicationsApi'
-import { Search, X } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 import StatusPill from '@/components/common/StatusPill'
+import { SearchInput, Toolbar } from '@/components/common/Toolbar'
 
 import {
   ApplicationsDetailSkeleton,
@@ -201,7 +202,6 @@ export default function ApplicationsPage() {
   const [activeStage, setActiveStage] = useState<StatusFilterKey>('all')
   const [selectedMode, setSelectedMode] = useState<WorkModeFilter>('all')
   const [searchInput, setSearchInput] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null)
 
   const { data, isLoading, isFetching, isError, error, refetch } = useGetMyApplicationsQuery({
@@ -231,7 +231,7 @@ export default function ApplicationsPage() {
   }, [applications])
 
   const filteredApplications = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase()
+    const normalizedQuery = searchInput.trim().toLowerCase()
 
     return applications.filter((application) => {
       const matchesStage = activeStage === 'all' || application.status === activeStage
@@ -243,7 +243,7 @@ export default function ApplicationsPage() {
 
       return matchesStage && matchesMode && matchesSearch
     })
-  }, [activeStage, applications, searchQuery, selectedMode])
+  }, [activeStage, applications, searchInput, selectedMode])
 
   const selectedApplication = useMemo(() => {
     if (filteredApplications.length === 0) return null
@@ -255,16 +255,6 @@ export default function ApplicationsPage() {
       filteredApplications[0]
     )
   }, [filteredApplications, requestedApplicationId, selectedApplicationId])
-
-  function handleSearch(event?: React.FormEvent) {
-    if (event) event.preventDefault()
-    setSearchQuery(searchInput.trim())
-  }
-
-  function handleClearSearch() {
-    setSearchInput('')
-    setSearchQuery('')
-  }
 
   if (isError) {
     return (
@@ -346,39 +336,20 @@ export default function ApplicationsPage() {
         </aside>
 
         <div className="apps-layout__list">
-          <form className="dash-page-toolbar" onSubmit={handleSearch}>
-            <div className="dash-page-toolbar__search">
-              <span className="dash-page-toolbar__icon">
-                <Search size={16} aria-hidden="true" />
-              </span>
-              <input
-                className="dash-page-toolbar__input"
-                type="text"
-                placeholder="Search company or role..."
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    handleSearch()
-                  }
-                }}
-              />
-              {searchInput ? (
-                <button
-                  type="button"
-                  className="btn btn--icon btn--sm dash-page-toolbar__clear"
-                  onClick={handleClearSearch}
-                  aria-label="Clear search"
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              ) : null}
-            </div>
-            <button type="submit" className="btn btn--primary">
+          <Toolbar>
+            <SearchInput
+              value={searchInput}
+              onChange={(next) => setSearchInput(next)}
+              placeholder="Search company or role..."
+            />
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => setSearchInput(searchInput)}
+            >
               Search
             </button>
-          </form>
+          </Toolbar>
 
           {isLoading ? (
             <ApplicationsListSkeleton count={5} />

@@ -133,11 +133,11 @@ export default function Home() {
             Whether you&apos;re hiring or job hunting, ConvexHire gets you there faster.
           </p>
           <div className="mid-cta__actions">
-            <Link href="/signup" className="mid-cta__btn mid-cta__btn--primary">
+            <Link href="/signup" className="btn btn--primary">
               Sign Up Free
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
-            <Link href="/jobs" className="mid-cta__btn mid-cta__btn--outline">
+            <Link href="/jobs" className="btn btn--secondary">
               Browse Jobs
             </Link>
           </div>
@@ -176,13 +176,13 @@ export default function Home() {
             Our team is here to help. Or jump in and see for yourself.
           </p>
           <div className="closing-cta__actions">
-            <Link href="/signup" className="closing-cta__btn closing-cta__btn--primary">
+            <Link href="/signup" className="btn btn--primary">
               Get Started Free
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <Link
               href="https://wa.me/9779866121812"
-              className="closing-cta__btn closing-cta__btn--outline"
+              className="btn btn--secondary"
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -38,7 +38,7 @@ import {
 import Avatar from '@/components/common/Avatar'
 import { FilterSelect } from '@/components/common/Toolbar'
 
-import styles from './CandidateDossier.module.scss'
+import styles from './CandidateDrawer.module.scss'
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: 'Applied',
@@ -52,10 +52,10 @@ const STATUS_LABELS: Record<ApplicationStatus, string> = {
   rejected: 'Rejected',
 }
 
-export const DOSSIER_TABS = ['profile', 'evaluation', 'interview', 'outreach', 'resume'] as const
-export type DossierTab = (typeof DOSSIER_TABS)[number]
+export const DRAWER_TABS = ['profile', 'evaluation', 'interview', 'outreach', 'resume'] as const
+export type DrawerTab = (typeof DRAWER_TABS)[number]
 
-const TAB_LABELS: Record<DossierTab, string> = {
+const TAB_LABELS: Record<DrawerTab, string> = {
   profile: 'Profile',
   evaluation: 'Evaluation',
   interview: 'Interview',
@@ -88,21 +88,21 @@ function formatTimelineTime(value: string) {
   })
 }
 
-export type CandidateDossierProps = {
+export type CandidateDrawerProps = {
   applicationId: string | null
-  activeTab?: DossierTab
+  activeTab?: DrawerTab
   onClose: () => void
-  onTabChange?: (tab: DossierTab) => void
+  onTabChange?: (tab: DrawerTab) => void
   onApplicationChange?: (applicationId: string) => void
 }
 
-export default function CandidateDossier({
+export default function CandidateDrawer({
   applicationId,
   activeTab = 'profile',
   onClose,
   onTabChange,
   onApplicationChange,
-}: CandidateDossierProps) {
+}: CandidateDrawerProps) {
   const isOpen = Boolean(applicationId)
 
   const { data, isLoading, isError, refetch } = useGetCompanyCandidateByIdQuery(
@@ -163,7 +163,7 @@ export default function CandidateDossier({
       <aside
         className={styles.drawer}
         role="dialog"
-        aria-label="Candidate dossier"
+        aria-label="Candidate drawer"
         data-lenis-prevent
       >
         <div className={styles.header}>
@@ -209,7 +209,7 @@ export default function CandidateDossier({
             type="button"
             className={styles.closeBtn}
             onClick={onClose}
-            aria-label="Close dossier"
+            aria-label="Close drawer"
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -240,7 +240,7 @@ export default function CandidateDossier({
         ) : null}
 
         <div className={styles.tabs} role="tablist">
-          {DOSSIER_TABS.map((tab) => (
+          {DRAWER_TABS.map((tab) => (
             <button
               key={tab}
               type="button"

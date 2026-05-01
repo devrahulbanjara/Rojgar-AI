@@ -1,12 +1,12 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { useReveal } from '@/hooks/useReveal'
 import { type SearchJobsParams, useSearchJobsQuery } from '@/store/services/jobsApi'
-import { Briefcase, MapPin, Search } from 'lucide-react'
+import { SearchInput, Toolbar, ToolbarCount } from '@/components/common/Toolbar'
 
 import PublicJobCard from '@/components/jobs/PublicJobCard'
 
@@ -33,7 +33,17 @@ function JobsPageInner() {
   const jobs = data?.data?.items ?? []
   const pagination = data?.data?.pagination
 
+  const [searchTerm, setSearchTerm] = useState(qParam)
+
   useReveal()
+
+  function handleSearch() {
+    const sp = new URLSearchParams(searchParams.toString())
+    if (searchTerm.trim()) sp.set('q', searchTerm.trim())
+    else sp.delete('q')
+    sp.delete('page')
+    router.push(`/jobs?${sp.toString()}`)
+  }
 
   function updateSearch(updates: Record<string, string>) {
     const sp = new URLSearchParams(searchParams.toString())
@@ -75,31 +85,20 @@ function JobsPageInner() {
         </div>
 
         {/* Search toolbar */}
-        <form className="public-jobs__toolbar" onSubmit={handleSubmit} data-reveal>
-          <div className="public-jobs__field">
-            <Search className="public-jobs__field-icon" size={18} aria-hidden="true" />
-            <input
-              name="q"
-              type="text"
-              className="public-jobs__input"
-              placeholder="Job title or keyword"
-              defaultValue={qParam}
-            />
-          </div>
-          <div className="public-jobs__field">
-            <MapPin className="public-jobs__field-icon" size={18} aria-hidden="true" />
-            <input
-              name="location"
-              type="text"
-              className="public-jobs__input"
-              placeholder="Location"
-              defaultValue={locationParam}
-            />
-          </div>
-          <button type="submit" className="btn btn--primary">
+        <Toolbar>
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            onEnter={handleSearch}
+            placeholder="Job title or keyword"
+          />
+          <button className="btn btn--primary btn--sm" onClick={handleSearch}>
             Search
           </button>
-        </form>
+          <ToolbarCount>
+            {pagination?.total ?? 0} job{(pagination?.total ?? 0) === 1 ? '' : 's'}
+          </ToolbarCount>
+        </Toolbar>
 
         {/* Job grid */}
         {isLoading ? (

@@ -6,10 +6,10 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { type InterviewItem, useGetInterviewsQuery } from '@/store/services/interviewsApi'
 
-import CandidateDossier, {
-  DOSSIER_TABS,
-  type DossierTab,
-} from '@/components/recruiter/CandidateDossier/CandidateDossier'
+import CandidateDrawer, {
+  DRAWER_TABS,
+  type DrawerTab,
+} from '@/components/recruiter/CandidateDrawer/CandidateDrawer'
 
 import Calendar, { type CalendarView } from './_components/Calendar'
 
@@ -69,10 +69,10 @@ export default function RecruiterInterviewsPage() {
     : '3day'
   const anchorDate = parseDate(searchParams.get('date'))
 
-  const dossierAppId = searchParams.get('app')
-  const dossierTabParam = searchParams.get('tab')
-  const dossierTab: DossierTab = (DOSSIER_TABS as readonly string[]).includes(dossierTabParam ?? '')
-    ? (dossierTabParam as DossierTab)
+  const drawerAppId = searchParams.get('app')
+  const drawerTabParam = searchParams.get('tab')
+  const drawerTab: DrawerTab = (DRAWER_TABS as readonly string[]).includes(drawerTabParam ?? '')
+    ? (drawerTabParam as DrawerTab)
     : 'interview'
 
   const updateParams = useCallback(
@@ -80,7 +80,7 @@ export default function RecruiterInterviewsPage() {
       view?: CalendarView
       date?: string | null
       app?: string | null
-      tab?: DossierTab | null
+      tab?: DrawerTab | null
     }) => {
       const params = new URLSearchParams(searchParams.toString())
       if (next.view) params.set('view', next.view)
@@ -107,9 +107,9 @@ export default function RecruiterInterviewsPage() {
     (next: Date) => updateParams({ date: toDateParam(next) }),
     [updateParams],
   )
-  const closeDossier = useCallback(() => updateParams({ app: null, tab: null }), [updateParams])
-  const setDossierTab = useCallback((tab: DossierTab) => updateParams({ tab }), [updateParams])
-  const switchDossierApp = useCallback(
+  const closeDrawer = useCallback(() => updateParams({ app: null, tab: null }), [updateParams])
+  const setDrawerTab = useCallback((tab: DrawerTab) => updateParams({ tab }), [updateParams])
+  const switchDrawerApp = useCallback(
     (appId: string) => updateParams({ app: appId }),
     [updateParams],
   )
@@ -130,7 +130,7 @@ export default function RecruiterInterviewsPage() {
           <h2 className="dash-page-header__title">Interviews</h2>
           <p className="dash-page-header__subtitle">
             Calendar view of all interviews booked across your jobs. Click any block to open the
-            candidate dossier.
+            candidate drawer.
           </p>
         </div>
       </div>
@@ -145,12 +145,12 @@ export default function RecruiterInterviewsPage() {
         onSelectInterview={handleSelect}
       />
 
-      <CandidateDossier
-        applicationId={dossierAppId}
-        activeTab={dossierTab}
-        onClose={closeDossier}
-        onTabChange={setDossierTab}
-        onApplicationChange={switchDossierApp}
+      <CandidateDrawer
+        applicationId={drawerAppId}
+        activeTab={drawerTab}
+        onClose={closeDrawer}
+        onTabChange={setDrawerTab}
+        onApplicationChange={switchDrawerApp}
       />
     </div>
   )
