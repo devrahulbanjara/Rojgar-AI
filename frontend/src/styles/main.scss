@@ -51,10 +51,21 @@
   --radius-sm: #{$radius-sm};
   --radius-md: #{$radius-md};
   --radius-lg: #{$radius-lg};
+  --radius-xl: #{$radius-xl};
   --radius-full: #{$radius-full};
   --shadow-sm: #{$shadow-sm};
   --shadow-md: #{$shadow-md};
   --shadow-lg: #{$shadow-lg};
+  --color-border: #{$color-border};
+  --color-border-strong: #{$color-border-strong};
+  --color-surface-subtle: #{$color-surface-subtle};
+  --color-surface-muted: #{$color-surface-muted};
+  --color-success: #{$color-success};
+  --color-warning: #{$color-warning-amber};
+  --color-error: #{$color-error-strong};
+  --color-error-soft-bg: #{$color-error-soft-bg};
+  --color-error-soft-border: #{$color-error-soft-border};
+  --color-primary-hover: #{$color-primary-hover};
 }
 
 body {

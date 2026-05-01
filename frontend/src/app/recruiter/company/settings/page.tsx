@@ -6,7 +6,7 @@ import { toast } from 'react-toastify'
 
 import { parseApiError } from '@/lib/apiError'
 import { createCroppedImageFile } from '@/lib/cropImage'
-import { formatBytes, getInitials, validateImageFile } from '@/lib/mediaValidation'
+import { formatBytes, validateImageFile } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import {
   useGetMyCompanyQuery,
@@ -16,8 +16,8 @@ import {
 } from '@/store/services/companyApi'
 import { Camera, MapPin, Trash2, X } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import MediaBadge from '@/components/common/MediaBadge'
 
 import { CompanySettingsDataSkeleton } from './_components/CompanySettingsSkeletons'
 
@@ -354,10 +354,11 @@ export default function CompanySettingsPage() {
               style={{ '--stagger-index': 0 } as React.CSSProperties}
             >
               <div className="profile-media-control">
-                <MediaBadge
+                <Avatar
+                  name={companyName}
                   src={logoSrc}
-                  alt={companyName}
-                  fallback={getInitials(companyName, 'C').slice(0, 1)}
+                  seed={company?.id ?? companyName}
+                  kind="company"
                   className="profile-aside-card__avatar"
                   sizes="96px"
                 />

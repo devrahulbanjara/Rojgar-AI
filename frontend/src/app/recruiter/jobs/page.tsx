@@ -31,7 +31,6 @@ import {
 } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import DashboardTabs from '@/components/common/DashboardTabs'
 
 import { CompanyJobsCardsSkeleton } from './_components/CompanyJobsSkeletons'
 
@@ -183,7 +182,7 @@ function RecruiterJobCard({
       <div className="company-job-card__footer">
         <div className="company-job-card__footer-meta">
           <Link
-            href={`/recruiter/candidates?job_id=${job.id}`}
+            href={`/recruiter/talent?job_id=${job.id}`}
             className="company-job-card__applicants-link"
             onClick={(e) => e.stopPropagation()}
           >
@@ -441,16 +440,24 @@ export default function CompanyJobsPage() {
           </div>
         </div>
 
-        <div className="dash-filter-bar">
-          <DashboardTabs
-            options={FILTER_OPTIONS.map((option) => ({
-              label: option.label,
-              value: option.value,
-              count: counts[option.value],
-            }))}
-            activeValue={activeFilter}
-            onChange={setActiveFilter}
-          />
+        <div className="team-tabs" role="tablist" aria-label="Job filters">
+          {FILTER_OPTIONS.map((option) => {
+            const isActive = activeFilter === option.value
+            const count = counts[option.value]
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`team-tabs__btn ${isActive ? 'team-tabs__btn--active' : ''}`}
+                onClick={() => setActiveFilter(option.value)}
+              >
+                <span>{option.label}</span>
+                {count > 0 ? <span className="team-tabs__count">{count}</span> : null}
+              </button>
+            )
+          })}
         </div>
 
         {isLoading ? <CompanyJobsCardsSkeleton count={4} /> : null}

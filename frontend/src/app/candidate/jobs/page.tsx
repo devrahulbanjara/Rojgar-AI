@@ -11,7 +11,7 @@ import {
 } from '@/store/services/jobsApi'
 import { Bookmark, Briefcase, Calendar, ChevronDown, Clock, MapPin, Search, X } from 'lucide-react'
 
-import MediaBadge from '@/components/common/MediaBadge'
+import Avatar from '@/components/common/Avatar'
 import ApplyFlowModal from '@/components/jobs/ApplyModal'
 
 import { JobCardsSkeleton, JobPreviewSkeleton } from './_components/JobsSkeletons'
@@ -331,10 +331,11 @@ export default function UserJobsPage() {
                         onClick={() => setSelectedJobId(job.id)}
                       >
                         <div className="job-card__header">
-                          <MediaBadge
+                          <Avatar
+                            name={job.company?.name ?? job.title}
                             src={job.company?.logo_url}
-                            alt={job.company?.name ?? job.title}
-                            fallback={accent.logo}
+                            seed={job.company?.id ?? job.company?.name ?? job.title}
+                            kind="company"
                             className="job-card__logo"
                             sizes="48px"
                             style={

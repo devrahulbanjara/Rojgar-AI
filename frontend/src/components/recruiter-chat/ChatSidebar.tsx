@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 
-import { getInitials } from '@/lib/mediaValidation'
 import type { ChatSessionResponse } from '@/lib/types/recruiterChat'
 import { useAppSelector } from '@/store/hooks'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 
-import MediaBadge from '@/components/common/MediaBadge'
+import Avatar from '@/components/common/Avatar'
 
 import { formatRelativeTime, groupSessionsByDate } from './utils'
 
@@ -150,10 +149,10 @@ export function ChatSidebar({
       </div>
 
       <div className="recruiter-chat-sidebar__footer">
-        <MediaBadge
+        <Avatar
+          name={user?.full_name ?? 'Recruiter'}
           src={user?.avatar_url}
-          alt={user?.full_name ?? 'Recruiter'}
-          fallback={getInitials(user?.full_name)}
+          seed={user?.id}
           className="recruiter-chat-avatar recruiter-chat-avatar--sidebar"
           sizes="28px"
         />

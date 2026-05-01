@@ -19,6 +19,8 @@ export default function LenisProvider({ children }: { children: React.ReactNode 
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       touchMultiplier: 1.5,
+      prevent: (node) =>
+        node instanceof HTMLElement && node.closest('[data-lenis-prevent]') !== null,
     })
 
     // Sync Lenis with GSAP ticker for consistent 60/120 fps behaviour

@@ -28,6 +28,19 @@ $color-bg-dark: $color-gray-900;
 $color-text: $color-gray-900;
 $color-text-muted: $color-gray-500;
 
+// --- Borders & Surfaces ---
+$color-border: #e5e7eb;
+$color-border-strong: $color-gray-300;
+$color-surface-subtle: $color-gray-50;
+$color-surface-muted: $color-gray-100;
+
+// --- Semantic ---
+$color-warning-amber: #f59e0b;
+$color-error-strong: #dc2626;
+$color-error-soft-bg: #fef2f2;
+$color-error-soft-border: #fca5a5;
+$color-primary-hover: #005bb5;
+
 // --- Typography ---
 $font-heading:
   var(--font-heading),

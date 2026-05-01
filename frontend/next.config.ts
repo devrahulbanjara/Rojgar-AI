@@ -38,6 +38,13 @@ const remotePatterns: NonNullable<NextConfig['images']>['remotePatterns'] = [
     pathname: '/**',
     search: '',
   },
+  {
+    protocol: 'https',
+    hostname: 'api.dicebear.com',
+    port: '',
+    pathname: '/9.x/**',
+    search: '',
+  },
 ]
 
 if (s3BucketName) {

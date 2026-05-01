@@ -3,7 +3,10 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { useAppSelector } from '@/store/hooks'
 import { LogOut } from 'lucide-react'
+
+import Avatar from '@/components/common/Avatar'
 
 export type NavItem = {
   label: string
@@ -30,9 +33,10 @@ export default function DashSidebar({
   navGroups,
   userName = 'User',
   userRole = 'Member',
-  userInitials = 'U',
 }: DashSidebarProps) {
   const pathname = usePathname()
+  const { user } = useAppSelector((s) => s.auth)
+  const displayName = user?.full_name ?? userName
 
   return (
     <aside className="dash-sidebar">
@@ -44,9 +48,15 @@ export default function DashSidebar({
 
       {/* User info */}
       <div className="dash-sidebar__user">
-        <div className="dash-sidebar__user-avatar">{userInitials}</div>
+        <Avatar
+          name={displayName}
+          src={user?.avatar_url}
+          seed={user?.id}
+          className="dash-sidebar__user-avatar"
+          sizes="40px"
+        />
         <div className="dash-sidebar__user-info">
-          <div className="dash-sidebar__user-name">{userName}</div>
+          <div className="dash-sidebar__user-name">{displayName}</div>
           <div className="dash-sidebar__user-role">{userRole}</div>
         </div>
         <div className="dash-sidebar__user-status" />

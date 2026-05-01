@@ -11,8 +11,8 @@ import {
 } from '@/store/services/interviewsApi'
 import { CalendarDays, Clock3, MapPin } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
-import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
 
 function formatDate(iso: string): string {
@@ -93,10 +93,11 @@ function InterviewCard({
       style={{ '--stagger-index': index, opacity: muted ? 0.72 : 1 } as CSSProperties}
     >
       <div className="candidate-interview-card__left">
-        <MediaBadge
+        <Avatar
+          name={interview.company_name}
           src={null}
-          alt={interview.company_name}
-          fallback={accent.logo}
+          seed={interview.company_name}
+          kind="company"
           className="candidate-interview-card__avatar"
           sizes="40px"
           style={

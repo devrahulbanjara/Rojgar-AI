@@ -20,6 +20,8 @@
     "fix-all": "pnpm type-check && pnpm stylelint:fix && pnpm lint:fix && pnpm format"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
     "@reduxjs/toolkit": "^2.11.2",
     "@types/html2pdf.js": "^0.10.0",
     "gsap": "^3.14.2",

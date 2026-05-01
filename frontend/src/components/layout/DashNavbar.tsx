@@ -6,7 +6,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
-import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import { useLogoutMutation } from '@/store/services/authApi'
 import {
@@ -14,9 +13,19 @@ import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
 } from '@/store/services/notificationsApi'
-import { Bell, ChevronDown, ClipboardList, FileText, LogOut, User, X } from 'lucide-react'
+import {
+  Bell,
+  Building2,
+  ChevronDown,
+  ClipboardList,
+  FileText,
+  LogOut,
+  Settings,
+  User,
+  X,
+} from 'lucide-react'
 
-import MediaBadge from '@/components/common/MediaBadge'
+import Avatar from '@/components/common/Avatar'
 
 // DashRole uses the canonical roles.
 export type DashRole = 'candidate' | 'recruiter_admin' | 'recruiter'
@@ -27,7 +36,6 @@ type DashNavbarProps = {
   role: DashRole
   userName?: string
   userRole?: string
-  userInitials?: string
 }
 
 function formatRelativeDate(iso: string): string {
@@ -85,17 +93,16 @@ function buildNavItems(role: DashRole): NavItem[] {
       { label: 'Profile', href: '/candidate/profile' },
     ]
   }
-  // "recruiter" or "recruiter_admin"
+  // "recruiter" or "recruiter_admin" — IA: Jobs · Talent · Inbox · Team(admin)
+  // Dashboard reachable via logo. Screening/Interviews/Outreach fold into Jobs pipeline (Phase 5).
   const items: NavItem[] = [
-    { label: 'Dashboard', href: '/recruiter' },
-    { label: 'My Jobs', href: '/recruiter/jobs' },
-    { label: 'Candidates', href: '/recruiter/candidates' },
-    { label: 'Screening', href: '/recruiter/screening' },
+    { label: 'Jobs', href: '/recruiter/jobs' },
+    { label: 'Talent', href: '/recruiter/talent' },
     { label: 'Interviews', href: '/recruiter/interviews' },
-    { label: 'Outreach', href: '/recruiter/outreach' },
+    { label: 'Inbox', href: '/recruiter/inbox' },
   ]
   if (role === 'recruiter_admin') {
-    items.push({ label: 'Recruiters', href: '/recruiter/recruiters' })
+    items.push({ label: 'Team', href: '/recruiter/team' })
   }
   return items
 }
@@ -104,7 +111,6 @@ export default function DashNavbar({
   role,
   userName = 'User',
   userRole = 'Member',
-  userInitials = 'U',
 }: DashNavbarProps) {
   const pathname = usePathname()
   const router = useRouter()
@@ -134,16 +140,13 @@ export default function DashNavbar({
       text: notification.body ?? notification.title,
       title: notification.title,
       time: notification.created_at,
-      href:
-        notification.href ??
-        (isCandidate ? '/candidate/notifications' : '/recruiter/notifications'),
+      href: notification.href ?? (isCandidate ? '/candidate/notifications' : '/recruiter/inbox'),
       isRead: notification.is_read,
     })) ?? []
   const notificationsCount = notifications.filter((notification) => !notification.isRead).length
-  const notificationsLink = isCandidate ? '/candidate/notifications' : '/recruiter/notifications'
+  const notificationsLink = isCandidate ? '/candidate/notifications' : '/recruiter/inbox'
 
   const displayName = user?.full_name ?? userName
-  const displayInitials = getInitials(displayName, userInitials)
   const displayRole =
     user?.primary_role === 'recruiter_admin'
       ? 'Company Admin'
@@ -191,7 +194,7 @@ export default function DashNavbar({
     <nav className="dash-navbar">
       <div className="dash-navbar__inner container container--app-shell">
         {/* Logo — links to the role's dashboard root */}
-        <Link href={navItems[0].href} className="dash-navbar__logo">
+        <Link href={isCandidate ? '/candidate' : '/recruiter'} className="dash-navbar__logo">
           <Image
             src="/logo/logo.png"
             alt="ConvexHire"
@@ -341,10 +344,10 @@ export default function DashNavbar({
                 className={`dash-navbar__avatar-chevron${dropdownOpen ? ' dash-navbar__avatar-chevron--open' : ''}`}
                 size={12}
               />
-              <MediaBadge
+              <Avatar
+                name={displayName}
                 src={user?.avatar_url}
-                alt={displayName}
-                fallback={displayInitials}
+                seed={user?.id}
                 className="dash-navbar__avatar"
                 sizes="36px"
               />
@@ -354,10 +357,10 @@ export default function DashNavbar({
               <div className="dash-navbar__dropdown">
                 {/* User info block */}
                 <div className="dash-navbar__dropdown-user">
-                  <MediaBadge
+                  <Avatar
+                    name={displayName}
                     src={user?.avatar_url}
-                    alt={displayName}
-                    fallback={displayInitials}
+                    seed={user?.id}
                     className="dash-navbar__dropdown-avatar"
                     sizes="42px"
                   />
@@ -394,18 +397,29 @@ export default function DashNavbar({
                       className="dash-navbar__dropdown-item"
                       onClick={() => setDropdownOpen(false)}
                     >
-                      <FileText size={15} />
-                      Recruiter Settings
+                      <Settings size={15} />
+                      Settings
                     </Link>
                     {activeRole === 'recruiter_admin' ? (
-                      <Link
-                        href="/recruiter/audit"
-                        className="dash-navbar__dropdown-item"
-                        onClick={() => setDropdownOpen(false)}
-                      >
-                        <ClipboardList size={15} />
-                        Audit Trail
-                      </Link>
+                      <>
+                        <div className="dash-navbar__dropdown-divider" />
+                        <Link
+                          href="/recruiter/company/settings"
+                          className="dash-navbar__dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <Building2 size={15} />
+                          Company
+                        </Link>
+                        <Link
+                          href="/recruiter/team?tab=audit"
+                          className="dash-navbar__dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <ClipboardList size={15} />
+                          Audit Trail
+                        </Link>
+                      </>
                     ) : null}
                   </>
                 )}

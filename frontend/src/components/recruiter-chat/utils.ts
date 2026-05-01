@@ -1,3 +1,4 @@
+import { getInitials } from '@/lib/avatar'
 import type {
   ChatSessionResponse,
   JobEditDiff,
@@ -5,18 +6,7 @@ import type {
   SalaryResearchResult,
 } from '@/lib/types/recruiterChat'
 
-export function getInitials(name: string | null | undefined, fallback = 'RC') {
-  if (!name?.trim()) return fallback
-
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join('') || fallback
-  )
-}
+export { getInitials }
 
 export function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr)

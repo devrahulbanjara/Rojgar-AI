@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 
 import {
@@ -12,6 +11,7 @@ import {
 } from '@/store/services/jobsApi'
 import { ArrowRight, Calendar, MapPin } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import StatusPill from '@/components/common/StatusPill'
 
 import { JobPreviewSkeleton } from './JobsSkeletons'
@@ -113,22 +113,15 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
   return (
     <div className="job-preview content-fade-in">
       <div className="job-preview__header">
-        <div
+        <Avatar
+          name={previewCompanyName}
+          src={previewLogoUrl}
+          seed={job.company?.id ?? selectedListJob?.company?.id ?? previewCompanyName}
+          kind="company"
           className="job-preview__logo"
+          sizes="56px"
           style={{ '--jp-logo': accent.color } as React.CSSProperties}
-        >
-          {previewLogoUrl ? (
-            <Image
-              src={previewLogoUrl}
-              alt={previewCompanyName}
-              fill
-              sizes="56px"
-              style={{ objectFit: 'cover' }}
-            />
-          ) : (
-            accent.logo
-          )}
-        </div>
+        />
         <div className="job-preview__date">Posted {formatDate(job.created_at)}</div>
         <div className="job-preview__title">{job.title}</div>
         <div className="job-preview__company">{previewCompanyName}</div>

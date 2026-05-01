@@ -14,8 +14,8 @@ import {
 } from '@/store/services/applicationsApi'
 import { Search, X } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
-import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
 
 import {
@@ -406,10 +406,11 @@ export default function ApplicationsPage() {
                       style={{ '--stagger-index': index } as CSSProperties}
                       onClick={() => setSelectedApplicationId(application.id)}
                     >
-                      <MediaBadge
+                      <Avatar
+                        name={application.company_name}
                         src={application.company_logo_url}
-                        alt={application.company_name}
-                        fallback={accent.logo}
+                        seed={application.company_name}
+                        kind="company"
                         className="app-item__logo"
                         sizes="48px"
                         style={
@@ -471,10 +472,11 @@ export default function ApplicationsPage() {
           ) : selectedApplication ? (
             <div className="app-detail content-fade-in">
               <div className="app-detail__header">
-                <MediaBadge
+                <Avatar
+                  name={selectedApplication.company_name}
                   src={selectedApplication.company_logo_url}
-                  alt={selectedApplication.company_name}
-                  fallback={getCompanyAccent(selectedApplication.company_name).logo}
+                  seed={selectedApplication.company_name}
+                  kind="company"
                   className="app-detail__logo"
                   sizes="72px"
                   style={
