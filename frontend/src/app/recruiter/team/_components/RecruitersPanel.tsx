@@ -150,7 +150,7 @@ export default function RecruitersPanel() {
         <div className={styles.empty}>
           <UserRound size={28} aria-hidden="true" />
           <p>Failed to load recruiters.</p>
-          <button className="btn btn--outline btn--sm" onClick={() => void refetch()}>
+          <button className="btn btn--secondary btn--sm" onClick={() => void refetch()}>
             Try again
           </button>
         </div>
@@ -203,54 +203,56 @@ function RecruiterCard({
         <div className={styles.identity}>
           <p className={styles.name}>{recruiter.full_name}</p>
           <p className={styles.email}>
-            <Mail size={12} aria-hidden="true" />
+            <Mail size={14} aria-hidden="true" />
             {recruiter.email}
           </p>
         </div>
       </div>
 
-      <div className={styles.cardMeta}>
-        <StatusDot status={recruiter.status} />
-        <span className={styles.joined}>{formatDate(recruiter.joined_at)}</span>
-      </div>
+      <div className={styles.cardFooter}>
+        <div className={styles.cardMeta}>
+          <StatusDot status={recruiter.status} />
+          <span className={styles.joined}>{formatDate(recruiter.joined_at)}</span>
+        </div>
 
-      <div className={styles.cardActions}>
-        {recruiter.status === 'pending' && (
-          <>
+        <div className={styles.cardActions}>
+          {recruiter.status === 'pending' && (
+            <>
+              <button
+                className="btn btn--primary btn--sm"
+                disabled={isBusy}
+                onClick={() => onApprove(recruiter.membership_id)}
+              >
+                Approve
+              </button>
+              <button
+                className="btn btn--danger btn--sm"
+                disabled={isBusy}
+                onClick={() => onReject(recruiter.membership_id)}
+              >
+                Reject
+              </button>
+            </>
+          )}
+          {recruiter.status === 'active' && (
             <button
-              className={`${styles.actionBtn} ${styles.actionPrimary}`}
+              className="btn btn--danger btn--sm"
+              disabled={isBusy}
+              onClick={() => onRemove(recruiter.membership_id)}
+            >
+              Remove
+            </button>
+          )}
+          {recruiter.status === 'rejected' && (
+            <button
+              className="btn btn--secondary btn--sm"
               disabled={isBusy}
               onClick={() => onApprove(recruiter.membership_id)}
             >
-              Approve
+              Re-approve
             </button>
-            <button
-              className={`${styles.actionBtn} ${styles.actionDanger}`}
-              disabled={isBusy}
-              onClick={() => onReject(recruiter.membership_id)}
-            >
-              Reject
-            </button>
-          </>
-        )}
-        {recruiter.status === 'active' && (
-          <button
-            className={`${styles.actionBtn} ${styles.actionDanger}`}
-            disabled={isBusy}
-            onClick={() => onRemove(recruiter.membership_id)}
-          >
-            Remove
-          </button>
-        )}
-        {recruiter.status === 'rejected' && (
-          <button
-            className={`${styles.actionBtn} ${styles.actionPrimary}`}
-            disabled={isBusy}
-            onClick={() => onApprove(recruiter.membership_id)}
-          >
-            Re-approve
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
