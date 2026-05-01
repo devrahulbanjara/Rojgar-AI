@@ -73,7 +73,10 @@ async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
     # 1. Try Cache
     cached_data = await redis_service.get(cache_key)
     if cached_data:
-        return CompanyResponse.model_validate_json(cached_data)
+        try:
+            return CompanyResponse.model_validate_json(cached_data)
+        except Exception:
+            await redis_service.delete(cache_key)
 
     company = await get_member_company(db, user)
     response = _company_to_response(company)

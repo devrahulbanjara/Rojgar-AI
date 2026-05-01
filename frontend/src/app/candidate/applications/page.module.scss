@@ -1,0 +1,323 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// ── Card grid ────────────────────────────────────────────────
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: 1rem;
+}
+
+// ── Application card ─────────────────────────────────────────
+.card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 21rem;
+  font-family: var(--font-body);
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  animation: card-in 320ms ease both;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgb(0 0 0 / 8%);
+    border-color: var(--color-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgb(0 112 243 / 18%);
+  }
+}
+
+// ── Card header ──────────────────────────────────────────────
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  border: 1px solid rgb(0 0 0 / 6%);
+  overflow: hidden;
+}
+
+.titleWrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 4.5rem;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+  line-height: 1.3;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6rem;
+}
+
+.company {
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.companyLocation {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 2px;
+}
+
+// ── Status row ───────────────────────────────────────────────
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--gray {
+    background: #9ca3af;
+  }
+
+  &--warning {
+    background: #f59e0b;
+  }
+
+  &--secondary {
+    background: #8b5cf6;
+  }
+
+  &--primary {
+    background: var(--color-primary, #2563eb);
+  }
+
+  &--success {
+    background: #10b981;
+  }
+
+  &--danger {
+    background: #dc2626;
+  }
+}
+
+.statusLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+// ── Mini pipeline ────────────────────────────────────────────
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0.25rem 0;
+}
+
+.pipelineStep {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border, #e5e7eb);
+  transition: background 200ms ease;
+
+  &--done {
+    background: var(--color-primary, #2563eb);
+  }
+
+  &--current {
+    background: var(--color-primary, #2563eb);
+    opacity: 0.5;
+  }
+
+  &--rejected {
+    background: #dc2626;
+  }
+
+  &--terminal {
+    background: #10b981;
+  }
+}
+
+// ── Stats grid ───────────────────────────────────────────────
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--color-surface-muted, #f8fafc);
+  border: 1px solid var(--color-border-light, #f3f4f6);
+  border-radius: var(--radius-lg);
+}
+
+.statCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statValue {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Review feedback ──────────────────────────────────────────
+.feedback {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--color-border-light, #f3f4f6);
+  margin: 0;
+  min-height: 4.4rem;
+  flex-grow: 1;
+
+  &--empty {
+    font-style: italic;
+    opacity: 0.7;
+  }
+}
+
+// ── Card actions ─────────────────────────────────────────────
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--color-border-light, #f3f4f6);
+}
+
+// ── Empty state ──────────────────────────────────────────────
+.empty {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-body);
+}
+
+.emptyIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--color-text-muted);
+}
+
+.emptyTitle {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  font-size: 1rem;
+}
+
+.emptyCopy {
+  margin: 0;
+  font-size: 0.875rem;
+  max-width: 22rem;
+}
+
+// ── Skeleton ─────────────────────────────────────────────────
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: 1rem;
+}
+
+.skeletonCard {
+  height: 16rem;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-muted) 0%,
+    var(--color-border) 50%,
+    var(--color-surface-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-xl);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

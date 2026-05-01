@@ -6,8 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 import { useReveal } from '@/hooks/useReveal'
 import { type SearchJobsParams, useSearchJobsQuery } from '@/store/services/jobsApi'
-import { SearchInput, Toolbar, ToolbarCount } from '@/components/common/Toolbar'
+import { Briefcase } from 'lucide-react'
 
+import { SearchInput, Toolbar, ToolbarCount } from '@/components/common/Toolbar'
 import PublicJobCard from '@/components/jobs/PublicJobCard'
 
 // ---------------------------------------------------------------------------
@@ -43,26 +44,6 @@ function JobsPageInner() {
     else sp.delete('q')
     sp.delete('page')
     router.push(`/jobs?${sp.toString()}`)
-  }
-
-  function updateSearch(updates: Record<string, string>) {
-    const sp = new URLSearchParams(searchParams.toString())
-    for (const [key, value] of Object.entries(updates)) {
-      if (value) sp.set(key, value)
-      else sp.delete(key)
-    }
-    // Reset to page 1 on new search
-    if ('q' in updates || 'location' in updates) sp.delete('page')
-    router.push(`/jobs?${sp.toString()}`)
-  }
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    updateSearch({
-      q: (fd.get('q') as string) ?? '',
-      location: (fd.get('location') as string) ?? '',
-    })
   }
 
   function handlePageChange(page: number) {

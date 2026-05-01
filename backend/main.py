@@ -1,13 +1,13 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import engine, get_db
+from app.core.database import engine
+from app.core.dependencies import DbSession
 from app.core.exception_handlers import register_exception_handlers
 from app.core.job_expiry_scheduler import (
     create_job_expiry_scheduler,
@@ -128,8 +128,8 @@ app.include_router(outreach_router)
 app.include_router(cal_webhook_router)
 
 
-@app.get("/", tags=["System"], response_model=UnifiedResponse[dict])
-async def root():
+@app.get("/", tags=["System"])
+async def root() -> UnifiedResponse[dict]:
     """Return basic API metadata for liveness checks and discovery."""
     data = {
         "app": settings.app_name,
@@ -139,8 +139,8 @@ async def root():
     return ResponseBuilder.success(data=data, message="API is online")
 
 
-@app.get("/health", tags=["System"], response_model=UnifiedResponse[dict])
-async def health_check(db: AsyncSession = Depends(get_db)):
+@app.get("/health", tags=["System"])
+async def health_check(db: DbSession) -> UnifiedResponse[dict]:
     """Verify database connectivity and report overall service health."""
     try:
         await db.execute(text("SELECT 1"))
