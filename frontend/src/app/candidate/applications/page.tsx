@@ -312,7 +312,8 @@ export default function ApplicationsPage() {
                 <button
                   key={stage.key}
                   type="button"
-                  className={`apps-sidebar__stage${activeStage === stage.key ? ' apps-sidebar__stage--active' : ''}`}
+                  className="btn btn--ghost btn--sm btn--full"
+                  aria-pressed={activeStage === stage.key}
                   onClick={() => setActiveStage(stage.key)}
                 >
                   <span className="apps-sidebar__stage-label">{stage.label}</span>
@@ -333,7 +334,8 @@ export default function ApplicationsPage() {
                 <button
                   key={mode.key}
                   type="button"
-                  className={`apps-sidebar__type-btn${selectedMode === mode.key ? ' apps-sidebar__type-btn--active' : ''}`}
+                  className="btn btn--ghost btn--sm btn--full"
+                  aria-pressed={selectedMode === mode.key}
                   onClick={() => setSelectedMode(mode.key)}
                 >
                   {mode.label}
@@ -365,7 +367,7 @@ export default function ApplicationsPage() {
               {searchInput ? (
                 <button
                   type="button"
-                  className="dash-page-toolbar__clear"
+                  className="btn btn--icon btn--sm dash-page-toolbar__clear"
                   onClick={handleClearSearch}
                   aria-label="Clear search"
                 >
@@ -373,7 +375,7 @@ export default function ApplicationsPage() {
                 </button>
               ) : null}
             </div>
-            <button type="submit" className="btn btn--primary" style={{ minHeight: '52px' }}>
+            <button type="submit" className="btn btn--primary">
               Search
             </button>
           </form>
@@ -402,7 +404,8 @@ export default function ApplicationsPage() {
                     <button
                       key={application.id}
                       type="button"
-                      className={`app-item content-stagger-item${selectedApplication?.id === application.id ? ' app-item--active' : ''}`}
+                      className="app-item content-stagger-item"
+                      aria-pressed={selectedApplication?.id === application.id}
                       style={{ '--stagger-index': index } as CSSProperties}
                       onClick={() => setSelectedApplicationId(application.id)}
                     >
@@ -567,7 +570,7 @@ export default function ApplicationsPage() {
                 </Link>
                 <Link
                   href={`/candidate/jobs/${selectedApplication.job_id}`}
-                  className="btn btn--outline btn--primary btn--sm"
+                  className="btn btn--secondary btn--sm"
                 >
                   View Job
                 </Link>

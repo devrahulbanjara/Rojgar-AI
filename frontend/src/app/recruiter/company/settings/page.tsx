@@ -364,7 +364,7 @@ export default function CompanySettingsPage() {
                 />
                 <div className="profile-media-actions" aria-label="Company logo actions">
                   <button
-                    className="btn btn--outline btn--sm"
+                    className="btn btn--secondary btn--sm"
                     disabled={isWorking || isReadOnly}
                     onClick={() => logoInputRef.current?.click()}
                     title={`PNG, JPG, WEBP, GIF up to ${formatBytes(5 * 1024 * 1024)}`}
@@ -620,7 +620,7 @@ export default function CompanySettingsPage() {
                 Crop Logo
               </div>
               <button
-                className="modal__close"
+                className="btn btn--icon btn--sm"
                 disabled={isSubmittingCroppedLogo}
                 onClick={closeLogoCropModal}
                 type="button"
@@ -673,7 +673,7 @@ export default function CompanySettingsPage() {
             </div>
             <div className="modal__footer">
               <button
-                className="btn btn--outline btn--primary"
+                className="btn btn--secondary"
                 disabled={isSubmittingCroppedLogo}
                 onClick={closeLogoCropModal}
                 type="button"

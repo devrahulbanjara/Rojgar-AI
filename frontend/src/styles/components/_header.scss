@@ -188,56 +188,10 @@
     }
   }
 
-  // ── Element: hamburger ─────────────────────────────────────
+  // ── Element: hamburger button (mobile) ─────────────────────
   &__hamburger {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 5px;
-    width: 2.25rem;
-    height: 2.25rem;
-    padding: $space-2;
-    border-radius: $radius-md;
-    @include transition(background-color, $transition-fast);
-
     @include lg {
       display: none;
-    }
-
-    &:hover {
-      background-color: rgba($color-black, 0.06);
-
-      .header__hamburger-line {
-        background-color: $color-black;
-      }
-    }
-  }
-
-  // ── Element: hamburger-line ────────────────────────────────
-  &__hamburger-line {
-    display: block;
-    width: 100%;
-    height: 2px;
-    background-color: rgba($color-black, 0.6);
-    border-radius: $radius-full;
-    @include transition(all, $transition-fast);
-  }
-
-  // ── Modifier: hamburger open → X ───────────────────────────
-  &__hamburger--open {
-    .header__hamburger-line {
-      &:nth-child(1) {
-        transform: translateY(7px) rotate(45deg);
-      }
-
-      &:nth-child(2) {
-        opacity: 0;
-        transform: scaleX(0);
-      }
-
-      &:nth-child(3) {
-        transform: translateY(-7px) rotate(-45deg);
-      }
     }
   }
 
@@ -286,38 +240,6 @@
   &__drawer-logo {
     display: inline-flex;
     align-items: center;
-  }
-
-  // ── Element: drawer-close ──────────────────────────────────
-  &__drawer-close {
-    position: relative;
-    width: 2rem;
-    height: 2rem;
-    border-radius: $radius-md;
-    flex-shrink: 0;
-    @include transition(background-color, $transition-fast);
-
-    &:hover {
-      background-color: $color-gray-100;
-    }
-
-    span {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 16px;
-      height: 2px;
-      background: $color-gray-600;
-      border-radius: $radius-full;
-
-      &:nth-child(1) {
-        transform: translate(-50%, -50%) rotate(45deg);
-      }
-
-      &:nth-child(2) {
-        transform: translate(-50%, -50%) rotate(-45deg);
-      }
-    }
   }
 
   // ── Element: drawer-nav ────────────────────────────────────

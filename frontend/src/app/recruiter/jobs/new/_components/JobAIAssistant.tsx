@@ -157,7 +157,7 @@ export default function JobAIAssistant({
           </button>
           <button
             type="button"
-            className="btn btn--outline"
+            className="btn btn--secondary"
             disabled={loading || !draftExists || !followUpFeedback.trim()}
             onClick={onGeneralUpdate}
           >

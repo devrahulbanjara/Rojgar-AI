@@ -164,7 +164,7 @@ function SchemaEditor({
 
             <button
               type="button"
-              className={`btn btn--outline btn--sm ${styles.removeButton}`}
+              className={`btn btn--secondary btn--sm ${styles.removeButton}`}
               onClick={() => removeCriterion(criterion.id)}
               disabled={criteria.length === 1}
             >
@@ -176,7 +176,7 @@ function SchemaEditor({
       </div>
 
       <div className={styles.actions}>
-        <button type="button" className="btn btn--outline btn--sm" onClick={addCriterion}>
+        <button type="button" className="btn btn--secondary btn--sm" onClick={addCriterion}>
           <Plus size={14} aria-hidden="true" />
           Add criterion
         </button>

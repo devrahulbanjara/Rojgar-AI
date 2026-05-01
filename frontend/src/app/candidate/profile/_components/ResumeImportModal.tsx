@@ -272,7 +272,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
             </p>
           </div>
           <button
-            className="modal__close"
+            className="btn btn--icon btn--sm"
             type="button"
             onClick={handleClose}
             aria-label="Close"
@@ -523,7 +523,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
                       />
                       <button
                         type="button"
-                        className="btn btn--outline btn--sm"
+                        className="btn btn--secondary btn--sm"
                         onClick={() => {
                           updateDraft(
                             'target_roles',
@@ -562,7 +562,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
                     <h4>Experience</h4>
                     <button
                       type="button"
-                      className="btn btn--outline btn--sm"
+                      className="btn btn--secondary btn--sm"
                       onClick={() =>
                         updateDraft('experiences', [
                           ...draft.experiences,
@@ -708,7 +708,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
                     <h4>Education</h4>
                     <button
                       type="button"
-                      className="btn btn--outline btn--sm"
+                      className="btn btn--secondary btn--sm"
                       onClick={() =>
                         updateDraft('educations', [
                           ...draft.educations,
@@ -871,7 +871,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
                       />
                       <button
                         type="button"
-                        className="btn btn--outline btn--sm"
+                        className="btn btn--secondary btn--sm"
                         onClick={() => {
                           updateDraft(
                             'skills',

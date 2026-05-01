@@ -48,7 +48,7 @@ export function AuditTrailCardSkeleton({
         <div className="audit-trail">
           <div className="audit-trail__list">
             {Array.from({ length: itemCount }).map((_, index) => (
-              <div key={index} className="audit-trail__item audit-trail__item--skeleton">
+              <div key={index} className="audit-trail__item--skeleton">
                 <div className="skeleton-block audit-trail__itemTitleSkeleton" />
                 <div className="skeleton-block audit-trail__itemMetaSkeleton" />
               </div>
@@ -102,7 +102,8 @@ export default function AuditTrailCard({ title, subtitle, items, emptyText }: Au
                 <button
                   key={item.id}
                   type="button"
-                  className={`audit-trail__item${selectedAudit?.id === item.id ? ' audit-trail__item--active' : ''}`}
+                  className="list-row"
+                  aria-pressed={selectedAudit?.id === item.id}
                   onClick={() => setSelectedAuditId(item.id)}
                 >
                   <div className="audit-trail__itemTitle">

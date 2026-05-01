@@ -111,11 +111,7 @@ function VerifyEmailInner() {
             <p className="auth__subtitle">
               Your account is now active. You can sign in and start using ConvexHire.
             </p>
-            <Link
-              href="/login"
-              className="auth__submit auth__submit--link"
-              style={{ marginTop: '1.5rem' }}
-            >
+            <Link href="/login" className="btn btn--ghost btn--sm" style={{ marginTop: '1.5rem' }}>
               Go to Login
             </Link>
           </>
@@ -130,11 +126,7 @@ function VerifyEmailInner() {
               Verification failed
             </h1>
             <p className="auth__subtitle">{errorMessage}</p>
-            <Link
-              href="/signup"
-              className="auth__submit auth__submit--link"
-              style={{ marginTop: '1.5rem' }}
-            >
+            <Link href="/signup" className="btn btn--ghost btn--sm" style={{ marginTop: '1.5rem' }}>
               Back to Sign Up
             </Link>
           </>

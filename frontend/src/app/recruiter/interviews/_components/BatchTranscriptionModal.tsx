@@ -86,7 +86,7 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
               job.
             </p>
           </div>
-          <button type="button" className="btn btn--outline btn--sm" onClick={onClose}>
+          <button type="button" className="btn btn--secondary btn--sm" onClick={onClose}>
             <X size={14} aria-hidden="true" />
             Close
           </button>
@@ -178,7 +178,7 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
         <div className={styles.footer}>
           <span>{effectiveSelectedIds.length} selected</span>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button type="button" className="btn btn--outline btn--sm" onClick={onClose}>
+            <button type="button" className="btn btn--secondary btn--sm" onClick={onClose}>
               Cancel
             </button>
             {phase === 'select' ? (
@@ -195,7 +195,7 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
                 {failedIds.length > 0 ? (
                   <button
                     type="button"
-                    className="btn btn--outline btn--sm"
+                    className="btn btn--secondary btn--sm"
                     onClick={() => void handleRetryFailed()}
                     disabled={isRunning}
                   >
@@ -211,8 +211,8 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
                 </button>
               </>
             ) : (
-              <button type="button" className="btn btn--primary btn--sm" disabled>
-                <ButtonSpinner label="Running..." />
+              <button type="button" className="btn btn--primary btn--sm btn--loading" disabled>
+                Running...
               </button>
             )}
           </div>

@@ -132,7 +132,8 @@ function InsightsSkeleton() {
           <button
             key={option.value}
             type="button"
-            className={`dashboard-range-tabs__button${option.value === '30d' ? ' dashboard-range-tabs__button--active' : ''}`}
+            className="btn btn--ghost btn--sm"
+            aria-pressed={option.value === '30d'}
             disabled
           >
             {option.label}
@@ -240,7 +241,8 @@ export default function CandidateDashboardInsights({
           <button
             key={option.value}
             type="button"
-            className={`dashboard-range-tabs__button${rangeKey === option.value ? ' dashboard-range-tabs__button--active' : ''}`}
+            className="btn btn--ghost btn--sm"
+            aria-pressed={rangeKey === option.value}
             onClick={() => onRangeChange(option.value)}
           >
             {option.label}

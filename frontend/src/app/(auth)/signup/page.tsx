@@ -30,8 +30,6 @@ import {
   UserPlus,
 } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 // ── Step type ──────────────────────────────────────────────────────────────
 
 type FlowStep =
@@ -626,7 +624,7 @@ function SignupContent() {
           step === 'join-company') && (
           <button
             type="button"
-            className="auth__back-btn"
+            className="btn btn--ghost btn--sm"
             onClick={() => {
               if (step === 'intent') setStep('credentials')
               else if (step === 'company-choice') setStep('intent')
@@ -650,7 +648,7 @@ function SignupContent() {
             <div className="auth__social-btns">
               <button
                 type="button"
-                className="auth__social-btn"
+                className="btn btn--secondary btn--full"
                 onClick={() => initiateGoogleOAuth()}
               >
                 <GoogleIcon />
@@ -727,7 +725,7 @@ function SignupContent() {
                   />
                   <button
                     type="button"
-                    className="auth__pw-toggle"
+                    className="btn btn--icon btn--sm"
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -759,7 +757,7 @@ function SignupContent() {
                   />
                   <button
                     type="button"
-                    className="auth__pw-toggle"
+                    className="btn btn--icon btn--sm"
                     onClick={() => setShowConfirmPassword((v) => !v)}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
@@ -794,7 +792,7 @@ function SignupContent() {
                 )}
               </div>
 
-              <button type="submit" className="auth__submit">
+              <button type="submit" className="btn btn--primary btn--lg btn--full">
                 Continue
               </button>
             </form>
@@ -807,7 +805,7 @@ function SignupContent() {
             <div className="auth__intent-cards">
               <button
                 type="button"
-                className="auth__intent-card"
+                className="btn btn--secondary btn--lg btn--full"
                 onClick={handleIntentCandidate}
                 disabled={isLoading}
               >
@@ -827,7 +825,7 @@ function SignupContent() {
 
               <button
                 type="button"
-                className="auth__intent-card"
+                className="btn btn--secondary btn--lg btn--full"
                 onClick={() => setStep('company-choice')}
                 disabled={isLoading}
               >
@@ -855,7 +853,7 @@ function SignupContent() {
             <div className="auth__intent-cards">
               <button
                 type="button"
-                className="auth__intent-card"
+                className="btn btn--secondary btn--lg btn--full"
                 onClick={() => setStep('company-details')}
               >
                 <div className="auth__intent-icon auth__intent-icon--create">
@@ -874,7 +872,7 @@ function SignupContent() {
 
               <button
                 type="button"
-                className="auth__intent-card"
+                className="btn btn--secondary btn--lg btn--full"
                 onClick={() => setStep('join-company')}
               >
                 <div className="auth__intent-icon auth__intent-icon--join">
@@ -1045,14 +1043,10 @@ function SignupContent() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
+                className={`btn btn--primary btn--lg btn--full${isLoading ? ' btn--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? (
-                  <ButtonSpinner label="Creating company..." />
-                ) : (
-                  'Create company & continue'
-                )}
+                {isLoading ? 'Creating company...' : 'Create company & continue'}
               </button>
             </form>
           </div>
@@ -1095,10 +1089,10 @@ function SignupContent() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
+                className={`btn btn--primary btn--lg btn--full${isLoading ? ' btn--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? <ButtonSpinner label="Sending request..." /> : 'Send join request'}
+                {isLoading ? 'Sending request...' : 'Send join request'}
               </button>
             </form>
           </div>
@@ -1117,13 +1111,16 @@ function SignupContent() {
             <p className="auth__success-note">
               Didn&apos;t get it? Check your spam folder, or{' '}
               {resendCooldown > 0 ? (
-                <span className="auth__inline-link" style={{ opacity: 0.5, cursor: 'default' }}>
+                <span
+                  className="btn btn--ghost btn--sm"
+                  style={{ opacity: 0.5, cursor: 'default' }}
+                >
                   resend the email ({resendCooldown}s)
                 </span>
               ) : (
                 <button
                   type="button"
-                  className="auth__inline-link"
+                  className="btn btn--ghost btn--sm"
                   disabled={isSigningUp}
                   onClick={() => {
                     void handleIntentCandidate()
@@ -1135,7 +1132,7 @@ function SignupContent() {
               )}
               .
             </p>
-            <Link href="/login" className="auth__submit auth__submit--link">
+            <Link href="/login" className="btn btn--ghost btn--sm">
               Go to sign in
             </Link>
           </div>
@@ -1154,7 +1151,7 @@ function SignupContent() {
             <p className="auth__success-note">
               While you wait, check your inbox to verify your email address.
             </p>
-            <Link href="/login" className="auth__submit auth__submit--link">
+            <Link href="/login" className="btn btn--ghost btn--sm">
               Go to sign in
             </Link>
           </div>

@@ -47,7 +47,7 @@ export default function ResumeCard({
           <span>Updated {resume.updatedAt}</span>
         </div>
         <div className="resume-card__actions">
-          <button className="btn btn--outline btn--sm" onClick={onView} disabled={isViewing}>
+          <button className="btn btn--secondary btn--sm" onClick={onView} disabled={isViewing}>
             {isViewing ? 'Loading\u2026' : 'View'}
           </button>
           <button className="btn btn--primary btn--sm" onClick={onEdit}>

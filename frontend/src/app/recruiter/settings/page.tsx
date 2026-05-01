@@ -256,7 +256,7 @@ export default function RecruiterSettingsPage() {
               {isAdmin ? (
                 <p className="cell-muted">
                   Need to update booking links or company profile?{' '}
-                  <Link href="/recruiter/company/settings" className="auth__inline-link">
+                  <Link href="/recruiter/company/settings" className="btn btn--ghost btn--sm">
                     Open company settings
                   </Link>
                 </p>
@@ -302,7 +302,7 @@ export default function RecruiterSettingsPage() {
               <h3 className="modal__title">Delete Account</h3>
               <button
                 type="button"
-                className="modal__close"
+                className="btn btn--icon btn--sm"
                 onClick={() => {
                   setShowDeleteModal(false)
                   setDeleteConfirmText('')

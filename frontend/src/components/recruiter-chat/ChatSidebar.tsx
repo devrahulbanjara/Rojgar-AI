@@ -60,7 +60,7 @@ export function ChatSidebar({
       <div className="recruiter-chat-sidebar__header">
         <button
           type="button"
-          className="recruiter-chat-sidebar__new-chat"
+          className="btn btn--primary btn--full"
           onClick={handleNewChat}
           disabled={isCreating}
         >
@@ -124,7 +124,7 @@ export function ChatSidebar({
                         >
                           <button
                             type="button"
-                            className="recruiter-chat-icon-btn recruiter-chat-icon-btn--delete"
+                            className="btn btn--icon btn--sm"
                             aria-label="Delete conversation"
                             onClick={(event) => {
                               event.stopPropagation()

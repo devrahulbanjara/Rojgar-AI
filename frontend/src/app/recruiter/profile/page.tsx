@@ -338,7 +338,7 @@ export default function RecruiterProfilePage() {
                 />
                 <div className="profile-media-actions" aria-label="Profile photo actions">
                   <button
-                    className="btn btn--outline btn--sm"
+                    className="btn btn--secondary btn--sm"
                     disabled={isAvatarBusy}
                     onClick={() => avatarInputRef.current?.click()}
                     title={`PNG, JPG, WEBP, GIF up to ${formatBytes(5 * 1024 * 1024)}`}
@@ -550,7 +550,7 @@ export default function RecruiterProfilePage() {
                 Crop Photo
               </div>
               <button
-                className="modal__close"
+                className="btn btn--icon btn--sm"
                 disabled={isSubmittingCroppedAvatar}
                 onClick={closeAvatarCropModal}
                 type="button"
@@ -604,7 +604,7 @@ export default function RecruiterProfilePage() {
             </div>
             <div className="modal__footer">
               <button
-                className="btn btn--outline btn--primary"
+                className="btn btn--secondary"
                 disabled={isSubmittingCroppedAvatar}
                 onClick={closeAvatarCropModal}
                 type="button"

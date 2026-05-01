@@ -213,7 +213,7 @@ export default function Pricing() {
           >
             <button
               type="button"
-              className={`pricing__toggle-btn${viewMode === 'candidates' ? ' pricing__toggle-btn--active' : ''}`}
+              className="btn btn--ghost btn--sm"
               onClick={() => setViewMode('candidates')}
               aria-pressed={viewMode === 'candidates'}
             >
@@ -221,7 +221,7 @@ export default function Pricing() {
             </button>
             <button
               type="button"
-              className={`pricing__toggle-btn${viewMode === 'companies' ? ' pricing__toggle-btn--active' : ''}`}
+              className="btn btn--ghost btn--sm"
               onClick={() => setViewMode('companies')}
               aria-pressed={viewMode === 'companies'}
             >

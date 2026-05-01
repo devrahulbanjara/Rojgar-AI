@@ -102,7 +102,7 @@ export default function ExploreCategories() {
           data-reveal
           style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
         >
-          <button className="explore__nav explore__nav--prev" aria-label="Previous">
+          <button className="btn btn--icon explore__nav--prev" aria-label="Previous">
             <ChevronLeft aria-hidden="true" />
           </button>
 
@@ -138,7 +138,7 @@ export default function ExploreCategories() {
             ))}
           </Swiper>
 
-          <button className="explore__nav explore__nav--next" aria-label="Next">
+          <button className="btn btn--icon explore__nav--next" aria-label="Next">
             <ChevronRight aria-hidden="true" />
           </button>
         </div>

@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
+import { FilterSelect } from '@/components/common/Toolbar'
 
 import styles from './CandidateDossier.module.scss'
 
@@ -142,16 +143,14 @@ export default function CandidateDossier({
 
   if (!isOpen) return null
 
-  const handleStatusChange = async (next: string) => {
-    if (!candidate || !next) return
+  const handleStatusChange = async (next: ApplicationStatus) => {
+    if (!candidate || !next || next === candidate.status) return
     try {
       await updateStatus({
         application_id: candidate.id,
-        body: { status: next as ApplicationStatus },
+        body: { status: next },
       }).unwrap()
-      toast.success(
-        `Application moved to ${STATUS_LABELS[next as ApplicationStatus].toLowerCase()}.`,
-      )
+      toast.success(`Application moved to ${STATUS_LABELS[next].toLowerCase()}.`)
       void refetch()
     } catch {
       toast.error('Could not update application status.')
@@ -191,22 +190,18 @@ export default function CandidateDossier({
 
           {candidate ? (
             <div className={styles.statusSelectWrap}>
-              <select
-                className={styles.statusSelect}
+              <span className={styles.statusSelectLabel}>Change application status</span>
+              <FilterSelect<ApplicationStatus>
                 value={candidate.status}
-                onChange={(event) => void handleStatusChange(event.target.value)}
+                onChange={(next) => void handleStatusChange(next)}
+                options={[
+                  { value: candidate.status, label: `Current: ${STATUS_LABELS[candidate.status]}` },
+                  ...transitions.map((status) => ({ value: status, label: STATUS_LABELS[status] })),
+                ]}
+                ariaLabel="Change application status"
                 disabled={isUpdating}
-                aria-label="Change application status"
-              >
-                <option value={candidate.status} disabled>
-                  Current: {STATUS_LABELS[candidate.status]}
-                </option>
-                {transitions.map((status) => (
-                  <option key={status} value={status}>
-                    {STATUS_LABELS[status]}
-                  </option>
-                ))}
-              </select>
+                className={styles.statusSelect}
+              />
             </div>
           ) : null}
 
@@ -222,7 +217,6 @@ export default function CandidateDossier({
 
         {siblingApplications.length > 1 && onApplicationChange ? (
           <div className={styles.appSwitcher} role="tablist" aria-label="Other applications">
-            <span className={styles.appSwitcherLabel}>Applications</span>
             <div className={styles.appSwitcherChips}>
               {siblingApplications.map((app) => {
                 const isActive = app.application_id === applicationId
@@ -273,7 +267,7 @@ export default function CandidateDossier({
           ) : isError || !candidate || !applicationId ? (
             <div className={styles.empty}>
               Could not load this candidate.{' '}
-              <button className="auth__inline-link" onClick={() => void refetch()}>
+              <button className="btn btn--ghost btn--sm" onClick={() => void refetch()}>
                 Try again
               </button>
             </div>
@@ -282,12 +276,20 @@ export default function CandidateDossier({
           ) : activeTab === 'evaluation' ? (
             <CandidateEvaluationCard applicationId={applicationId} />
           ) : activeTab === 'interview' ? (
-            <InterviewTab applicationId={applicationId} interview={interview ?? null} />
+            <InterviewBookingSection interview={interview ?? null} />
           ) : activeTab === 'outreach' ? (
             <OutreachTab applicationId={applicationId} jobId={candidate.job_id} />
           ) : (
             <ResumeTab renderedResume={renderedResume} />
           )}
+          {!isLoading && !isError && candidate && applicationId ? (
+            <div
+              className={activeTab === 'interview' ? undefined : styles.hiddenRecordingPanel}
+              aria-hidden={activeTab !== 'interview'}
+            >
+              <InterviewRecordingCard key={applicationId} applicationId={applicationId} />
+            </div>
+          ) : null}
         </div>
       </aside>
     </>
@@ -405,52 +407,42 @@ function ProfileTab({ candidate }: { candidate: Candidate }) {
   )
 }
 
-function InterviewTab({
-  applicationId,
-  interview,
-}: {
-  applicationId: string
-  interview: Candidate['interview']
-}) {
+function InterviewBookingSection({ interview }: { interview: Candidate['interview'] }) {
   return (
-    <>
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Booking</h3>
-        {interview ? (
-          <>
+    <div className={styles.section}>
+      <h3 className={styles.sectionTitle}>Booking</h3>
+      {interview ? (
+        <>
+          <div className={styles.bookingRow}>
+            <CalendarDays size={14} aria-hidden="true" />
+            {interview.start_time
+              ? formatInterviewDate(interview.start_time)
+              : 'Date not available'}
+          </div>
+          <div className={styles.bookingRow}>
+            <Clock3 size={14} aria-hidden="true" />
+            {interview.start_time && interview.end_time
+              ? formatInterviewTime(interview.start_time, interview.end_time)
+              : 'Time not available'}
+          </div>
+          <div className={styles.bookingRow}>
+            <MapPin size={14} aria-hidden="true" />
+            {interview.location ?? 'Location not available'}
+          </div>
+          {interview.title ? (
+            <div className={`${styles.bookingRow} ${styles.muted}`}>{interview.title}</div>
+          ) : null}
+          {interview.cal_booking_uid ? (
             <div className={styles.bookingRow}>
-              <CalendarDays size={14} aria-hidden="true" />
-              {interview.start_time
-                ? formatInterviewDate(interview.start_time)
-                : 'Date not available'}
+              <Hash size={14} aria-hidden="true" />
+              <span className={styles.bookingMono}>{interview.cal_booking_uid}</span>
             </div>
-            <div className={styles.bookingRow}>
-              <Clock3 size={14} aria-hidden="true" />
-              {interview.start_time && interview.end_time
-                ? formatInterviewTime(interview.start_time, interview.end_time)
-                : 'Time not available'}
-            </div>
-            <div className={styles.bookingRow}>
-              <MapPin size={14} aria-hidden="true" />
-              {interview.location ?? 'Location not available'}
-            </div>
-            {interview.title ? (
-              <div className={`${styles.bookingRow} ${styles.muted}`}>{interview.title}</div>
-            ) : null}
-            {interview.cal_booking_uid ? (
-              <div className={styles.bookingRow}>
-                <Hash size={14} aria-hidden="true" />
-                <span className={styles.bookingMono}>{interview.cal_booking_uid}</span>
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <p className={styles.muted}>No interview booked yet.</p>
-        )}
-      </div>
-
-      <InterviewRecordingCard applicationId={applicationId} />
-    </>
+          ) : null}
+        </>
+      ) : (
+        <p className={styles.muted}>No interview booked yet.</p>
+      )}
+    </div>
   )
 }
 
@@ -652,7 +644,7 @@ function DraftEditor({ draft }: { draft: EmailDraftRecord }) {
           </button>
           <button
             type="button"
-            className="btn btn--outline btn--sm"
+            className="btn btn--secondary btn--sm"
             onClick={() => void handleApprove()}
             disabled={isApproving}
           >
@@ -660,7 +652,7 @@ function DraftEditor({ draft }: { draft: EmailDraftRecord }) {
           </button>
           <button
             type="button"
-            className="btn btn--outline btn--sm"
+            className="btn btn--secondary btn--sm"
             onClick={() => void handleDelete()}
             disabled={isDeleting}
             style={{ marginLeft: 'auto', color: 'var(--color-error)' }}

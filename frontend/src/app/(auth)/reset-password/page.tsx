@@ -11,8 +11,6 @@ import { parseApiError } from '@/lib/apiError'
 import { useResetPasswordMutation } from '@/store/services/authApi'
 import { Eye, EyeOff } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 // ── Validation ─────────────────────────────────────────────────────────────
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
@@ -155,11 +153,7 @@ function ResetPasswordInner() {
               <p className="auth__subtitle" style={{ color: 'var(--color-error, #ef4444)' }}>
                 This reset link is invalid or has expired.
               </p>
-              <Link
-                href="/forgot-password"
-                className="auth__submit"
-                style={{ textDecoration: 'none', textAlign: 'center' }}
-              >
+              <Link href="/forgot-password" className="btn btn--primary btn--lg btn--full">
                 Request a new link
               </Link>
             </div>
@@ -204,7 +198,7 @@ function ResetPasswordInner() {
                   />
                   <button
                     type="button"
-                    className="auth__pw-toggle"
+                    className="btn btn--icon btn--sm"
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -241,7 +235,7 @@ function ResetPasswordInner() {
                   />
                   <button
                     type="button"
-                    className="auth__pw-toggle"
+                    className="btn btn--icon btn--sm"
                     onClick={() => setShowConfirm((v) => !v)}
                     aria-label={showConfirm ? 'Hide password' : 'Show password'}
                   >
@@ -258,10 +252,10 @@ function ResetPasswordInner() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
+                className={`btn btn--primary btn--lg btn--full${isLoading ? ' btn--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? <ButtonSpinner label="Resetting password..." /> : 'Reset password'}
+                {isLoading ? 'Resetting password...' : 'Reset password'}
               </button>
             </form>
           )}

@@ -60,6 +60,11 @@
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgb(0 112 243 / 14%);
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
 }
 
 .searchClear {

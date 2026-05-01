@@ -43,7 +43,7 @@ export function MobileSidebarDrawer({
         <div className="recruiter-chat-mobile-drawer__close-row">
           <button
             type="button"
-            className="recruiter-chat-icon-btn"
+            className="btn btn--icon btn--sm"
             aria-label="Close sessions"
             onClick={() => onOpenChange(false)}
           >

@@ -276,39 +276,11 @@
     min-width: 0;
   }
 
-  // ── Nav arrows ───────────────────────────────────────────
-  &__nav {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: $radius-full;
-    background: $color-white;
-    border: 1.5px solid $color-gray-200;
-    box-shadow: $shadow-sm;
-    color: $color-gray-700;
-    z-index: 10;
-    @include transition(all, $transition-fast);
-
-    svg {
-      width: 1rem;
-      height: 1rem;
-    }
-
-    &:hover {
-      background: $color-primary;
-      border-color: $color-primary;
-      color: $color-white;
-      box-shadow: 0 4px 12px rgba($color-primary, 0.35);
-    }
-
-    &.swiper-button-disabled {
-      opacity: 0.35;
-      cursor: default;
-      pointer-events: none;
-    }
+  // ── Nav arrow disabled state (swiper) ────────────────────
+  .swiper-button-disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
   }
 
   // ── Card ────────────────────────────────────────────────

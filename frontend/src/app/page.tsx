@@ -91,7 +91,7 @@ export default function Home() {
                 onChange={(e) => setHeroLocation(e.target.value)}
               />
             </div>
-            <button className="homepage__search-btn" type="submit" aria-label="Search jobs">
+            <button className="btn btn--primary btn--lg" type="submit" aria-label="Search jobs">
               <Search size={16} aria-hidden="true" />
               Search
             </button>

@@ -64,18 +64,23 @@ export function FilterSelect<T extends string>({
   onChange,
   options,
   ariaLabel,
+  disabled = false,
+  className,
 }: {
   value: T
   onChange: (next: T) => void
   options: ReadonlyArray<FilterOption<T>>
   ariaLabel: string
+  disabled?: boolean
+  className?: string
 }) {
   return (
     <select
-      className={styles.filterSelect}
+      className={[styles.filterSelect, className].filter(Boolean).join(' ')}
       value={value}
       onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value as T)}
       aria-label={ariaLabel}
+      disabled={disabled}
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>

@@ -12,7 +12,6 @@ import { updateUser } from '@/store/slices/authSlice'
 import { X } from 'lucide-react'
 
 import AuthGuard from '@/components/common/AuthGuard'
-import ButtonSpinner from '@/components/common/ButtonSpinner'
 
 // Available predefined roles for the candidate to select
 const AVAILABLE_ROLES = [
@@ -173,16 +172,7 @@ function OnboardingForm() {
                       <button
                         type="button"
                         onClick={() => handleRemoveRole(role)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'inherit',
-                          padding: 0,
-                        }}
+                        className="btn btn--secondary btn--sm"
                       >
                         <X size={14} />
                       </button>
@@ -230,22 +220,7 @@ function OnboardingForm() {
                         key={role}
                         type="button"
                         onClick={() => handleAddRole(role)}
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          textAlign: 'left',
-                          background: 'transparent',
-                          border: 'none',
-                          borderBottom: '1px solid var(--border-color)',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          color: 'var(--text-color)',
-                          transition: 'background-color 0.2s',
-                        }}
-                        onMouseOver={(e) =>
-                          (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')
-                        }
-                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        className="btn btn--secondary btn--sm"
                       >
                         {role}
                       </button>
@@ -259,24 +234,7 @@ function OnboardingForm() {
                         <button
                           type="button"
                           onClick={() => handleAddRole(inputValue)}
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            textAlign: 'left',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            color: 'var(--primary-color)',
-                            fontWeight: 500,
-                            transition: 'background-color 0.2s',
-                          }}
-                          onMouseOver={(e) =>
-                            (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')
-                          }
-                          onMouseOut={(e) =>
-                            (e.currentTarget.style.backgroundColor = 'transparent')
-                          }
+                          className="btn btn--secondary btn--sm"
                         >
                           + Add &quot;{inputValue.trim()}&quot;
                         </button>
@@ -289,11 +247,11 @@ function OnboardingForm() {
             <button
               type="submit"
               disabled={isLoading || selectedRoles.length === 0}
-              className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
+              className={`btn btn--primary btn--lg btn--full${isLoading ? ' btn--loading' : ''}`}
               aria-busy={isLoading}
               style={{ marginTop: '1.5rem' }}
             >
-              {isLoading ? <ButtonSpinner label="Saving..." /> : 'Complete Onboarding'}
+              {isLoading ? 'Saving...' : 'Complete Onboarding'}
             </button>
           </form>
         </div>

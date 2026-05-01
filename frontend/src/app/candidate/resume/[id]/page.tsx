@@ -124,7 +124,7 @@ function ResumeViewer({ resume, onEdit }: { resume: Resume; onEdit: () => void }
     <div className="rv-overlay">
       <div className="rv-overlay__bar">
         <div className="rv-overlay__bar-left">
-          <Link href="/candidate/resume" className="jd-back">
+          <Link href="/candidate/resume" className="btn btn--ghost btn--sm">
             <ArrowLeft size={16} aria-hidden="true" />
             Back to Resumes
           </Link>

@@ -31,7 +31,7 @@ export default function CreateResumeModal({
       <div className="modal">
         <div className="modal__header">
           <h3 className="modal__title">Create New Resume</h3>
-          <button className="modal__close" onClick={onCancel} aria-label="Close">
+          <button className="btn btn--icon btn--sm" onClick={onCancel} aria-label="Close">
             x
           </button>
         </div>
