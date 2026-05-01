@@ -1,6 +1,7 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -11,8 +12,12 @@ from app.modules.interviews import evaluation_service
 from app.modules.interviews.evaluation_schemas import (
     CombinedEvaluationResponse,
     EvaluationScoreResponse,
+    EvaluatorIdentity,
+    HumanAverageResponse,
+    HumanEvaluatorScoreResponse,
     JobEvaluationSchemaResponse,
     SubmitHumanEvaluationRequest,
+    UpdateHumanEvaluationRequest,
     UpsertJobEvaluationSchemaRequest,
 )
 
@@ -60,23 +65,65 @@ async def fetch_job_evaluation_schema(
 @router.post(
     "/applications/{application_id}/evaluation/human",
     response_model=UnifiedResponse[EvaluationScoreResponse],
-    summary="Submit recruiter evaluation for a candidate",
+    summary="Add a recruiter evaluation row for a candidate",
 )
-async def submit_human_evaluation(
+async def create_human_evaluation(
     application_id: uuid.UUID,
     payload: SubmitHumanEvaluationRequest,
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
-    """Submit recruiter-provided evaluation scores for an application."""
-    score = await evaluation_service.submit_human_score(
+    """Create a new free-form recruiter evaluation row for an application."""
+    score = await evaluation_service.create_human_score(
         db,
         user.id,
         application_id,
+        evaluator_label=payload.evaluator_label,
         scores=payload.scores,
         notes=payload.notes,
     )
-    return ResponseBuilder.success(data=score, message="Human evaluation saved.")
+    return ResponseBuilder.success(data=score, message="Recruiter evaluation added.")
+
+
+@router.patch(
+    "/applications/{application_id}/evaluation/human/{score_id}",
+    response_model=UnifiedResponse[EvaluationScoreResponse],
+    summary="Update a recruiter evaluation row",
+)
+async def update_human_evaluation(
+    application_id: uuid.UUID,
+    score_id: uuid.UUID,
+    payload: UpdateHumanEvaluationRequest,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update an existing recruiter evaluation row by id."""
+    score = await evaluation_service.update_human_score(
+        db,
+        user.id,
+        application_id,
+        score_id,
+        evaluator_label=payload.evaluator_label,
+        scores=payload.scores,
+        notes=payload.notes,
+    )
+    return ResponseBuilder.success(data=score, message="Recruiter evaluation updated.")
+
+
+@router.delete(
+    "/applications/{application_id}/evaluation/human/{score_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a recruiter evaluation row",
+)
+async def delete_human_evaluation(
+    application_id: uuid.UUID,
+    score_id: uuid.UUID,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a recruiter evaluation row by id."""
+    await evaluation_service.delete_human_score(db, user.id, application_id, score_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -104,14 +151,37 @@ async def fetch_combined_evaluation(
     user: User = Depends(require_active_membership),
     db: AsyncSession = Depends(get_db),
 ):
-    """Fetch human, LLM, and blended evaluation results for an application."""
+    """Fetch human submissions, the human average, the LLM row, and the blended final."""
     (
         application,
         schema,
-        human,
+        humans,
+        human_aggregate,
         llm,
         final_score,
     ) = await evaluation_service.get_combined_evaluation(db, user.id, application_id)
+
+    user_pairs = await evaluation_service.list_humans_with_users(db, application.id)
+    user_by_score_id = {score.id: submitter for score, submitter in user_pairs}
+
+    human_responses: list[HumanEvaluatorScoreResponse] = []
+    for row in humans:
+        submitter = user_by_score_id.get(row.id)
+        identity = (
+            EvaluatorIdentity(
+                id=submitter.id,
+                full_name=submitter.full_name,
+                email=submitter.email,
+                avatar_url=submitter.avatar_url,
+            )
+            if submitter
+            else None
+        )
+        base = EvaluationScoreResponse.model_validate(row).model_dump()
+        human_responses.append(
+            HumanEvaluatorScoreResponse(**base, submitted_by=identity)
+        )
+
     return ResponseBuilder.success(
         data=CombinedEvaluationResponse(
             application_id=application.id,
@@ -119,7 +189,14 @@ async def fetch_combined_evaluation(
             schema=JobEvaluationSchemaResponse.model_validate(schema)
             if schema
             else None,
-            human=EvaluationScoreResponse.model_validate(human) if human else None,
+            humans=human_responses,
+            human_average=HumanAverageResponse(
+                per_criterion=human_aggregate.per_criterion,
+                weighted_total=human_aggregate.weighted_total,
+                evaluator_count=human_aggregate.evaluator_count,
+            )
+            if human_aggregate
+            else None,
             llm=EvaluationScoreResponse.model_validate(llm) if llm else None,
             final_score=final_score,
         ),

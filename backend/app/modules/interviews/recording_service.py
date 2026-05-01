@@ -8,8 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from app.infrastructures.ai.service import ai_service
+from app.infrastructures.huggingface.whisper_service import (
+    HFSpaceTranscriptionError,
+    whisper_service,
+)
 from app.infrastructures.storage.service import storage_service
-from app.infrastructures.whisper.service import whisper_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import CompanyMembership
@@ -188,8 +191,23 @@ async def transcribe_recording(
         transcript = await whisper_service.transcribe_from_bytes(audio_bytes, filename)
         recording.transcript = transcript
         recording.status = RecordingStatus.transcribed
+    except HFSpaceTranscriptionError as exc:
+        logger.warning(
+            f"HF Whisper failed for recording {recording_id}: {exc.message} "
+            f"(cold_start={exc.is_cold_start}, status={exc.status_code})"
+        )
+        recording.status = RecordingStatus.failed
+        await db.commit()
+        detail = (
+            "Transcription model is warming up. Please retry in 30 seconds."
+            if exc.is_cold_start
+            else f"Transcription failed: {exc.message}"
+        )
+        raise HTTPException(
+            status_code=503 if exc.is_cold_start else 502, detail=detail
+        )
     except Exception as exc:
-        logger.exception("Transcription failed for recording %s: %s", recording_id, exc)
+        logger.exception(f"Transcription failed for recording {recording_id}: {exc}")
         recording.status = RecordingStatus.failed
         await db.commit()
         raise HTTPException(
@@ -270,7 +288,7 @@ async def batch_transcribe_for_job(
 
         if not recording:
             logger.info(
-                "No pending recording for application %s, skipping.", application_id
+                f"No pending recording for application {application_id}, skipping."
             )
             continue
 
@@ -285,12 +303,16 @@ async def batch_transcribe_for_job(
             )
             recording.transcript = transcript
             recording.status = RecordingStatus.transcribed
-            logger.info("Batch: transcribed application %s", application_id)
+            logger.info(f"Batch: transcribed application {application_id}")
+        except HFSpaceTranscriptionError as exc:
+            logger.warning(
+                f"Batch: HF Whisper failed for application {application_id}: "
+                f"{exc.message} (cold_start={exc.is_cold_start}, status={exc.status_code})"
+            )
+            recording.status = RecordingStatus.failed
         except Exception as exc:
             logger.exception(
-                "Batch: transcription failed for application %s: %s",
-                application_id,
-                exc,
+                f"Batch: transcription failed for application {application_id}: {exc}"
             )
             recording.status = RecordingStatus.failed
 

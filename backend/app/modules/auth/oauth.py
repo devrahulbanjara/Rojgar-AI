@@ -106,6 +106,7 @@ async def google_oauth_callback(
             httponly=True,
             secure=settings.environment == "prod",
             samesite="lax",
+            path="/",
             expires=refresh_expires_at,
         )
         db.add(RefreshToken(user_id=user.id, jti=jti, expires_at=refresh_expires_at))

@@ -309,6 +309,7 @@ async def google_login():
         httponly=True,
         max_age=600,
         samesite="lax",
+        path="/",
     )
     return response
 
@@ -337,7 +338,7 @@ async def google_callback(
     redirect_resp = RedirectResponse(url="/")
 
     # 2. Clean up the CSRF cookie immediately
-    redirect_resp.delete_cookie("oauth_state")
+    redirect_resp.delete_cookie("oauth_state", path="/")
 
     # 3. Run the OAuth callback logic (new users receive a signup_token; existing users are logged in)
     try:
