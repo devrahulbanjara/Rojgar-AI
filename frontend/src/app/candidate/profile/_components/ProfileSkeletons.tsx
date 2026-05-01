@@ -44,9 +44,15 @@ export function ProfileDataSkeleton() {
       </aside>
 
       <div className="profile-layout__main">
-        <div className="profile-tabs profile-tabs--skeleton">
+        <div className="team-tabs" role="tablist" aria-label="Profile sections" aria-hidden="true">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="skeleton-block profile-skeleton__tab" />
+            <div
+              key={index}
+              className="team-tabs__btn"
+              style={{ opacity: 0.5, pointerEvents: 'none' }}
+            >
+              <div className="skeleton-block" style={{ width: '60px', height: '14px' }} />
+            </div>
           ))}
         </div>
 

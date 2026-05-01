@@ -322,211 +322,237 @@ export default function RecruiterProfilePage() {
           </div>
         </div>
       ) : (
-        <div className="profile-layout content-fade-in">
-          <aside className="profile-layout__aside">
-            <div
-              className="profile-aside-card content-stagger-item"
-              style={{ '--stagger-index': 0 } as React.CSSProperties}
+        <>
+          <div className="team-tabs" role="tablist" aria-label="Profile sections">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={true}
+              className="team-tabs__btn team-tabs__btn--active"
             >
-              <div className="profile-media-control">
-                <Avatar
-                  name={me.full_name}
-                  src={avatarSrc}
-                  seed={me.id}
-                  className="profile-aside-card__avatar"
-                  sizes="96px"
+              <span>Profile</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              className="team-tabs__btn"
+              disabled
+            >
+              <span>Security</span>
+            </button>
+          </div>
+
+          <div className="profile-layout content-fade-in">
+            <aside className="profile-layout__aside">
+              <div
+                className="profile-aside-card content-stagger-item"
+                style={{ '--stagger-index': 0 } as React.CSSProperties}
+              >
+                <div className="profile-media-control">
+                  <Avatar
+                    name={me.full_name}
+                    src={avatarSrc}
+                    seed={me.id}
+                    className="profile-aside-card__avatar"
+                    sizes="96px"
+                  />
+                  <div className="profile-media-actions" aria-label="Profile photo actions">
+                    <button
+                      className="btn btn--secondary btn--sm"
+                      disabled={isAvatarBusy}
+                      onClick={() => avatarInputRef.current?.click()}
+                      title={`PNG, JPG, WEBP, GIF up to ${formatBytes(5 * 1024 * 1024)}`}
+                      type="button"
+                    >
+                      <Camera size={14} />
+                      <span>{avatarSrc ? 'Replace' : 'Upload'}</span>
+                    </button>
+                    <button
+                      className="btn btn--danger btn--sm"
+                      disabled={!avatarSrc || isAvatarBusy}
+                      onClick={() => void handleAvatarRemove()}
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                      <span>Remove</span>
+                    </button>
+                  </div>
+                </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+                  hidden
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file) {
+                      void handleAvatarSelection(file)
+                    }
+                    event.currentTarget.value = ''
+                  }}
                 />
-                <div className="profile-media-actions" aria-label="Profile photo actions">
-                  <button
-                    className="btn btn--secondary btn--sm"
-                    disabled={isAvatarBusy}
-                    onClick={() => avatarInputRef.current?.click()}
-                    title={`PNG, JPG, WEBP, GIF up to ${formatBytes(5 * 1024 * 1024)}`}
-                    type="button"
-                  >
-                    <Camera size={14} />
-                    <span>{avatarSrc ? 'Replace' : 'Upload'}</span>
-                  </button>
-                  <button
-                    className="btn btn--danger btn--sm"
-                    disabled={!avatarSrc || isAvatarBusy}
-                    onClick={() => void handleAvatarRemove()}
-                    type="button"
-                  >
-                    <Trash2 size={14} />
-                    <span>Remove</span>
-                  </button>
+                {avatarError ? <div className="resume-field__error">{avatarError}</div> : null}
+                <div className="profile-aside-card__name">{me.full_name}</div>
+                <div className="profile-aside-card__headline">{displayRole}</div>
+                <div className="profile-media-hint">
+                  PNG, JPG, WEBP, GIF up to {formatBytes(5 * 1024 * 1024)}
+                </div>
+                <div className="profile-aside-card__divider" />
+                <div className="profile-aside-card__location">
+                  <BriefcaseBusiness size={13} aria-hidden="true" />
+                  {companyLabel}
+                </div>
+                <div className="profile-aside-card__location">
+                  <Mail size={13} aria-hidden="true" />
+                  {me.email}
+                </div>
+                <div className="profile-aside-card__location">
+                  <Shield size={13} aria-hidden="true" />
+                  {me.membership_status === 'active' ? 'Active member' : 'Membership pending'}
                 </div>
               </div>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
-                hidden
-                onChange={(event) => {
-                  const file = event.target.files?.[0]
-                  if (file) {
-                    void handleAvatarSelection(file)
-                  }
-                  event.currentTarget.value = ''
-                }}
-              />
-              {avatarError ? <div className="resume-field__error">{avatarError}</div> : null}
-              <div className="profile-aside-card__name">{me.full_name}</div>
-              <div className="profile-aside-card__headline">{displayRole}</div>
-              <div className="profile-media-hint">
-                PNG, JPG, WEBP, GIF up to {formatBytes(5 * 1024 * 1024)}
-              </div>
-              <div className="profile-aside-card__divider" />
-              <div className="profile-aside-card__location">
-                <BriefcaseBusiness size={13} aria-hidden="true" />
-                {companyLabel}
-              </div>
-              <div className="profile-aside-card__location">
-                <Mail size={13} aria-hidden="true" />
-                {me.email}
-              </div>
-              <div className="profile-aside-card__location">
-                <Shield size={13} aria-hidden="true" />
-                {me.membership_status === 'active' ? 'Active member' : 'Membership pending'}
-              </div>
-            </div>
-          </aside>
+            </aside>
 
-          <div className="profile-layout__main">
-            <div className="profile-section">
-              <div
-                className="profile-block content-stagger-item"
-                style={{ '--stagger-index': 1 } as React.CSSProperties}
-              >
-                <div className="profile-block__header">
-                  <div className="profile-block__title">Basic Information</div>
-                  <button
-                    className="btn btn--primary btn--sm"
-                    disabled={isSavingProfile}
-                    onClick={() => void handleSaveProfile()}
-                    type="button"
-                  >
-                    Save
-                  </button>
+            <div className="profile-layout__main">
+              <div className="profile-section">
+                <div
+                  className="profile-block content-stagger-item"
+                  style={{ '--stagger-index': 1 } as React.CSSProperties}
+                >
+                  <div className="profile-block__header">
+                    <div className="profile-block__title">Basic Information</div>
+                    <button
+                      className="btn btn--primary btn--sm"
+                      disabled={isSavingProfile}
+                      onClick={() => void handleSaveProfile()}
+                      type="button"
+                    >
+                      Save
+                    </button>
+                  </div>
+
+                  <div className="resume-form-grid">
+                    <div className="resume-field">
+                      <label className="resume-field__label" htmlFor="recruiter-full-name">
+                        Full Name
+                      </label>
+                      <input
+                        id="recruiter-full-name"
+                        className="resume-field__input"
+                        value={profileForm.full_name}
+                        onChange={(event) =>
+                          setProfileForm((prev) => ({ ...prev, full_name: event.target.value }))
+                        }
+                        placeholder="Your full name"
+                        type="text"
+                      />
+                    </div>
+
+                    <div className="resume-field">
+                      <label className="resume-field__label" htmlFor="recruiter-email">
+                        Email
+                      </label>
+                      <input
+                        id="recruiter-email"
+                        className="resume-field__input"
+                        value={me.email}
+                        disabled
+                        type="email"
+                      />
+                    </div>
+                  </div>
+
+                  {profileError ? <div className="resume-field__error">{profileError}</div> : null}
+                  {profileSuccess ? <div className="resume-field__hint">Profile saved.</div> : null}
                 </div>
 
-                <div className="resume-form-grid">
-                  <div className="resume-field">
-                    <label className="resume-field__label" htmlFor="recruiter-full-name">
-                      Full Name
-                    </label>
-                    <input
-                      id="recruiter-full-name"
-                      className="resume-field__input"
-                      value={profileForm.full_name}
-                      onChange={(event) =>
-                        setProfileForm((prev) => ({ ...prev, full_name: event.target.value }))
-                      }
-                      placeholder="Your full name"
-                      type="text"
-                    />
+                <div
+                  className="profile-block content-stagger-item"
+                  style={{ '--stagger-index': 2 } as React.CSSProperties}
+                >
+                  <div className="profile-block__header">
+                    <div className="profile-block__title">Password</div>
+                    <button
+                      className="btn btn--primary btn--sm"
+                      disabled={isSavingPassword}
+                      onClick={() => void handleChangePassword()}
+                      type="button"
+                    >
+                      Update password
+                    </button>
                   </div>
 
-                  <div className="resume-field">
-                    <label className="resume-field__label" htmlFor="recruiter-email">
-                      Email
-                    </label>
-                    <input
-                      id="recruiter-email"
-                      className="resume-field__input"
-                      value={me.email}
-                      disabled
-                      type="email"
-                    />
+                  <p className="company-settings__booking-copy company-settings__booking-copy--left">
+                    Enter your current password if you already have one. If you signed up with
+                    Google, you can leave it blank and set a password now.
+                  </p>
+
+                  <div className="resume-form-grid">
+                    <div className="resume-field">
+                      <label className="resume-field__label" htmlFor="current-password">
+                        Current Password
+                      </label>
+                      <input
+                        id="current-password"
+                        className="resume-field__input"
+                        value={passwordForm.current_password}
+                        onChange={(event) =>
+                          setPasswordForm((prev) => ({
+                            ...prev,
+                            current_password: event.target.value,
+                          }))
+                        }
+                        placeholder="Current password"
+                        type="password"
+                      />
+                    </div>
+                    <div className="resume-field">
+                      <label className="resume-field__label" htmlFor="new-password">
+                        New Password
+                      </label>
+                      <input
+                        id="new-password"
+                        className="resume-field__input"
+                        value={passwordForm.new_password}
+                        onChange={(event) =>
+                          setPasswordForm((prev) => ({ ...prev, new_password: event.target.value }))
+                        }
+                        placeholder="New password"
+                        type="password"
+                      />
+                    </div>
+                    <div className="resume-field">
+                      <label className="resume-field__label" htmlFor="confirm-password">
+                        Confirm New Password
+                      </label>
+                      <input
+                        id="confirm-password"
+                        className="resume-field__input"
+                        value={passwordForm.confirm_password}
+                        onChange={(event) =>
+                          setPasswordForm((prev) => ({
+                            ...prev,
+                            confirm_password: event.target.value,
+                          }))
+                        }
+                        placeholder="Confirm new password"
+                        type="password"
+                      />
+                    </div>
                   </div>
+
+                  {passwordError ? (
+                    <div className="resume-field__error">{passwordError}</div>
+                  ) : null}
+                  {passwordSuccess ? (
+                    <div className="resume-field__hint">Password saved.</div>
+                  ) : null}
                 </div>
-
-                {profileError ? <div className="resume-field__error">{profileError}</div> : null}
-                {profileSuccess ? <div className="resume-field__hint">Profile saved.</div> : null}
-              </div>
-
-              <div
-                className="profile-block content-stagger-item"
-                style={{ '--stagger-index': 2 } as React.CSSProperties}
-              >
-                <div className="profile-block__header">
-                  <div className="profile-block__title">Password</div>
-                  <button
-                    className="btn btn--primary btn--sm"
-                    disabled={isSavingPassword}
-                    onClick={() => void handleChangePassword()}
-                    type="button"
-                  >
-                    Update password
-                  </button>
-                </div>
-
-                <p className="company-settings__booking-copy company-settings__booking-copy--left">
-                  Enter your current password if you already have one. If you signed up with Google,
-                  you can leave it blank and set a password now.
-                </p>
-
-                <div className="resume-form-grid">
-                  <div className="resume-field">
-                    <label className="resume-field__label" htmlFor="current-password">
-                      Current Password
-                    </label>
-                    <input
-                      id="current-password"
-                      className="resume-field__input"
-                      value={passwordForm.current_password}
-                      onChange={(event) =>
-                        setPasswordForm((prev) => ({
-                          ...prev,
-                          current_password: event.target.value,
-                        }))
-                      }
-                      placeholder="Current password"
-                      type="password"
-                    />
-                  </div>
-                  <div className="resume-field">
-                    <label className="resume-field__label" htmlFor="new-password">
-                      New Password
-                    </label>
-                    <input
-                      id="new-password"
-                      className="resume-field__input"
-                      value={passwordForm.new_password}
-                      onChange={(event) =>
-                        setPasswordForm((prev) => ({ ...prev, new_password: event.target.value }))
-                      }
-                      placeholder="New password"
-                      type="password"
-                    />
-                  </div>
-                  <div className="resume-field">
-                    <label className="resume-field__label" htmlFor="confirm-password">
-                      Confirm New Password
-                    </label>
-                    <input
-                      id="confirm-password"
-                      className="resume-field__input"
-                      value={passwordForm.confirm_password}
-                      onChange={(event) =>
-                        setPasswordForm((prev) => ({
-                          ...prev,
-                          confirm_password: event.target.value,
-                        }))
-                      }
-                      placeholder="Confirm new password"
-                      type="password"
-                    />
-                  </div>
-                </div>
-
-                {passwordError ? <div className="resume-field__error">{passwordError}</div> : null}
-                {passwordSuccess ? <div className="resume-field__hint">Password saved.</div> : null}
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {avatarCropDraft ? (
