@@ -29,6 +29,8 @@ import {
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
 import { ArrowLeft, CheckCheck, CircleSlash, FolderCheck, Send } from 'lucide-react'
 
+import styles from './page.module.scss'
+
 type DraftField = keyof Pick<
   JobAIDraftPayload,
   | 'title'
@@ -136,6 +138,7 @@ export default function RecruiterJobAIDraftPage() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const draftIdFromUrl = searchParams.get('draftId')
+  const isManualMode = searchParams.get('mode') === 'manual'
 
   const [prompt, setPrompt] = useState('')
   const [sourceText, setSourceText] = useState('')
@@ -432,100 +435,194 @@ export default function RecruiterJobAIDraftPage() {
     }
   }
 
+  function setMode(nextMode: 'ai' | 'manual') {
+    const next = new URLSearchParams(searchParams.toString())
+    if (nextMode === 'manual') next.set('mode', 'manual')
+    else next.delete('mode')
+    router.replace(`${pathname}${next.toString() ? `?${next.toString()}` : ''}`, { scroll: false })
+  }
+
+  async function handleStartBlank() {
+    setPageState((prev) => ({ ...prev, saving: true }))
+    try {
+      const response = await createDraft({
+        prompt: 'Untitled role — recruiter will fill in details manually.',
+        research_salary: false,
+        locked_fields: [],
+      }).unwrap()
+      applyDraftRecord(response.data, false)
+      syncRouteWithDraftId(response.data.id)
+    } catch (error) {
+      setPageState((prev) => ({ ...prev, saving: false }))
+      showApiToast(error, 'Could not start a blank draft right now.')
+    }
+  }
+
+  const pageTitle = pageState.draftId
+    ? pageState.draft?.title?.trim() || 'Untitled job'
+    : 'New job posting'
+  const pageSubtitle = pageState.draftId
+    ? 'Edit any field, lock what should stay, then publish when it looks right.'
+    : isManualMode
+      ? 'Start a blank draft and write the job description yourself.'
+      : 'Describe the role and AI will draft the job posting for you.'
+
   return (
-    <div className="dash-content container container--app-shell">
-      <Link href="/recruiter/jobs" className="btn btn--ghost btn--sm">
+    <div className={`dash-content container container--app-shell ${styles.page}`}>
+      <Link href="/recruiter/jobs" className={`btn btn--ghost btn--sm ${styles.backLink}`}>
         <ArrowLeft size={16} aria-hidden="true" />
         Back to Jobs
       </Link>
 
-      <JobAIAssistant
-        prompt={prompt}
-        sourceText={sourceText}
-        sourceJobId={sourceJobId}
-        researchSalary={researchSalary}
-        followUpFeedback={followUpFeedback}
-        draftExists={Boolean(pageState.draftId)}
-        loading={isBusy}
-        jobs={jobs}
-        onPromptChange={setPrompt}
-        onSourceTextChange={setSourceText}
-        onSourceJobIdChange={setSourceJobId}
-        onResearchSalaryChange={setResearchSalary}
-        onFollowUpFeedbackChange={setFollowUpFeedback}
-        onGenerate={handleGenerate}
-        onGeneralUpdate={() => void handleGeneralUpdate()}
-      />
+      <div className="dash-page-header">
+        <div className="dash-page-header__left">
+          <h2 className="dash-page-header__title">{pageTitle}</h2>
+          <p className="dash-page-header__subtitle">{pageSubtitle}</p>
+        </div>
+        <div className="dash-page-header__actions">
+          <span className="page-header-hint">
+            {pageState.draftId ? 'Draft saved' : isBusy ? 'Working…' : 'Not started'}
+          </span>
+        </div>
+      </div>
 
-      <div className="job-ai-page">
-        <section className="job-ai-page__main">
-          <JobDraftForm
-            draft={pageState.draft}
-            dirtyFields={pageState.dirtyFields}
-            lockedFields={pageState.lockedFields}
-            missingFields={pageState.missingFields}
+      {!pageState.draftId ? (
+        <div className="team-tabs" role="tablist" aria-label="How to start">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!isManualMode}
+            className={`team-tabs__btn ${!isManualMode ? 'team-tabs__btn--active' : ''}`}
+            onClick={() => setMode('ai')}
+          >
+            Use AI assistant
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={isManualMode}
+            className={`team-tabs__btn ${isManualMode ? 'team-tabs__btn--active' : ''}`}
+            onClick={() => setMode('manual')}
+          >
+            Write it myself
+          </button>
+        </div>
+      ) : null}
+
+      {!isManualMode ? (
+        <JobAIAssistant
+          prompt={prompt}
+          sourceText={sourceText}
+          sourceJobId={sourceJobId}
+          researchSalary={researchSalary}
+          followUpFeedback={followUpFeedback}
+          draftExists={Boolean(pageState.draftId)}
+          loading={isBusy}
+          jobs={jobs}
+          onPromptChange={setPrompt}
+          onSourceTextChange={setSourceText}
+          onSourceJobIdChange={setSourceJobId}
+          onResearchSalaryChange={setResearchSalary}
+          onFollowUpFeedbackChange={setFollowUpFeedback}
+          onGenerate={handleGenerate}
+          onGeneralUpdate={() => void handleGeneralUpdate()}
+        />
+      ) : !pageState.draftId ? (
+        <section className={styles.startBlank}>
+          <h2 className={styles.startBlankTitle}>Start a blank draft</h2>
+          <p className={styles.startBlankCopy}>
+            We&apos;ll create an empty draft so you can fill in the title, description, and
+            requirements field by field. You can switch to AI assistance any time.
+          </p>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => void handleStartBlank()}
             disabled={isBusy}
-            isLoading={isBusy}
-            onFieldChange={handleFieldChange}
-            onToggleLock={handleToggleLock}
-            onRequestUpdate={(fields, feedback) => void handleRegenerate(fields, feedback)}
-          />
-          <EvaluationSchemaSetupCard
-            enabled={evaluationEnabled}
-            onEnabledChange={setEvaluationEnabled}
-            onChange={setEvaluationDraft}
-            disabled={isBusy}
-          />
+          >
+            <Send size={16} aria-hidden="true" />
+            {isBusy ? 'Creating…' : 'Create blank draft'}
+          </button>
         </section>
+      ) : null}
 
-        <aside className="job-ai-page__sidebar">
-          <AssumptionsWarnings
-            assumptions={pageState.assumptions}
-            warnings={pageState.warnings}
-            missingFields={pageState.missingFields}
-          />
-          <SalaryResearchCard research={pageState.salaryResearch} />
-        </aside>
-      </div>
+      {pageState.draftId ? (
+        <div className={isManualMode ? styles.singleColumn : 'job-ai-page'}>
+          <section className={isManualMode ? styles.singleColumnMain : 'job-ai-page__main'}>
+            <JobDraftForm
+              draft={pageState.draft}
+              dirtyFields={pageState.dirtyFields}
+              lockedFields={pageState.lockedFields}
+              missingFields={pageState.missingFields}
+              disabled={isBusy}
+              isLoading={isBusy}
+              onFieldChange={handleFieldChange}
+              onToggleLock={handleToggleLock}
+              onRequestUpdate={(fields, feedback) => void handleRegenerate(fields, feedback)}
+            />
+            <EvaluationSchemaSetupCard
+              enabled={evaluationEnabled}
+              onEnabledChange={setEvaluationEnabled}
+              onChange={setEvaluationDraft}
+              disabled={isBusy}
+            />
+          </section>
 
-      <div className="job-ai-toolbar__actions job-ai-footer-actions">
-        <button
-          type="button"
-          className="btn btn--secondary"
-          disabled={!pageState.draft || isBusy}
-          onClick={() => void handleSaveProgress()}
-        >
-          <FolderCheck size={16} aria-hidden="true" />
-          Save Progress
-        </button>
-        <button
-          type="button"
-          className="btn btn--secondary"
-          disabled={!pageState.draftId || isBusy}
-          onClick={() => void handleApprove()}
-        >
-          <CheckCheck size={16} aria-hidden="true" />
-          Save as Draft
-        </button>
-        <button
-          type="button"
-          className="btn btn--primary"
-          disabled={!pageState.draftId || isBusy}
-          onClick={() => void handlePostJob()}
-        >
-          <Send size={16} aria-hidden="true" />
-          {isCommitting ? 'Posting...' : 'Post Job'}
-        </button>
-        <button
-          type="button"
-          className="btn btn--ghost btn--danger"
-          disabled={!pageState.draftId || isBusy}
-          onClick={() => void handleDiscard()}
-        >
-          <CircleSlash size={16} aria-hidden="true" />
-          Discard
-        </button>
-      </div>
+          {!isManualMode ? (
+            <aside className="job-ai-page__sidebar">
+              <AssumptionsWarnings
+                assumptions={pageState.assumptions}
+                warnings={pageState.warnings}
+                missingFields={pageState.missingFields}
+              />
+              <SalaryResearchCard research={pageState.salaryResearch} />
+            </aside>
+          ) : null}
+        </div>
+      ) : null}
+
+      {pageState.draftId ? (
+        <div className={styles.footer}>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm btn--danger"
+            disabled={!pageState.draftId || isBusy}
+            onClick={() => void handleDiscard()}
+          >
+            <CircleSlash size={14} aria-hidden="true" />
+            Discard draft
+          </button>
+          <div className={styles.footerActions}>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              disabled={!pageState.draft || isBusy}
+              onClick={() => void handleSaveProgress()}
+            >
+              <FolderCheck size={14} aria-hidden="true" />
+              Save changes
+            </button>
+            <button
+              type="button"
+              className="btn btn--secondary btn--sm"
+              disabled={!pageState.draftId || isBusy}
+              onClick={() => void handleApprove()}
+            >
+              <CheckCheck size={14} aria-hidden="true" />
+              Save &amp; exit
+            </button>
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              disabled={!pageState.draftId || isBusy}
+              onClick={() => void handlePostJob()}
+            >
+              <Send size={14} aria-hidden="true" />
+              {isCommitting ? 'Publishing…' : 'Publish job'}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

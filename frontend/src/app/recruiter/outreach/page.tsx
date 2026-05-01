@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 import {
   OutreachDraftDetailSkeleton,
@@ -118,10 +119,12 @@ function buildEmailPreviewDocument(subject: string, body: string) {
 }
 
 export default function RecruiterOutreachPage() {
+  const searchParams = useSearchParams()
+  const requestedJobId = searchParams.get('job') ?? ''
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
   const jobs = useMemo(() => jobsResp?.data ?? [], [jobsResp?.data])
   const [jobScope, setJobScope] = useState<'finalized' | 'all'>('finalized')
-  const [selectedJobId, setSelectedJobId] = useState('')
+  const [selectedJobId, setSelectedJobId] = useState(requestedJobId)
 
   const finalizedJobs = useMemo(
     () =>
@@ -257,16 +260,24 @@ export default function RecruiterOutreachPage() {
   )
 
   useEffect(() => {
-    if (!selectedJobId && defaultJobId) {
-      setSelectedJobId(defaultJobId)
+    if (jobs.length === 0) return
 
-      // If the default job is not in finalized jobs, switch scope to "all"
-      const isInFinalizedJobs = finalizedJobs.some((job) => job.id === defaultJobId)
-      if (!isInFinalizedJobs && finalizedJobs.length > 0) {
-        setJobScope('all')
-      }
+    const targetId =
+      requestedJobId && jobs.some((job) => job.id === requestedJobId)
+        ? requestedJobId
+        : selectedJobId || defaultJobId
+
+    if (!targetId) return
+
+    if (targetId !== selectedJobId) {
+      setSelectedJobId(targetId)
     }
-  }, [defaultJobId, selectedJobId, finalizedJobs])
+
+    const isInFinalizedJobs = finalizedJobs.some((job) => job.id === targetId)
+    if (!isInFinalizedJobs && jobScope === 'finalized') {
+      setJobScope('all')
+    }
+  }, [defaultJobId, finalizedJobs, jobScope, jobs, requestedJobId, selectedJobId])
 
   useEffect(() => {
     if (!candidateItems.length) {

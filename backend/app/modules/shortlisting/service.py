@@ -453,14 +453,6 @@ async def finalize_shortlist(
     rejected_rows = []
 
     if payload.use_ai_recommendations:
-        if job.status != JobStatus.expired and (
-            job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="AI approval is only available after the job expires.",
-            )
-
         threshold = (
             payload.threshold
             if payload.threshold is not None
@@ -508,7 +500,8 @@ async def finalize_shortlist(
             SyncAction.UPSERT,
         )
 
-    job.final_shortlist_completed = True
+    if _job_has_expired(job):
+        job.final_shortlist_completed = True
     await db.commit()
 
     changed_user_ids = [

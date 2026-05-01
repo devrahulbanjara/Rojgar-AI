@@ -11607,10 +11607,10 @@
 }
 
 .job-ai-assistant__toggle {
-  padding: $space-3 $space-4;
-  border-radius: $radius-lg;
-  background: $color-gray-100;
-  border: 1px solid $color-gray-200;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
 }
 
 .job-ai-assistant__actions,
@@ -11744,14 +11744,20 @@
 }
 
 .job-ai-field {
-  padding: $space-4;
-  border-radius: $radius-lg;
-  border: 1px solid $color-gray-200;
-  background: $color-gray-100;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
 
   &--missing {
-    border-color: rgba($color-warning, 0.45);
-    background: rgba($color-warning, 0.06);
+    .job-ai-input,
+    .job-ai-textarea {
+      border-color: rgba($color-warning, 0.55);
+      background: rgba($color-warning, 0.04);
+    }
   }
 }
 
@@ -11824,9 +11830,9 @@
   display: flex;
   flex-direction: column;
   gap: $space-1;
-  padding: $space-4;
+  padding: $space-3 $space-4;
   border-radius: $radius-lg;
-  background: $color-gray-100;
+  background: $color-white;
   border: 1px solid $color-gray-200;
 
   strong {
@@ -11866,7 +11872,7 @@
 .assumptions-panel__item {
   padding: $space-3 $space-4;
   border-radius: $radius-lg;
-  background: $color-gray-100;
+  background: $color-white;
   border: 1px solid $color-gray-200;
   font-family: $font-body;
   font-size: $font-size-sm;
@@ -11941,17 +11947,16 @@
 }
 
 .job-ai-list-editor__composer {
-  padding: $space-3;
-  border: 1px dashed rgba($color-primary, 0.28);
-  border-radius: $radius-xl;
-  background:
-    linear-gradient(135deg, rgba($color-primary, 0.05), rgba($color-primary, 0.02)), $color-white;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .job-ai-list-editor__composer-input {
-  border-style: dashed;
-  border-color: rgba($color-primary, 0.22);
-  background: rgba($color-white, 0.92);
+  border-style: solid;
+  border-color: $color-gray-200;
+  background: $color-white;
 }
 
 @media (width <= 1279px) {
