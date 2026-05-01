@@ -41,7 +41,7 @@
     border-bottom: 1px solid rgba($color-black, 0.06);
 
     .header__inner {
-      border-radius: 0;
+      border-radius: 8px;
       box-shadow: none;
     }
   }
@@ -50,7 +50,7 @@
   &__inner {
     height: 100%;
     background: $color-white;
-    border-radius: 50px;
+    border-radius: 8px;
     box-shadow: 0 4px 32px rgba($color-black, 0.08);
     transition:
       border-radius 0.45s ease,

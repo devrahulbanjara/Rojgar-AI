@@ -1,13 +1,10 @@
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, status
 from fastapi.responses import Response
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.dependencies import ActiveMember, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import require_active_membership
-from app.modules.auth.models import User
 from app.modules.interviews import evaluation_service
 from app.modules.interviews.evaluation_schemas import (
     CombinedEvaluationResponse,
@@ -21,20 +18,19 @@ from app.modules.interviews.evaluation_schemas import (
     UpsertJobEvaluationSchemaRequest,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/interviews", tags=["Evaluation"])
 
 
 @router.put(
     "/jobs/{job_id}/evaluation-schema",
-    response_model=UnifiedResponse[JobEvaluationSchemaResponse],
     summary="Create or update the evaluation schema for a job",
 )
 async def upsert_job_evaluation_schema(
     job_id: uuid.UUID,
     payload: UpsertJobEvaluationSchemaRequest,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[JobEvaluationSchemaResponse]:
     """Create or update the evaluation schema for a company job."""
     schema = await evaluation_service.upsert_job_schema(
         db,
@@ -49,14 +45,13 @@ async def upsert_job_evaluation_schema(
 
 @router.get(
     "/jobs/{job_id}/evaluation-schema",
-    response_model=UnifiedResponse[JobEvaluationSchemaResponse | None],
     summary="Fetch the evaluation schema for a job",
 )
 async def fetch_job_evaluation_schema(
     job_id: uuid.UUID,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[JobEvaluationSchemaResponse | None]:
     """Fetch the evaluation schema configured for a company job."""
     schema = await evaluation_service.get_job_schema(db, user.id, job_id)
     return ResponseBuilder.success(data=schema, message="Evaluation schema fetched.")
@@ -64,15 +59,14 @@ async def fetch_job_evaluation_schema(
 
 @router.post(
     "/applications/{application_id}/evaluation/human",
-    response_model=UnifiedResponse[EvaluationScoreResponse],
     summary="Add a recruiter evaluation row for a candidate",
 )
 async def create_human_evaluation(
     application_id: uuid.UUID,
     payload: SubmitHumanEvaluationRequest,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[EvaluationScoreResponse]:
     """Create a new free-form recruiter evaluation row for an application."""
     score = await evaluation_service.create_human_score(
         db,
@@ -87,16 +81,15 @@ async def create_human_evaluation(
 
 @router.patch(
     "/applications/{application_id}/evaluation/human/{score_id}",
-    response_model=UnifiedResponse[EvaluationScoreResponse],
     summary="Update a recruiter evaluation row",
 )
 async def update_human_evaluation(
     application_id: uuid.UUID,
     score_id: uuid.UUID,
     payload: UpdateHumanEvaluationRequest,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[EvaluationScoreResponse]:
     """Update an existing recruiter evaluation row by id."""
     score = await evaluation_service.update_human_score(
         db,
@@ -118,8 +111,8 @@ async def update_human_evaluation(
 async def delete_human_evaluation(
     application_id: uuid.UUID,
     score_id: uuid.UUID,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
+    user: ActiveMember,
+    db: DbSession,
 ):
     """Delete a recruiter evaluation row by id."""
     await evaluation_service.delete_human_score(db, user.id, application_id, score_id)
@@ -128,14 +121,13 @@ async def delete_human_evaluation(
 
 @router.post(
     "/applications/{application_id}/evaluation/llm",
-    response_model=UnifiedResponse[EvaluationScoreResponse],
     summary="Run LLM evaluation for a candidate transcript",
 )
 async def run_llm_evaluation(
     application_id: uuid.UUID,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[EvaluationScoreResponse]:
     """Run LLM scoring for the latest transcribed interview recording."""
     score = await evaluation_service.run_llm_evaluation(db, user.id, application_id)
     return ResponseBuilder.success(data=score, message="LLM evaluation complete.")
@@ -143,14 +135,13 @@ async def run_llm_evaluation(
 
 @router.get(
     "/applications/{application_id}/evaluation",
-    response_model=UnifiedResponse[CombinedEvaluationResponse],
     summary="Fetch combined human and LLM evaluation for a candidate",
 )
 async def fetch_combined_evaluation(
     application_id: uuid.UUID,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[CombinedEvaluationResponse]:
     """Fetch human submissions, the human average, the LLM row, and the blended final."""
     (
         application,

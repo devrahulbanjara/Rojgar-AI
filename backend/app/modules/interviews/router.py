@@ -1,28 +1,25 @@
 import uuid
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Query
 
-from app.core.database import get_db
+from app.core.dependencies import ActiveMember, CandidateUser, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import require_active_membership, require_candidate
-from app.modules.auth.models import User
 from app.modules.interviews import service
 from app.modules.interviews.schemas import CandidateInterviewView, InterviewResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/interviews", tags=["Interviews"])
 
 
 @router.get(
     "/my",
-    response_model=UnifiedResponse[list[CandidateInterviewView]],
     summary="List all interviews for the authenticated candidate",
 )
 async def list_my_interviews(
-    user: User = Depends(require_candidate),
-    db: AsyncSession = Depends(get_db),
-):
+    user: CandidateUser,
+    db: DbSession,
+) -> UnifiedResponse[list[CandidateInterviewView]]:
     """List interviews for the authenticated candidate."""
     data = await service.list_candidate_interviews(db, user.id)
     return ResponseBuilder.success(data=data, message="Interviews fetched.")
@@ -30,16 +27,15 @@ async def list_my_interviews(
 
 @router.get(
     "/",
-    response_model=UnifiedResponse[list[InterviewResponse]],
     summary="List all interviews for the recruiter's company",
 )
 async def list_interviews(
-    job_id: uuid.UUID | None = Query(default=None),
-    start: datetime | None = Query(default=None),
-    end: datetime | None = Query(default=None),
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    job_id: Annotated[uuid.UUID | None, Query()] = None,
+    start: Annotated[datetime | None, Query()] = None,
+    end: Annotated[datetime | None, Query()] = None,
+    user: ActiveMember = None,
+    db: DbSession = None,
+) -> UnifiedResponse[list[InterviewResponse]]:
     """List interviews visible to the recruiter's company."""
     data = await service.list_interviews(db, user.id, job_id, start, end)
     return ResponseBuilder.success(data=data, message="Interviews fetched.")
@@ -47,14 +43,13 @@ async def list_interviews(
 
 @router.post(
     "/{interview_id}/complete",
-    response_model=UnifiedResponse[InterviewResponse],
     summary="Mark an interview as completed (recruiter only)",
 )
 async def mark_interview_complete(
     interview_id: uuid.UUID,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = Depends(get_db),
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[InterviewResponse]:
     """Mark an interview as completed for the recruiter's company."""
     data = await service.mark_interview_complete(db, user.id, interview_id)
     return ResponseBuilder.success(data=data, message="Interview marked as completed.")

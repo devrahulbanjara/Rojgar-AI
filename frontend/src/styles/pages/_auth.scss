@@ -171,7 +171,7 @@
     color: $color-gray-900;
     background-color: $color-white;
     border: 1.5px solid $color-gray-200;
-    border-radius: $radius-full;
+    border-radius: 8px;
     outline: none;
     @include transition(border-color, $transition-fast);
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import tempfile
 import uuid
 from collections.abc import Iterable
@@ -229,7 +230,7 @@ async def start_resume_import_task(
     try:
         content = await file.read()
         with temp_file:
-            temp_file.write(content)
+            await asyncio.to_thread(temp_file.write, content)
     finally:
         await file.seek(0)
 

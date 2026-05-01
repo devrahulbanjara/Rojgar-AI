@@ -76,7 +76,7 @@ const CANDIDATE_TIERS: PricingTier[] = [
   {
     id: 'candidate-credits',
     badge: 'Top-up Credits',
-    planName: 'À la carte',
+    planName: 'Credit Top-ups',
     currency: '',
     amount: '',
     period: '',
@@ -288,7 +288,7 @@ export default function Pricing() {
                 {/* CTA */}
                 <Link
                   href={tier.ctaHref}
-                  className={`pricing__cta pricing__cta--${tier.ctaVariant}`}
+                  className={`btn ${tier.ctaVariant === 'filled' ? 'btn--primary' : 'btn--secondary'} btn--full`}
                   {...(tier.ctaExternal && {
                     target: '_blank',
                     rel: 'noopener noreferrer',

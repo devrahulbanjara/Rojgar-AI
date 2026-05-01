@@ -1,242 +1,206 @@
 'use client'
 
-import { type CSSProperties, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 
-import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { getCompanyAccent } from '@/lib/companyAccent'
 import {
   type CandidateInterviewView,
   useGetMyInterviewsQuery,
 } from '@/store/services/interviewsApi'
-import { CalendarDays, Clock3, MapPin } from 'lucide-react'
+import { X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
-import DashboardErrorState from '@/components/common/DashboardErrorState'
-import StatusPill from '@/components/common/StatusPill'
+
+import Calendar, { type CalendarView } from './_components/Calendar'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
     year: 'numeric',
   })
 }
 
-function formatTime(iso: string, timezone: string | null): string {
+function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
-    timeZoneName: timezone ? undefined : 'short',
   })
 }
 
-function InterviewCardSkeleton() {
-  return (
-    <div className="candidate-interview-card">
-      <div className="candidate-interview-card__left">
-        <div
-          className="skeleton-block"
-          style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }}
-        />
-        <div className="candidate-interview-card__copy" style={{ gap: '0.4rem' }}>
-          <div className="skeleton-block" style={{ height: 14, width: '50%', borderRadius: 4 }} />
-          <div className="skeleton-block" style={{ height: 12, width: '30%', borderRadius: 4 }} />
-          <div className="skeleton-block" style={{ height: 12, width: '65%', borderRadius: 4 }} />
-        </div>
-      </div>
-      <div
-        className="skeleton-block"
-        style={{ width: 90, height: 24, borderRadius: 'var(--radius-pill)', flexShrink: 0 }}
-      />
-    </div>
-  )
+const VIEW_VALUES: CalendarView[] = ['day', '3day', 'week']
+
+function isCalendarView(value: string | null): value is CalendarView {
+  return value !== null && (VIEW_VALUES as string[]).includes(value)
 }
 
-function InterviewSkeleton() {
-  return (
-    <div className="dash-card">
-      <div className="dash-card__header">
-        <div>
-          <div className="skeleton-block" style={{ height: 16, width: 100, borderRadius: 4 }} />
-          <div
-            className="skeleton-block"
-            style={{ height: 12, width: 140, borderRadius: 4, marginTop: 6 }}
-          />
-        </div>
-      </div>
-      <div className="dash-card__body candidate-dashboard__list">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <InterviewCardSkeleton key={i} />
-        ))}
-      </div>
-    </div>
-  )
+function parseDate(value: string | null): Date {
+  if (!value) return new Date()
+  const [year, month, day] = value.split('-').map(Number)
+  const parsed = year && month && day ? new Date(year, month - 1, day) : new Date(value)
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed
 }
 
-function InterviewCard({
-  interview,
-  muted,
-  index,
-}: {
-  interview: CandidateInterviewView
-  muted?: boolean
-  index: number
-}) {
-  const accent = getCompanyAccent(interview.company_name)
-
-  return (
-    <Link
-      href={`/candidate/applications/${interview.application_id}`}
-      className="candidate-interview-card candidate-interview-card--clickable content-stagger-item"
-      style={{ '--stagger-index': index, opacity: muted ? 0.72 : 1 } as CSSProperties}
-    >
-      <div className="candidate-interview-card__left">
-        <Avatar
-          name={interview.company_name}
-          src={null}
-          seed={interview.company_name}
-          kind="company"
-          className="candidate-interview-card__avatar"
-          sizes="40px"
-          style={
-            {
-              '--logo-bg': accent.background,
-              '--logo-color': accent.color,
-            } as CSSProperties
-          }
-        />
-        <div className="candidate-interview-card__copy">
-          <div className="candidate-interview-card__title">
-            {interview.title ?? interview.job_title}
-          </div>
-          <div className="candidate-interview-card__company">{interview.company_name}</div>
-          <div className="candidate-interview-card__schedule">
-            <span className="candidate-interview-card__metaItem">
-              <CalendarDays size={12} aria-hidden="true" />
-              {formatDate(interview.start_time)}
-            </span>
-            <span className="candidate-interview-card__metaItem">
-              <Clock3 size={12} aria-hidden="true" />
-              {formatTime(interview.start_time, interview.timezone)} &ndash;{' '}
-              {formatTime(interview.end_time, interview.timezone)}
-            </span>
-            {interview.location ? (
-              <span className="candidate-interview-card__metaItem">
-                <MapPin size={12} aria-hidden="true" />
-                {interview.location}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      <StatusPill kind="application" status={interview.application_status} />
-    </Link>
-  )
+function toDateParam(date: Date): string {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }
 
 export default function CandidateInterviewsPage() {
-  const { data, isLoading, isError, error, isFetching, refetch } = useGetMyInterviewsQuery()
-  const interviews = useMemo(() => data?.data ?? [], [data?.data])
-  const [now] = useState(Date.now)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null)
 
-  const upcoming = useMemo(
-    () => interviews.filter((i) => new Date(i.start_time).getTime() >= now),
-    [interviews, now],
-  )
-  const past = useMemo(
-    () => interviews.filter((i) => new Date(i.start_time).getTime() < now),
-    [interviews, now],
+  const view: CalendarView = isCalendarView(searchParams.get('view'))
+    ? (searchParams.get('view') as CalendarView)
+    : '3day'
+  const anchorDate = parseDate(searchParams.get('date'))
+
+  const updateParams = useCallback(
+    (next: { view?: CalendarView; date?: string | null }) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (next.view) params.set('view', next.view)
+      if (next.date !== undefined) {
+        if (next.date) params.set('date', next.date)
+        else params.delete('date')
+      }
+      const query = params.toString()
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams],
   )
 
-  if (isError) {
-    return (
-      <div className="dash-content container container--app-shell">
-        <div className="dash-page-header">
-          <div className="dash-page-header__left">
-            <h1 className="dash-page-header__title">My Interviews</h1>
-            <p className="dash-page-header__subtitle">All scheduled and past interviews.</p>
-          </div>
-        </div>
-        <DashboardErrorState error={error} isRetrying={isFetching} onRetry={() => void refetch()} />
-      </div>
-    )
-  }
+  const setView = useCallback((next: CalendarView) => updateParams({ view: next }), [updateParams])
+  const setAnchor = useCallback(
+    (next: Date) => updateParams({ date: toDateParam(next) }),
+    [updateParams],
+  )
+
+  const { data, isLoading } = useGetMyInterviewsQuery()
+  const interviews: CandidateInterviewView[] = useMemo(() => data?.data ?? [], [data?.data])
+
+  const handleSelect = useCallback((interview: CandidateInterviewView) => {
+    setSelectedApplicationId(interview.application_id)
+  }, [])
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedApplicationId(null)
+  }, [])
+
+  const selectedInterview = useMemo(
+    () =>
+      selectedApplicationId
+        ? interviews.find((i) => i.application_id === selectedApplicationId)
+        : null,
+    [interviews, selectedApplicationId],
+  )
 
   return (
     <div className="dash-content container container--app-shell">
       <div className="dash-page-header">
         <div className="dash-page-header__left">
-          <h1 className="dash-page-header__title">My Interviews</h1>
-          <p className="dash-page-header__subtitle">All scheduled and past interviews.</p>
-        </div>
-        <div className="dash-page-header__actions">
-          <span className="page-header-hint">
-            {isLoading
-              ? 'Loading...'
-              : `${interviews.length} interview${interviews.length === 1 ? '' : 's'} total`}
-          </span>
+          <h2 className="dash-page-header__title">My Interviews</h2>
+          <p className="dash-page-header__subtitle">
+            Calendar view of your scheduled interviews. Click any block to view details.
+          </p>
         </div>
       </div>
 
-      {isLoading ? (
-        <InterviewSkeleton />
-      ) : interviews.length === 0 ? (
-        <div className="dash-card">
-          <div className="dash-card__body">
-            <div className="apps-empty">
-              <CalendarDays size={40} aria-hidden="true" />
-              <p>No interviews scheduled yet.</p>
-              <Link href="/candidate/applications" className="btn btn--primary btn--sm">
-                View applications
-              </Link>
+      <Calendar
+        view={view}
+        anchorDate={anchorDate}
+        interviews={interviews}
+        isLoading={isLoading}
+        onChangeView={setView}
+        onChangeAnchor={setAnchor}
+        onSelectInterview={handleSelect}
+      />
+
+      {selectedInterview && (
+        <InterviewDetailPanel interview={selectedInterview} onClose={handleCloseDetail} />
+      )}
+    </div>
+  )
+}
+
+function InterviewDetailPanel({
+  interview,
+  onClose,
+}: {
+  interview: CandidateInterviewView
+  onClose: () => void
+}) {
+  const accent = getCompanyAccent(interview.company_name)
+
+  const interviewDate = formatDate(interview.start_time)
+  const interviewStartTime = formatTime(interview.start_time)
+  const interviewEndTime = formatTime(interview.end_time)
+
+  return (
+    <dialog open className="candidate-interview-detail-panel">
+      <div className="candidate-interview-detail-panel__header">
+        <h3>Interview Details</h3>
+        <button type="button" className="btn btn--icon btn--sm" onClick={onClose}>
+          <X size={16} />
+        </button>
+      </div>
+      <div className="candidate-interview-detail-panel__body">
+        <div className="candidate-interview-detail-panel__company">
+          <Avatar
+            name={interview.company_name}
+            src={null}
+            seed={interview.company_name}
+            kind="company"
+            className="candidate-interview-detail-panel__avatar"
+            sizes="56px"
+            style={
+              {
+                '--logo-bg': accent.background,
+                '--logo-color': accent.color,
+              } as CSSProperties
+            }
+          />
+          <div>
+            <div className="candidate-interview-detail-panel__role">{interview.job_title}</div>
+            <div className="candidate-interview-detail-panel__companyName">
+              {interview.company_name}
             </div>
           </div>
         </div>
-      ) : (
-        <div
-          className="content-stagger"
-          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-        >
-          {upcoming.length > 0 && (
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Upcoming</div>
-                  <div className="dash-card__subtitle">
-                    {upcoming.length} upcoming interview{upcoming.length === 1 ? '' : 's'}
-                  </div>
-                </div>
-              </div>
-              <div className="dash-card__body candidate-dashboard__list">
-                {upcoming.map((interview, index) => (
-                  <InterviewCard key={interview.id} interview={interview} index={index} />
-                ))}
-              </div>
-            </div>
-          )}
 
-          {past.length > 0 && (
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Past</div>
-                  <div className="dash-card__subtitle">
-                    {past.length} past interview{past.length === 1 ? '' : 's'}
-                  </div>
-                </div>
-              </div>
-              <div className="dash-card__body candidate-dashboard__list">
-                {past.map((interview, index) => (
-                  <InterviewCard key={interview.id} interview={interview} muted index={index} />
-                ))}
-              </div>
+        <div className="candidate-interview-detail-panel__schedule">
+          <div className="candidate-interview-detail-panel__scheduleItem">
+            <span>Date</span>
+            <strong>{interviewDate}</strong>
+          </div>
+          <div className="candidate-interview-detail-panel__scheduleItem">
+            <span>Time</span>
+            <strong>
+              {interviewStartTime} - {interviewEndTime}
+            </strong>
+          </div>
+          {interview.location && (
+            <div className="candidate-interview-detail-panel__scheduleItem">
+              <span>Location</span>
+              <strong>{interview.location}</strong>
             </div>
           )}
         </div>
-      )}
-    </div>
+
+        <a
+          href={`/candidate/applications/${interview.application_id}`}
+          className="btn btn--primary btn--full"
+        >
+          View Application
+        </a>
+      </div>
+    </dialog>
   )
 }

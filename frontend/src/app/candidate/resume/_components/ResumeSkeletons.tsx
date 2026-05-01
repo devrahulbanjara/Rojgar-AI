@@ -31,6 +31,23 @@ export function ResumeTableSkeleton({ rows = 6 }: { rows?: number }) {
   )
 }
 
+export function ResumeGridSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <div className="resume-grid-skeleton" aria-hidden="true">
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className="resume-grid-skeleton__card">
+          <div className="resume-grid-skeleton__avatar" />
+          <div className="resume-grid-skeleton__info">
+            <div className="resume-grid-skeleton__title" />
+            <div className="resume-grid-skeleton__subtitle" />
+            <div className="resume-grid-skeleton__meta" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function ResumePageSkeleton() {
   return (
     <div className="dash-content container" aria-hidden="true">

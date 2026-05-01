@@ -93,7 +93,7 @@
     width: 100%;
     max-width: 680px;
     background-color: $color-white;
-    border-radius: $radius-full;
+    border-radius: 8px;
     box-shadow:
       $shadow-lg,
       0 0 0 1px $color-gray-200;
@@ -301,42 +301,7 @@
     margin-top: $space-2;
   }
 
-  &__btn {
-    display: inline-flex;
-    align-items: center;
-    gap: $space-2;
-    padding: $space-3 $space-8;
-    border-radius: $radius-full;
-    font-family: $font-body;
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
-    text-decoration: none;
-    transition: all $transition-base;
-
-    &--primary {
-      background: $color-primary;
-      color: $color-white;
-      box-shadow: 0 4px 14px rgba($color-primary, 0.35);
-
-      &:hover {
-        background: color.adjust($color-primary, $lightness: -8%);
-        box-shadow: 0 6px 20px rgba($color-primary, 0.45);
-        transform: translateY(-1px);
-      }
-    }
-
-    &--outline {
-      background: $color-white;
-      color: $color-primary;
-      border: 1.5px solid rgba($color-primary, 0.4);
-
-      &:hover {
-        border-color: $color-primary;
-        background: rgba($color-primary, 0.04);
-      }
-    }
   }
-}
 
 // ── Closing CTA (after FAQ) ──────────────────────────────────────
 .closing-cta {
@@ -403,42 +368,6 @@
     gap: $space-3;
     justify-content: center;
     margin-top: $space-2;
-  }
-
-  &__btn {
-    display: inline-flex;
-    align-items: center;
-    gap: $space-2;
-    padding: $space-3 $space-8;
-    border-radius: $radius-full;
-    font-family: $font-body;
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
-    text-decoration: none;
-    transition: all $transition-base;
-
-    &--primary {
-      background: $color-primary;
-      color: $color-white;
-      box-shadow: 0 4px 14px rgba($color-primary, 0.35);
-
-      &:hover {
-        background: color.adjust($color-primary, $lightness: -8%);
-        box-shadow: 0 6px 20px rgba($color-primary, 0.45);
-        transform: translateY(-1px);
-      }
-    }
-
-    &--outline {
-      background: $color-white;
-      color: $color-gray-700;
-      border: 1.5px solid $color-gray-300;
-
-      &:hover {
-        border-color: $color-gray-500;
-        color: $color-gray-900;
-      }
-    }
   }
 }
 

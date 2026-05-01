@@ -24,12 +24,21 @@ export function SearchInput({
   onChange,
   placeholder = 'Search',
   ariaLabel,
+  onEnter,
 }: {
   value: string
   onChange: (next: string) => void
   placeholder?: string
   ariaLabel?: string
+  onEnter?: () => void
 }) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && onEnter) {
+      e.preventDefault()
+      onEnter()
+    }
+  }
+
   return (
     <div className={styles.search}>
       <span className={styles.searchIcon}>
@@ -41,6 +50,7 @@ export function SearchInput({
         placeholder={placeholder}
         value={value}
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
+        onKeyDown={handleKeyDown}
         aria-label={ariaLabel ?? placeholder}
       />
       {value ? (

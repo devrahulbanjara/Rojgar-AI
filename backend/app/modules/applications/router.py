@@ -1,17 +1,11 @@
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Query, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.dependencies import ActiveMember, CandidateUser, CurrentUser, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import (
-    get_current_user,
-    require_active_membership,
-    require_candidate,
-)
-from app.modules.auth.models import User
 from app.modules.applications import service
 from app.modules.applications.schemas import (
     ApplicationResponse,
@@ -28,23 +22,20 @@ from app.modules.applications.schemas import (
 from app.modules.activity.schemas import ActivityEventResponse
 from app.shared.enums import ApplicationStatus
 
-router = APIRouter()
-
-db = Depends(get_db)
+router = APIRouter(prefix="/applications", tags=["Applications"])
 
 
 @router.post(
     "/",
-    response_model=UnifiedResponse[ApplicationResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Apply to a job (auto-forks profile to resume if none provided)",
 )
 async def apply_to_job(
     payload: ApplyRequest,
     bg_tasks: BackgroundTasks,
-    user: User = Depends(require_candidate),
-    db: AsyncSession = db,
-):
+    user: CandidateUser,
+    db: DbSession,
+) -> UnifiedResponse[ApplicationResponse]:
     """Submit a candidate application for a job."""
     data = await service.apply_to_job(db, user, payload, bg_tasks)
     return ResponseBuilder.success(
@@ -56,15 +47,14 @@ async def apply_to_job(
 
 @router.get(
     "/me",
-    response_model=UnifiedResponse[list[CandidateApplicationView]],
     summary="List all applications submitted by the authenticated candidate",
 )
 async def list_my_applications(
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=20, ge=1, le=100),
-    user: User = Depends(require_candidate),
-    db: AsyncSession = db,
-):
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 20,
+    user: CandidateUser = None,
+    db: DbSession = None,
+) -> UnifiedResponse[list[CandidateApplicationView]]:
     """List the authenticated candidate's applications."""
     data = await service.list_user_applications(db, user, page, size)
     return ResponseBuilder.success(data=data, message="Applications fetched.")
@@ -72,16 +62,15 @@ async def list_my_applications(
 
 @router.get(
     "/company/me",
-    response_model=UnifiedResponse[list[RecruiterApplicationView]],
     summary="List all applications for the authenticated recruiter's company, optionally filtered by job",
 )
 async def list_my_company_applications(
-    job_id: str | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=20, ge=1, le=100),
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db,
-):
+    job_id: Annotated[str | None, Query()] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 20,
+    user: ActiveMember = None,
+    db: DbSession = None,
+) -> UnifiedResponse[list[RecruiterApplicationView]]:
     """List applications for the recruiter's active company."""
     data = await service.list_my_company_applications(db, user, job_id, page, size)
     return ResponseBuilder.success(data=data, message="Applications fetched.")
@@ -89,21 +78,20 @@ async def list_my_company_applications(
 
 @router.get(
     "/company/me/candidates/search",
-    response_model=UnifiedResponse[SemanticCandidateSearchResponse],
     summary="Semantic candidate search (natural language query)",
 )
 async def search_candidates_semantic(
-    q: str = Query(
-        ..., min_length=1, max_length=500, description="Free-text search query"
-    ),
-    status: list[str] | None = Query(
-        default=None, description="Filter by application statuses"
-    ),
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=20, ge=1, le=100),
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db,
-):
+    q: Annotated[
+        str, Query(min_length=1, max_length=500, description="Free-text search query")
+    ],
+    status: Annotated[
+        list[str] | None, Query(description="Filter by application statuses")
+    ] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 20,
+    user: ActiveMember = None,
+    db: DbSession = None,
+) -> UnifiedResponse[SemanticCandidateSearchResponse]:
     """
     Search candidates semantically across your company.
 
@@ -116,17 +104,16 @@ async def search_candidates_semantic(
 
 @router.get(
     "/company/me/candidates",
-    response_model=UnifiedResponse[list[RecruiterCandidateListItem]],
     summary="List candidate applications for the authenticated recruiter's company",
 )
 async def list_my_company_candidates(
-    job_id: str | None = Query(default=None),
-    status_filter: ApplicationStatus | None = Query(default=None, alias="status"),
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=50, ge=1, le=200),
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db,
-):
+    job_id: Annotated[str | None, Query()] = None,
+    status_filter: Annotated[ApplicationStatus | None, Query(alias="status")] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=200)] = 50,
+    user: ActiveMember = None,
+    db: DbSession = None,
+) -> UnifiedResponse[list[RecruiterCandidateListItem]]:
     """List candidate applications for the recruiter's active company."""
     data = await service.list_company_candidates(
         db,
@@ -141,15 +128,14 @@ async def list_my_company_candidates(
 
 @router.get(
     "/company/me/candidates/{application_id}/similar",
-    response_model=UnifiedResponse[SimilarCandidatesResponse],
     summary="Find candidates similar to a given application",
 )
 async def get_similar_candidates(
     application_id: str,
-    limit: int = Query(default=10, ge=1, le=50),
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db,
-):
+    limit: Annotated[int, Query(ge=1, le=50)] = 10,
+    user: ActiveMember = None,
+    db: DbSession = None,
+) -> UnifiedResponse[SimilarCandidatesResponse]:
     """
     Given one candidate application, surface the most similar candidates
     from the same company's talent pool using vector similarity.
@@ -160,14 +146,13 @@ async def get_similar_candidates(
 
 @router.get(
     "/company/me/candidates/{application_id}",
-    response_model=UnifiedResponse[RecruiterCandidateDetailView],
     summary="Get recruiter-safe candidate details for one application",
 )
 async def get_company_candidate_detail(
     application_id: str,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[RecruiterCandidateDetailView]:
     """Return recruiter-safe detail for one company application."""
     data = await service.get_company_candidate_detail(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Candidate fetched.")
@@ -175,16 +160,15 @@ async def get_company_candidate_detail(
 
 @router.get(
     "/job/{job_id}",
-    response_model=UnifiedResponse[list[RecruiterApplicationView]],
     summary="List all applications for a specific job (company/recruiter only)",
 )
 async def list_job_applications(
     job_id: str,
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=20, ge=1, le=100),
-    user: User = Depends(get_current_user),
-    db: AsyncSession = db,
-):
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 20,
+    user: CurrentUser = None,
+    db: DbSession = None,
+) -> UnifiedResponse[list[RecruiterApplicationView]]:
     """List applications for one job the user can access."""
     data = await service.list_job_applications(db, user, job_id, page, size)
     return ResponseBuilder.success(data=data, message="Applications fetched.")
@@ -192,14 +176,13 @@ async def list_job_applications(
 
 @router.get(
     "/{application_id}",
-    response_model=UnifiedResponse[ApplicationResponse],
     summary="Get full details of a specific application",
 )
 async def get_application(
     application_id: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = db,
-):
+    user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[ApplicationResponse]:
     """Return one application visible to the requesting user."""
     data = await service.get_application(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application fetched.")
@@ -207,14 +190,13 @@ async def get_application(
 
 @router.get(
     "/{application_id}/timeline",
-    response_model=UnifiedResponse[list[ActivityEventResponse]],
     summary="Get the event timeline for a specific application",
 )
 async def get_application_timeline(
     application_id: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = db,
-):
+    user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[list[ActivityEventResponse]]:
     """Return the timeline for one visible application."""
     data = await service.get_application_timeline(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application timeline fetched.")
@@ -222,14 +204,13 @@ async def get_application_timeline(
 
 @router.get(
     "/company/me/candidates/{application_id}/timeline",
-    response_model=UnifiedResponse[list[ActivityEventResponse]],
     summary="Get the recruiter timeline for a specific candidate application",
 )
 async def get_company_candidate_timeline(
     application_id: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = db,
-):
+    user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[list[ActivityEventResponse]]:
     """Return the recruiter-scoped timeline for one company candidate."""
     data = await service.get_company_candidate_timeline(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Candidate timeline fetched.")
@@ -237,16 +218,15 @@ async def get_company_candidate_timeline(
 
 @router.patch(
     "/{application_id}/review",
-    response_model=UnifiedResponse[ApplicationResponse],
     summary="Update application score and feedback (company/recruiter only)",
 )
 async def update_application_review(
     application_id: str,
     payload: UpdateApplicationReviewRequest,
     bg_tasks: BackgroundTasks,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = db,
-):
+    user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[ApplicationResponse]:
     """Update recruiter review data for an application."""
     data = await service.update_application_review(
         db, user, application_id, payload, bg_tasks
@@ -256,16 +236,15 @@ async def update_application_review(
 
 @router.patch(
     "/{application_id}/status",
-    response_model=UnifiedResponse[ApplicationResponse],
     summary="Update application status (company/recruiter only)",
 )
 async def update_application_status(
     application_id: str,
     payload: UpdateApplicationStatusRequest,
     bg_tasks: BackgroundTasks,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = db,
-):
+    user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[ApplicationResponse]:
     """Update an application's workflow status."""
     data = await service.update_application_status(
         db, user, application_id, payload, bg_tasks
@@ -279,15 +258,14 @@ class OfferResponsePayload(BaseModel):
 
 @router.post(
     "/{application_id}/offer/respond",
-    response_model=UnifiedResponse[None],
     summary="Candidate accepts or declines a recorded offer",
 )
 async def respond_to_offer(
     application_id: uuid.UUID,
     payload: OfferResponsePayload,
-    user: User = Depends(require_candidate),
-    db: AsyncSession = db,
-):
+    user: CandidateUser,
+    db: DbSession,
+) -> UnifiedResponse[None]:
     """Record the candidate's response to an offer."""
     await service.respond_to_offer(db, application_id, payload.accepted, user)
     return ResponseBuilder.success(

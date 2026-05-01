@@ -4,12 +4,9 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from fastapi_limiter.depends import RateLimiter
 from pyrate_limiter import Duration, Limiter, Rate
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.dependencies import ActiveMember, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import require_active_membership
-from app.modules.auth.models import User
 from app.modules.recruiter_chat import service
 from app.modules.recruiter_chat.schemas import (
     ChatExchangeResponse,
@@ -21,20 +18,18 @@ from app.modules.recruiter_chat.schemas import (
 )
 
 
-router = APIRouter()
-db_dep = Depends(get_db)
+router = APIRouter(prefix="/recruiter-chat", tags=["recruiter-chat"])
 
 
 @router.post(
     "/sessions",
-    response_model=UnifiedResponse[ChatSessionResponse],
     summary="Create a recruiter chat session",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE * 5))))],
 )
 async def create_recruiter_chat_session(
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[ChatSessionResponse]:
     """Create a recruiter chat session."""
     data = await service.create_session(db, user)
     return ResponseBuilder.success(data=data, message="Recruiter chat session created.")
@@ -42,14 +37,13 @@ async def create_recruiter_chat_session(
 
 @router.get(
     "/sessions",
-    response_model=UnifiedResponse[list[ChatSessionResponse]],
     summary="List recruiter chat sessions",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
 )
 async def list_recruiter_chat_sessions(
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[list[ChatSessionResponse]]:
     """List recruiter chat sessions for the authenticated user."""
     data = await service.list_sessions(db, user)
     return ResponseBuilder.success(
@@ -59,15 +53,14 @@ async def list_recruiter_chat_sessions(
 
 @router.get(
     "/sessions/{session_id}/history",
-    response_model=UnifiedResponse[ChatHistoryResponse],
     summary="Get recruiter chat history",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
 )
 async def get_recruiter_chat_history(
     session_id: uuid.UUID,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[ChatHistoryResponse]:
     """Fetch chat history for one recruiter chat session."""
     data = await service.get_history(db, user, session_id)
     return ResponseBuilder.success(data=data, message="Recruiter chat history fetched.")
@@ -75,16 +68,15 @@ async def get_recruiter_chat_history(
 
 @router.post(
     "/sessions/{session_id}/messages",
-    response_model=UnifiedResponse[ChatExchangeResponse],
     summary="Send a recruiter chat message",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(20, Duration.MINUTE))))],
 )
 async def send_recruiter_chat_message(
     session_id: uuid.UUID,
     payload: ChatMessageRequest,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[ChatExchangeResponse]:
     """Send a recruiter chat message and return the assistant response."""
     data = await service.send_message(db, user, session_id, payload)
     return ResponseBuilder.success(data=data, message="Recruiter chat message sent.")
@@ -98,8 +90,8 @@ async def send_recruiter_chat_message(
 async def stream_recruiter_chat_message(
     session_id: uuid.UUID,
     payload: ChatMessageRequest,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
+    user: ActiveMember,
+    db: DbSession,
 ):
     """Stream a recruiter chat response over SSE."""
     stream = service.stream_message(db, user, session_id, payload)
@@ -116,16 +108,15 @@ async def stream_recruiter_chat_message(
 
 @router.post(
     "/sessions/{session_id}/confirm-job-selection",
-    response_model=UnifiedResponse[ChatExchangeResponse],
     summary="Confirm a specific job choice for recruiter chat",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(15, Duration.MINUTE))))],
 )
 async def confirm_recruiter_chat_job_selection(
     session_id: uuid.UUID,
     payload: ConfirmJobSelectionRequest,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[ChatExchangeResponse]:
     """Confirm a pending job selection inside recruiter chat."""
     data = await service.confirm_job_selection(db, user, session_id, payload)
     return ResponseBuilder.success(data=data, message="Job selection confirmed.")
@@ -133,16 +124,15 @@ async def confirm_recruiter_chat_job_selection(
 
 @router.post(
     "/sessions/{session_id}/confirm-job-edit",
-    response_model=UnifiedResponse[ChatExchangeResponse],
     summary="Approve or cancel the pending recruiter chat job edit",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(15, Duration.MINUTE))))],
 )
 async def confirm_recruiter_chat_job_edit(
     session_id: uuid.UUID,
     payload: ConfirmJobEditRequest,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[ChatExchangeResponse]:
     """Approve or cancel a pending job edit inside recruiter chat."""
     data = await service.confirm_job_edit(db, user, session_id, payload)
     return ResponseBuilder.success(data=data, message="Job edit decision recorded.")
@@ -150,15 +140,14 @@ async def confirm_recruiter_chat_job_edit(
 
 @router.delete(
     "/sessions/{session_id}",
-    response_model=UnifiedResponse[None],
     summary="Delete a recruiter chat session",
     dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE * 5))))],
 )
 async def delete_recruiter_chat_session(
     session_id: uuid.UUID,
-    user: User = Depends(require_active_membership),
-    db: AsyncSession = db_dep,
-):
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[None]:
     """Delete a recruiter chat session."""
     await service.delete_session(db, user, session_id)
     return ResponseBuilder.success(data=None, message="Recruiter chat session deleted.")

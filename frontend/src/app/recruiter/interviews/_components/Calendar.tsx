@@ -19,7 +19,7 @@ const VIEW_OPTIONS = [
 ]
 
 const HOUR_START = 7
-const HOUR_END = 21
+const HOUR_END = 24
 const TOTAL_MINUTES = (HOUR_END - HOUR_START) * 60
 const HOUR_PX = 48 // matches `.hourLabel` flex-basis (3rem)
 const BLOCK_NAME_PX = 42 // ~time + name + padding
@@ -221,9 +221,9 @@ export default function Calendar({
         />
       </div>
 
-      <div className={styles.calendarFrame}>
+      <div className={styles.calendarFrame} data-lenis-prevent>
         <div className={styles.calendarHeader}>
-          <div />
+          <div className={styles.calendarHeaderSpacer} />
           <div className={styles.calendarHeaderInner} style={dayColumnsStyle}>
             {days.map((day) => {
               const isToday = isSameDay(day, today)

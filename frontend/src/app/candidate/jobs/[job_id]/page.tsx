@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
@@ -15,15 +14,19 @@ import {
   useGetJobByIdQuery,
   useSearchJobsQuery,
 } from '@/store/services/jobsApi'
-import { ArrowLeft, Banknote, Briefcase, Building, Clock, MapPin, Share2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  Banknote,
+  Briefcase,
+  Clock,
+  DollarSign,
+  MapPin,
+  Share2,
+  Users,
+} from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
-import StatusPill from '@/components/common/StatusPill'
 import ApplyFlowModal from '@/components/jobs/ApplyModal'
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   onsite: 'On-site',
@@ -49,20 +52,10 @@ function formatSalaryRange(job: JobListItem): string {
   return `Up to ${job.currency} ${job.salary_max!.toLocaleString()}`
 }
 
-function getCompanyAccent(name: string): { logo: string; color: string } {
+function getCompanyAccent(name: string): string {
   const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
   const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-
-  return {
-    logo: name.trim().charAt(0).toUpperCase() || 'C',
-    color: palette[seed % palette.length],
-  }
-}
-
-function getRecommendedJobTags(job: JobListItem): string[] {
-  return [job.location_type, job.company?.industry]
-    .filter((value): value is string => Boolean(value))
-    .slice(0, 3)
+  return palette[seed % palette.length]
 }
 
 function formatDate(iso: string): string {
@@ -77,9 +70,15 @@ function formatDate(iso: string): string {
   })
 }
 
-// ---------------------------------------------------------------------------
-// Apply modal
-// ---------------------------------------------------------------------------
+function buildSubtitle(job: JobDetail): string {
+  const parts: string[] = []
+  if (job.company?.name) parts.push(job.company.name)
+  if (job.location) parts.push(job.location)
+  parts.push(LOCATION_TYPE_LABELS[job.location_type])
+  const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
+  if (salary) parts.push(salary)
+  return parts.join(' · ')
+}
 
 function ApplyModal({
   jobId,
@@ -103,13 +102,8 @@ function ApplyModal({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Recommended job card
-// ---------------------------------------------------------------------------
-
 function RecommendedCard({ job, index }: { job: JobListItem; index: number }) {
   const accent = getCompanyAccent(job.company?.name ?? job.title)
-  const tags = getRecommendedJobTags(job)
 
   return (
     <Link
@@ -127,8 +121,8 @@ function RecommendedCard({ job, index }: { job: JobListItem; index: number }) {
           sizes="40px"
           style={
             {
-              '--logo-bg': accent.color + '1A',
-              '--logo-color': accent.color,
+              '--logo-bg': accent + '1A',
+              '--logo-color': accent,
             } as React.CSSProperties
           }
         />
@@ -142,23 +136,17 @@ function RecommendedCard({ job, index }: { job: JobListItem; index: number }) {
             </span>
           </div>
         </div>
-        {job.match_score !== null && (
-          <span className="match-score" title="AI Match Score">
-            {Math.round(job.match_score * 100)}% match
-          </span>
-        )}
       </div>
       <div className="job-meta">
-        {tags.map((tag, i) => (
-          <span key={tag} className="job-meta__item">
-            {i > 0 && (
-              <span className="job-meta__sep" aria-hidden="true">
-                ·
-              </span>
-            )}
-            {tag}
-          </span>
-        ))}
+        <span className="job-meta__item">{job.location_type}</span>
+        {job.company?.industry && (
+          <>
+            <span className="job-meta__sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="job-meta__item">{job.company.industry}</span>
+          </>
+        )}
       </div>
       <div className="job-card__meta">
         <span>
@@ -171,10 +159,6 @@ function RecommendedCard({ job, index }: { job: JobListItem; index: number }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 export default function JobDetailPage() {
   const params = useParams()
   const jobId = params.job_id as string
@@ -186,19 +170,34 @@ export default function JobDetailPage() {
   const { data: jobsResp } = useSearchJobsQuery({ q: job?.title, size: 7 }, { skip: !job?.title })
   const recommended = (jobsResp?.data?.items ?? []).filter((j) => j.id !== jobId).slice(0, 6)
 
+  const salary = job ? formatSalary(job.salary_min, job.salary_max, job.currency) : null
+  const isActive = job?.status === 'active'
+  const hasApplied = job?.has_applied
+
   if (isLoading) {
     return (
       <div className="dash-content container dash-content--pad-top">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '4rem',
-            color: '#9ca3af',
-          }}
+        <Link
+          href="/candidate/jobs"
+          className="btn btn--ghost btn--sm"
+          style={{ alignSelf: 'flex-start' }}
         >
-          Loading job details…
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Jobs
+        </Link>
+        <div className="jd-detail-header-skeleton" aria-hidden="true">
+          <div className="jd-detail-header-skeleton__title" />
+          <div className="jd-detail-header-skeleton__subtitle" />
+        </div>
+        <div className="jd-detail">
+          <div className="jd-detail__main">
+            <div className="jd-detail__skeleton-section" />
+            <div className="jd-detail__skeleton-section" />
+            <div className="jd-detail__skeleton-section" />
+          </div>
+          <div className="jd-detail__sidebar">
+            <div className="jd-detail__skeleton-sidebar" />
+          </div>
         </div>
       </div>
     )
@@ -207,326 +206,252 @@ export default function JobDetailPage() {
   if (isError || !job) {
     return (
       <div className="dash-content container dash-content--pad-top">
-        <Link href="/candidate/jobs" className="btn btn--ghost btn--sm">
+        <Link
+          href="/candidate/jobs"
+          className="btn btn--ghost btn--sm"
+          style={{ alignSelf: 'flex-start' }}
+        >
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Jobs
         </Link>
-        <div className="dash-card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <Briefcase style={{ width: 40, height: 40, color: '#9ca3af' }} />
-          <p style={{ marginTop: '1rem', color: '#6b7280' }}>
-            This job could not be found or has been removed.
-          </p>
+        <div className="dash-page-header">
+          <div className="dash-page-header__left">
+            <h2 className="dash-page-header__title">Job not found</h2>
+            <p className="dash-page-header__subtitle">
+              This job could not be found or has been removed.
+            </p>
+          </div>
         </div>
+        <button
+          className="btn btn--secondary btn--sm"
+          style={{ alignSelf: 'flex-start' }}
+          onClick={() => void refetch()}
+        >
+          Try again
+        </button>
       </div>
     )
   }
 
-  const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
-  const isActive = job.status === 'active'
-  const hasApplied = job.has_applied
-
   return (
     <>
       <div className="dash-content container dash-content--pad-top">
-        <Link href="/candidate/jobs" className="btn btn--ghost btn--sm">
+        <Link
+          href="/candidate/jobs"
+          className="btn btn--ghost btn--sm"
+          style={{ alignSelf: 'flex-start' }}
+        >
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Jobs
         </Link>
 
-        <div className="jd-page">
-          {/* ── Hero ── */}
-          <div className="jd-hero">
-            <div className="jd-hero__body">
-              <div className="jd-hero__info">
-                <div
-                  className="jd-hero__logo"
-                  style={{ '--jd-logo': '#7928ca' } as React.CSSProperties}
-                >
-                  {job.company?.logo_url ? (
-                    <Image
-                      src={job.company.logo_url}
-                      alt={job.company.name}
-                      fill
-                      sizes="68px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    job.title[0]
-                  )}
-                </div>
-                <div className="jd-hero__date">Posted {formatDate(job.created_at)}</div>
-                <h1 className="jd-hero__title">{job.title}</h1>
-                <div className="jd-hero__company">
-                  <Building size={13} aria-hidden="true" />
-                  {job.company?.name}
-                  {job.company?.industry && ` · ${job.company.industry}`}
-                </div>
-                <div className="jd-hero__location">
-                  <MapPin size={14} aria-hidden="true" />
-                  {job.location ?? 'Location not specified'} ·{' '}
-                  {LOCATION_TYPE_LABELS[job.location_type]}
-                </div>
-                <div className="job-meta jd-hero__chips">
-                  <span className="job-meta__item">
-                    <Briefcase size={11} aria-hidden="true" />
-                    {LOCATION_TYPE_LABELS[job.location_type]}
-                  </span>
-                  {salary && (
-                    <>
-                      <span className="job-meta__sep" aria-hidden="true">
-                        ·
-                      </span>
-                      <span className="job-meta__item job-meta__item--salary">{salary}</span>
-                    </>
-                  )}
-                  <span className="job-meta__sep" aria-hidden="true">
-                    ·
-                  </span>
-                  <StatusPill kind="job" status={job.status} />
-                  <span className="job-meta__sep" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className="job-meta__item job-meta__item--time">
-                    <Clock size={11} aria-hidden="true" />
-                    Posted {formatDate(job.updated_at ?? job.created_at)}
-                  </span>
-                </div>
-              </div>
+        <div className="dash-page-header">
+          <div className="dash-page-header__left">
+            <h2 className="dash-page-header__title">{job.title}</h2>
+            <p className="dash-page-header__subtitle">{buildSubtitle(job)}</p>
+          </div>
+          <div className="dash-page-header__actions">
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                if (!hasApplied) setApplying(true)
+              }}
+              disabled={!isActive || hasApplied}
+              title={
+                hasApplied
+                  ? 'You have already applied to this job.'
+                  : isActive
+                    ? undefined
+                    : job.status === 'draft'
+                      ? 'This job is still in draft.'
+                      : 'This job has expired.'
+              }
+            >
+              {hasApplied ? 'Applied' : isActive ? 'Apply Now' : getJobStatusLabel(job.status)}
+            </button>
+            <button
+              className="btn btn--icon btn--sm"
+              onClick={() => {
+                navigator.clipboard
+                  .writeText(window.location.href)
+                  .then(() => toast.info('Link copied!'))
+              }}
+              aria-label="Share link"
+            >
+              <Share2 size={16} />
+            </button>
+          </div>
+        </div>
 
-              <div className="jd-hero__apply-wrap">
-                <button
-                  className="btn btn--primary btn--lg"
-                  onClick={() => {
-                    if (!hasApplied) {
-                      setApplying(true)
-                    }
-                  }}
-                  disabled={!isActive || hasApplied}
-                  title={
-                    hasApplied
-                      ? 'You have already applied to this job.'
-                      : isActive
-                        ? undefined
-                        : job.status === 'draft'
-                          ? 'This job is still in draft.'
-                          : 'This job has expired.'
-                  }
-                >
-                  <span>
-                    {hasApplied
-                      ? 'Applied'
-                      : isActive
-                        ? 'Apply Now'
-                        : getJobStatusLabel(job.status)}
-                  </span>
-                </button>
-                <button
-                  className="btn btn--secondary btn--sm"
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText(window.location.href)
-                      .then(() => toast.info('Link copied!'))
-                  }}
-                >
-                  <Share2 size={12} aria-hidden="true" />
-                  Share
-                </button>
-              </div>
-            </div>
+        <div className="jd-detail">
+          <div className="jd-detail__main">
+            {job.overview && (
+              <section className="jd-detail__section">
+                <h3 className="jd-detail__heading">About the Role</h3>
+                <p className="jd-detail__text">{job.overview}</p>
+              </section>
+            )}
+
+            {job.responsibilities.length > 0 && (
+              <section className="jd-detail__section">
+                <h3 className="jd-detail__heading">Responsibilities</h3>
+                <ul className="jd-detail__list">
+                  {job.responsibilities.map((item, i) => (
+                    <li key={i} className="jd-detail__list-item">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {job.requirements.length > 0 && (
+              <section className="jd-detail__section">
+                <h3 className="jd-detail__heading">Requirements</h3>
+                <ul className="jd-detail__list">
+                  {job.requirements.map((item, i) => (
+                    <li key={i} className="jd-detail__list-item">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {job.preferred_qualifications.length > 0 && (
+              <section className="jd-detail__section">
+                <h3 className="jd-detail__heading">Preferred Qualifications</h3>
+                <ul className="jd-detail__list">
+                  {job.preferred_qualifications.map((item, i) => (
+                    <li key={i} className="jd-detail__list-item">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {job.benefits.length > 0 && (
+              <section className="jd-detail__section">
+                <h3 className="jd-detail__heading">Benefits</h3>
+                <ul className="jd-detail__list">
+                  {job.benefits.map((item, i) => (
+                    <li key={i} className="jd-detail__list-item">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
 
-          {/* ── Overview ── */}
-          {job.overview && (
-            <div className="jd-section">
-              <div className="jd-section__title">About the Role</div>
-              <p className="jd-section__text">{job.overview}</p>
-            </div>
-          )}
+          <aside className="jd-detail__sidebar">
+            <div className="jd-detail__sidebar-card">
+              <div className="jd-detail__sidebar-section">
+                <Avatar
+                  name={job.company?.name ?? job.title}
+                  src={job.company?.logo_url}
+                  seed={job.company?.id ?? job.company?.name ?? job.title}
+                  kind="company"
+                  className="jd-detail__sidebar-logo"
+                  sizes="48px"
+                />
+                <span className="jd-detail__sidebar-company">{job.company?.name ?? 'Unknown'}</span>
+                {job.company?.industry && (
+                  <span className="jd-detail__sidebar-industry">{job.company.industry}</span>
+                )}
+              </div>
 
-          {/* ── Responsibilities ── */}
-          {job.responsibilities.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Responsibilities</div>
-              <ul className="jd-section__list">
-                {job.responsibilities.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ── Requirements ── */}
-          {job.requirements.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Requirements</div>
-              <ul className="jd-section__list">
-                {job.requirements.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ── Preferred Qualifications ── */}
-          {job.preferred_qualifications.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Preferred Qualifications</div>
-              <ul className="jd-section__list">
-                {job.preferred_qualifications.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ── Benefits ── */}
-          {job.benefits.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Benefits</div>
-              <ul className="jd-section__list">
-                {job.benefits.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ── About the Company ── */}
-          <div className="jd-section">
-            <div className="jd-section__title">About the Company</div>
-            <div className="jd-section__content">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.875rem',
-                }}
-              >
-                <div
-                  style={{
-                    position: 'relative',
-                    width: 52,
-                    height: 52,
-                    borderRadius: 12,
-                    background: 'rgba(0,112,243,0.1)',
-                    border: '1px solid rgba(0,112,243,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '1.375rem',
-                    color: '#0070f3',
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {job.company?.logo_url ? (
-                    <Image
-                      src={job.company.logo_url}
-                      alt={job.company.name}
-                      fill
-                      sizes="52px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    (job.company?.name[0] ?? job.title[0])
-                  )}
+              <dl className="jd-detail__meta">
+                <div className="jd-detail__meta-row">
+                  <dt>
+                    <MapPin aria-hidden="true" /> Location
+                  </dt>
+                  <dd>{job.location ?? 'Not specified'}</dd>
                 </div>
-                <div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      fontSize: '0.9375rem',
-                      color: '#111827',
-                      marginBottom: 2,
-                    }}
-                  >
-                    {job.company?.name}
+                <div className="jd-detail__meta-row">
+                  <dt>
+                    <Briefcase aria-hidden="true" /> Work Type
+                  </dt>
+                  <dd>{LOCATION_TYPE_LABELS[job.location_type]}</dd>
+                </div>
+                {salary && (
+                  <div className="jd-detail__meta-row">
+                    <dt>
+                      <DollarSign aria-hidden="true" /> Salary
+                    </dt>
+                    <dd>{salary}</dd>
                   </div>
-                  {job.company?.industry && (
-                    <div style={{ fontSize: '0.8125rem', color: '#6b7280' }}>
-                      {job.company.industry}
-                    </div>
-                  )}
+                )}
+                <div className="jd-detail__meta-row">
+                  <dt>
+                    <Clock aria-hidden="true" /> Posted
+                  </dt>
+                  <dd>{formatDate(job.created_at)}</dd>
                 </div>
-              </div>
-
-              <div className="job-meta" style={{ marginTop: '0.5rem' }}>
+                <div className="jd-detail__meta-row">
+                  <dt>
+                    <Users aria-hidden="true" /> Applicants
+                  </dt>
+                  <dd>{job.applications_count}</dd>
+                </div>
                 {job.company?.company_size && (
-                  <span className="job-meta__item">
-                    <Briefcase width={11} height={11} aria-hidden="true" />
-                    {job.company.company_size} employees
-                  </span>
+                  <div className="jd-detail__meta-row">
+                    <dt>
+                      <Users aria-hidden="true" /> Company Size
+                    </dt>
+                    <dd>{job.company.company_size}</dd>
+                  </div>
                 )}
-                {job.company?.location && (
-                  <>
-                    {job.company?.company_size && (
-                      <span className="job-meta__sep" aria-hidden="true">
-                        ·
-                      </span>
-                    )}
-                    <span className="job-meta__item">
-                      <MapPin width={11} height={11} aria-hidden="true" />
-                      {job.company.location}
-                    </span>
-                  </>
-                )}
-                {job.company?.website_url && (
-                  <>
-                    {(job.company?.company_size || job.company?.location) && (
-                      <span className="job-meta__sep" aria-hidden="true">
-                        ·
-                      </span>
-                    )}
-                    <a
-                      href={job.company.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="job-meta__item job-meta__item--salary"
-                      style={{ textDecoration: 'none' }}
-                    >
-                      Visit Website ↗
-                    </a>
-                  </>
-                )}
-              </div>
+              </dl>
 
-              {job.company?.description && (
-                <p className="jd-section__text">{job.company.description}</p>
+              {job.company?.website_url && (
+                <div className="jd-detail__sidebar-section">
+                  <a
+                    href={job.company.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn--ghost btn--sm"
+                  >
+                    Visit Website ↗
+                  </a>
+                </div>
               )}
             </div>
-          </div>
 
-          {/* ── Recommended Jobs ── */}
-          {recommended.length > 0 && (
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Recommended for You</div>
-                  <div className="dash-card__subtitle">Based on your profile and skills</div>
+            {job.company?.description && (
+              <div className="jd-detail__sidebar-card" style={{ marginTop: '1rem' }}>
+                <div className="jd-detail__sidebar-section" style={{ borderBottom: 0 }}>
+                  <span className="jd-detail__sidebar-company">About {job.company.name}</span>
                 </div>
-                <Link href="/candidate/jobs" className="btn btn--secondary btn--sm">
-                  Browse All Jobs
-                </Link>
+                <div style={{ padding: '0 1.25rem 1.25rem' }}>
+                  <p className="jd-detail__text">{job.company.description}</p>
+                </div>
               </div>
-              <div className="dash-card__body dash-card__body--recommended-jobs">
-                <div className="recommended-jobs-grid">
-                  {recommended.map((j, index: number) => (
-                    <RecommendedCard key={j.id} job={j} index={index} />
-                  ))}
-                </div>
+            )}
+          </aside>
+        </div>
+
+        {recommended.length > 0 && (
+          <div className="dash-card">
+            <div className="dash-card__header">
+              <div>
+                <div className="dash-card__title dash-card__title--sm">Recommended for You</div>
+                <div className="dash-card__subtitle">Based on your profile and skills</div>
+              </div>
+              <Link href="/candidate/jobs" className="btn btn--secondary btn--sm">
+                Browse All Jobs
+              </Link>
+            </div>
+            <div className="dash-card__body dash-card__body--recommended-jobs">
+              <div className="recommended-jobs-grid">
+                {recommended.map((j, index: number) => (
+                  <RecommendedCard key={j.id} job={j} index={index} />
+                ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {applying && (

@@ -9,9 +9,10 @@ import {
   type SearchJobsParams,
   useSearchJobsQuery,
 } from '@/store/services/jobsApi'
-import { Bookmark, Briefcase, Calendar, ChevronDown, Clock, MapPin, Search, X } from 'lucide-react'
+import { Bookmark, Briefcase, Calendar, ChevronDown, Clock, MapPin, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
+import { SearchInput, Toolbar } from '@/components/common/Toolbar'
 import ApplyFlowModal from '@/components/jobs/ApplyModal'
 
 import { JobCardsSkeleton, JobPreviewSkeleton } from './_components/JobsSkeletons'
@@ -116,14 +117,6 @@ export default function UserJobsPage() {
       location_type: locationTypeDraft ?? undefined,
       salary_min: salaryMinInput ? Number(salaryMinInput) : undefined,
       salary_max: salaryMaxInput ? Number(salaryMaxInput) : undefined,
-    })
-    setSelectedJobId(null)
-  }
-
-  function handleClearSearch() {
-    setSearchInput('')
-    setAppliedParams((prev) => {
-      return { ...prev, q: undefined }
     })
     setSelectedJobId(null)
   }
@@ -263,39 +256,16 @@ export default function UserJobsPage() {
 
           {/* ── Job List ── */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="dash-page-toolbar">
-              <div className="dash-page-toolbar__search">
-                <span className="dash-page-toolbar__icon">
-                  <Search size={16} aria-hidden="true" />
-                </span>
-                <input
-                  type="text"
-                  className="dash-page-toolbar__input"
-                  placeholder="Search jobs by title"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleSearch()
-                    }
-                  }}
-                />
-                {searchInput && (
-                  <button
-                    type="button"
-                    className="btn btn--icon btn--sm dash-page-toolbar__clear"
-                    onClick={handleClearSearch}
-                    aria-label="Clear search"
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-              <button type="submit" className="btn btn--primary">
+            <Toolbar>
+              <SearchInput
+                value={searchInput}
+                onChange={(next) => setSearchInput(next)}
+                placeholder="Search jobs by title"
+              />
+              <button type="button" className="btn btn--primary" onClick={() => handleSearch()}>
                 Search
               </button>
-            </div>
+            </Toolbar>
 
             {isLoading ? (
               <JobCardsSkeleton count={5} />
@@ -364,11 +334,6 @@ export default function UserJobsPage() {
                             </div>
                           </div>
                           <div className="job-card__actions-wrap">
-                            {job.match_score !== null && (
-                              <span className="match-score" title="AI Match Score">
-                                {Math.round(job.match_score * 100)}% Match
-                              </span>
-                            )}
                             <button
                               className="btn btn--icon btn--sm"
                               title="Save job"

@@ -5387,6 +5387,45 @@
   height: 0.875rem;
 }
 
+.resume-grid-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+
+  &__card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1.25rem;
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    min-height: 6.5rem;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  &__title {
+    width: 8rem;
+    height: 1rem;
+    background: $color-gray-100;
+    border-radius: $radius-sm;
+  }
+
+  &__meta {
+    width: 5rem;
+    height: 0.75rem;
+    background: $color-gray-100;
+    border-radius: $radius-sm;
+  }
+}
+
 .resume-table-card {
   overflow: visible;
 
@@ -10937,6 +10976,253 @@
     background: rgba($color-success, 0.1);
     color: color.adjust($color-success, $lightness: -10%);
     border: 1px solid rgba($color-success, 0.2);
+  }
+}
+
+// ── Recruiter Job Detail — Description Layout ────────────────
+.jd-detail {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: $space-6;
+  align-items: start;
+
+  @media (width <= 860px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: $space-5;
+  }
+
+  &__section {
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    padding: $space-5 $space-6;
+  }
+
+  &__heading {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-gray-500;
+    margin: 0 0 $space-4;
+  }
+
+  &__text {
+    font-size: $font-size-sm;
+    color: $color-gray-600;
+    line-height: $line-height-loose;
+    margin: 0;
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: $space-3;
+    font-size: $font-size-sm;
+    color: $color-gray-600;
+    line-height: $line-height-normal;
+
+    &::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: $radius-full;
+      background: $color-primary;
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+  }
+
+  &__sidebar {
+    position: sticky;
+    top: 5rem;
+
+    @media (width <= 860px) {
+      position: static;
+    }
+  }
+
+  &__sidebar-card {
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    overflow: hidden;
+  }
+
+  &__sidebar-section {
+    padding: $space-5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: $space-2;
+    border-bottom: 1px solid $color-gray-100;
+  }
+
+  &__sidebar-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: $radius-full;
+    border: 1px solid $color-gray-200;
+    overflow: hidden;
+  }
+
+  &__sidebar-company {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+  }
+
+  &__sidebar-industry {
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+  }
+
+  &__meta {
+    padding: $space-4 $space-5;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+  }
+
+  &__meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $space-3;
+
+    dt {
+      display: inline-flex;
+      align-items: center;
+      gap: $space-2;
+      font-size: $font-size-xs;
+      color: $color-gray-500;
+      font-weight: $font-weight-medium;
+      white-space: nowrap;
+
+      svg {
+        width: 14px;
+        height: 14px;
+        opacity: 0.6;
+      }
+    }
+
+    dd {
+      margin: 0;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      color: $color-gray-900;
+      text-align: right;
+    }
+  }
+
+  &__skeleton-section {
+    height: 8rem;
+    background: linear-gradient(
+      90deg,
+      $color-gray-100 0%,
+      $color-gray-200 50%,
+      $color-gray-100 100%
+    );
+    background-size: 200% 100%;
+    animation: jd-detail-shimmer 1.4s infinite;
+    border-radius: $radius-xl;
+  }
+
+  &__skeleton-sidebar {
+    height: 18rem;
+    background: linear-gradient(
+      90deg,
+      $color-gray-100 0%,
+      $color-gray-200 50%,
+      $color-gray-100 100%
+    );
+    background-size: 200% 100%;
+    animation: jd-detail-shimmer 1.4s infinite;
+    border-radius: $radius-xl;
+  }
+}
+
+.jd-detail-header-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__title {
+    width: min(50%, 22rem);
+    height: 1.6rem;
+    background: linear-gradient(
+      90deg,
+      $color-gray-100 0%,
+      $color-gray-200 50%,
+      $color-gray-100 100%
+    );
+    background-size: 200% 100%;
+    animation: jd-detail-shimmer 1.4s infinite;
+    border-radius: $radius-md;
+  }
+
+  &__subtitle {
+    width: min(70%, 30rem);
+    height: 0.875rem;
+    background: linear-gradient(
+      90deg,
+      $color-gray-100 0%,
+      $color-gray-200 50%,
+      $color-gray-100 100%
+    );
+    background-size: 200% 100%;
+    animation: jd-detail-shimmer 1.4s infinite;
+    border-radius: $radius-sm;
+  }
+}
+
+.jd-detail-tabs-skeleton {
+  display: flex;
+  gap: $space-4;
+  padding-bottom: $space-3;
+  border-bottom: 1px solid $color-gray-200;
+  margin-bottom: $space-5;
+
+  > div {
+    width: 5rem;
+    height: 0.875rem;
+    background: linear-gradient(
+      90deg,
+      $color-gray-100 0%,
+      $color-gray-200 50%,
+      $color-gray-100 100%
+    );
+    background-size: 200% 100%;
+    animation: jd-detail-shimmer 1.4s infinite;
+    border-radius: $radius-sm;
+  }
+}
+
+@keyframes jd-detail-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
   }
 }
 

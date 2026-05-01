@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 
 import { useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery } from '@/store/services/authApi'
@@ -16,6 +17,7 @@ const FloatingRecruiterChat = dynamic(
 )
 
 function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const { user } = useAppSelector((s) => s.auth)
   const [triggerGetMe, { isFetching }] = useLazyGetMeQuery()
   const [logout] = useLogoutMutation()
@@ -88,7 +90,13 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
                 {isFetching ? 'Checking…' : 'Refresh Status'}
               </button>
             )}
-            <button className="btn btn--danger btn--sm" onClick={() => logout()}>
+            <button
+              className="btn btn--danger btn--sm"
+              onClick={() => {
+                router.replace('/login')
+                void logout()
+              }}
+            >
               Log Out
             </button>
           </div>

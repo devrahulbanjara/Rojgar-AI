@@ -244,17 +244,17 @@ export default function EvaluationSchemaBuilder({ jobId }: Props) {
     <section className="dash-card">
       <div className="dash-card__header">
         <div>
-          <div className="dash-card__title">Evaluation Schema</div>
+          <div className="dash-card__title dash-card__title--sm">Evaluation Schema</div>
           <div className="dash-card__subtitle">
-            Define the scorecard once for this job, then reuse it across every interview.
+            Define the scorecard for this job, then reuse it across every interview.
           </div>
         </div>
       </div>
 
       <div className={`dash-card__body ${styles.cardBody}`}>
         <p className={styles.intro}>
-          Recruiters and the LLM will score candidates against the same schema. Weighted totals are
-          normalized to 100 so scores stay comparable even when criteria use different max values.
+          Recruiters and the LLM score candidates against the same criteria. Weighted totals are
+          normalized to 100 so scores stay comparable.
         </p>
 
         {isLoading ? (

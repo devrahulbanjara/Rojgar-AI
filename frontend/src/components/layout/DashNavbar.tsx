@@ -124,10 +124,10 @@ export default function DashNavbar({
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [logout] = useLogoutMutation()
 
-  async function handleLogout() {
+  function handleLogout() {
     setDropdownOpen(false)
-    await logout()
-    router.push('/login')
+    router.replace('/login')
+    void logout()
   }
 
   const { data: notificationsResponse, isFetching: notificationsLoading } =

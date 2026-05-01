@@ -24,7 +24,7 @@ from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStatus
 
-router = APIRouter()
+router = APIRouter(tags=["Webhooks"])
 
 
 class CalWebhookBody(BaseModel):
