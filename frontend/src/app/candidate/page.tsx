@@ -105,7 +105,8 @@ export default function UserDashboardPage() {
                     Open to Work {dashboardData?.is_open_to_work ? '| Active' : '| Off'}
                   </span>
                   <button
-                    className={`open-to-work-status__toggle ${isUpdating ? 'open-to-work-status__toggle--loading' : ''}`}
+                    className={`btn btn--secondary btn--sm${isUpdating ? ' btn--loading' : ''}`}
+                    aria-pressed={dashboardData?.is_open_to_work ?? false}
                     onClick={handleToggleOpenToWork}
                     disabled={isUpdating}
                   >

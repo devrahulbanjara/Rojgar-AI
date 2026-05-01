@@ -204,7 +204,7 @@ function CopyMarkdownButton({
   return (
     <button
       type="button"
-      className={`recruiter-chat-copy-btn${copied ? ' recruiter-chat-copy-btn--copied' : ''}`}
+      className="btn btn--icon btn--sm"
       onClick={() => void handleCopy()}
       aria-label={copied ? 'Copied' : 'Copy response'}
       title={copied ? 'Copied!' : 'Copy'}
@@ -912,7 +912,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
                     <div className="recruiter-chat-stream-error__body">{streamError}</div>
                     <button
                       type="button"
-                      className="recruiter-chat-stream-error__retry"
+                      className="btn btn--ghost btn--sm"
                       onClick={() => {
                         void handleRetry()
                       }}
@@ -944,9 +944,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
             />
             <button
               type={isSending ? 'button' : 'submit'}
-              className={`recruiter-chat-send-button${
-                isSending ? ' recruiter-chat-send-button--stop' : ''
-              }`}
+              className={`btn btn--icon ${isSending ? 'btn--danger' : 'btn--primary'}`}
               disabled={
                 isSending ? false : Boolean(pendingAction) || draftMessage.trim().length === 0
               }

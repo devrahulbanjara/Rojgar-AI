@@ -475,7 +475,7 @@ export default function RecruiterOutreachPage() {
   return (
     <div className="dash-content container container--app-shell">
       <div className={styles.page}>
-        <Link href="/recruiter/screening" className="jd-back">
+        <Link href="/recruiter/screening" className="btn btn--ghost btn--sm">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Screening
         </Link>
@@ -619,7 +619,7 @@ export default function RecruiterOutreachPage() {
                 <Link href="/recruiter/jobs" className="btn btn--primary btn--sm">
                   Back to jobs
                 </Link>
-                <Link href="/recruiter/screening" className="btn btn--outline btn--sm">
+                <Link href="/recruiter/screening" className="btn btn--secondary btn--sm">
                   Back to screening
                 </Link>
               </div>
@@ -838,7 +838,7 @@ export default function RecruiterOutreachPage() {
                                     {canGenerateSelectedDraft ? (
                                       <button
                                         type="button"
-                                        className="btn btn--outline btn--sm"
+                                        className="btn btn--secondary btn--sm"
                                         disabled={
                                           generatingApplicationId ===
                                           selectedCandidate.application.id
@@ -1020,7 +1020,7 @@ export default function RecruiterOutreachPage() {
                               <div className={styles.detailFooterActions}>
                                 <button
                                   type="button"
-                                  className="btn btn--outline btn--sm"
+                                  className="btn btn--secondary btn--sm"
                                   disabled={
                                     !canEditSelectedDraft ||
                                     savingDraftId === selectedDraft.draft_id ||

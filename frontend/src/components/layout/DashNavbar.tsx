@@ -224,7 +224,7 @@ export default function DashNavbar({
           <div ref={notificationsRef} className="dash-navbar__notifications">
             <button
               type="button"
-              className={`dash-navbar__icon-btn${notificationsOpen ? ' dash-navbar__icon-btn--active' : ''}`}
+              className={`btn btn--icon${notificationsOpen ? ' btn--icon-active' : ''}`}
               title="Notifications"
               aria-label="Open notifications"
               aria-expanded={notificationsOpen}
@@ -254,7 +254,7 @@ export default function DashNavbar({
                   </div>
                   <button
                     type="button"
-                    className="dash-navbar__notifications-close"
+                    className="btn btn--icon btn--sm"
                     aria-label="Close notifications"
                     onClick={() => setNotificationsOpen(false)}
                   >
@@ -320,7 +320,7 @@ export default function DashNavbar({
                   {notificationsCount > 0 ? (
                     <button
                       type="button"
-                      className="dash-navbar__mark-read-btn"
+                      className="btn btn--ghost btn--sm"
                       onClick={() => void markAllNotificationsRead()}
                     >
                       Mark all read
@@ -335,7 +335,7 @@ export default function DashNavbar({
           <div ref={dropdownRef} className="dash-navbar__profile">
             <button
               type="button"
-              className="dash-navbar__avatar-btn"
+              className="btn btn--ghost btn--sm"
               onClick={() => setDropdownOpen((v) => !v)}
               aria-label="Open profile menu"
               aria-expanded={dropdownOpen}
@@ -374,7 +374,7 @@ export default function DashNavbar({
 
                 <Link
                   href={activeRole === 'candidate' ? '/candidate/profile' : '/recruiter/profile'}
-                  className="dash-navbar__dropdown-item"
+                  className="btn btn--ghost btn--menu"
                   onClick={() => setDropdownOpen(false)}
                 >
                   <User size={15} />
@@ -384,7 +384,7 @@ export default function DashNavbar({
                 {activeRole === 'candidate' ? (
                   <Link
                     href="/candidate/resume"
-                    className="dash-navbar__dropdown-item"
+                    className="btn btn--ghost btn--menu"
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FileText size={15} />
@@ -394,7 +394,7 @@ export default function DashNavbar({
                   <>
                     <Link
                       href="/recruiter/settings"
-                      className="dash-navbar__dropdown-item"
+                      className="btn btn--ghost btn--menu"
                       onClick={() => setDropdownOpen(false)}
                     >
                       <Settings size={15} />
@@ -405,7 +405,7 @@ export default function DashNavbar({
                         <div className="dash-navbar__dropdown-divider" />
                         <Link
                           href="/recruiter/company/settings"
-                          className="dash-navbar__dropdown-item"
+                          className="btn btn--ghost btn--menu"
                           onClick={() => setDropdownOpen(false)}
                         >
                           <Building2 size={15} />
@@ -413,7 +413,7 @@ export default function DashNavbar({
                         </Link>
                         <Link
                           href="/recruiter/team?tab=audit"
-                          className="dash-navbar__dropdown-item"
+                          className="btn btn--ghost btn--menu"
                           onClick={() => setDropdownOpen(false)}
                         >
                           <ClipboardList size={15} />
@@ -428,7 +428,7 @@ export default function DashNavbar({
 
                 <button
                   type="button"
-                  className="dash-navbar__dropdown-item dash-navbar__dropdown-item--danger"
+                  className="btn btn--danger btn--menu"
                   onClick={() => void handleLogout()}
                 >
                   <LogOut size={15} />

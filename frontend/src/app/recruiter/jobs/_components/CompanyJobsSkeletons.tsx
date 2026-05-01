@@ -111,68 +111,64 @@ export function CompanyJobEditorSkeleton() {
 
 export function CompanyJobDetailSkeleton() {
   return (
-    <div className="jd-page jd-page--skeleton" aria-hidden="true">
-      {/* ── Hero Skeleton ── */}
+    <div className="jd-page jd-page--skeleton jd-detail-skeleton" aria-hidden="true">
       <div className="jd-hero jd-hero--skeleton">
         <div className="jd-hero__body">
           <div className="jd-hero__info">
-            <div
-              className="skeleton-block jd-hero__logo"
-              style={{ width: 68, height: 68, borderRadius: 16 }}
-            />
-            <div
-              className="skeleton-block"
-              style={{ width: 120, height: '0.875rem', marginBottom: '1rem' }}
-            />
-            <div
-              className="skeleton-block"
-              style={{ width: '60%', height: '2.5rem', marginBottom: '1rem' }}
-            />
-            <div
-              className="skeleton-block"
-              style={{ width: '40%', height: '1.25rem', marginBottom: '0.75rem' }}
-            />
-            <div
-              className="skeleton-block"
-              style={{ width: '30%', height: '1.25rem', marginBottom: '1.5rem' }}
-            />
-            <div className="jd-hero__chips">
-              <div className="skeleton-block" style={{ width: 80, height: 24, borderRadius: 12 }} />
-              <div
-                className="skeleton-block"
-                style={{ width: 100, height: 24, borderRadius: 12 }}
-              />
-              <div className="skeleton-block" style={{ width: 70, height: 24, borderRadius: 12 }} />
+            <div className="skeleton-block jd-detail-skeleton__logo" />
+            <div className="skeleton-block jd-detail-skeleton__date" />
+            <div className="skeleton-block jd-detail-skeleton__title" />
+            <div className="jd-detail-skeleton__meta-line">
+              <div className="skeleton-block jd-detail-skeleton__meta-icon" />
+              <div className="skeleton-block jd-detail-skeleton__company" />
+            </div>
+            <div className="jd-detail-skeleton__meta-line">
+              <div className="skeleton-block jd-detail-skeleton__meta-icon" />
+              <div className="skeleton-block jd-detail-skeleton__location" />
+            </div>
+            <div className="job-meta jd-hero__chips jd-detail-skeleton__chips">
+              <div className="skeleton-block jd-detail-skeleton__chip" />
+              <div className="skeleton-block jd-detail-skeleton__chip jd-detail-skeleton__chip--wide" />
+              <div className="skeleton-block jd-detail-skeleton__chip" />
+              <div className="skeleton-block jd-detail-skeleton__chip jd-detail-skeleton__chip--time" />
             </div>
           </div>
           <div className="jd-hero__apply-wrap">
-            <div className="skeleton-block" style={{ width: 140, height: 44, borderRadius: 22 }} />
-            <div className="skeleton-block" style={{ width: 90, height: 36, borderRadius: 18 }} />
+            <div className="skeleton-block jd-detail-skeleton__primary-action" />
+            <div className="skeleton-block jd-detail-skeleton__secondary-action" />
+            <div className="skeleton-block jd-detail-skeleton__secondary-action" />
           </div>
         </div>
       </div>
 
-      {/* ── Content Sections Skeletons ── */}
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="jd-section">
-          <div
-            className="skeleton-block"
-            style={{ width: 150, height: '1.5rem', marginBottom: '1rem' }}
-          />
-          <div
-            className="skeleton-block"
-            style={{ width: '100%', height: '1rem', marginBottom: '0.5rem' }}
-          />
-          <div
-            className="skeleton-block"
-            style={{ width: '90%', height: '1rem', marginBottom: '0.5rem' }}
-          />
-          <div
-            className="skeleton-block"
-            style={{ width: '95%', height: '1rem', marginBottom: '0.5rem' }}
-          />
-        </div>
-      ))}
+      <div className="jd-detail-skeleton__view-tabs">
+        <div className="skeleton-block jd-detail-skeleton__view-tab jd-detail-skeleton__view-tab--active" />
+        <div className="skeleton-block jd-detail-skeleton__view-tab" />
+      </div>
+
+      <div className="jd-detail-skeleton__pipeline-tabs">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="jd-detail-skeleton__pipeline-tab">
+            <div className="skeleton-block jd-detail-skeleton__stage-label" />
+            <div className="skeleton-block jd-detail-skeleton__stage-count" />
+          </div>
+        ))}
+      </div>
+
+      <div className="jd-detail-skeleton__pipeline-list">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="jd-detail-skeleton__candidate-row">
+            <div className="skeleton-block jd-detail-skeleton__avatar" />
+            <div className="jd-detail-skeleton__identity">
+              <div className="skeleton-block jd-detail-skeleton__name" />
+              <div className="skeleton-block jd-detail-skeleton__email" />
+            </div>
+            <div className="skeleton-block jd-detail-skeleton__score" />
+            <div className="skeleton-block jd-detail-skeleton__feedback" />
+            <div className="skeleton-block jd-detail-skeleton__applied" />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -291,7 +291,7 @@ export default function EvaluationSchemaSetupCard({
 
                   <button
                     type="button"
-                    className={`btn btn--outline btn--sm ${styles.removeButton}`}
+                    className={`btn btn--secondary btn--sm ${styles.removeButton}`}
                     onClick={() => removeCriterion(criterion.id)}
                     disabled={disabled || criteria.length === 1}
                   >
@@ -305,7 +305,7 @@ export default function EvaluationSchemaSetupCard({
             <div className={styles.actions}>
               <button
                 type="button"
-                className="btn btn--outline btn--sm"
+                className="btn btn--secondary btn--sm"
                 onClick={addCriterion}
                 disabled={disabled}
               >

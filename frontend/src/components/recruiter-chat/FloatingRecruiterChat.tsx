@@ -59,7 +59,7 @@ export default function FloatingRecruiterChat() {
     <>
       <button
         type="button"
-        className="floating-chat-fab"
+        className="btn btn--primary btn--icon btn--lg fab"
         onClick={handleToggle}
         aria-label={isOpen ? 'Close recruiter chat' : 'Open recruiter chat'}
       >
@@ -91,7 +91,7 @@ export default function FloatingRecruiterChat() {
             <div className="floating-chat-panel__header-right">
               <button
                 type="button"
-                className="floating-chat-panel__icon-btn"
+                className="btn btn--icon btn--sm"
                 onClick={() => {
                   void createSession()
                   setHistoryOpen(false)
@@ -103,7 +103,7 @@ export default function FloatingRecruiterChat() {
               </button>
               <button
                 type="button"
-                className="floating-chat-panel__icon-btn"
+                className="btn btn--icon btn--sm"
                 onClick={() => setHistoryOpen(!historyOpen)}
                 aria-label="Toggle history"
                 title="Session History"
@@ -112,7 +112,7 @@ export default function FloatingRecruiterChat() {
               </button>
               <button
                 type="button"
-                className="floating-chat-panel__icon-btn"
+                className="btn btn--icon btn--sm"
                 onClick={handleClose}
                 aria-label="Close chat"
               >

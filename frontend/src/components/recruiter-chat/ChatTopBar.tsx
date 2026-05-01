@@ -14,7 +14,7 @@ export function ChatTopBar({ isLoading = false, onMenuClick, title }: ChatTopBar
       <div className="recruiter-chat-topbar__left">
         <button
           type="button"
-          className="recruiter-chat-icon-btn recruiter-chat-icon-btn--mobile"
+          className="btn btn--icon btn--sm"
           aria-label="Open chat sessions"
           onClick={onMenuClick}
         >

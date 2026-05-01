@@ -5,6 +5,8 @@ import { type CSSProperties, useMemo } from 'react'
 import type { InterviewItem } from '@/store/services/interviewsApi'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+import { DateInput } from '@/components/common/Toolbar'
+
 import styles from './Calendar.module.scss'
 
 export type CalendarView = 'day' | '3day' | 'week'
@@ -33,6 +35,20 @@ function addDays(date: Date, n: number): Date {
   const next = new Date(date)
   next.setDate(next.getDate() + n)
   return next
+}
+
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function parseDateInputValue(value: string): Date | null {
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return null
+  const parsed = new Date(year, month - 1, day)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -98,6 +114,7 @@ export interface CalendarProps {
   view: CalendarView
   anchorDate: Date
   interviews: InterviewItem[]
+  isLoading?: boolean
   onChangeView: (next: CalendarView) => void
   onChangeAnchor: (next: Date) => void
   onSelectInterview: (interview: InterviewItem) => void
@@ -107,6 +124,7 @@ export default function Calendar({
   view,
   anchorDate,
   interviews,
+  isLoading = false,
   onChangeView,
   onChangeAnchor,
   onSelectInterview,
@@ -141,6 +159,15 @@ export default function Calendar({
   }
 
   const totalGridHeight = (HOUR_END - HOUR_START) * HOUR_PX
+  const selectedDateValue = toDateInputValue(anchorDate)
+  const skeletonBlocks = useMemo(
+    () => [
+      { startHour: 9, startMinute: 0, durationMinutes: 60, width: '82%' },
+      { startHour: 12, startMinute: 30, durationMinutes: 45, width: '64%' },
+      { startHour: 15, startMinute: 0, durationMinutes: 75, width: '74%' },
+    ],
+    [],
+  )
 
   return (
     <div className={styles.shell}>
@@ -171,6 +198,14 @@ export default function Calendar({
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>
+        <DateInput
+          value={selectedDateValue}
+          onChange={(value) => {
+            const next = parseDateInputValue(value)
+            if (next) onChangeAnchor(next)
+          }}
+          ariaLabel="Select calendar date"
+        />
         <div className={styles.viewToggle} role="tablist" aria-label="Calendar view">
           {(['day', '3day', 'week'] as CalendarView[]).map((option) => {
             const label = option === 'day' ? 'Day' : option === '3day' ? '3-Day' : 'Week'
@@ -224,7 +259,7 @@ export default function Calendar({
           </div>
 
           <div className={styles.gridArea} style={dayColumnsStyle}>
-            {days.map((day) => {
+            {days.map((day, dayIndex) => {
               const key = day.toISOString()
               const dayInterviews = interviewsByDay.get(key) ?? []
               return (
@@ -240,35 +275,64 @@ export default function Calendar({
                       style={{ top: `${(hour - HOUR_START) * HOUR_PX}px` }}
                     />
                   ))}
-                  {dayInterviews.map((interview) => {
-                    const { topPx, heightPx } = placement(interview.start_time, interview.end_time)
-                    const isCompleted = interview.application_status === 'interview_completed'
-                    const blockClass = isCompleted ? styles.blockCompleted : styles.block
-                    const showName = heightPx >= BLOCK_NAME_PX
-                    const showJob = heightPx >= BLOCK_JOB_PX
-                    return (
-                      <button
-                        key={interview.id}
-                        type="button"
-                        className={`${styles.block} ${blockClass}`}
-                        style={{
-                          top: `${topPx}px`,
-                          height: `${heightPx}px`,
-                        }}
-                        onClick={() => onSelectInterview(interview)}
-                      >
-                        <span className={styles.blockTime}>
-                          {fmtTime(interview.start_time)} – {fmtTime(interview.end_time)}
-                        </span>
-                        {showName ? (
-                          <span className={styles.blockName}>{interview.candidate_name}</span>
-                        ) : null}
-                        {showJob ? (
-                          <span className={styles.blockJob}>{interview.job_title}</span>
-                        ) : null}
-                      </button>
-                    )
-                  })}
+                  {isLoading
+                    ? skeletonBlocks
+                        .slice(0, Math.max(1, Math.min(3, 4 - dayIndex)))
+                        .map((block, index) => {
+                          const topPx =
+                            ((block.startHour * 60 + block.startMinute - HOUR_START * 60) / 60) *
+                            HOUR_PX
+                          const heightPx = (block.durationMinutes / 60) * HOUR_PX
+                          return (
+                            <div
+                              key={`${key}-skeleton-${index}`}
+                              className={styles.blockSkeleton}
+                              style={{
+                                top: `${topPx}px`,
+                                height: `${heightPx}px`,
+                                width: block.width,
+                              }}
+                            >
+                              <span className={styles.blockSkeletonTime} />
+                              <span className={styles.blockSkeletonName} />
+                              {heightPx >= BLOCK_JOB_PX ? (
+                                <span className={styles.blockSkeletonJob} />
+                              ) : null}
+                            </div>
+                          )
+                        })
+                    : dayInterviews.map((interview) => {
+                        const { topPx, heightPx } = placement(
+                          interview.start_time,
+                          interview.end_time,
+                        )
+                        const isCompleted = interview.application_status === 'interview_completed'
+                        const blockClass = isCompleted ? styles.blockCompleted : styles.block
+                        const showName = heightPx >= BLOCK_NAME_PX
+                        const showJob = heightPx >= BLOCK_JOB_PX
+                        return (
+                          <button
+                            key={interview.id}
+                            type="button"
+                            className={`${styles.block} ${blockClass}`}
+                            style={{
+                              top: `${topPx}px`,
+                              height: `${heightPx}px`,
+                            }}
+                            onClick={() => onSelectInterview(interview)}
+                          >
+                            <span className={styles.blockTime}>
+                              {fmtTime(interview.start_time)} – {fmtTime(interview.end_time)}
+                            </span>
+                            {showName ? (
+                              <span className={styles.blockName}>{interview.candidate_name}</span>
+                            ) : null}
+                            {showJob ? (
+                              <span className={styles.blockJob}>{interview.job_title}</span>
+                            ) : null}
+                          </button>
+                        )
+                      })}
                 </div>
               )
             })}
@@ -276,7 +340,7 @@ export default function Calendar({
         </div>
       </div>
 
-      {interviews.length === 0 ? (
+      {!isLoading && interviews.length === 0 ? (
         <div className={styles.empty}>No interviews booked in this range.</div>
       ) : null}
     </div>

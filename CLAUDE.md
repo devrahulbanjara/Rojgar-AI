@@ -80,6 +80,49 @@ Always use tokens from `frontend/src/styles/_variables.scss`.
 Candidate UI should feel calm and guided.
 Recruiter UI should feel denser and more operational.
 
+## Buttons (single source of truth)
+
+All button styles live in `frontend/src/styles/_buttons.scss`. Do NOT define button styles anywhere else. Do NOT use inline `style={{}}` on button elements.
+
+**Variants** — pick one:
+
+- `btn btn--primary` — main CTA. Filled brand blue (`#2563eb`), white text. Save, Submit, Create Job, Apply, Sign Up, Invite Recruiter, Approve, Send.
+- `btn btn--secondary` — alt action / lower-priority CTA. White bg, brand-blue border + text. Browse Jobs, View All, Re-approve, Edit, secondary alongside primary.
+- `btn btn--ghost` — text-style. Transparent bg, muted-grey text. Cancel, Dismiss, Try again, Back, inline toggles, tab switchers.
+- `btn btn--danger` — destructive. White bg, red border + text (`#dc2626`). Remove, Delete, Reject, Decline. Never filled red.
+- `btn btn--icon` — icon-only square. 36×36 default, white bg, light-grey border. Modal close (X), navbar icons, chat icons, bookmark, kebab.
+
+**Sizes** — combine with any variant:
+
+- `btn--sm` — 32px (compact rows, dense toolbars)
+- (default) — 40px
+- `btn--lg` — 48px (hero CTAs, auth submit)
+
+**Helpers / states:**
+
+- `btn--full` — width 100%
+- `btn--loading` — adds spinner via `::after`; pairs with `disabled`
+- `btn--menu` — left-aligned full-width menu item (use inside dropdowns: `btn btn--ghost btn--menu`)
+- `[aria-pressed='true']` — toggled state on tab/segment buttons (light-blue tint)
+- `.list-row` — clickable list-item button (audit rows, application list rows). Not a `.btn`.
+- `.btn.fab` — fixed bottom-right floating action button positioning helper.
+
+**Forbidden** — these are removed; do NOT reintroduce:
+`btn--md`, `btn--outline`, `btn--xs`, `btn--xl`, `btn--pill`, `btn--accent`, `btn--success`, `btn--warning`, `btn--error`, `btn--dark`, `btn--icon-left`, `btn--icon-right`, `auth__submit`, `auth__social-btn`, `auth__back-btn`, `auth__inline-link`, `auth__pw-toggle`, `auth__intent-card`, `modal__close`, `dash-navbar__icon-btn`, `recruiter-chat-*-btn`, `floating-chat-panel__icon-btn`, `homepage__search-btn`, `public-jobs__search-btn`, `jd-hero__apply-btn`, `jd-back`, `rec-card__startBtn`, `rec-card__actionBtn--*`, `recruiters-remove-btn`, custom `<SpinnerIcon/>` / `<ButtonSpinner/>` inside buttons.
+
+**Legacy mapping** (for reference if encountering old patterns):
+
+- `btn--outline btn--primary` → `btn--secondary`
+- `btn--outline btn--danger` → `btn--danger`
+- `btn--ghost btn--primary` → `btn--ghost`
+- `btn--xs` → `btn--sm`
+- `btn--xl` → `btn--lg`
+- `auth__submit` → `btn btn--primary btn--lg btn--full`
+- `auth__social-btn` → `btn btn--secondary btn--full`
+- `auth__inline-link` → `btn btn--ghost btn--sm`
+- `modal__close` → `btn btn--icon btn--sm`
+- `<ButtonSpinner/>`/`<SpinnerIcon/>` → add `btn--loading` class
+
 ## Product Rules
 
 Status rules must hold:

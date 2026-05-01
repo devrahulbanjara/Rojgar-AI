@@ -162,7 +162,7 @@ function RecruiterRowEditor({
         </button>
         <button
           type="button"
-          className="btn btn--outline btn--sm"
+          className="btn btn--secondary btn--sm"
           onClick={onCancel}
           disabled={isSaving}
         >
@@ -206,7 +206,7 @@ function RecruiterRowView({
         <div className={styles.actions}>
           <button
             type="button"
-            className="btn btn--outline btn--sm"
+            className="btn btn--secondary btn--sm"
             onClick={onEdit}
             aria-label="Edit recruiter row"
           >
@@ -215,7 +215,7 @@ function RecruiterRowView({
           </button>
           <button
             type="button"
-            className="btn btn--outline btn--sm"
+            className="btn btn--secondary btn--sm"
             onClick={onDelete}
             disabled={isDeleting}
             aria-label="Delete recruiter row"
@@ -452,7 +452,7 @@ function LlmCard({
       <div className={styles.actions}>
         <button
           type="button"
-          className="btn btn--outline btn--sm"
+          className="btn btn--secondary btn--sm"
           onClick={() => void handleRunLlm()}
           disabled={isRunningLlm}
         >

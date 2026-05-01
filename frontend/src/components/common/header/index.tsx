@@ -157,23 +157,26 @@ export default function Header() {
 
           {/* Desktop Actions */}
           <div className="header__actions">
-            <Link href="/login" className="btn btn--md btn--outline">
+            <Link href="/login" className="btn btn--secondary">
               Login
             </Link>
-            <Link href="/signup" className="btn btn--md btn--primary">
+            <Link href="/signup" className="btn btn--primary">
               Sign Up
             </Link>
           </div>
 
           {/* Hamburger */}
           <button
-            className={`header__hamburger${isMenuOpen ? ' header__hamburger--open' : ''}`}
+            className="btn btn--icon header__hamburger"
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
             onClick={isMenuOpen ? closeMenu : openMenu}
           >
-            <span className="header__hamburger-line" />
-            <span className="header__hamburger-line" />
-            <span className="header__hamburger-line" />
+            <span className={`hamburger${isMenuOpen ? ' hamburger--open' : ''}`}>
+              <span />
+              <span />
+              <span />
+            </span>
           </button>
         </div>
       </nav>
@@ -188,9 +191,15 @@ export default function Header() {
           <Link href="/" className="header__drawer-logo" onClick={closeMenu}>
             <Image src="/logo/logo.png" alt="ConvexHire Logo" width={110} height={24} />
           </Link>
-          <button className="header__drawer-close" onClick={closeMenu} aria-label="Close menu">
-            <span />
-            <span />
+          <button className="btn btn--icon" onClick={closeMenu} aria-label="Close menu">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path
+                d="M1 1l12 12M13 1L1 13"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
         </div>
 
@@ -209,7 +218,7 @@ export default function Header() {
 
         {/* Drawer actions */}
         <div className="header__drawer-actions">
-          <Link href="/login" className="btn btn--outline" onClick={closeMenu}>
+          <Link href="/login" className="btn btn--secondary" onClick={closeMenu}>
             Login
           </Link>
           <Link href="/signup" className="btn btn--primary" onClick={closeMenu}>

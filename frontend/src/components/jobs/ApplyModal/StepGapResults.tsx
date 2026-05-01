@@ -173,7 +173,7 @@ export default function StepGapResults({
           Back
         </button>
         <div className={styles.applyModal__ctaActions}>
-          <button className="btn btn--outline" onClick={onApplyAnyway} type="button">
+          <button className="btn btn--secondary" onClick={onApplyAnyway} type="button">
             Apply with current resume
           </button>
           <button className="btn btn--primary" onClick={onAutoPatch} type="button">

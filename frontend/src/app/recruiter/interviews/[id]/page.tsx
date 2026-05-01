@@ -29,7 +29,7 @@ export default function RecruiterInterviewRoutePage() {
   if (isLoading || interview) {
     return (
       <div className="dash-content container container--app-shell">
-        <Link href="/recruiter/interviews" className="jd-back">
+        <Link href="/recruiter/interviews" className="btn btn--ghost btn--sm">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Interviews
         </Link>
@@ -49,7 +49,7 @@ export default function RecruiterInterviewRoutePage() {
   if (isError || !interview) {
     return (
       <div className="dash-content container container--app-shell">
-        <Link href="/recruiter/interviews" className="jd-back">
+        <Link href="/recruiter/interviews" className="btn btn--ghost btn--sm">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Interviews
         </Link>
@@ -63,7 +63,7 @@ export default function RecruiterInterviewRoutePage() {
             <p className="cell-muted">
               This booking could not be matched to a candidate application.
             </p>
-            <button className="btn btn--outline btn--sm" onClick={() => void refetch()}>
+            <button className="btn btn--secondary btn--sm" onClick={() => void refetch()}>
               Try again
             </button>
           </div>

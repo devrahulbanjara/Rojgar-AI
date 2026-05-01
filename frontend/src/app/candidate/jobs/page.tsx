@@ -158,7 +158,9 @@ export default function UserJobsPage() {
               <div className="jobs-filter-dropdown" ref={workTypeRef}>
                 <button
                   type="button"
-                  className={`jobs-filter-dropdown__trigger${workTypeOpen ? ' jobs-filter-dropdown__trigger--open' : ''}${locationTypeDraft !== null ? ' jobs-filter-dropdown__trigger--active' : ''}`}
+                  className="btn btn--secondary btn--sm btn--full"
+                  aria-pressed={locationTypeDraft !== null}
+                  aria-expanded={workTypeOpen}
                   onClick={() => setWorkTypeOpen((v) => !v)}
                 >
                   <span>
@@ -175,7 +177,8 @@ export default function UserJobsPage() {
                       <button
                         key={String(t)}
                         type="button"
-                        className={`jobs-filter-dropdown__option${locationTypeDraft === t ? ' jobs-filter-dropdown__option--active' : ''}`}
+                        className="btn btn--ghost btn--menu"
+                        aria-pressed={locationTypeDraft === t}
                         onClick={() => {
                           setLocationTypeDraft(t)
                           setWorkTypeOpen(false)
@@ -213,7 +216,7 @@ export default function UserJobsPage() {
                 {locationInput && (
                   <button
                     type="button"
-                    className="jobs-sidebar-search__btn"
+                    className="btn btn--icon btn--sm"
                     aria-label="Clear location"
                     onClick={() => setLocationInput('')}
                   >
@@ -281,7 +284,7 @@ export default function UserJobsPage() {
                 {searchInput && (
                   <button
                     type="button"
-                    className="dash-page-toolbar__clear"
+                    className="btn btn--icon btn--sm dash-page-toolbar__clear"
                     onClick={handleClearSearch}
                     aria-label="Clear search"
                   >
@@ -289,7 +292,7 @@ export default function UserJobsPage() {
                   </button>
                 )}
               </div>
-              <button type="submit" className="btn btn--primary" style={{ minHeight: '52px' }}>
+              <button type="submit" className="btn btn--primary">
                 Search
               </button>
             </div>
@@ -367,7 +370,7 @@ export default function UserJobsPage() {
                               </span>
                             )}
                             <button
-                              className="job-card__bookmark"
+                              className="btn btn--icon btn--sm"
                               title="Save job"
                               onClick={(e) => e.stopPropagation()}
                             >

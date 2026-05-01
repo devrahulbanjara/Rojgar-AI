@@ -434,7 +434,7 @@ export default function RecruiterJobAIDraftPage() {
 
   return (
     <div className="dash-content container container--app-shell">
-      <Link href="/recruiter/jobs" className="jd-back">
+      <Link href="/recruiter/jobs" className="btn btn--ghost btn--sm">
         <ArrowLeft size={16} aria-hidden="true" />
         Back to Jobs
       </Link>
@@ -491,7 +491,7 @@ export default function RecruiterJobAIDraftPage() {
       <div className="job-ai-toolbar__actions job-ai-footer-actions">
         <button
           type="button"
-          className="btn btn--outline"
+          className="btn btn--secondary"
           disabled={!pageState.draft || isBusy}
           onClick={() => void handleSaveProgress()}
         >
@@ -500,7 +500,7 @@ export default function RecruiterJobAIDraftPage() {
         </button>
         <button
           type="button"
-          className="btn btn--outline"
+          className="btn btn--secondary"
           disabled={!pageState.draftId || isBusy}
           onClick={() => void handleApprove()}
         >

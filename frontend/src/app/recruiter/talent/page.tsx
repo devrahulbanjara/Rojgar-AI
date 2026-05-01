@@ -166,7 +166,7 @@ export default function RecruiterTalentPage() {
         <div className={styles.empty}>
           <UserRound size={28} aria-hidden="true" />
           <p>Failed to load candidates.</p>
-          <button className="btn btn--outline btn--sm" onClick={() => void refetch()}>
+          <button className="btn btn--secondary btn--sm" onClick={() => void refetch()}>
             Try again
           </button>
         </div>

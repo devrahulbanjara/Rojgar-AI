@@ -133,7 +133,7 @@ export default function StepShareProfile({
       ) : null}
 
       <div className={styles.applyModal__stepActions}>
-        <button className="btn btn--outline btn--primary" onClick={onBack} type="button">
+        <button className="btn btn--secondary" onClick={onBack} type="button">
           Back
         </button>
         <button className="btn btn--primary" disabled={submitting} onClick={onSubmit} type="button">

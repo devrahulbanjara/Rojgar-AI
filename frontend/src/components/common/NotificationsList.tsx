@@ -36,7 +36,7 @@ export default function NotificationsList({ emptyText }: { emptyText: string }) 
         {unreadCount > 0 ? (
           <button
             type="button"
-            className="auth__inline-link"
+            className="btn btn--ghost btn--sm"
             onClick={() => void markAllRead()}
             disabled={isMarkingAllRead}
           >
@@ -54,7 +54,7 @@ export default function NotificationsList({ emptyText }: { emptyText: string }) 
             </p>
             <button
               type="button"
-              className="btn btn--outline btn--sm"
+              className="btn btn--secondary btn--sm"
               onClick={() => void refetch()}
             >
               {isFetching ? 'Retrying...' : 'Try again'}

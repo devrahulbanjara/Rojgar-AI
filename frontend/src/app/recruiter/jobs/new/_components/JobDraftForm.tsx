@@ -78,7 +78,8 @@ function FieldChrome({
           <label className="job-ai-label">{label}</label>
           <button
             type="button"
-            className={`job-ai-field__lock-btn${isLocked ? ' job-ai-field__lock-btn--active' : ''}`}
+            className="btn btn--icon btn--sm"
+            aria-pressed={isLocked}
             disabled={disabled}
             onClick={() => onToggleLock(fieldKeys[0])}
             aria-label={isLocked ? `Unlock ${label}` : `Lock ${label}`}
@@ -144,7 +145,7 @@ function FieldChrome({
           <div className="job-ai-field__actions">
             <button
               type="button"
-              className="btn btn--outline btn--sm"
+              className="btn btn--secondary btn--sm"
               disabled={disabled || isLocked || !instruction.trim()}
               onClick={() => {
                 onRequestUpdate(fieldKeys, instruction.trim())
@@ -205,7 +206,7 @@ function ListEditor({
               />
               <button
                 type="button"
-                className="job-ai-list-editor__remove"
+                className="btn btn--icon btn--sm"
                 onClick={() => removeItem(index)}
                 disabled={disabled}
                 aria-label={`Remove item ${index + 1}`}
@@ -227,7 +228,7 @@ function ListEditor({
         />
         <button
           type="button"
-          className="job-ai-list-editor__add"
+          className="btn btn--secondary btn--sm"
           onClick={addItem}
           disabled={disabled}
         >

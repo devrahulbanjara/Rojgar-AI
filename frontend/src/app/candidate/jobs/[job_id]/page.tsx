@@ -207,7 +207,7 @@ export default function JobDetailPage() {
   if (isError || !job) {
     return (
       <div className="dash-content container dash-content--pad-top">
-        <Link href="/candidate/jobs" className="jd-back">
+        <Link href="/candidate/jobs" className="btn btn--ghost btn--sm">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Jobs
         </Link>
@@ -228,7 +228,7 @@ export default function JobDetailPage() {
   return (
     <>
       <div className="dash-content container dash-content--pad-top">
-        <Link href="/candidate/jobs" className="jd-back">
+        <Link href="/candidate/jobs" className="btn btn--ghost btn--sm">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Jobs
         </Link>
@@ -295,7 +295,7 @@ export default function JobDetailPage() {
 
               <div className="jd-hero__apply-wrap">
                 <button
-                  className="jd-hero__apply-btn"
+                  className="btn btn--primary btn--lg"
                   onClick={() => {
                     if (!hasApplied) {
                       setApplying(true)
@@ -321,19 +321,7 @@ export default function JobDetailPage() {
                   </span>
                 </button>
                 <button
-                  style={{
-                    background: 'none',
-                    border: '1px solid #e4e4e7',
-                    borderRadius: '9999px',
-                    padding: '0.5rem 1rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: '#6b7280',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                  }}
+                  className="btn btn--secondary btn--sm"
                   onClick={() => {
                     navigator.clipboard
                       .writeText(window.location.href)
@@ -525,7 +513,7 @@ export default function JobDetailPage() {
                   <div className="dash-card__title">Recommended for You</div>
                   <div className="dash-card__subtitle">Based on your profile and skills</div>
                 </div>
-                <Link href="/candidate/jobs" className="btn btn--outline btn--sm">
+                <Link href="/candidate/jobs" className="btn btn--secondary btn--sm">
                   Browse All Jobs
                 </Link>
               </div>

@@ -151,6 +151,15 @@
     position: relative;
     display: flex;
     align-items: center;
+
+    > .btn--icon {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-color: transparent;
+      background: transparent;
+    }
   }
 
   // ── Input ────────────────────────────────────────────────
@@ -207,35 +216,6 @@
     margin-top: $space-1;
   }
 
-  // ── Password toggle button ────────────────────────────────
-  &__pw-toggle {
-    position: absolute;
-    right: $space-3;
-    top: 50%;
-    transform: translateY(-50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: $space-1;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: $color-gray-400;
-    @include transition(color, $transition-fast);
-
-    line-height: 1;
-
-    &:hover {
-      color: $color-gray-700;
-    }
-
-    svg {
-      width: 18px;
-      height: 18px;
-      display: block;
-    }
-  }
-
   // ── Field row (e.g., remember me + forgot password) ───────
   &__field-row {
     display: flex;
@@ -280,66 +260,6 @@
     }
   }
 
-  // ── Submit button (full-width, fill animation) ────────────
-  &__submit {
-    position: relative;
-    overflow: hidden;
-    z-index: 0;
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: $space-2;
-    padding: $space-3 $space-8;
-    min-height: 3rem;
-    font-family: $font-body;
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
-    color: $color-white;
-    background-color: $color-primary;
-    border: 2px solid $color-primary;
-    border-radius: $radius-full;
-    cursor: pointer;
-    @include transition(color border-color, $transition-base);
-
-    // Fill layer — collapses upward when not hovered
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-color: color.adjust($color-primary, $lightness: -12%);
-      transform: scaleY(0);
-      transform-origin: top;
-      transition: transform $transition-base;
-      z-index: -1;
-    }
-
-    &:hover:not(:disabled) {
-      border-color: color.adjust($color-primary, $lightness: -12%);
-
-      &::before {
-        transform: scaleY(1);
-        transform-origin: bottom;
-      }
-    }
-
-    &:active:not(:disabled) {
-      &::before {
-        background-color: color.adjust($color-primary, $lightness: -18%);
-      }
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    &--loading {
-      cursor: wait;
-      pointer-events: none;
-    }
-  }
-
   // ── Divider ───────────────────────────────────────────────
   &__divider {
     display: grid;
@@ -363,57 +283,6 @@
       white-space: nowrap;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-    }
-  }
-
-  // ── Social buttons ────────────────────────────────────────
-  &__social-btn {
-    position: relative;
-    overflow: hidden;
-    z-index: 0;
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: $space-3;
-    padding: $space-3 $space-4;
-    min-height: 2.75rem;
-    font-family: $font-body;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    color: $color-gray-700;
-    background-color: $color-white;
-    border: 1.5px solid $color-gray-200;
-    border-radius: $radius-full;
-    cursor: pointer;
-    @include transition(all, $transition-fast);
-
-    // Fill layer — slides up on hover
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-color: $color-gray-100;
-      transform: scaleY(0);
-      transform-origin: top;
-      transition: transform $transition-base;
-      z-index: -1;
-    }
-
-    &:hover:not(:disabled) {
-      border-color: $color-gray-300;
-      color: $color-gray-900;
-
-      &::before {
-        transform: scaleY(1);
-        transform-origin: bottom;
-      }
-    }
-
-    svg {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
     }
   }
 
@@ -707,29 +576,6 @@
     }
   }
 
-  &__back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: $space-2;
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $color-text-muted;
-    cursor: pointer;
-    @include transition(color, $transition-fast);
-
-    &:hover {
-      color: $color-gray-900;
-    }
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
   // ── Form-level error alert ────────────────────────────────
   &__alert {
     display: flex;
@@ -763,35 +609,6 @@
     display: flex;
     flex-direction: column;
     gap: $space-4;
-  }
-
-  &__intent-card {
-    display: flex;
-    align-items: center;
-    gap: $space-4;
-    width: 100%;
-    padding: $space-5 $space-6;
-    background-color: $color-white;
-    border: 1.5px solid $color-gray-200;
-    border-radius: $radius-xl;
-    cursor: pointer;
-    text-align: left;
-    @include transition(all, $transition-base);
-
-    &:hover:not(:disabled) {
-      border-color: $color-primary;
-      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
-      transform: translateY(-1px);
-    }
-
-    &:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
   }
 
   &__intent-icon {
@@ -855,11 +672,6 @@
     line-height: 1;
     flex-shrink: 0;
     @include transition(transform color, $transition-fast);
-
-    .auth__intent-card:hover & {
-      color: $color-primary;
-      transform: translateX(3px);
-    }
   }
 
   // ── Two-column field grid ─────────────────────────────────────────────
@@ -990,23 +802,6 @@
     margin: 0;
   }
 
-  // ── Inline link (resend, etc.) ────────────────────────────────────────
-  &__inline-link {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: inherit;
-    font-weight: $font-weight-semibold;
-    color: $color-primary;
-    cursor: pointer;
-    @include transition(opacity, $transition-fast);
-
-    &:hover {
-      opacity: 0.75;
-      text-decoration: underline;
-    }
-  }
-
   // ── Loading note ──────────────────────────────────────────────────────
   &__loading-note {
     text-align: center;
@@ -1015,15 +810,6 @@
     margin-top: $space-4;
     padding-top: $space-4;
     border-top: 1px solid $color-gray-100;
-  }
-
-  // ── Submit as link (for success screens) ─────────────────────────────
-  &__submit--link {
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: $space-2;
   }
 
   // ── Email not verified block (inside login card) ──────────────────────

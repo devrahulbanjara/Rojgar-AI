@@ -746,7 +746,7 @@ export default function ProfilePage() {
         <div className="dash-page-header__actions">
           <button
             type="button"
-            className="btn btn--outline btn--sm"
+            className="btn btn--secondary btn--sm"
             onClick={() => setShowResumeImportModal(true)}
           >
             <FileUp size={14} aria-hidden="true" />
@@ -796,7 +796,7 @@ export default function ProfilePage() {
                 />
                 <div className="profile-media-actions" aria-label="Profile picture actions">
                   <button
-                    className="btn btn--outline btn--sm"
+                    className="btn btn--secondary btn--sm"
                     disabled={isAvatarBusy}
                     onClick={() => avatarInputRef.current?.click()}
                     title={`PNG, JPG, WEBP, GIF up to ${formatBytes(5 * 1024 * 1024)}`}
@@ -855,7 +855,8 @@ export default function ProfilePage() {
                   Open to Work · {form.is_open_to_work ? 'Active' : 'Off'}
                 </span>
                 <button
-                  className={`open-to-work-status__toggle ${isSaving ? 'open-to-work-status__toggle--loading' : ''}`}
+                  className={`btn btn--secondary btn--sm${isSaving ? ' btn--loading' : ''}`}
+                  aria-pressed={form.is_open_to_work}
                   onClick={() => {
                     const next = !form.is_open_to_work
                     const nextForm = { ...form, is_open_to_work: next }
@@ -904,7 +905,7 @@ export default function ProfilePage() {
                     >
                       {role}
                       <button
-                        className="skill-item__remove"
+                        className="btn btn--icon btn--sm"
                         disabled={isSaving}
                         onClick={() => removeTargetRole(role)}
                         aria-label={`Remove ${role}`}
@@ -968,24 +969,7 @@ export default function ProfilePage() {
                             key={role}
                             type="button"
                             onClick={() => addTargetRole(role)}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '8px 12px',
-                              background: 'transparent',
-                              border: 'none',
-                              borderBottom: '1px solid var(--border-color)',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem',
-                              color: 'var(--text-color)',
-                              transition: 'background-color 0.2s',
-                            }}
-                            onMouseOver={(e) =>
-                              (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')
-                            }
-                            onMouseOut={(e) =>
-                              (e.currentTarget.style.backgroundColor = 'transparent')
-                            }
+                            className="btn btn--secondary btn--sm"
                           >
                             {role}
                           </button>
@@ -997,24 +981,7 @@ export default function ProfilePage() {
                             <button
                               type="button"
                               onClick={() => addTargetRole(targetRoleInput)}
-                              style={{
-                                width: '100%',
-                                textAlign: 'left',
-                                padding: '8px 12px',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '0.75rem',
-                                color: 'var(--primary-color)',
-                                fontWeight: 600,
-                                transition: 'background-color 0.2s',
-                              }}
-                              onMouseOver={(e) =>
-                                (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')
-                              }
-                              onMouseOut={(e) =>
-                                (e.currentTarget.style.backgroundColor = 'transparent')
-                              }
+                              className="btn btn--secondary btn--sm"
                             >
                               + Add &quot;{targetRoleInput.trim()}&quot;
                             </button>
@@ -1154,7 +1121,11 @@ export default function ProfilePage() {
                   style={{ '--stagger-index': 2 } as React.CSSProperties}
                 >
                   <div className="profile-section__title">Work Experience</div>
-                  <button className="btn btn--outline btn--sm" onClick={addExp} disabled={isSaving}>
+                  <button
+                    className="btn btn--secondary btn--sm"
+                    onClick={addExp}
+                    disabled={isSaving}
+                  >
                     + Add
                   </button>
                 </div>
@@ -1307,7 +1278,11 @@ export default function ProfilePage() {
                   style={{ '--stagger-index': 2 } as React.CSSProperties}
                 >
                   <div className="profile-section__title">Education</div>
-                  <button className="btn btn--outline btn--sm" onClick={addEdu} disabled={isSaving}>
+                  <button
+                    className="btn btn--secondary btn--sm"
+                    onClick={addEdu}
+                    disabled={isSaving}
+                  >
                     + Add
                   </button>
                 </div>
@@ -1458,7 +1433,7 @@ export default function ProfilePage() {
                       <div className="skill-item" key={sk}>
                         {sk}
                         <button
-                          className="skill-item__remove"
+                          className="btn btn--icon btn--sm"
                           disabled={isSaving}
                           onClick={() => removeSkill(sk)}
                           aria-label={`Remove ${sk}`}
@@ -1507,7 +1482,7 @@ export default function ProfilePage() {
                 Crop Photo
               </div>
               <button
-                className="modal__close"
+                className="btn btn--icon btn--sm"
                 disabled={isSubmittingCroppedAvatar}
                 onClick={closeAvatarCropModal}
                 type="button"
@@ -1561,7 +1536,7 @@ export default function ProfilePage() {
             </div>
             <div className="modal__footer">
               <button
-                className="btn btn--outline btn--primary"
+                className="btn btn--secondary"
                 disabled={isSubmittingCroppedAvatar}
                 onClick={closeAvatarCropModal}
                 type="button"
@@ -1603,7 +1578,7 @@ export default function ProfilePage() {
             </div>
             <button
               type="button"
-              className="btn btn--outline btn--danger btn--sm"
+              className="btn btn--danger btn--sm"
               onClick={() => setShowDeleteModal(true)}
             >
               Delete Account
@@ -1626,7 +1601,7 @@ export default function ProfilePage() {
               </h3>
               <button
                 type="button"
-                className="modal__close"
+                className="btn btn--icon btn--sm"
                 onClick={() => {
                   setShowDeleteModal(false)
                   setDeleteConfirmText('')

@@ -29,7 +29,7 @@ import {
 
 import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import { SearchInput } from '@/components/common/Toolbar'
+import { FilterSelect, SearchInput } from '@/components/common/Toolbar'
 
 import { ScreeningControlsSkeleton, ScreeningTableSkeleton } from './_components/ScreeningSkeletons'
 import styles from './screening.module.css'
@@ -155,29 +155,6 @@ function RefreshIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.35"
-      />
-    </svg>
-  )
-}
-
-function SpinnerIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" className={styles.spinnerIcon}>
-      <circle
-        cx="8"
-        cy="8"
-        r="5.25"
-        fill="none"
-        opacity="0.25"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M8 2.75a5.25 5.25 0 014.52 2.58"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.5"
       />
     </svg>
   )
@@ -633,23 +610,15 @@ export default function RecruiterScreeningPage() {
             <>
               {canApproveAiRecommendations ? (
                 <button
-                  className="btn btn--outline btn--sm"
+                  className="btn btn--secondary btn--sm"
                   disabled={isBusy}
                   onClick={() => void handleApproveAiRecommendations()}
                 >
-                  {isFinalizing ? (
-                    <>
-                      <SpinnerIcon />
-                      Approving...
-                    </>
-                  ) : (
-                    'Approve Agent'
-                  )}
+                  {isFinalizing ? 'Approving...' : 'Approve Agent'}
                 </button>
               ) : null}
               {isScreeningRunning ? (
-                <button className="btn btn--primary btn--sm" disabled>
-                  <SpinnerIcon />
+                <button className="btn btn--primary btn--sm btn--loading" disabled>
                   Agent screening running
                 </button>
               ) : canRunScreening ? (
@@ -668,7 +637,7 @@ export default function RecruiterScreeningPage() {
               ) : null}
 
               <button
-                className={`btn btn--sm ${canApproveAiRecommendations ? 'btn--outline' : 'btn--primary'}`}
+                className={`btn btn--sm ${canApproveAiRecommendations ? 'btn--secondary' : 'btn--primary'}`}
                 disabled={isBusy}
                 onClick={() => void handleCompleteShortlist()}
               >
@@ -744,7 +713,7 @@ export default function RecruiterScreeningPage() {
                       />
                       <span className={styles.thresholdSuffix}>/100</span>
                       <button
-                        className="btn btn--outline btn--sm"
+                        className="btn btn--secondary btn--sm"
                         disabled={isUpdatingJob}
                         onClick={() => void handleSaveThreshold()}
                       >
@@ -939,27 +908,29 @@ export default function RecruiterScreeningPage() {
                                     className={styles.statusSelectWrap}
                                     onClick={(event) => event.stopPropagation()}
                                   >
-                                    <select
-                                      className={`resume-field__input ${styles.statusSelect}`}
+                                    <FilterSelect<ApplicationStatus>
+                                      className={styles.statusSelect}
                                       value={statusValue}
                                       disabled={updatingStatusId === application.id}
-                                      onChange={(event) =>
+                                      onChange={(status) =>
                                         void handleStatus(
                                           application.id,
-                                          event.target.value as ApplicationStatus,
+                                          status,
                                           application.status,
                                         )
                                       }
-                                    >
-                                      <option value={application.status}>
-                                        {STATUS_LABELS[application.status]}
-                                      </option>
-                                      {statusOptions.map((status) => (
-                                        <option key={status} value={status}>
-                                          {STATUS_LABELS[status]}
-                                        </option>
-                                      ))}
-                                    </select>
+                                      ariaLabel="Change application status"
+                                      options={[
+                                        {
+                                          value: application.status,
+                                          label: STATUS_LABELS[application.status],
+                                        },
+                                        ...statusOptions.map((status) => ({
+                                          value: status,
+                                          label: STATUS_LABELS[status],
+                                        })),
+                                      ]}
+                                    />
                                   </div>
                                 </div>
                               </td>
@@ -1012,7 +983,7 @@ export default function RecruiterScreeningPage() {
 
                                     <div className={styles.expandedFooter}>
                                       <button
-                                        className="btn btn--outline btn--sm"
+                                        className="btn btn--secondary btn--sm"
                                         onClick={() => setExpandedApplicationId(null)}
                                       >
                                         Cancel

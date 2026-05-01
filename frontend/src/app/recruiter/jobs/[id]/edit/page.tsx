@@ -43,7 +43,7 @@ export default function RecruiterEditJobPage() {
     return (
       <div className="dash-content container container--app-shell">
         <div className="job-editor-page">
-          <Link href="/recruiter/jobs" className="jd-back">
+          <Link href="/recruiter/jobs" className="btn btn--ghost btn--sm">
             <ArrowLeft size={16} aria-hidden="true" />
             Back to Jobs
           </Link>
@@ -95,7 +95,7 @@ export default function RecruiterEditJobPage() {
   return (
     <div className="dash-content container container--app-shell">
       <div className="job-editor-page">
-        <Link href="/recruiter/jobs" className="jd-back">
+        <Link href="/recruiter/jobs" className="btn btn--ghost btn--sm">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Jobs
         </Link>

@@ -192,7 +192,7 @@ export default function ResumeEditor({
             <div className="resume-section">
               <div className="resume-section__header">
                 <div className="resume-section__title">Work Experience</div>
-                <button className="btn btn--outline btn--sm" onClick={addExp}>
+                <button className="btn btn--secondary btn--sm" onClick={addExp}>
                   + Add Experience
                 </button>
               </div>
@@ -286,7 +286,7 @@ export default function ResumeEditor({
             <div className="resume-section">
               <div className="resume-section__header">
                 <div className="resume-section__title">Education</div>
-                <button className="btn btn--outline btn--sm" onClick={addEdu}>
+                <button className="btn btn--secondary btn--sm" onClick={addEdu}>
                   + Add Education
                 </button>
               </div>

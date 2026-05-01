@@ -30,14 +30,18 @@ export default function RecruiterCandidateResumePage({
   if (isError || !candidate || !renderedResume) {
     return (
       <div className="dash-content container container--app-shell">
-        <button type="button" className="jd-back" onClick={() => window.history.back()}>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() => window.history.back()}
+        >
           <ArrowLeft size={16} aria-hidden="true" />
           Back
         </button>
         <div className="dash-card">
           <div className="dash-card__body">
             Could not load this resume.{' '}
-            <button className="auth__inline-link" onClick={() => void refetch()}>
+            <button className="btn btn--ghost btn--sm" onClick={() => void refetch()}>
               Try again
             </button>
           </div>
@@ -50,7 +54,11 @@ export default function RecruiterCandidateResumePage({
     <div className="rv-overlay">
       <div className="rv-overlay__bar">
         <div className="rv-overlay__bar-left">
-          <button type="button" className="jd-back" onClick={() => window.history.back()}>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => window.history.back()}
+          >
             <ArrowLeft size={16} aria-hidden="true" />
             Back
           </button>

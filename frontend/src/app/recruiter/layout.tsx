@@ -81,7 +81,7 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
           >
             {ms !== 'rejected' && (
               <button
-                className="btn btn--outline btn--sm"
+                className="btn btn--secondary btn--sm"
                 disabled={isFetching}
                 onClick={() => triggerGetMe()}
               >

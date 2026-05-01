@@ -14,8 +14,6 @@ import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'
 import { clearCredentials } from '@/store/slices/authSlice'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface LoginFormState {
@@ -236,7 +234,7 @@ function LoginPageInner() {
                 Didn&apos;t receive it?{' '}
                 <button
                   type="button"
-                  className="auth__inline-link"
+                  className="btn btn--ghost btn--sm"
                   onClick={() => setEmailUnverified(false)}
                 >
                   Try a different account
@@ -294,7 +292,7 @@ function LoginPageInner() {
                     />
                     <button
                       type="button"
-                      className="auth__pw-toggle"
+                      className="btn btn--icon btn--sm"
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
@@ -329,10 +327,10 @@ function LoginPageInner() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
+                  className={`btn btn--primary btn--lg btn--full${isLoading ? ' btn--loading' : ''}`}
                   aria-busy={isLoading}
                 >
-                  {isLoading ? <ButtonSpinner label="Signing in..." /> : 'Sign in'}
+                  {isLoading ? 'Signing in...' : 'Sign in'}
                 </button>
               </form>
 
@@ -345,7 +343,7 @@ function LoginPageInner() {
               <div className="auth__social-btns">
                 <button
                   type="button"
-                  className="auth__social-btn"
+                  className="btn btn--secondary btn--full"
                   onClick={() => handleSocialLogin()}
                   disabled={isLoading}
                 >

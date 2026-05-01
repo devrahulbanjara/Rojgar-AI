@@ -107,7 +107,7 @@ export default function RecruiterInboxPage() {
                   </Link>
                 ))}
                 {activeJobs.length > 6 ? (
-                  <Link href="/recruiter/jobs" className="auth__inline-link">
+                  <Link href="/recruiter/jobs" className="btn btn--ghost btn--sm">
                     View all {activeJobs.length} active jobs
                   </Link>
                 ) : null}

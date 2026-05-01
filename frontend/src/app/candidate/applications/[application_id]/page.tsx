@@ -49,7 +49,7 @@ export default function CandidateApplicationDetailPage() {
 
   return (
     <div className="dash-content container container--app-shell">
-      <Link href="/candidate/applications" className="jd-back">
+      <Link href="/candidate/applications" className="btn btn--ghost btn--sm">
         <ArrowLeft size={16} aria-hidden="true" />
         Back to Applications
       </Link>

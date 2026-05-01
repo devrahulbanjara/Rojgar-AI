@@ -281,9 +281,8 @@ function AuditDetailPanel({ item }: { item: AuditLogItem }) {
       <div>
         <button
           type="button"
-          className="auth__inline-link"
+          className="btn btn--ghost btn--sm"
           onClick={() => setShowIds((v) => !v)}
-          style={{ fontSize: '0.8rem' }}
         >
           {showIds ? 'Hide' : 'Show'} entity IDs
         </button>
@@ -422,8 +421,7 @@ export default function AuditPanel() {
               <div style={{ padding: '1rem' }}>
                 <div className="empty-state__desc">Could not load audit events.</div>
                 <button
-                  className="btn btn--outline btn--sm"
-                  style={{ marginTop: '0.5rem' }}
+                  className="btn btn--secondary btn--sm"
                   onClick={() => void refetch()}
                   disabled={isFetching}
                 >
@@ -442,21 +440,9 @@ export default function AuditPanel() {
                     <button
                       key={item.id}
                       type="button"
+                      className="list-row"
+                      aria-pressed={active}
                       onClick={() => setSelectedId(active ? null : item.id)}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        background: active
-                          ? 'var(--color-surface-raised, rgba(99,102,241,0.06))'
-                          : 'transparent',
-                        border: 'none',
-                        borderBottom: '1px solid var(--color-border)',
-                        padding: '0.65rem 1rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.2rem',
-                      }}
                     >
                       <div
                         style={{

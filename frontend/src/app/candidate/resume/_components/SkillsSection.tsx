@@ -47,7 +47,7 @@ export default function SkillsSection({
           <span className="skill-item" key={sk}>
             {sk}
             <button
-              className="skill-item__remove"
+              className="btn btn--icon btn--sm"
               onClick={() => onRemove(sk)}
               aria-label={`Remove ${sk}`}
             >

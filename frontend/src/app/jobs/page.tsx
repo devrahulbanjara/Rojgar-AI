@@ -96,7 +96,7 @@ function JobsPageInner() {
               defaultValue={locationParam}
             />
           </div>
-          <button type="submit" className="btn btn--primary public-jobs__search-btn">
+          <button type="submit" className="btn btn--primary">
             Search
           </button>
         </form>

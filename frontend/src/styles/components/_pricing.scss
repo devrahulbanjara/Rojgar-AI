@@ -73,28 +73,6 @@
     margin-top: $space-6;
   }
 
-  &__toggle-btn {
-    padding: $space-2 $space-6;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    color: $color-gray-600;
-    background-color: transparent;
-    border: none;
-    border-radius: $radius-full;
-    cursor: pointer;
-    @include transition(all, $transition-base);
-
-    &:hover {
-      color: $color-gray-900;
-    }
-
-    &--active {
-      color: $color-white;
-      background-color: $color-primary;
-      box-shadow: $shadow-sm;
-    }
-  }
-
   // ── Cards grid ────────────────────────────────────────────
   &__grid {
     position: relative;

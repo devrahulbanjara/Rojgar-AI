@@ -379,7 +379,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
         {/* ====== STATE: idle — show Start button ====== */}
         {recorderState === 'idle' && (
           <div className="rec-card__empty">
-            <button className="rec-card__startBtn" onClick={startRecording} type="button">
+            <button className="btn btn--primary" onClick={startRecording} type="button">
               <Mic size={18} />
               Start recording
             </button>
@@ -409,7 +409,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
             <div className="rec-card__actions">
               {recorderState === 'recording' ? (
                 <button
-                  className="rec-card__actionBtn rec-card__actionBtn--secondary"
+                  className="btn btn--secondary btn--sm"
                   onClick={pauseRecording}
                   type="button"
                   title="Pause"
@@ -418,7 +418,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
                 </button>
               ) : (
                 <button
-                  className="rec-card__actionBtn rec-card__actionBtn--secondary"
+                  className="btn btn--secondary btn--sm"
                   onClick={resumeRecording}
                   type="button"
                   title="Resume"
@@ -427,7 +427,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
                 </button>
               )}
               <button
-                className="rec-card__actionBtn rec-card__actionBtn--stop"
+                className="btn btn--danger btn--sm"
                 onClick={stopRecording}
                 type="button"
                 title="Stop"
@@ -435,7 +435,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
                 <Square size={16} />
               </button>
               <button
-                className="rec-card__actionBtn rec-card__actionBtn--cancel"
+                className="btn btn--ghost btn--sm"
                 onClick={cancelRecording}
                 type="button"
                 title="Cancel"
@@ -454,7 +454,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
 
             <div className="rec-card__previewActions">
               <button
-                className="rec-card__actionBtn rec-card__actionBtn--primary"
+                className="btn btn--primary btn--sm"
                 onClick={handleSave}
                 disabled={isUploading}
                 type="button"
@@ -467,7 +467,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
                 {isUploading ? 'Saving…' : 'Save'}
               </button>
               <button
-                className="rec-card__actionBtn rec-card__actionBtn--secondary"
+                className="btn btn--secondary btn--sm"
                 onClick={resetRecorder}
                 disabled={isUploading}
                 type="button"
@@ -542,7 +542,7 @@ function RecordingItem({
         <div className="rec-item__actions">
           {(rec.status === 'uploaded' || rec.status === 'failed') && (
             <button
-              className="rec-card__actionBtn rec-card__actionBtn--primary"
+              className="btn btn--primary btn--sm"
               onClick={() => onTranscribe(rec.id)}
               disabled={isTranscribing}
               type="button"
@@ -558,7 +558,7 @@ function RecordingItem({
           )}
 
           <button
-            className="rec-card__actionBtn rec-card__actionBtn--cancel"
+            className="btn btn--ghost btn--sm"
             onClick={() => onDelete(rec.id)}
             type="button"
             title="Delete"
@@ -572,7 +572,7 @@ function RecordingItem({
       {rec.transcript && (
         <div className="rec-item__section">
           <button
-            className="rec-item__toggle"
+            className="btn btn--ghost btn--sm"
             onClick={() => setExpanded((prev) => !prev)}
             type="button"
           >

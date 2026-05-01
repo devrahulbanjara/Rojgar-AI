@@ -160,7 +160,7 @@ function ListInput({
               />
               <button
                 type="button"
-                className="job-editor-list__remove"
+                className="btn btn--icon btn--sm job-editor-list__remove"
                 onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
                 disabled={disabled}
                 aria-label={`Remove "${item}"`}
@@ -187,7 +187,12 @@ function ListInput({
           className="job-ai-input job-editor-list__composer-input"
           disabled={disabled}
         />
-        <button type="button" className="job-editor-list__add" onClick={add} disabled={disabled}>
+        <button
+          type="button"
+          className="btn btn--secondary btn--sm"
+          onClick={add}
+          disabled={disabled}
+        >
           <Plus size={14} aria-hidden="true" />
           Add
         </button>

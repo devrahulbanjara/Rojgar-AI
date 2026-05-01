@@ -197,7 +197,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
       ) : isError ? (
         <div className={styles.empty}>
           Failed to load applicants.{' '}
-          <button className="auth__inline-link" onClick={() => void refetch()}>
+          <button className="btn btn--ghost btn--sm" onClick={() => void refetch()}>
             Try again
           </button>
         </div>

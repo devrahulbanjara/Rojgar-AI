@@ -41,7 +41,7 @@ function DeleteResumeModal({
           <h3 className="modal__title">Delete Resume</h3>
           <button
             type="button"
-            className="modal__close"
+            className="btn btn--icon btn--sm"
             onClick={onCancel}
             aria-label="Close"
             disabled={isDeleting}
