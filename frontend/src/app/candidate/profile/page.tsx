@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
 import { createCroppedImageFile } from '@/lib/cropImage'
-import { formatBytes, getInitials, validateImageFile } from '@/lib/mediaValidation'
+import { formatBytes, validateImageFile } from '@/lib/mediaValidation'
 import {
   PROFILE_COMPLETION_LABEL,
   calculateProfileCompletionPercentage,
@@ -27,9 +27,9 @@ import {
 import { clearCredentials, updateUser } from '@/store/slices/authSlice'
 import { AlertTriangle, Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import DashboardTabs from '@/components/common/DashboardTabs'
-import MediaBadge from '@/components/common/MediaBadge'
 
 import { ProfileDataSkeleton } from './_components/ProfileSkeletons'
 import ResumeImportModal from './_components/ResumeImportModal'
@@ -707,7 +707,6 @@ export default function ProfilePage() {
   // ── Derived display values ────────────────────────────────────────────────
 
   const displayName = user?.full_name ?? '—'
-  const initials = getInitials(displayName, 'CP')
   const avatarSrc = avatarPreviewUrl ?? profileResp?.data?.avatar_url ?? user?.avatar_url ?? null
   const isAvatarBusy = isUploadingAvatar || isRemovingAvatar || isSubmittingCroppedAvatar
 
@@ -788,10 +787,10 @@ export default function ProfilePage() {
               </div>
 
               <div className="profile-media-control">
-                <MediaBadge
+                <Avatar
+                  name={displayName}
                   src={avatarSrc}
-                  alt={displayName}
-                  fallback={initials}
+                  seed={user?.id}
                   className="profile-aside-card__avatar"
                   sizes="96px"
                 />

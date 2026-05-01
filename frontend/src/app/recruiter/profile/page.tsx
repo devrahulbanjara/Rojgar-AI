@@ -6,7 +6,7 @@ import { toast } from 'react-toastify'
 
 import { parseApiError } from '@/lib/apiError'
 import { createCroppedImageFile } from '@/lib/cropImage'
-import { formatBytes, getInitials, validateImageFile } from '@/lib/mediaValidation'
+import { formatBytes, validateImageFile } from '@/lib/mediaValidation'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
   useChangeMyPasswordMutation,
@@ -19,8 +19,8 @@ import { useGetMyCompanyQuery } from '@/store/services/companyApi'
 import { updateUser } from '@/store/slices/authSlice'
 import { BriefcaseBusiness, Camera, Mail, Shield, Trash2, X } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import MediaBadge from '@/components/common/MediaBadge'
 
 import { RecruiterProfileDataSkeleton } from './_components/RecruiterProfileSkeletons'
 
@@ -329,10 +329,10 @@ export default function RecruiterProfilePage() {
               style={{ '--stagger-index': 0 } as React.CSSProperties}
             >
               <div className="profile-media-control">
-                <MediaBadge
+                <Avatar
+                  name={me.full_name}
                   src={avatarSrc}
-                  alt={me.full_name}
-                  fallback={getInitials(me.full_name, 'R')}
+                  seed={me.id}
                   className="profile-aside-card__avatar"
                   sizes="96px"
                 />

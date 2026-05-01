@@ -2,18 +2,18 @@
 
 import type { CandidateDetailData } from '@/lib/types/recruiterChat'
 
-import MediaBadge from '@/components/common/MediaBadge'
+import Avatar from '@/components/common/Avatar'
 
-import { formatDateLabel, formatLongDate, getInitials, getStatusTone } from './utils'
+import { formatDateLabel, formatLongDate, getStatusTone } from './utils'
 
 export function CandidateDetailPanel({ data }: { data: CandidateDetailData }) {
   return (
     <section className="recruiter-chat-card recruiter-chat-card--detail">
       <div className="recruiter-chat-detail-header">
-        <MediaBadge
+        <Avatar
+          name={data.full_name}
           src={data.avatar_url}
-          alt={data.full_name}
-          fallback={getInitials(data.full_name)}
+          seed={data.user_id}
           className="recruiter-chat-avatar recruiter-chat-avatar--large"
           sizes="56px"
         />

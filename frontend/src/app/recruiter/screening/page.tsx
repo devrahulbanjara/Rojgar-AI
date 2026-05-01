@@ -1,21 +1,12 @@
 'use client'
 
-import {
-  type CSSProperties,
-  Fragment,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import type { SetStateAction } from 'react'
 import { toast } from 'react-toastify'
 
 import { useRouter } from 'next/navigation'
 
 import { getApplicationStatusLabel, getApplicationStatusVariant } from '@/lib/applicationStatus'
-import { getInitials } from '@/lib/mediaValidation'
 import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
 import {
   type ApplicationStatus,
@@ -35,18 +26,13 @@ import {
   useGetShortlistSummaryQuery,
   useTriggerShortlistingMutation,
 } from '@/store/services/shortlistingApi'
-import { X as ClearSearchIcon, Search as SearchFieldIcon } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
+import { SearchInput } from '@/components/common/Toolbar'
 
 import { ScreeningControlsSkeleton, ScreeningTableSkeleton } from './_components/ScreeningSkeletons'
 import styles from './screening.module.css'
-
-function getAvatarColor(name: string): string {
-  const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
-  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-  return colors[seed % colors.length]
-}
 
 type ReviewDraft = {
   score: string
@@ -363,10 +349,6 @@ export default function RecruiterScreeningPage() {
 
   function toggleExpanded(applicationId: string) {
     setExpandedApplicationId((current) => (current === applicationId ? null : applicationId))
-  }
-
-  function handleClearSearch() {
-    setSearchTerm('')
   }
 
   useEffect(() => {
@@ -786,30 +768,11 @@ export default function RecruiterScreeningPage() {
           <>
             <section className={styles.filterSection}>
               <div className={styles.filterBar}>
-                <label
-                  className="dash-page-toolbar__search"
-                  style={{ flex: '1 1 22rem', maxWidth: '26rem' }}
-                >
-                  <span className="dash-page-toolbar__icon">
-                    <SearchFieldIcon size={16} aria-hidden="true" />
-                  </span>
-                  <input
-                    className="dash-page-toolbar__input"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Search candidates by name or email"
-                  />
-                  {searchTerm ? (
-                    <button
-                      type="button"
-                      className="dash-page-toolbar__clear"
-                      onClick={handleClearSearch}
-                      aria-label="Clear search"
-                    >
-                      <ClearSearchIcon size={14} aria-hidden="true" />
-                    </button>
-                  ) : null}
-                </label>
+                <SearchInput
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  placeholder="Search candidates by name or email"
+                />
 
                 <div className={styles.filterCluster}>
                   <span className={styles.filterLabel}>Score:</span>
@@ -904,26 +867,13 @@ export default function RecruiterScreeningPage() {
                             >
                               <td>
                                 <div className="cell-user">
-                                  <div
+                                  <Avatar
+                                    name={application.applicant_name}
+                                    src={application.applicant_avatar_url}
+                                    seed={application.applicant_email}
                                     className="cell-user__avatar"
-                                    style={
-                                      {
-                                        '--avatar-bg':
-                                          getAvatarColor(application.applicant_name) + '1A',
-                                        '--avatar-color': getAvatarColor(
-                                          application.applicant_name,
-                                        ),
-                                        backgroundImage: application.applicant_avatar_url
-                                          ? `url(${application.applicant_avatar_url})`
-                                          : undefined,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                      } as CSSProperties
-                                    }
-                                  >
-                                    {!application.applicant_avatar_url &&
-                                      getInitials(application.applicant_name)}
-                                  </div>
+                                    sizes="36px"
+                                  />
                                   <div className={styles.candidateMeta}>
                                     <div className={styles.candidateName}>
                                       {application.applicant_name}

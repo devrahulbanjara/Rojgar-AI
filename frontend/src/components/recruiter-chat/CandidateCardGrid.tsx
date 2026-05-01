@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import type { CandidateSearchResult } from '@/lib/types/recruiterChat'
 import { ChevronRight } from 'lucide-react'
 
-import MediaBadge from '@/components/common/MediaBadge'
+import Avatar from '@/components/common/Avatar'
 
-import { getInitials, getStatusTone } from './utils'
+import { getStatusTone } from './utils'
 
 function CandidateRow({ candidate }: { candidate: CandidateSearchResult['candidates'][number] }) {
   const router = useRouter()
@@ -21,10 +21,10 @@ function CandidateRow({ candidate }: { candidate: CandidateSearchResult['candida
       className="recruiter-chat-job-mini-row recruiter-chat-candidate-mini-row"
       onClick={() => router.push(`/recruiter/candidates/${candidate.application_id}?from=chat`)}
     >
-      <MediaBadge
+      <Avatar
+        name={candidate.full_name}
         src={candidate.avatar_url}
-        alt={candidate.full_name}
-        fallback={getInitials(candidate.full_name)}
+        seed={candidate.user_id}
         className="recruiter-chat-candidate-mini-avatar"
         sizes="28px"
       />

@@ -1,18 +1,23 @@
 'use client'
 
+import { useCallback } from 'react'
 import { toast } from 'react-toastify'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { type JobDetail, useGetJobByIdQuery } from '@/store/services/jobsApi'
 import { ArrowLeft, Briefcase, Building, Clock, MapPin, Pencil, Share2 } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import StatusPill from '@/components/common/StatusPill'
 
 import { CompanyJobDetailSkeleton } from '../_components/CompanyJobsSkeletons'
 import EvaluationSchemaBuilder from '../_components/EvaluationSchemaBuilder'
+import JobPipelineWorkspace from './_components/JobPipelineWorkspace'
+
+const VIEW_TABS = ['pipeline', 'description'] as const
+type ViewTab = (typeof VIEW_TABS)[number]
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -46,9 +51,30 @@ function formatDate(iso: string): string {
 export default function RecruiterJobDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const fromChat = searchParams.get('from') === 'chat'
   const jobId = params.id as string
+
+  const viewParam = searchParams.get('view')
+  const activeView: ViewTab = (VIEW_TABS as readonly string[]).includes(viewParam ?? '')
+    ? (viewParam as ViewTab)
+    : 'pipeline'
+
+  const setView = useCallback(
+    (view: ViewTab) => {
+      const next = new URLSearchParams(searchParams.toString())
+      next.set('view', view)
+      // When switching views, drop pipeline-specific state
+      if (view === 'description') {
+        next.delete('stage')
+        next.delete('app')
+        next.delete('tab')
+      }
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+    },
+    [pathname, router, searchParams],
+  )
 
   const { data: resp, isLoading, isError, refetch } = useGetJobByIdQuery(jobId)
   const job: JobDetail | undefined = resp?.data
@@ -127,22 +153,15 @@ export default function RecruiterJobDetailPage() {
           <div className="jd-hero">
             <div className="jd-hero__body">
               <div className="jd-hero__info">
-                <div
+                <Avatar
+                  name={job.company?.name ?? job.title}
+                  src={job.company?.logo_url}
+                  seed={job.company?.id ?? job.company?.name ?? job.title}
+                  kind="company"
                   className="jd-hero__logo"
+                  sizes="68px"
                   style={{ '--jd-logo': '#7928ca' } as React.CSSProperties}
-                >
-                  {job.company?.logo_url ? (
-                    <Image
-                      src={job.company.logo_url}
-                      alt={job.company.name}
-                      fill
-                      sizes="68px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    job.title[0]
-                  )}
-                </div>
+                />
                 <div className="jd-hero__date">Posted {formatDate(job.created_at)}</div>
                 <h1 className="jd-hero__title">{job.title}</h1>
                 <div className="jd-hero__company">
@@ -217,73 +236,127 @@ export default function RecruiterJobDetailPage() {
             </div>
           </div>
 
-          {/* ── Overview ── */}
-          {job.overview && (
-            <div className="jd-section">
-              <div className="jd-section__title">About the Role</div>
-              <p className="jd-section__text">{job.overview}</p>
-            </div>
-          )}
+          {/* ── View tabs (Pipeline / Description) ── */}
+          <div
+            role="tablist"
+            aria-label="Job view"
+            style={{
+              display: 'flex',
+              gap: '0.25rem',
+              borderBottom: '1px solid #e4e4e7',
+              marginTop: '1.25rem',
+              marginBottom: '1.5rem',
+            }}
+          >
+            {VIEW_TABS.map((tab) => {
+              const isActive = activeView === tab
+              const label = tab === 'pipeline' ? 'Pipeline' : 'Description'
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setView(tab)}
+                  style={{
+                    background: 'none',
+                    border: 0,
+                    padding: '0.625rem 1rem',
+                    fontSize: '0.875rem',
+                    fontFamily: 'var(--font-body)',
+                    color: isActive ? 'var(--color-primary)' : '#6b7280',
+                    cursor: 'pointer',
+                    borderBottom: `2px solid ${isActive ? 'var(--color-primary)' : 'transparent'}`,
+                    marginBottom: '-1px',
+                    fontWeight: isActive ? 600 : 500,
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
 
-          {/* ── Responsibilities ── */}
-          {job.responsibilities.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Responsibilities</div>
-              <ul className="jd-section__list">
-                {job.responsibilities.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {activeView === 'pipeline' ? (
+            <JobPipelineWorkspace jobId={job.id} />
+          ) : (
+            <>
+              {/* ── Overview ── */}
+              {job.overview && (
+                <div className="jd-section">
+                  <div className="jd-section__title">About the Role</div>
+                  <p className="jd-section__text">{job.overview}</p>
+                </div>
+              )}
+              <DescriptionSections job={job} />
+            </>
           )}
-
-          {/* ── Requirements ── */}
-          {job.requirements.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Requirements</div>
-              <ul className="jd-section__list">
-                {job.requirements.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ── Preferred Qualifications ── */}
-          {job.preferred_qualifications.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Preferred Qualifications</div>
-              <ul className="jd-section__list">
-                {job.preferred_qualifications.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ── Benefits ── */}
-          {job.benefits.length > 0 && (
-            <div className="jd-section">
-              <div className="jd-section__title">Benefits</div>
-              <ul className="jd-section__list">
-                {job.benefits.map((item, i) => (
-                  <li key={i} className="jd-section__list-item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <EvaluationSchemaBuilder jobId={job.id} />
         </div>
       </div>
     </div>
+  )
+}
+
+function DescriptionSections({ job }: { job: JobDetail }) {
+  return (
+    <>
+      {/* ── Responsibilities ── */}
+      {job.responsibilities.length > 0 && (
+        <div className="jd-section">
+          <div className="jd-section__title">Responsibilities</div>
+          <ul className="jd-section__list">
+            {job.responsibilities.map((item, i) => (
+              <li key={i} className="jd-section__list-item">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* ── Requirements ── */}
+      {job.requirements.length > 0 && (
+        <div className="jd-section">
+          <div className="jd-section__title">Requirements</div>
+          <ul className="jd-section__list">
+            {job.requirements.map((item, i) => (
+              <li key={i} className="jd-section__list-item">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* ── Preferred Qualifications ── */}
+      {job.preferred_qualifications.length > 0 && (
+        <div className="jd-section">
+          <div className="jd-section__title">Preferred Qualifications</div>
+          <ul className="jd-section__list">
+            {job.preferred_qualifications.map((item, i) => (
+              <li key={i} className="jd-section__list-item">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* ── Benefits ── */}
+      {job.benefits.length > 0 && (
+        <div className="jd-section">
+          <div className="jd-section__title">Benefits</div>
+          <ul className="jd-section__list">
+            {job.benefits.map((item, i) => (
+              <li key={i} className="jd-section__list-item">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <EvaluationSchemaBuilder jobId={job.id} />
+    </>
   )
 }

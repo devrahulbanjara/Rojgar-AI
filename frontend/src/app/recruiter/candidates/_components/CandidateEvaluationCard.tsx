@@ -16,6 +16,7 @@ import {
 import { useGetRecordingsQuery } from '@/store/services/recordingsApi'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 
 import styles from './CandidateEvaluationCard.module.css'
@@ -46,15 +47,6 @@ function fmtScore(value: number | null | undefined) {
 function fmtCell(value: number | null | undefined) {
   if (value == null) return null
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
-}
-
-function initials(label: string) {
-  return label
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
 }
 
 function buildDraft(
@@ -199,7 +191,13 @@ function RecruiterRowView({
     <div className={styles.recruiterCard}>
       <div className={styles.recruiterCardHeader}>
         <div className={styles.evaluatorCell}>
-          <span className={styles.evaluatorAvatar}>{initials(label)}</span>
+          <Avatar
+            name={label}
+            src={row.submitted_by?.avatar_url}
+            seed={row.submitted_by_user_id ?? row.submitted_by?.email ?? label}
+            className={styles.evaluatorAvatar}
+            sizes="28px"
+          />
           <div>
             <div className={styles.evaluatorName}>{label}</div>
             <div className={styles.evaluatorEmail}>Total: {fmtScore(row.weighted_total)}</div>

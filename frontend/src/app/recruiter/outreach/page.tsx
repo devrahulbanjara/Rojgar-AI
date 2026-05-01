@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
@@ -10,7 +10,6 @@ import {
   OutreachDraftListSkeleton,
 } from '@/app/recruiter/outreach/_components/OutreachSkeletons'
 import { getApplicationStatusLabel } from '@/lib/applicationStatus'
-import { getInitials } from '@/lib/mediaValidation'
 import type { ApplicationStatus, RecruiterApplicationView } from '@/store/services/applicationsApi'
 import { useGetJobApplicationsQuery } from '@/store/services/applicationsApi'
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
@@ -27,6 +26,7 @@ import {
 } from '@/store/services/outreachApi'
 import { ArrowLeft, ChevronRight, Mail, MoreHorizontal } from 'lucide-react'
 
+import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 
 import styles from './outreach.module.css'
@@ -76,12 +76,6 @@ function getDerivedOutreachStatus(
 
 function getApplicationLabel(status: ApplicationStatus) {
   return getApplicationStatusLabel(status)
-}
-
-function getAvatarColor(name: string): string {
-  const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
-  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-  return colors[seed % colors.length]
 }
 
 function formatTimestamp(value: string) {
@@ -708,26 +702,13 @@ export default function RecruiterOutreachPage() {
                         onClick={() => setSelectedApplicationId(candidate.application.id)}
                       >
                         <div className={styles.draftRow}>
-                          <div
+                          <Avatar
+                            name={candidate.application.applicant_name}
+                            src={candidate.application.applicant_avatar_url}
+                            seed={candidate.application.applicant_email}
                             className="cell-user__avatar"
-                            style={
-                              {
-                                '--avatar-bg':
-                                  getAvatarColor(candidate.application.applicant_name) + '1A',
-                                '--avatar-color': getAvatarColor(
-                                  candidate.application.applicant_name,
-                                ),
-                                backgroundImage: candidate.application.applicant_avatar_url
-                                  ? `url(${candidate.application.applicant_avatar_url})`
-                                  : undefined,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                              } as CSSProperties
-                            }
-                          >
-                            {!candidate.application.applicant_avatar_url &&
-                              getInitials(candidate.application.applicant_name)}
-                          </div>
+                            sizes="40px"
+                          />
                           <div className={styles.draftBody}>
                             <div className={styles.draftTop}>
                               <div>
@@ -829,28 +810,13 @@ export default function RecruiterOutreachPage() {
                       <>
                         <div className={styles.detailTop}>
                           <div className="cell-user">
-                            <div
+                            <Avatar
+                              name={selectedCandidate.application.applicant_name}
+                              src={selectedCandidate.application.applicant_avatar_url}
+                              seed={selectedCandidate.application.applicant_email}
                               className="cell-user__avatar"
-                              style={
-                                {
-                                  '--avatar-bg':
-                                    getAvatarColor(selectedCandidate.application.applicant_name) +
-                                    '1A',
-                                  '--avatar-color': getAvatarColor(
-                                    selectedCandidate.application.applicant_name,
-                                  ),
-                                  backgroundImage: selectedCandidate.application
-                                    .applicant_avatar_url
-                                    ? `url(${selectedCandidate.application.applicant_avatar_url})`
-                                    : undefined,
-                                  backgroundSize: 'cover',
-                                  backgroundPosition: 'center',
-                                } as CSSProperties
-                              }
-                            >
-                              {!selectedCandidate.application.applicant_avatar_url &&
-                                getInitials(selectedCandidate.application.applicant_name)}
-                            </div>
+                              sizes="48px"
+                            />
                             <div className="recruiter-candidates-table__identity">
                               <div className="recruiter-candidates-table__name">
                                 {selectedCandidate.application.applicant_name}

@@ -6,7 +6,7 @@ import { LOCATION_TYPE_LABELS, formatDate, formatSalary, getCompanyAccent } from
 import type { JobListItem } from '@/store/services/jobsApi'
 import { Briefcase, ChevronRight, Clock, MapPin } from 'lucide-react'
 
-import MediaBadge from '@/components/common/MediaBadge'
+import Avatar from '@/components/common/Avatar'
 
 export default function PublicJobCard({ job }: { job: JobListItem }) {
   const accent = getCompanyAccent(job.company?.name ?? job.title)
@@ -19,10 +19,11 @@ export default function PublicJobCard({ job }: { job: JobListItem }) {
       style={{ textDecoration: 'none' }}
     >
       <div className="job-card__header">
-        <MediaBadge
+        <Avatar
+          name={job.company?.name ?? job.title}
           src={job.company?.logo_url}
-          alt={job.company?.name ?? job.title}
-          fallback={accent.logo}
+          seed={job.company?.id ?? job.company?.name ?? job.title}
+          kind="company"
           className="job-card__logo"
           sizes="40px"
           style={

@@ -17,7 +17,7 @@ import {
 } from '@/store/services/jobsApi'
 import { ArrowLeft, Banknote, Briefcase, Building, Clock, MapPin, Share2 } from 'lucide-react'
 
-import MediaBadge from '@/components/common/MediaBadge'
+import Avatar from '@/components/common/Avatar'
 import StatusPill from '@/components/common/StatusPill'
 import ApplyFlowModal from '@/components/jobs/ApplyModal'
 
@@ -118,10 +118,11 @@ function RecommendedCard({ job, index }: { job: JobListItem; index: number }) {
       style={{ '--stagger-index': index, textDecoration: 'none' } as React.CSSProperties}
     >
       <div className="job-card__header">
-        <MediaBadge
+        <Avatar
+          name={job.company?.name ?? job.title}
           src={job.company?.logo_url}
-          alt={job.company?.name ?? job.title}
-          fallback={accent.logo}
+          seed={job.company?.id ?? job.company?.name ?? job.title}
+          kind="company"
           className="job-card__logo"
           sizes="40px"
           style={
