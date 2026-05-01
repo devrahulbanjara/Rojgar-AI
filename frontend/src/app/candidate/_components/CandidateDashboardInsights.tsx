@@ -7,6 +7,8 @@ import {
   type CandidateDashboardAnalyticsTimeseriesPoint,
 } from '@/store/services/dashboardApi'
 
+import SegmentedControl from '@/components/common/SegmentedControl'
+
 import CandidateMetricCard from './CandidateMetricCard'
 
 type RangeKey = '7d' | '30d' | '90d'
@@ -127,19 +129,12 @@ function ActivityGroupedBar({
 function InsightsSkeleton() {
   return (
     <div className="candidate-dashboard__analytics">
-      <div className="dashboard-range-tabs" aria-hidden="true">
-        {RANGE_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className="btn btn--ghost btn--sm"
-            aria-pressed={option.value === '30d'}
-            disabled
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={RANGE_OPTIONS}
+        value="30d"
+        onChange={() => {}}
+        ariaLabel="Select time range"
+      />
 
       <div className="dashboard-metric-grid dashboard-metric-grid--candidate-top">
         {SERIES_META.map((series) => (
@@ -236,19 +231,12 @@ export default function CandidateDashboardInsights({
 
   return (
     <div className="candidate-dashboard__analytics">
-      <div className="dashboard-range-tabs">
-        {RANGE_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className="btn btn--ghost btn--sm"
-            aria-pressed={rangeKey === option.value}
-            onClick={() => onRangeChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={RANGE_OPTIONS}
+        value={rangeKey}
+        onChange={onRangeChange}
+        ariaLabel="Select time range"
+      />
 
       <CandidateMetricCards analytics={analytics} />
 
