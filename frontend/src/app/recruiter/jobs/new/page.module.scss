@@ -1,0 +1,75 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.backLink {
+  align-self: flex-start;
+}
+
+// ── Manual-mode start blank card ──────────────────────────────
+.startBlank {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 2rem 1.5rem;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+  max-width: 36rem;
+}
+
+.startBlankTitle {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.startBlankCopy {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.25rem;
+  line-height: 1.55;
+}
+
+// ── Single-column layout for manual mode ──────────────────────
+.singleColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.singleColumnMain {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// ── Sticky footer action bar ──────────────────────────────────
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 0.875rem 1.125rem;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  position: sticky;
+  bottom: 1rem;
+  z-index: 5;
+}
+
+.footerActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}

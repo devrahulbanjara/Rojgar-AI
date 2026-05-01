@@ -59,6 +59,143 @@
   margin-bottom: 1rem;
 }
 
+// AI screening compact bar shown above Applied/Screening lists
+.screeningBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.625rem;
+  padding: 0.5rem 0.625rem 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  animation: card-in 320ms ease both;
+}
+
+.screeningBarEyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  padding-right: 0.5rem;
+  border-right: 1px solid var(--color-border);
+  margin-right: 0.25rem;
+}
+
+.screeningBarText {
+  color: var(--color-text);
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+.screeningBarSep {
+  color: var(--color-border-strong, #d1d5db);
+}
+
+.screeningBarChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.screeningBarChipGood {
+  background: rgb(16 185 129 / 12%);
+  color: #047857;
+}
+
+.screeningBarChipBad {
+  background: rgb(220 38 38 / 10%);
+  color: #b91c1c;
+}
+
+.screeningBarChipMuted {
+  background: var(--color-surface-muted, #f8fafc);
+  color: var(--color-text-muted);
+}
+
+.screeningBarSpacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.confirmList {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.confirmRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-subtle);
+  font-size: 0.875rem;
+}
+
+.confirmRowLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text);
+}
+
+.confirmRowDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.confirmRowDotGood {
+  background: var(--color-success);
+}
+
+.confirmRowDotBad {
+  background: var(--color-error);
+}
+
+.confirmRowDotMuted {
+  background: var(--color-text-muted);
+}
+
+.confirmRowValue {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .list {
   display: flex;
   flex-direction: column;

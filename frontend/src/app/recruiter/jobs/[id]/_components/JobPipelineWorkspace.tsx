@@ -1,16 +1,23 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
 } from '@/store/services/applicationsApi'
-import { ClipboardCheck, Mail } from 'lucide-react'
+import {
+  useFinalizeShortlistMutation,
+  useGetShortlistSummaryQuery,
+} from '@/store/services/shortlistingApi'
+import { ClipboardCheck, Mail, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import CandidateDrawer, {
   DRAWER_TABS,
   type DrawerTab,
@@ -167,6 +174,75 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     [jobApplications, visibleStage],
   )
 
+  // ── AI screening summary + bulk-approve wiring ──────────────────────────
+  const isPreShortlistStage = activeStage === 'applied' || activeStage === 'screening'
+  const { data: summaryResp } = useGetShortlistSummaryQuery(jobId, { skip: !isPreShortlistStage })
+  const summary = summaryResp?.data
+  const threshold = summary?.shortlist_threshold ?? null
+
+  const screeningStats = useMemo(() => {
+    const pending = jobApplications.filter(
+      (row) => row.status === 'applied' || row.status === 'screening',
+    )
+    const scored = pending.filter((row) => row.score !== null && row.feedback !== null)
+    const above =
+      threshold === null ? 0 : scored.filter((row) => (row.score ?? 0) >= threshold).length
+    const below =
+      threshold === null ? 0 : scored.filter((row) => (row.score ?? 0) < threshold).length
+    return {
+      pending: pending.length,
+      scored: scored.length,
+      above,
+      below,
+      awaiting: pending.length - scored.length,
+    }
+  }, [jobApplications, threshold])
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [finalizeShortlist, { isLoading: isFinalizing }] = useFinalizeShortlistMutation()
+  const [approvedKey, setApprovedKey] = useState<string | null>(null)
+  const currentKey = `${jobId}:${activeStage}`
+  const showOutreachCta = approvedKey === currentKey
+
+  useEffect(() => {
+    if (!isConfirmOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setIsConfirmOpen(false)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKey)
+    }
+  }, [isConfirmOpen])
+
+  const canApprove =
+    isPreShortlistStage &&
+    threshold !== null &&
+    screeningStats.scored > 0 &&
+    !summary?.final_shortlist_completed
+
+  async function handleApproveAll() {
+    try {
+      const response = await finalizeShortlist({
+        jobId,
+        use_ai_recommendations: true,
+      }).unwrap()
+      setIsConfirmOpen(false)
+      setApprovedKey(currentKey)
+      toast.success(
+        `Approved ${response.data.updated_applications} AI recommendation${
+          response.data.updated_applications === 1 ? '' : 's'
+        }.`,
+      )
+      await refetch()
+    } catch {
+      toast.error('Could not approve AI recommendations.')
+    }
+  }
+
   return (
     <div>
       <div className={styles.tabBar} role="tablist" aria-label="Pipeline stages">
@@ -187,6 +263,72 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
           )
         })}
       </div>
+
+      {isPreShortlistStage && threshold !== null && screeningStats.pending > 0 ? (
+        <div
+          className={styles.screeningBar}
+          title={
+            showOutreachCta
+              ? 'Statuses updated. Generate outreach emails next.'
+              : `Score ≥ ${threshold} → Shortlisted · Score < ${threshold} → Rejected · Manual moves left alone`
+          }
+        >
+          <span className={styles.screeningBarEyebrow}>AI screening</span>
+          {showOutreachCta ? (
+            <span className={styles.screeningBarText}>Recommendations applied</span>
+          ) : (
+            <>
+              <span className={styles.screeningBarText}>
+                <strong>{screeningStats.scored}</strong> of {screeningStats.pending} ready
+              </span>
+              <span className={styles.screeningBarSep} aria-hidden="true">
+                ·
+              </span>
+              <span
+                className={`${styles.screeningBarChip} ${styles.screeningBarChipGood}`}
+                title={`Ready to shortlist (≥ ${threshold})`}
+              >
+                ✓ {screeningStats.above}
+              </span>
+              <span
+                className={`${styles.screeningBarChip} ${styles.screeningBarChipBad}`}
+                title={`Ready to reject (< ${threshold})`}
+              >
+                ✗ {screeningStats.below}
+              </span>
+              {screeningStats.awaiting > 0 ? (
+                <span
+                  className={`${styles.screeningBarChip} ${styles.screeningBarChipMuted}`}
+                  title="Still being scored"
+                >
+                  … {screeningStats.awaiting}
+                </span>
+              ) : null}
+            </>
+          )}
+          <span className={styles.screeningBarSpacer} />
+          {showOutreachCta ? (
+            <Link href={`/recruiter/outreach?job=${jobId}`} className="btn btn--primary btn--sm">
+              Draft outreach
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              disabled={!canApprove || isFinalizing}
+              onClick={() => setIsConfirmOpen(true)}
+            >
+              {isFinalizing ? (
+                <ButtonSpinner label="Approving..." />
+              ) : screeningStats.scored > 0 ? (
+                `Approve ${screeningStats.scored}`
+              ) : (
+                'Waiting for scores'
+              )}
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className={styles.loadingSkeleton}>
@@ -266,6 +408,99 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         onTabChange={setDrawerTab}
         onApplicationChange={(appId) => updateParams({ app: appId })}
       />
+
+      {isConfirmOpen ? (
+        <div
+          className="modal-backdrop modal-backdrop--animated"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setIsConfirmOpen(false)
+          }}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="approve-recommendations-title"
+          >
+            <div className="modal__header">
+              <div className="modal__title" id="approve-recommendations-title">
+                Approve AI recommendations
+              </div>
+              <button
+                type="button"
+                className="btn btn--icon btn--sm"
+                aria-label="Close"
+                onClick={() => setIsConfirmOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal__body">
+              <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                Only candidates still in <strong>Applied</strong> or <strong>Screening</strong> will
+                be touched. Any status you already changed manually stays as-is.
+              </p>
+              <ul className={styles.confirmList}>
+                <li className={styles.confirmRow}>
+                  <span className={styles.confirmRowLabel}>
+                    <span
+                      className={`${styles.confirmRowDot} ${styles.confirmRowDotGood}`}
+                      aria-hidden="true"
+                    />
+                    Move to Shortlisted
+                  </span>
+                  <span className={styles.confirmRowValue}>{screeningStats.above}</span>
+                </li>
+                <li className={styles.confirmRow}>
+                  <span className={styles.confirmRowLabel}>
+                    <span
+                      className={`${styles.confirmRowDot} ${styles.confirmRowDotBad}`}
+                      aria-hidden="true"
+                    />
+                    Move to Rejected
+                  </span>
+                  <span className={styles.confirmRowValue}>{screeningStats.below}</span>
+                </li>
+                <li className={styles.confirmRow}>
+                  <span className={styles.confirmRowLabel}>
+                    <span
+                      className={`${styles.confirmRowDot} ${styles.confirmRowDotMuted}`}
+                      aria-hidden="true"
+                    />
+                    Skip — awaiting score
+                  </span>
+                  <span className={styles.confirmRowValue}>{screeningStats.awaiting}</span>
+                </li>
+              </ul>
+            </div>
+            <div className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                disabled={isFinalizing}
+                onClick={() => setIsConfirmOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                disabled={isFinalizing || screeningStats.scored === 0}
+                onClick={() => void handleApproveAll()}
+              >
+                {isFinalizing ? (
+                  <ButtonSpinner label="Approving..." />
+                ) : (
+                  `Approve ${screeningStats.scored} recommendation${
+                    screeningStats.scored === 1 ? '' : 's'
+                  }`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
