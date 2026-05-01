@@ -5,11 +5,18 @@ import { type CSSProperties, useMemo } from 'react'
 import type { InterviewItem } from '@/store/services/interviewsApi'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+import SegmentedControl from '@/components/common/SegmentedControl'
 import { DateInput } from '@/components/common/Toolbar'
 
 import styles from './Calendar.module.scss'
 
 export type CalendarView = 'day' | '3day' | 'week'
+
+const VIEW_OPTIONS = [
+  { value: 'day' as const, label: 'Day' },
+  { value: '3day' as const, label: '3-Day' },
+  { value: 'week' as const, label: 'Week' },
+]
 
 const HOUR_START = 7
 const HOUR_END = 21
@@ -206,24 +213,12 @@ export default function Calendar({
           }}
           ariaLabel="Select calendar date"
         />
-        <div className={styles.viewToggle} role="tablist" aria-label="Calendar view">
-          {(['day', '3day', 'week'] as CalendarView[]).map((option) => {
-            const label = option === 'day' ? 'Day' : option === '3day' ? '3-Day' : 'Week'
-            const isActive = view === option
-            return (
-              <button
-                key={option}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`${styles.viewBtn} ${isActive ? styles.viewBtnActive : ''}`}
-                onClick={() => onChangeView(option)}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
+        <SegmentedControl
+          options={VIEW_OPTIONS}
+          value={view}
+          onChange={onChangeView}
+          ariaLabel="Calendar view"
+        />
       </div>
 
       <div className={styles.calendarFrame}>
