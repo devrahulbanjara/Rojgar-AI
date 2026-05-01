@@ -31,30 +31,48 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
   const [hasEditedSelection, setHasEditedSelection] = useState(false)
   const [phase, setPhase] = useState<'select' | 'progress' | 'done'>('select')
   const [completedIds, setCompletedIds] = useState<string[]>([])
+  const [attemptedIds, setAttemptedIds] = useState<string[]>([])
 
   const effectiveSelectedIds = hasEditedSelection
     ? selectedIds
     : selectable.map((candidate) => candidate.application_id)
+
+  const failedIds = attemptedIds.filter((id) => !completedIds.includes(id))
+
+  async function runBatch(applicationIds: string[]) {
+    setAttemptedIds(applicationIds)
+    setPhase('progress')
+    try {
+      const response = await batchTranscribe({ jobId, applicationIds }).unwrap()
+      const transcribed = response.data.map((recording) => recording.application_id)
+      setCompletedIds((current) => Array.from(new Set([...current, ...transcribed])))
+      setPhase('done')
+      const failedCount = applicationIds.length - transcribed.length
+      if (failedCount > 0) {
+        toast.info(
+          `${transcribed.length} transcribed, ${failedCount} failed. The HF Space may have been cold — use Retry failed.`,
+        )
+      } else {
+        toast.success('Batch transcription complete.')
+      }
+    } catch {
+      setPhase('done')
+      toast.error('Batch transcription failed.')
+    }
+  }
 
   async function handleRun() {
     if (effectiveSelectedIds.length === 0) {
       toast.error('Select at least one candidate to batch transcribe.')
       return
     }
+    setCompletedIds([])
+    await runBatch(effectiveSelectedIds)
+  }
 
-    setPhase('progress')
-    try {
-      const response = await batchTranscribe({
-        jobId,
-        applicationIds: effectiveSelectedIds,
-      }).unwrap()
-      setCompletedIds(response.data.map((recording) => recording.application_id))
-      setPhase('done')
-      toast.success('Batch transcription complete.')
-    } catch {
-      setPhase('select')
-      toast.error('Batch transcription failed.')
-    }
+  async function handleRetryFailed() {
+    if (failedIds.length === 0) return
+    await runBatch(failedIds)
   }
 
   return (
@@ -121,7 +139,12 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
             </div>
           ) : (
             <div className={styles.progressBox}>
-              {effectiveSelectedIds.map((applicationId, index) => {
+              {phase === 'done' && failedIds.length > 0 ? (
+                <div className={styles.row}>
+                  First request may have woken the model — failed candidates can be retried.
+                </div>
+              ) : null}
+              {attemptedIds.map((applicationId, index) => {
                 const candidate = candidates.find((item) => item.application_id === applicationId)
                 const isDone = completedIds.includes(applicationId)
                 const isActive = isRunning && !isDone && index === completedIds.length
@@ -142,7 +165,7 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
                         : isActive
                           ? 'Transcribing...'
                           : phase === 'done'
-                            ? 'Skipped'
+                            ? 'Failed'
                             : 'Waiting'}
                     </span>
                   </div>
@@ -168,9 +191,25 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
                 {isRunning ? <ButtonSpinner label="Running..." /> : 'Run transcription'}
               </button>
             ) : phase === 'done' ? (
-              <button type="button" className="btn btn--primary btn--sm" onClick={onClose}>
-                Close
-              </button>
+              <>
+                {failedIds.length > 0 ? (
+                  <button
+                    type="button"
+                    className="btn btn--outline btn--sm"
+                    onClick={() => void handleRetryFailed()}
+                    disabled={isRunning}
+                  >
+                    {isRunning ? (
+                      <ButtonSpinner label="Retrying..." />
+                    ) : (
+                      `Retry failed (${failedIds.length})`
+                    )}
+                  </button>
+                ) : null}
+                <button type="button" className="btn btn--primary btn--sm" onClick={onClose}>
+                  Close
+                </button>
+              </>
             ) : (
               <button type="button" className="btn btn--primary btn--sm" disabled>
                 <ButtonSpinner label="Running..." />

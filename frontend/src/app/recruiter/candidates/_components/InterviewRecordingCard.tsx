@@ -317,12 +317,39 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
   }
 
   // ---- Transcribe / evaluate ----
-  const handleTranscribe = async (recordingId: string) => {
+  const handleTranscribe = async (recordingId: string, isRetry = false) => {
     try {
       await transcribeRecording(recordingId).unwrap()
       toast.success('Transcription complete.')
-    } catch {
-      toast.error('Transcription failed.')
+    } catch (error) {
+      const detail =
+        typeof error === 'object' && error && 'data' in error
+          ? // RTK error shape: { status, data }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (error as any).data?.message ||
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (error as any).data?.detail ||
+            ''
+          : ''
+      const status =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        typeof error === 'object' && error && 'status' in error ? (error as any).status : null
+      const isColdStart =
+        status === 503 ||
+        /warming up|cold[- ]?start/i.test(typeof detail === 'string' ? detail : '')
+
+      if (isColdStart && !isRetry) {
+        toast.info('Transcription model is warming up. Retrying in 20s...')
+        setTimeout(() => {
+          void handleTranscribe(recordingId, true)
+        }, 20000)
+        return
+      }
+      toast.error(
+        isColdStart
+          ? 'Transcription still warming up. Try again shortly.'
+          : 'Transcription failed.',
+      )
     }
   }
 
