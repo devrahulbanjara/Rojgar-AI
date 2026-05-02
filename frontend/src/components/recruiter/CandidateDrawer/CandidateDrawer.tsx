@@ -391,7 +391,7 @@ function ProfileTab({ candidate }: { candidate: Candidate }) {
         ) : null}
       </div>
 
-      <ShortlistingEvaluationEditor candidate={candidate} />
+      <ShortlistingEvaluationEditor key={candidate.id} candidate={candidate} />
 
       {candidate.timeline.length > 0 ? (
         <div className={styles.section}>
@@ -442,12 +442,6 @@ function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
   const [weaknessesDraft, setWeaknessesDraft] = useState<string[]>(
     toDraftRows(candidate.weaknesses),
   )
-
-  useEffect(() => {
-    setScoreDraft(candidate.score?.toString() ?? '')
-    setStrengthsDraft(toDraftRows(candidate.strengths))
-    setWeaknessesDraft(toDraftRows(candidate.weaknesses))
-  }, [candidate.id, candidate.score, candidate.strengths, candidate.weaknesses])
 
   const payloadScore = scoreDraftToPayload(scoreDraft)
   const hasScoreInput = scoreDraft.trim().length > 0

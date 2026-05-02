@@ -1984,7 +1984,7 @@
   font-size: 0.88rem;
   color: var(--color-text, #111827);
   line-height: 1.45;
-  word-break: break-word;
+  word-break: break-all;
   white-space: pre-wrap;
   border: 1px solid rgba($color-primary, 0.08);
 }

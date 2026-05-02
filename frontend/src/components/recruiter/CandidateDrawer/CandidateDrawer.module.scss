@@ -432,7 +432,9 @@
   color: var(--color-text-muted);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 150ms ease, color 150ms ease;
+  transition:
+    opacity 150ms ease,
+    color 150ms ease;
 
   &:hover {
     color: var(--color-error);
