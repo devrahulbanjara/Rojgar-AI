@@ -19,7 +19,7 @@ from app.modules.resume_gap.schemas import (
 from app.modules.resumes import service as resumes_service
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeUpdate
-from app.shared.schemas import SkillBase
+from app.shared.schemas import EducationBase, ExperienceBase, SkillBase
 
 _provider = GroqGapAnalysisProvider()
 CACHE_TTL_SECONDS = 600
@@ -35,21 +35,23 @@ def _serialize_resume(resume: Resume) -> dict:
         "skills": [skill.skill_name for skill in resume.skills],
         "experiences": [
             {
+                "index": idx,
                 "company": experience.company_name,
                 "title": experience.title,
                 "start": str(experience.start_date) if experience.start_date else None,
                 "end": str(experience.end_date) if experience.end_date else "present",
                 "description": experience.description or [],
             }
-            for experience in resume.experiences
+            for idx, experience in enumerate(resume.experiences)
         ],
         "educations": [
             {
+                "index": idx,
                 "institution": education.institution,
                 "degree": education.degree,
                 "field": education.field_of_study,
             }
-            for education in resume.educations
+            for idx, education in enumerate(resume.educations)
         ],
     }
 
@@ -136,63 +138,154 @@ async def auto_patch_resume(
     )
 
     existing_skills = [skill.skill_name for skill in resume.skills]
-    seen = {skill_name.strip().lower() for skill_name in existing_skills}
-    merged_skills: list[SkillBase] = [SkillBase(skill_name=s) for s in existing_skills]
+    existing_by_lower = {s.strip().lower(): s for s in existing_skills}
+    merged_skills: list[SkillBase] = []
+    seen: set[str] = set()
     added_skill_names: list[str] = []
-    for skill_name in patch.skills_to_add:
+    MAX_NEW_SKILLS = 5
+    MAX_TOTAL_SKILLS = 30
+    for skill_name in patch.skills:
         normalized = skill_name.strip()
-        if not normalized or normalized.lower() in seen:
+        if not normalized:
             continue
-        seen.add(normalized.lower())
-        merged_skills.append(SkillBase(skill_name=normalized))
-        added_skill_names.append(normalized)
-        if len(added_skill_names) >= 5:
+        key = normalized.lower()
+        if key in seen:
+            continue
+        if key in existing_by_lower:
+            seen.add(key)
+            merged_skills.append(SkillBase(skill_name=existing_by_lower[key]))
+        else:
+            if len(added_skill_names) >= MAX_NEW_SKILLS:
+                continue
+            seen.add(key)
+            merged_skills.append(SkillBase(skill_name=normalized))
+            added_skill_names.append(normalized)
+        if len(merged_skills) >= MAX_TOTAL_SKILLS:
             break
+    for original in existing_skills:
+        key = original.strip().lower()
+        if key and key not in seen:
+            seen.add(key)
+            merged_skills.append(SkillBase(skill_name=original))
+
+    new_headline = patch.headline.strip()[:120]
+    new_summary = patch.summary.strip()[:400]
+    current_headline = (resume.headline or "").strip()
+    current_summary = (resume.summary or "").strip()
+
+    # Apply experience patches by index. Preserve company/title/dates verbatim;
+    # only the description bullet list is replaced.
+    experience_count = len(resume.experiences)
+    patched_descriptions: dict[int, list[str]] = {}
+    for exp_patch in patch.experience_patches:
+        if exp_patch.index < 0 or exp_patch.index >= experience_count:
+            continue
+        cleaned_bullets = [
+            bullet.strip()[:220]
+            for bullet in exp_patch.description
+            if bullet and bullet.strip()
+        ][:6]
+        if not cleaned_bullets:
+            continue
+        existing_bullets = list(resume.experiences[exp_patch.index].description or [])
+        if cleaned_bullets == existing_bullets:
+            continue
+        patched_descriptions[exp_patch.index] = cleaned_bullets
+
+    merged_skill_names = [s.skill_name for s in merged_skills]
+    skills_changed = merged_skill_names != existing_skills
 
     updated_fields: list[str] = []
-    if patch.headline != (resume.headline or ""):
+    if new_headline and new_headline != current_headline:
         updated_fields.append("headline")
-    if patch.summary != (resume.summary or ""):
+    if new_summary and new_summary != current_summary:
         updated_fields.append("summary")
-    if added_skill_names:
+    if skills_changed:
         updated_fields.append("skills")
+    if patched_descriptions:
+        updated_fields.append("experiences")
 
-    await resumes_service.update_resume(
-        db,
-        user,
-        str(payload.resume_id),
-        ResumeUpdate(
-            headline=patch.headline,
-            summary=patch.summary,
-            skills=merged_skills,
-        ),
-    )
-    await redis_service.delete(f"resume_gap:{payload.resume_id}:{payload.job_id}")
+    if updated_fields:
+        rebuilt_experiences = [
+            ExperienceBase(
+                company_name=experience.company_name,
+                title=experience.title,
+                start_date=experience.start_date,
+                end_date=experience.end_date,
+                description=patched_descriptions.get(
+                    idx, list(experience.description or [])
+                ),
+            )
+            for idx, experience in enumerate(resume.experiences)
+        ]
+        rebuilt_educations = [
+            EducationBase(
+                institution=education.institution,
+                degree=education.degree,
+                field_of_study=education.field_of_study,
+                start_date=education.start_date,
+                end_date=education.end_date,
+            )
+            for education in resume.educations
+        ]
+        await resumes_service.update_resume(
+            db,
+            user,
+            str(payload.resume_id),
+            ResumeUpdate(
+                headline=new_headline
+                if "headline" in updated_fields
+                else resume.headline,
+                summary=new_summary if "summary" in updated_fields else resume.summary,
+                skills=merged_skills,
+                experiences=rebuilt_experiences,
+                educations=rebuilt_educations,
+            ),
+        )
+        await redis_service.delete(f"resume_gap:{payload.resume_id}:{payload.job_id}")
 
     diffs: list[PatchedFieldDiff] = []
     if "headline" in updated_fields:
-        diffs.append(PatchedFieldDiff(
-            field="headline",
-            label="Professional headline",
-            old_value=resume.headline,
-            new_value=patch.headline,
-        ))
+        diffs.append(
+            PatchedFieldDiff(
+                field="headline",
+                label="Professional headline",
+                old_value=resume.headline,
+                new_value=new_headline,
+            )
+        )
     if "summary" in updated_fields:
-        diffs.append(PatchedFieldDiff(
-            field="summary",
-            label="Profile summary",
-            old_value=resume.summary,
-            new_value=patch.summary,
-        ))
+        diffs.append(
+            PatchedFieldDiff(
+                field="summary",
+                label="Profile summary",
+                old_value=resume.summary,
+                new_value=new_summary,
+            )
+        )
+    for idx, new_bullets in patched_descriptions.items():
+        experience = resume.experiences[idx]
+        old_bullets = list(experience.description or [])
+        label = f"Experience: {experience.title} @ {experience.company_name}"
+        diffs.append(
+            PatchedFieldDiff(
+                field=f"experience_{idx}",
+                label=label,
+                old_value="\n".join(old_bullets) if old_bullets else None,
+                new_value="\n".join(new_bullets),
+            )
+        )
     if "skills" in updated_fields:
-        old_skills = ", ".join(existing_skills) if existing_skills else None
-        new_skills = ", ".join([s.skill_name for s in merged_skills]) if merged_skills else None
-        diffs.append(PatchedFieldDiff(
-            field="skills",
-            label="Skills section",
-            old_value=old_skills,
-            new_value=new_skills,
-        ))
+        old_skills_value = ", ".join(existing_skills) if existing_skills else None
+        new_skills_value = ", ".join(merged_skill_names)
+        diffs.append(
+            PatchedFieldDiff(
+                field="skills",
+                label="Skills",
+                old_value=old_skills_value,
+                new_value=new_skills_value,
+            )
+        )
 
     return AutoPatchResponse(
         updated_fields=updated_fields,

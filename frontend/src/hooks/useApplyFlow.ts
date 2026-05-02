@@ -49,6 +49,8 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
   const [gapResult, setGapResult] = useState<GapAnalysisResult | null>(null)
   const [patchedFields, setPatchedFields] = useState<string[]>([])
   const [patchedDiffs, setPatchedDiffs] = useState<PatchedFieldDiff[]>([])
+  const [patchMessage, setPatchMessage] = useState<string>('')
+  const [isPatching, setIsPatching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [shareSettings, setShareSettings] = useState<ShareSettingsDraft>(DEFAULT_SHARE_SETTINGS)
   const [shareReturnStep, setShareReturnStep] = useState<
@@ -64,6 +66,8 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     setGapResult(null)
     setPatchedFields([])
     setPatchedDiffs([])
+    setPatchMessage('')
+    setIsPatching(false)
     setShareSettings(DEFAULT_SHARE_SETTINGS)
     setError(null)
     setStep('gap_choice')
@@ -110,6 +114,10 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     if (!selectedResumeId || !gapResult) return
 
     setStep('patching')
+    setIsPatching(true)
+    setPatchedFields([])
+    setPatchedDiffs([])
+    setPatchMessage('')
     setError(null)
 
     try {
@@ -120,15 +128,18 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
       }).unwrap()
       setPatchedFields(response.data.updated_fields)
       setPatchedDiffs(response.data.diffs)
+      setPatchMessage(response.data.message)
+      setIsPatching(false)
     } catch (err: unknown) {
       const message =
         (err as { data?: { detail?: string; message?: string } })?.data?.detail ||
         (err as { data?: { detail?: string; message?: string } })?.data?.message ||
         'Resume update failed. You can still apply with the current resume.'
       setError(message)
+      setIsPatching(false)
       setStep('gap_results')
     }
-  }, [autoPatchResume, gapResult, handleOpenShareStep, jobId, selectedResumeId])
+  }, [autoPatchResume, gapResult, jobId, selectedResumeId])
 
   const handleBackFromShare = useCallback(() => {
     setStep(shareReturnStep)
@@ -188,6 +199,8 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     gapResult,
     patchedFields,
     patchedDiffs,
+    patchMessage,
+    isPatching,
     shareSettings,
     error,
     handleResumeConfirmed,

@@ -13,11 +13,8 @@ export interface ShareSettingsDraft {
 }
 
 interface StepShareProfileProps {
-  onBack: () => void
-  onSubmit: () => void
   onToggle: <K extends keyof ShareSettingsDraft>(key: K, value: ShareSettingsDraft[K]) => void
   settings: ShareSettingsDraft
-  submitting: boolean
 }
 
 const LIMITED_FIELDS: Array<{
@@ -57,13 +54,7 @@ const LIMITED_FIELDS: Array<{
   },
 ]
 
-export default function StepShareProfile({
-  onBack,
-  onSubmit,
-  onToggle,
-  settings,
-  submitting,
-}: StepShareProfileProps) {
+export default function StepShareProfile({ onToggle, settings }: StepShareProfileProps) {
   return (
     <div className={`${styles.applyModal__body} ${styles.applyModal__shareStep}`}>
       <div className={styles.applyModal__shareHero}>

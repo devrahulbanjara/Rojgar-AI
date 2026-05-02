@@ -222,31 +222,20 @@ export default function ApplyModal({
             {flow.step === 'analyzing' ? <StepAnalyzing /> : null}
 
             {flow.step === 'gap_results' && flow.gapResult ? (
-              <StepGapResults
-                onApplyAnyway={() => flow.handleOpenShareStep('gap_results')}
-                onAutoPatch={flow.handleAutoPatch}
-                onBack={flow.handleBackToChoice}
-                result={flow.gapResult}
-              />
+              <StepGapResults result={flow.gapResult} />
             ) : null}
 
             {flow.step === 'patching' ? (
               <StepPatching
-                isPatching={flow.patchedFields.length === 0}
+                isPatching={flow.isPatching}
+                message={flow.patchMessage}
                 onContinue={flow.handleSubmit}
-                patchedFields={flow.patchedFields}
                 patchedDiffs={flow.patchedDiffs}
               />
             ) : null}
 
             {flow.step === 'share_profile' ? (
-              <StepShareProfile
-                onBack={flow.handleBackFromShare}
-                onSubmit={flow.handleSubmit}
-                onToggle={flow.updateShareSetting}
-                settings={flow.shareSettings}
-                submitting={false}
-              />
+              <StepShareProfile onToggle={flow.updateShareSetting} settings={flow.shareSettings} />
             ) : null}
 
             {flow.step === 'submitting' ? (
@@ -260,10 +249,18 @@ export default function ApplyModal({
 
         {flow.step === 'gap_results' && flow.gapResult ? (
           <div className={styles.applyModal__footer}>
-            <button className="btn btn--primary btn--full" onClick={flow.handleAutoPatch} type="button">
+            <button
+              className="btn btn--primary btn--full"
+              onClick={flow.handleAutoPatch}
+              type="button"
+            >
               Let AI update my resume
             </button>
-            <button className="btn btn--secondary btn--full" onClick={() => flow.handleOpenShareStep('gap_results')} type="button">
+            <button
+              className="btn btn--secondary btn--full"
+              onClick={() => flow.handleOpenShareStep('gap_results')}
+              type="button"
+            >
               Apply with current resume
             </button>
             <button className="btn btn--ghost" onClick={flow.handleBackToChoice} type="button">
@@ -274,10 +271,18 @@ export default function ApplyModal({
 
         {flow.step === 'share_profile' ? (
           <div className={styles.applyModal__footer}>
-            <button className="btn btn--primary btn--full" onClick={flow.handleSubmit} type="button">
+            <button
+              className="btn btn--primary btn--full"
+              onClick={flow.handleSubmit}
+              type="button"
+            >
               Submit application
             </button>
-            <button className="btn btn--secondary btn--full" onClick={flow.handleBackFromShare} type="button">
+            <button
+              className="btn btn--secondary btn--full"
+              onClick={flow.handleBackFromShare}
+              type="button"
+            >
               Back
             </button>
           </div>
