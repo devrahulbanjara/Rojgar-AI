@@ -22,6 +22,20 @@ if TYPE_CHECKING:
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
+class _FakeEmbeddings:
+    """Deterministic offline embeddings used in tests/CI when no API key is set."""
+
+    def __init__(self, dim: int) -> None:
+        self._dim = dim
+
+    def _vector(self, text: str) -> list[float]:
+        digest = hashlib.sha256(text.encode("utf-8")).digest()
+        return [digest[i % len(digest)] / 255.0 for i in range(self._dim)]
+
+    async def aembed_query(self, text: str) -> list[float]:
+        return self._vector(text)
+
+
 def _walk_groq_strict_schema(node: Any) -> None:
     """Mutate a JSON schema tree in-place to satisfy Groq strict mode."""
     if isinstance(node, list):
@@ -105,20 +119,27 @@ class AIService:
     """
 
     def __init__(self) -> None:
-        self._embeddings: GoogleGenerativeAIEmbeddings | None = None
+        self._embeddings: GoogleGenerativeAIEmbeddings | _FakeEmbeddings | None = None
 
         # LLM provider (currently Groq, easily swappable to OpenAI)
         self._llm_client = AsyncGroq(api_key=settings.groq_api_key)
         self._llm_model = settings.groq_model_job_drafting
 
-    def _get_embeddings_client(self) -> GoogleGenerativeAIEmbeddings:
+    def _get_embeddings_client(self) -> GoogleGenerativeAIEmbeddings | _FakeEmbeddings:
         """Lazily initialise and return the Gemini embeddings client."""
         if self._embeddings is None:
+            api_key = settings.google_api_key
+            if settings.environment == "test" or not api_key or api_key == "unused":
+                self._embeddings = _FakeEmbeddings(
+                    dim=settings.embedding_output_dimensionality
+                )
+                return self._embeddings
+
             from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
             self._embeddings = GoogleGenerativeAIEmbeddings(
                 model=settings.embedding_model,
-                api_key=SecretStr(settings.google_api_key),
+                api_key=SecretStr(api_key),
             )
 
         return self._embeddings
