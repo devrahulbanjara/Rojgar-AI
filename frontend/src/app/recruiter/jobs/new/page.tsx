@@ -42,6 +42,7 @@ type DraftField = keyof Pick<
   | 'currency'
   | 'auto_shortlist'
   | 'shortlist_threshold'
+  | 'required_years_of_experience'
   | 'overview'
   | 'responsibilities'
   | 'requirements'
@@ -74,6 +75,7 @@ const ALL_DRAFT_FIELDS: DraftField[] = [
   'currency',
   'auto_shortlist',
   'shortlist_threshold',
+  'required_years_of_experience',
   'overview',
   'responsibilities',
   'requirements',

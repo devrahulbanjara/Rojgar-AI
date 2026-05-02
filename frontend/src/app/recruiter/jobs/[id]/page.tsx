@@ -367,6 +367,17 @@ export default function RecruiterJobDetailPage() {
                         <dd>{salary}</dd>
                       </div>
                     )}
+                    {job.required_years_of_experience != null && (
+                      <div className="jd-detail__meta-row">
+                        <dt>
+                          <Briefcase aria-hidden="true" /> Experience
+                        </dt>
+                        <dd>
+                          {job.required_years_of_experience}+ year
+                          {job.required_years_of_experience === 1 ? '' : 's'}
+                        </dd>
+                      </div>
+                    )}
                     <div className="jd-detail__meta-row">
                       <dt>
                         <Clock aria-hidden="true" /> Posted

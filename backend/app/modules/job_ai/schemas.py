@@ -42,12 +42,13 @@ class JobDraft(BaseModel):
     currency: str | None = Field(max_length=10)
     status: JobStatus
     shortlist_threshold: int = Field(default=70, ge=0, le=100)
+    required_years_of_experience: int | None = None
 
-    overview: str = Field(min_length=1)
-    responsibilities: list[str]
-    requirements: list[str]
-    preferred_qualifications: list[str]
-    benefits: list[str]
+    overview: str = Field(min_length=1, max_length=5000)
+    responsibilities: list[str] = Field(max_length=50)
+    requirements: list[str] = Field(max_length=50)
+    preferred_qualifications: list[str] = Field(max_length=30)
+    benefits: list[str] = Field(max_length=30)
     auto_shortlist: bool = Field(default=False)
 
     assumptions: list[str]

@@ -91,6 +91,15 @@ def _background_database_url(db: AsyncSession) -> str:
     return settings.database_url
 
 
+async def _compute_and_store_jd_embedding(job: Job) -> None:
+    """Compute Gemini embedding for job description text and store on the row."""
+    from app.infrastructures.ai.service import ai_service
+    from app.infrastructures.qdrant.service import qdrant_service
+
+    text = qdrant_service._build_job_document(job)
+    job.jd_embedding = await ai_service.get_embeddings(text)
+
+
 async def expire_due_jobs(db: AsyncSession) -> int:
     """
     Expire all jobs whose expiry date is today or earlier.
@@ -132,9 +141,14 @@ async def expire_due_jobs(db: AsyncSession) -> int:
         await redis_service.delete(f"jobs:company:{company_id}")
         await invalidate_company_dashboard_caches(db, str(company_id))
 
-    # Auto-finalize threshold-classified outcomes for jobs that opted into AI shortlisting.
+    # Two-stage pipeline for auto-shortlist jobs; simple finalize for the rest.
+    from app.modules.shortlisting.service import run_two_stage_for_expired_job
+
     for job in jobs:
-        await auto_finalize_expired_job(db, job)
+        if job.auto_shortlist and not job.final_shortlist_completed:
+            await run_two_stage_for_expired_job(db, job)
+        else:
+            await auto_finalize_expired_job(db, job)
 
     # Lift the candidate-side decision mask: invalidate every applicant's cached
     # application list for jobs that just expired, so their next page-load reveals
@@ -186,6 +200,7 @@ def _job_list_item_from_row(
             "status": _effective_job_status(job),
             "auto_shortlist": job.auto_shortlist,
             "shortlist_threshold": job.shortlist_threshold,
+            "required_years_of_experience": job.required_years_of_experience,
             "expires_at": job.expires_at,
             "applications_count": int(applications_count or 0),
             "final_shortlist_completed": job.final_shortlist_completed,
@@ -219,6 +234,7 @@ def _job_detail_response_from_row(
             "status": _effective_job_status(job),
             "auto_shortlist": job.auto_shortlist,
             "shortlist_threshold": job.shortlist_threshold,
+            "required_years_of_experience": job.required_years_of_experience,
             "expires_at": job.expires_at,
             "overview": job.overview,
             "responsibilities": job.responsibilities,
@@ -292,6 +308,7 @@ async def create_job(
         status=payload.status,
         auto_shortlist=payload.auto_shortlist,
         shortlist_threshold=payload.shortlist_threshold,
+        required_years_of_experience=payload.required_years_of_experience,
         expires_at=expires_at,
         overview=payload.overview,
         responsibilities=payload.responsibilities or [],
@@ -310,6 +327,9 @@ async def create_job(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Active jobs must have an expires_at in the future.",
         )
+
+    if job.status == JobStatus.active:
+        await _compute_and_store_jd_embedding(job)
 
     db.add(job)
     await db.flush()  # Generates job.id without committing yet
@@ -593,6 +613,14 @@ async def update_job(
         and job.expires_at <= _utcnow()
     ):
         job.status = JobStatus.expired
+
+    if job.status == JobStatus.active:
+        _jd_fields = {
+            "title", "overview", "responsibilities", "requirements",
+            "preferred_qualifications", "benefits", "status",
+        }
+        if _jd_fields & set(update_data.keys()):
+            await _compute_and_store_jd_embedding(job)
 
     # 1. Transactionally write the outbox event alongside the update
     event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)

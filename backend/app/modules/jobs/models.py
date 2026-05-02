@@ -1,7 +1,17 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, Uuid, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Uuid,
+    func,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -43,6 +53,12 @@ class Job(Base):
     )
     shortlist_threshold: Mapped[int] = mapped_column(
         Integer, default=70, server_default="70", nullable=False
+    )
+    required_years_of_experience: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+    jd_embedding: Mapped[list[float] | None] = mapped_column(
+        ARRAY(Float), nullable=True
     )
     final_shortlist_completed: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
