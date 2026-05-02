@@ -16,6 +16,7 @@ type DraftField =
   | 'currency'
   | 'auto_shortlist'
   | 'shortlist_threshold'
+  | 'required_years_of_experience'
   | 'overview'
   | 'responsibilities'
   | 'requirements'
@@ -23,6 +24,18 @@ type DraftField =
   | 'benefits'
 
 const CURRENCY_OPTIONS = ['NPR', 'INR', 'USD', 'EUR', 'GBP'] as const
+
+// Only these fields are AI-rewritten in a meaningful way, so only these expose a
+// lock toggle. Numeric / dropdown fields the recruiter sets directly don't need locks.
+const LOCKABLE_FIELDS: ReadonlySet<DraftField> = new Set<DraftField>([
+  'title',
+  'salary_min',
+  'overview',
+  'responsibilities',
+  'requirements',
+  'preferred_qualifications',
+  'benefits',
+])
 
 type JobDraftFormProps = {
   draft: JobAIDraftPayload | null
@@ -32,19 +45,40 @@ type JobDraftFormProps = {
   disabled: boolean
   isLoading?: boolean
   showAiControls?: boolean
+  salaryWarning?: ReactNode
   onFieldChange: <K extends DraftField>(field: K, value: JobAIDraftPayload[K]) => void
   onToggleLock: (field: DraftField) => void
-  onRequestUpdate: (fields: DraftField[], feedback: string) => void
 }
 
 function hasAny(targets: string[], keys: string[]) {
   return keys.some((key) => targets.includes(key))
 }
 
-function FieldChrome({
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title?: string
+  description?: string
+  children: ReactNode
+}) {
+  return (
+    <div className="job-ai-section">
+      {title ? (
+        <div className="job-ai-section__header">
+          <h3 className="job-ai-section__title">{title}</h3>
+          {description ? <p className="job-ai-section__description">{description}</p> : null}
+        </div>
+      ) : null}
+      <div className="job-ai-section__body">{children}</div>
+    </div>
+  )
+}
+
+function Field({
   label,
   helper,
-  showHelper = true,
   fieldKeys,
   lockedFields,
   dirtyFields,
@@ -52,12 +86,11 @@ function FieldChrome({
   disabled,
   showAiControls = true,
   onToggleLock,
-  onRequestUpdate,
+  warning,
   children,
 }: {
   label: string
-  helper: string
-  showHelper?: boolean
+  helper?: string
   fieldKeys: DraftField[]
   lockedFields: string[]
   dirtyFields: string[]
@@ -65,106 +98,50 @@ function FieldChrome({
   disabled: boolean
   showAiControls?: boolean
   onToggleLock: (field: DraftField) => void
-  onRequestUpdate: (fields: DraftField[], feedback: string) => void
+  warning?: ReactNode
   children: ReactNode
 }) {
-  const [instruction, setInstruction] = useState('')
-  const [showInstruction, setShowInstruction] = useState(false)
   const isLocked = hasAny(lockedFields, fieldKeys)
   const isDirty = hasAny(dirtyFields, fieldKeys)
   const isMissing = hasAny(missingFields, fieldKeys)
+  const canLock = showAiControls && fieldKeys.some((key) => LOCKABLE_FIELDS.has(key))
 
   return (
-    <div className={`job-ai-field${isMissing ? ' job-ai-field--missing' : ''}`}>
+    <div
+      className={`job-ai-field${isMissing ? ' job-ai-field--missing' : ''}${
+        isLocked ? ' job-ai-field--locked' : ''
+      }`}
+    >
       <div className="job-ai-field__header">
-        <div className="job-ai-field__title-row">
-          <label className="job-ai-label">{label}</label>
-          {showAiControls ? (
-            <button
-              type="button"
-              className="btn btn--icon btn--sm"
-              aria-pressed={isLocked}
-              disabled={disabled}
-              onClick={() => onToggleLock(fieldKeys[0])}
-              aria-label={isLocked ? `Unlock ${label}` : `Lock ${label}`}
-              title={isLocked ? `Unlock ${label}` : `Lock ${label}`}
-            >
-              {isLocked ? (
-                <Lock size={15} aria-hidden="true" />
-              ) : (
-                <LockOpen size={15} aria-hidden="true" />
-              )}
-            </button>
-          ) : null}
-          <div className="job-ai-field__badges">
-            {showAiControls && isLocked ? (
-              <span className="job-ai-field__label job-ai-field__label--locked">
-                <Lock size={10} aria-hidden="true" />
-                Locked
-              </span>
-            ) : null}
-            {isDirty ? (
-              <span className="job-ai-field__label job-ai-field__label--edited">Edited</span>
-            ) : null}
-            {isMissing ? (
-              <span className="job-ai-field__label job-ai-field__label--missing">Missing</span>
-            ) : null}
-          </div>
-        </div>
+        <label className="job-ai-label">
+          {label}
+          {isMissing ? <span className="job-ai-field__missing-dot" aria-label="Missing" /> : null}
+          {isDirty && !isLocked ? <span className="job-ai-field__edited-tag">Edited</span> : null}
+        </label>
+        {warning ? <div className="job-ai-field__warning">{warning}</div> : null}
+        {canLock ? (
+          <button
+            type="button"
+            className={`job-ai-field__lock${isLocked ? ' job-ai-field__lock--on' : ''}`}
+            aria-pressed={isLocked}
+            disabled={disabled}
+            onClick={() => onToggleLock(fieldKeys[0])}
+            aria-label={isLocked ? `Unlock ${label}` : `Lock ${label} from AI changes`}
+            title={isLocked ? `Unlock ${label}` : `Lock ${label} so AI won't change it`}
+          >
+            {isLocked ? (
+              <Lock size={13} aria-hidden="true" />
+            ) : (
+              <LockOpen size={13} aria-hidden="true" />
+            )}
+            <span>{isLocked ? 'Locked' : 'Lock'}</span>
+          </button>
+        ) : null}
       </div>
 
-      {showHelper ? <p className="job-ai-field__helper">{helper}</p> : null}
+      {helper ? <p className="job-ai-field__helper">{helper}</p> : null}
 
       {children}
-
-      {showAiControls ? (
-        <div className="job-ai-assistant__toggle job-ai-field__toggle">
-          <label className="job-ai-checkbox" htmlFor={`field-feedback-toggle-${fieldKeys[0]}`}>
-            <input
-              id={`field-feedback-toggle-${fieldKeys[0]}`}
-              type="checkbox"
-              checked={showInstruction}
-              onChange={(event) => setShowInstruction(event.target.checked)}
-              disabled={disabled || isLocked}
-            />
-            <span>Any feedback for AI to modify this field?</span>
-          </label>
-        </div>
-      ) : null}
-
-      {showAiControls && showInstruction ? (
-        <div
-          className="job-ai-instruction"
-          style={{ animation: 'content-fade-up 280ms ease both' }}
-        >
-          <label className="job-ai-label" htmlFor={`field-feedback-${fieldKeys[0]}`}>
-            Tell AI what to change in this field
-          </label>
-          <textarea
-            id={`field-feedback-${fieldKeys[0]}`}
-            className="job-ai-textarea"
-            rows={3}
-            value={instruction}
-            onChange={(event) => setInstruction(event.target.value)}
-            placeholder={`Example: ${helper}`}
-            disabled={disabled || isLocked}
-          />
-          <div className="job-ai-field__actions">
-            <button
-              type="button"
-              className="btn btn--secondary btn--sm"
-              disabled={disabled || isLocked || !instruction.trim()}
-              onClick={() => {
-                onRequestUpdate(fieldKeys, instruction.trim())
-                setInstruction('')
-                setShowInstruction(false)
-              }}
-            >
-              Send to AI
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -255,9 +232,9 @@ export default function JobDraftForm({
   disabled,
   isLoading,
   showAiControls = true,
+  salaryWarning,
   onFieldChange,
   onToggleLock,
-  onRequestUpdate,
 }: JobDraftFormProps) {
   if (isLoading) {
     return (
@@ -292,6 +269,15 @@ export default function JobDraftForm({
     )
   }
 
+  const fieldProps = {
+    lockedFields,
+    dirtyFields,
+    missingFields,
+    disabled,
+    showAiControls,
+    onToggleLock,
+  }
+
   return (
     <section className="job-ai-card job-ai-form dash-card">
       <div className="job-ai-card__header dash-card__header">
@@ -299,144 +285,81 @@ export default function JobDraftForm({
           <h2 className="job-ai-card__title dash-card__title">Draft Details</h2>
           <p className="job-ai-card__subtitle dash-card__subtitle">
             {showAiControls
-              ? 'Edit directly, lock what must stay fixed, then send field-specific instructions to AI.'
+              ? "Edit any field directly. Lock the ones AI shouldn't change, then use Refine with AI on the right to update sections."
               : 'Fill in the job details below.'}
           </p>
         </div>
       </div>
 
       <div className="job-ai-card__body dash-card__body">
-        <div className="job-ai-form__grid">
-          <FieldChrome
-            label="Title"
-            helper="Make the title more specific for the actual seniority and team."
-            fieldKeys={['title']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
-            <input
-              className="job-ai-input"
-              value={draft.title}
-              onChange={(event) => onFieldChange('title', event.target.value)}
-              disabled={disabled}
-            />
-          </FieldChrome>
-
-          <FieldChrome
-            label="Location"
-            helper="Clarify the city, country, or whether the role should remain location-flexible."
-            fieldKeys={['location']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
-            <input
-              className="job-ai-input"
-              value={draft.location ?? ''}
-              onChange={(event) => onFieldChange('location', event.target.value || null)}
-              disabled={disabled}
-            />
-          </FieldChrome>
-
-          <FieldChrome
-            label="Location Type"
-            helper="Change between on-site, remote, or hybrid while keeping the rest of the job intact."
-            fieldKeys={['location_type']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
-            <select
-              className="job-ai-input"
-              value={draft.location_type}
-              onChange={(event) =>
-                onFieldChange(
-                  'location_type',
-                  event.target.value as JobAIDraftPayload['location_type'],
-                )
-              }
-              disabled={disabled}
-            >
-              <option value="onsite">On-site</option>
-              <option value="remote">Remote</option>
-              <option value="hybrid">Hybrid</option>
-            </select>
-          </FieldChrome>
-
-          <FieldChrome
-            label="Automatic AI Evaluation"
-            helper="Turn this on when each new application should be evaluated automatically right after submission."
-            fieldKeys={['auto_shortlist']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
-            <label className="job-ai-checkbox">
+        <FormSection title="Basics">
+          <div className="job-ai-form__grid">
+            <Field label="Job title" fieldKeys={['title']} {...fieldProps}>
               <input
-                type="checkbox"
-                checked={draft.auto_shortlist}
-                onChange={(event) => onFieldChange('auto_shortlist', event.target.checked)}
+                className="job-ai-input"
+                value={draft.title}
+                onChange={(event) => onFieldChange('title', event.target.value)}
                 disabled={disabled}
               />
-              <span>
-                Automatically generate evaluation scores and feedback for each new application
-              </span>
-            </label>
-          </FieldChrome>
+            </Field>
 
-          <FieldChrome
-            label="Shortlist Threshold"
-            helper="Set the score threshold used later when applying AI shortlisting decisions."
-            fieldKeys={['shortlist_threshold']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
-            <input
-              type="number"
-              min={0}
-              max={100}
-              className="job-ai-input"
-              value={draft.shortlist_threshold}
-              onChange={(event) =>
-                onFieldChange('shortlist_threshold', Number(event.target.value || 70))
-              }
-              disabled={disabled}
-            />
-          </FieldChrome>
+            <Field label="Location" fieldKeys={['location']} {...fieldProps}>
+              <input
+                className="job-ai-input"
+                value={draft.location ?? ''}
+                onChange={(event) => onFieldChange('location', event.target.value || null)}
+                disabled={disabled}
+              />
+            </Field>
 
-          <FieldChrome
-            label="Salary Range"
-            helper="Adjust the salary range and currency using realistic recruiter-friendly language."
+            <Field label="Location type" fieldKeys={['location_type']} {...fieldProps}>
+              <select
+                className="job-ai-input"
+                value={draft.location_type}
+                onChange={(event) =>
+                  onFieldChange(
+                    'location_type',
+                    event.target.value as JobAIDraftPayload['location_type'],
+                  )
+                }
+                disabled={disabled}
+              >
+                <option value="onsite">On-site</option>
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </Field>
+
+            <Field
+              label="Required years of experience"
+              fieldKeys={['required_years_of_experience']}
+              {...fieldProps}
+            >
+              <input
+                type="number"
+                min={0}
+                max={50}
+                className="job-ai-input"
+                value={draft.required_years_of_experience ?? ''}
+                onChange={(event) =>
+                  onFieldChange(
+                    'required_years_of_experience',
+                    event.target.value ? Number(event.target.value) : null,
+                  )
+                }
+                placeholder="e.g. 3"
+                disabled={disabled}
+              />
+            </Field>
+          </div>
+        </FormSection>
+
+        <FormSection>
+          <Field
+            label="Salary range"
             fieldKeys={['salary_min', 'salary_max', 'currency']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
+            {...fieldProps}
+            warning={salaryWarning}
           >
             <div className="job-ai-form__salary-grid">
               <input
@@ -449,7 +372,7 @@ export default function JobDraftForm({
                     event.target.value ? Number(event.target.value) : null,
                   )
                 }
-                placeholder="Min salary"
+                placeholder="Min"
                 disabled={disabled}
               />
               <input
@@ -462,7 +385,7 @@ export default function JobDraftForm({
                     event.target.value ? Number(event.target.value) : null,
                   )
                 }
-                placeholder="Max salary"
+                placeholder="Max"
                 disabled={disabled}
               />
               <select
@@ -478,84 +401,78 @@ export default function JobDraftForm({
                 ))}
               </select>
             </div>
-          </FieldChrome>
-        </div>
+          </Field>
+        </FormSection>
 
-        <FieldChrome
-          label="Overview"
-          helper="Shorten this overview, improve clarity, or make it stronger for the intended audience."
-          fieldKeys={['overview']}
-          lockedFields={lockedFields}
-          dirtyFields={dirtyFields}
-          missingFields={missingFields}
-          disabled={disabled}
-          onToggleLock={onToggleLock}
-          onRequestUpdate={onRequestUpdate}
-        >
-          <textarea
-            className="job-ai-textarea"
-            rows={6}
-            value={draft.overview}
-            onChange={(event) => onFieldChange('overview', event.target.value)}
-            disabled={disabled}
-          />
-        </FieldChrome>
+        <FormSection title="AI Evaluation" description="How candidates get scored once they apply.">
+          <div className="job-ai-form__grid">
+            <Field
+              label="Auto-evaluate applications"
+              fieldKeys={['auto_shortlist']}
+              {...fieldProps}
+            >
+              <label className="job-ai-checkbox job-ai-checkbox--inline">
+                <input
+                  type="checkbox"
+                  checked={draft.auto_shortlist}
+                  onChange={(event) => onFieldChange('auto_shortlist', event.target.checked)}
+                  disabled={disabled}
+                />
+                <span>Score and feedback every new application automatically</span>
+              </label>
+            </Field>
 
-        <div className="job-ai-form__stack">
-          <FieldChrome
-            label="Responsibilities"
-            helper="Make these responsibilities clearer, more senior, or more execution-focused."
-            showHelper={false}
-            fieldKeys={['responsibilities']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
+            <Field label="Shortlist threshold" fieldKeys={['shortlist_threshold']} {...fieldProps}>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className="job-ai-input"
+                value={draft.shortlist_threshold}
+                onChange={(event) =>
+                  onFieldChange('shortlist_threshold', Number(event.target.value || 70))
+                }
+                disabled={disabled}
+              />
+            </Field>
+          </div>
+        </FormSection>
+
+        <FormSection>
+          <Field label="Overview" fieldKeys={['overview']} {...fieldProps}>
+            <textarea
+              className="job-ai-textarea"
+              rows={8}
+              value={draft.overview}
+              onChange={(event) => onFieldChange('overview', event.target.value)}
+              disabled={disabled}
+            />
+          </Field>
+        </FormSection>
+
+        <FormSection>
+          <Field label="Responsibilities" fieldKeys={['responsibilities']} {...fieldProps}>
             <ListEditor
               label="Responsibilities"
               items={draft.responsibilities}
               disabled={disabled}
               onChange={(items) => onFieldChange('responsibilities', items)}
             />
-          </FieldChrome>
+          </Field>
 
-          <FieldChrome
-            label="Requirements"
-            helper="Tighten these requirements, remove unrealistic asks, or better reflect the role."
-            showHelper={false}
-            fieldKeys={['requirements']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
+          <Field label="Requirements" fieldKeys={['requirements']} {...fieldProps}>
             <ListEditor
               label="Requirements"
               items={draft.requirements}
               disabled={disabled}
               onChange={(items) => onFieldChange('requirements', items)}
             />
-          </FieldChrome>
+          </Field>
 
-          <FieldChrome
-            label="Preferred Qualifications"
-            helper="Refine the preferred qualifications so they add signal without becoming mandatory."
-            showHelper={false}
+          <Field
+            label="Preferred qualifications"
             fieldKeys={['preferred_qualifications']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
+            {...fieldProps}
           >
             <ListEditor
               label="Preferred qualifications"
@@ -563,29 +480,19 @@ export default function JobDraftForm({
               disabled={disabled}
               onChange={(items) => onFieldChange('preferred_qualifications', items)}
             />
-          </FieldChrome>
+          </Field>
+        </FormSection>
 
-          <FieldChrome
-            label="Benefits"
-            helper="Rewrite the benefits to be clearer, more realistic, or more appealing."
-            showHelper={false}
-            fieldKeys={['benefits']}
-            lockedFields={lockedFields}
-            dirtyFields={dirtyFields}
-            missingFields={missingFields}
-            disabled={disabled}
-            showAiControls={showAiControls}
-            onToggleLock={onToggleLock}
-            onRequestUpdate={onRequestUpdate}
-          >
+        <FormSection>
+          <Field label="Benefits" fieldKeys={['benefits']} {...fieldProps}>
             <ListEditor
               label="Benefits"
               items={draft.benefits}
               disabled={disabled}
               onChange={(items) => onFieldChange('benefits', items)}
             />
-          </FieldChrome>
-        </div>
+          </Field>
+        </FormSection>
       </div>
     </section>
   )

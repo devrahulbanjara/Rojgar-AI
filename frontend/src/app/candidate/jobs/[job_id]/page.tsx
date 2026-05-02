@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
 import { getCompanyAccent } from '@/lib/companyAccent'
 import { formatDate, formatSalary } from '@/lib/jobHelpers'
+import { notify } from '@/lib/notify'
 import {
   type JobDetail,
   type JobListItem,
@@ -260,7 +260,7 @@ export default function JobDetailPage() {
               onClick={() => {
                 navigator.clipboard
                   .writeText(window.location.href)
-                  .then(() => toast.info('Link copied!'))
+                  .then(() => notify.info('Link copied!'))
               }}
               aria-label="Share link"
             >
@@ -384,6 +384,17 @@ export default function JobDetailPage() {
                       <DollarSign aria-hidden="true" /> Salary
                     </dt>
                     <dd>{salary}</dd>
+                  </div>
+                )}
+                {job.required_years_of_experience != null && (
+                  <div className="jd-detail__meta-row">
+                    <dt>
+                      <Briefcase aria-hidden="true" /> Experience
+                    </dt>
+                    <dd>
+                      {job.required_years_of_experience}+ year
+                      {job.required_years_of_experience === 1 ? '' : 's'}
+                    </dd>
                   </div>
                 )}
                 <div className="jd-detail__meta-row">

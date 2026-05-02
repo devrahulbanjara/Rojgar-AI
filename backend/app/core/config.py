@@ -91,6 +91,9 @@ class Settings(BaseSettings):
     shortlisting_reflection_max_iterations: int = 2
     shortlisting_web_search_max_results: int = 3
 
+    ml_bouncer_top_percent: int = 20
+    ml_bouncer_min_score: float = 0.4
+
     # HF Space Whisper (transcription)
     hf_whisper_url: str = (
         "https://devrahulbanjara-nepali-whisper-small.hf.space/transcribe"

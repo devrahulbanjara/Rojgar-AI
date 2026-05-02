@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, status
+from fastapi import APIRouter, BackgroundTasks, Response, status
 
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
@@ -24,11 +24,28 @@ async def create_ai_job_draft(
     payload: GenerateJobDraftRequest,
     user: CurrentUser,
     db: DbSession,
+    background_tasks: BackgroundTasks,
 ) -> UnifiedResponse[JobAIDraftResponse]:
     """Generate a new AI-assisted job draft."""
-    data = await service.create_draft(db, user, payload)
+    draft = await service.create_draft(db, user, payload, run_background=True)
+
+    if not payload.manual:
+        background_tasks.add_task(
+            service.run_draft_generation_background,
+            draft_id=draft.id,
+            thread_id=draft.thread_id,
+            recruiter_id=user.id,
+            company_id=draft.company_id,
+            mode=payload.mode,
+            title=payload.title,
+            rough_description=payload.rough_description,
+            source_job_id=payload.source_job_id,
+            research_salary=payload.research_salary,
+            locked_fields=payload.locked_fields,
+        )
+
     return ResponseBuilder.success(
-        data=data,
+        data=draft,
         message="AI draft created.",
         status_code=status.HTTP_201_CREATED,
     )
@@ -90,3 +107,18 @@ async def commit_ai_job_draft(
     """Commit an approved AI draft into a persisted job."""
     data = await service.commit_draft(db, user, draft_id, payload, bg_tasks)
     return ResponseBuilder.success(data=data, message="AI draft committed as job.")
+
+
+@router.delete(
+    "/drafts/{draft_id}",
+    summary="Delete an AI draft",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_ai_job_draft(
+    draft_id: uuid.UUID,
+    user: CurrentUser,
+    db: DbSession,
+) -> Response:
+    """Delete an AI draft."""
+    await service.delete_draft(db, user, draft_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

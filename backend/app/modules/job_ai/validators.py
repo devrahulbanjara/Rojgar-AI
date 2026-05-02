@@ -4,12 +4,41 @@ from app.modules.job_ai.schemas import JobDraft
 
 
 BANNED_PHRASES = {
+    # Age-coded language
     "young and energetic",
     "digital native",
+    "recent graduate only",
+    "recent grad only",
+    "new grad only",
+    "young professional",
+    "fresh graduate",
+    # Gender-coded language
     "he will",
     "she will",
-    "recent graduate only",
+    "he or she",
+    "his or her",
+    # Nationality / language bias
     "native english speaker",
+    "native speaker",
+    # Exclusionary culture-fit dog-whistles
+    "ninja",
+    "rockstar",
+    "rock star",
+    "guru",
+    "wizard",
+    "superhero",
+    "10x engineer",
+    "10x developer",
+    # Aggression / dominance language
+    "aggressive",
+    "killer instinct",
+    "dominate",
+    "crush it",
+    "hustle culture",
+    # Physical / appearance requirements (unrelated to job)
+    "physically fit",
+    "well-groomed",
+    "presentable appearance",
 }
 
 

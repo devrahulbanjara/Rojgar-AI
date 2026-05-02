@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
 import CandidateEvaluationCard from '@/app/recruiter/candidates/_components/CandidateEvaluationCard'
 import InterviewRecordingCard from '@/app/recruiter/candidates/_components/InterviewRecordingCard'
 import { mapRecruiterCandidateResume } from '@/app/recruiter/candidates/_lib/mapRecruiterCandidateResume'
 import { buildEmailPreviewDocument } from '@/lib/email/preview'
+import { notify } from '@/lib/notify'
 import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
 import {
   type ApplicationStatus,
@@ -159,10 +159,10 @@ export default function CandidateDrawer({
         application_id: candidate.id,
         body: { status: next },
       }).unwrap()
-      toast.success(`Application moved to ${STATUS_LABELS[next].toLowerCase()}.`)
+      notify.success(`Application moved to ${STATUS_LABELS[next].toLowerCase()}.`)
       void refetch()
     } catch {
-      toast.error('Could not update application status.')
+      notify.error('Could not update application status.')
     }
   }
 
@@ -467,7 +467,7 @@ function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
 
   async function handleSave() {
     if (scoreError) {
-      toast.error(scoreError)
+      notify.error(scoreError)
       return
     }
     try {
@@ -479,9 +479,9 @@ function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
           weaknesses: parsedWeaknesses,
         },
       }).unwrap()
-      toast.success('Shortlisting evaluation saved.')
+      notify.success('Shortlisting evaluation saved.')
     } catch {
-      toast.error('Could not save shortlisting evaluation.')
+      notify.error('Could not save shortlisting evaluation.')
     }
   }
 
@@ -691,10 +691,10 @@ function OutreachTab({
   async function handleGenerate() {
     try {
       await generateDraft(applicationId).unwrap()
-      toast.success('Draft generated.')
+      notify.success('Draft generated.')
       void refetch()
     } catch {
-      toast.error('Could not generate draft.')
+      notify.error('Could not generate draft.')
     }
   }
 
@@ -803,10 +803,10 @@ function DraftEditor({
   async function handleSave() {
     try {
       await updateDraft({ draftId: draft.draft_id, subject, body }).unwrap()
-      toast.success('Draft saved.')
+      notify.success('Draft saved.')
       setDirty(false)
     } catch {
-      toast.error('Could not save draft.')
+      notify.error('Could not save draft.')
     }
   }
 
@@ -817,20 +817,20 @@ function DraftEditor({
         setDirty(false)
       }
       await approveDraft({ draftId: draft.draft_id, approved: true }).unwrap()
-      toast.success('Email sent.')
+      notify.success('Email sent.')
     } catch {
-      toast.error('Could not send email.')
+      notify.error('Could not send email.')
     }
   }
 
   async function handleRegenerate() {
     try {
       await generateDraft(draft.application_id).unwrap()
-      toast.success('Draft regenerated.')
+      notify.success('Draft regenerated.')
       setDirty(false)
       onRegenerated()
     } catch {
-      toast.error('Could not regenerate draft.')
+      notify.error('Could not regenerate draft.')
     }
   }
 
@@ -838,9 +838,9 @@ function DraftEditor({
     if (!confirm('Delete this draft?')) return
     try {
       await deleteDraft(draft.draft_id).unwrap()
-      toast.success('Draft deleted.')
+      notify.success('Draft deleted.')
     } catch {
-      toast.error('Could not delete draft.')
+      notify.error('Could not delete draft.')
     }
   }
 

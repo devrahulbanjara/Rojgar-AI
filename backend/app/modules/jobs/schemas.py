@@ -23,6 +23,7 @@ class JobBase(BaseSchema):
     benefits: list[str] | None = None
     auto_shortlist: bool = False
     shortlist_threshold: int = Field(default=70, ge=0, le=100)
+    required_years_of_experience: int | None = None
 
     @model_validator(mode="after")
     def validate_job_fields(self) -> "JobBase":
@@ -89,6 +90,7 @@ class JobListItem(BaseSchema):
     status: JobStatus
     auto_shortlist: bool = False
     shortlist_threshold: int = 70
+    required_years_of_experience: int | None = None
     expires_at: datetime | None = None
     applications_count: int = 0
     final_shortlist_completed: bool = False
@@ -122,6 +124,7 @@ class JobDetailResponse(BaseSchema):
     status: JobStatus
     auto_shortlist: bool = False
     shortlist_threshold: int = 70
+    required_years_of_experience: int | None = None
     expires_at: datetime | None = None
     overview: str | None = None
     responsibilities: list[str] = []

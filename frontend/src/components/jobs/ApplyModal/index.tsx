@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import { useApplyFlow } from '@/hooks/useApplyFlow'
+import { notify } from '@/lib/notify'
 import { useGetMyResumesQuery } from '@/store/services/resumeApi'
 import { X } from 'lucide-react'
 
@@ -105,7 +105,7 @@ export default function ApplyModal({
   const flow = useApplyFlow({
     jobId,
     onSuccess: () => {
-      toast.success('Application submitted successfully!')
+      notify.success('Application submitted successfully!')
       onSuccess?.()
       onClose()
     },

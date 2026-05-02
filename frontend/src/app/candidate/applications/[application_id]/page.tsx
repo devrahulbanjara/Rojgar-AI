@@ -1,13 +1,13 @@
 'use client'
 
 import { type CSSProperties, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
 import { getCompanyAccent } from '@/lib/companyAccent'
+import { notify } from '@/lib/notify'
 import { getApplicationStatusLabel } from '@/lib/statusMetadata'
 import {
   type ActivityEvent,
@@ -180,10 +180,10 @@ export default function CandidateApplicationDetailPage() {
     try {
       await respondToOffer({ application_id: applicationId, accepted }).unwrap()
       setRespondedAccepted(accepted)
-      toast.success(accepted ? 'Offer accepted.' : 'Offer declined.')
+      notify.success(accepted ? 'Offer accepted.' : 'Offer declined.')
     } catch (err) {
       const parsed = parseApiError(err, {}, 'Failed to respond to offer.')
-      toast.error(parsed.message)
+      notify.error(parsed.message)
     }
   }
 

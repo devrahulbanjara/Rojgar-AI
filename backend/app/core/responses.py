@@ -85,7 +85,7 @@ class ResponseBuilder:
         message: str = "Operation successful",
         status_code: int = status.HTTP_200_OK,
         response: Response | None = None,
-    ) -> JSONResponse:
+    ) -> Any:
         """Wrap a successful payload in the unified response envelope."""
         content = {
             "success": True,
@@ -107,7 +107,7 @@ class ResponseBuilder:
         message: str = "An error occurred",
         status_code: int = status.HTTP_400_BAD_REQUEST,
         response: Response | None = None,
-    ) -> JSONResponse:
+    ) -> Any:
         """Wrap an error payload in the unified response envelope."""
         content = {
             "success": False,
@@ -131,7 +131,7 @@ class ResponseBuilder:
         size: int,
         message: str = "Data fetched successfully",
         status_code: int = status.HTTP_200_OK,
-    ) -> JSONResponse:
+    ) -> Any:
         """Wrap paginated data in the unified response envelope."""
         total_pages = math.ceil(total / size) if size > 0 else 0
         content = {

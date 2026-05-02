@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
   useChangeMyPasswordMutation,
@@ -67,13 +67,13 @@ export default function RecruiterProfilePage() {
       const response = await updateMe({ full_name: fullName }).unwrap()
       dispatch(updateUser(response.data))
       setProfileSuccess(true)
-      toast.success('Profile updated.')
+      notify.success('Profile updated.')
       window.setTimeout(() => setProfileSuccess(false), 2000)
     } catch (error: unknown) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ?? 'Failed to update profile.'
       setProfileError(message)
-      toast.error(message)
+      notify.error(message)
     }
   }
 
@@ -97,13 +97,13 @@ export default function RecruiterProfilePage() {
       }).unwrap()
       setPasswordForm(EMPTY_PASSWORD_FORM)
       setPasswordSuccess(true)
-      toast.success('Password updated.')
+      notify.success('Password updated.')
       window.setTimeout(() => setPasswordSuccess(false), 2000)
     } catch (error: unknown) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ?? 'Failed to update password.'
       setPasswordError(message)
-      toast.error(message)
+      notify.error(message)
     }
   }
 
@@ -117,14 +117,14 @@ export default function RecruiterProfilePage() {
         return response.data.avatar_url
       })
       dispatch(updateUser(response.data))
-      toast.success('Avatar updated.')
+      notify.success('Avatar updated.')
     } catch (error) {
       const parsed = parseApiError(
         error,
         {},
         'We could not update your avatar right now. Please try again.',
       )
-      toast.error(parsed.message)
+      notify.error(parsed.message)
       throw error
     }
   }
@@ -137,11 +137,11 @@ export default function RecruiterProfilePage() {
         return null
       })
       if (user) dispatch(updateUser({ ...user, avatar_url: null }))
-      toast.success('Avatar removed.')
+      notify.success('Avatar removed.')
     } catch (error: unknown) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ?? 'Failed to remove avatar.'
-      toast.error(message)
+      notify.error(message)
     }
   }
 

@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import { useRouter } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import { useAppSelector } from '@/store/hooks'
 import {
   useGetCompanyRecruitersQuery,
@@ -67,7 +67,7 @@ export default function RecruitersPanel() {
 
   useEffect(() => {
     if (user && user.primary_role !== 'recruiter_admin') {
-      toast.error('Only company admins can manage recruiters.')
+      notify.error('Only company admins can manage recruiters.')
       router.replace('/recruiter')
     }
   }, [user, router])
@@ -101,27 +101,27 @@ export default function RecruitersPanel() {
   async function handleApprove(membershipId: string) {
     try {
       await updateStatus({ membershipId, status: 'active' }).unwrap()
-      toast.success('Recruiter approved.')
+      notify.success('Recruiter approved.')
     } catch {
-      toast.error('Failed to approve recruiter.')
+      notify.error('Failed to approve recruiter.')
     }
   }
 
   async function handleReject(membershipId: string) {
     try {
       await updateStatus({ membershipId, status: 'rejected' }).unwrap()
-      toast.success('Recruiter request rejected.')
+      notify.success('Recruiter request rejected.')
     } catch {
-      toast.error('Failed to reject recruiter.')
+      notify.error('Failed to reject recruiter.')
     }
   }
 
   async function handleRemove(membershipId: string) {
     try {
       await removeRecruiter(membershipId).unwrap()
-      toast.success('Recruiter removed.')
+      notify.success('Recruiter removed.')
     } catch {
-      toast.error('Failed to remove recruiter.')
+      notify.error('Failed to remove recruiter.')
     }
   }
 

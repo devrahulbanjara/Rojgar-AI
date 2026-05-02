@@ -74,6 +74,7 @@ preferred_qualifications
 benefits
 auto_shortlist
 shortlist_threshold
+required_years_of_experience
 
 Rules:
 - The patch object must include every allowed field exactly once.
@@ -98,7 +99,8 @@ Return JSON only with:
 - answer: concise answer in 2-4 sentences
 
 Rules:
-- Use only the provided search results.
+- Use ONLY the provided search results. Do not rely on your internal training data.
+- If the provided search results do not contain the answer, reply with answer set to exactly: "I do not have enough information to answer that."
 - If evidence is weak, say that clearly.
 - Mention dates/years explicitly when relevant.
 - Do not mention internal tooling.

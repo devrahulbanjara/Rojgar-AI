@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { toast } from 'react-toastify'
 
 import Image from 'next/image'
 import Link from 'next/link'
 
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import { useForgotPasswordMutation } from '@/store/services/authApi'
 
 // ── Validation ─────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
       if (result.success) {
         setSent(true)
       } else {
-        toast.error(result.message ?? 'Failed to send reset link. Please try again.')
+        notify.error(result.message ?? 'Failed to send reset link. Please try again.')
       }
     } catch (err: unknown) {
       const { message } = parseApiError(
@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
         { email: 'email' },
         'Failed to send reset link. Please try again.',
       )
-      toast.error(message)
+      notify.error(message)
     }
   }
 

@@ -1,11 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import { useRouter } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import {
   calculateProfileCompletionPercentage,
   getProfileCompletionMeta,
@@ -198,7 +198,7 @@ export default function ProfilePage() {
     const nextForm = { ...form, is_open_to_work: next }
     setForm(nextForm)
     void saveProfile(nextForm)
-    toast.success(next ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
+    notify.success(next ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
   }
 
   // ── Avatar handlers ───────────────────────────────────────────
@@ -213,7 +213,7 @@ export default function ProfilePage() {
         return updatedAvatarUrl
       })
       if (user) dispatch(updateUser({ ...user, avatar_url: updatedAvatarUrl }))
-      toast.success('Avatar updated.')
+      notify.success('Avatar updated.')
     } catch (error) {
       const parsed = parseApiError(
         error,
@@ -224,7 +224,7 @@ export default function ProfilePage() {
         typeof parsed.status === 'number' && parsed.status >= 500
           ? 'We could not update your profile picture right now. Please try again.'
           : parsed.message
-      toast.error(message)
+      notify.error(message)
       throw error
     }
   }
@@ -237,11 +237,11 @@ export default function ProfilePage() {
         return null
       })
       if (user) dispatch(updateUser({ ...user, avatar_url: null }))
-      toast.success('Avatar removed.')
+      notify.success('Avatar removed.')
     } catch (error) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ?? 'Failed to remove avatar.'
-      toast.error(message)
+      notify.error(message)
     }
   }
 
@@ -252,7 +252,7 @@ export default function ProfilePage() {
       dispatch(clearCredentials())
       router.push('/login')
     } catch {
-      toast.error('Failed to delete account. Please try again.')
+      notify.error('Failed to delete account. Please try again.')
     }
   }
 

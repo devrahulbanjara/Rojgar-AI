@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useCompleteOnboardingMutation } from '@/store/services/profileApi'
 import { updateUser } from '@/store/slices/authSlice'
@@ -86,7 +86,7 @@ function OnboardingForm() {
     e.preventDefault()
 
     if (selectedRoles.length === 0) {
-      toast.error('Please select at least one role to continue.')
+      notify.error('Please select at least one role to continue.')
       return
     }
 
@@ -95,18 +95,18 @@ function OnboardingForm() {
       if (result.success && user) {
         // Update user state smoothly
         dispatch(updateUser({ ...user, is_onboarded: true }))
-        toast.success('Welcome to ConvexHire!')
+        notify.success('Welcome to ConvexHire!')
 
         // Since user roles dictate dashboards, redirect to home which then routes identically
         router.replace('/candidate')
       } else {
-        toast.error(result.message || 'Something went wrong')
+        notify.error(result.message || 'Something went wrong')
       }
     } catch (err: unknown) {
       const errorMsg =
         (err as { data?: { message?: string } })?.data?.message ||
         'Failed to complete onboarding. Please try again.'
-      toast.error(errorMsg)
+      notify.error(errorMsg)
     }
   }
 

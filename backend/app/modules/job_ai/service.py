@@ -106,6 +106,7 @@ async def create_draft(
     db: AsyncSession,
     user: User,
     payload: GenerateJobDraftRequest,
+    run_background: bool = False,
 ) -> JobAIDraftResponse:
     """Create a new AI job draft and persist its first review state."""
 
@@ -113,14 +114,34 @@ async def create_draft(
 
     company_id = await get_recruiter_company_id(db, user.id)
 
+    thread_id = _new_thread_id()
+
+    if payload.manual:
+        draft_row = JobAIDraft(
+            recruiter_id=user.id,
+            company_id=company_id,
+            thread_id=thread_id,
+            status="ready",
+            mode=payload.mode,
+            source_title=None,
+            source_rough_description=None,
+            locked_fields=payload.locked_fields,
+            latest_draft=None,
+            assumptions=[],
+            warnings=[],
+            missing_fields=[],
+        )
+        db.add(draft_row)
+        await db.commit()
+        await db.refresh(draft_row)
+        return JobAIDraftResponse.model_validate(draft_row)
+
     company_context = await get_company_context(db, company_id)
 
     source_job = None
 
     if payload.source_job_id:
         source_job = await get_source_job_context(db, payload.source_job_id)
-
-    thread_id = _new_thread_id()
 
     draft_row = JobAIDraft(
         recruiter_id=user.id,
@@ -139,6 +160,26 @@ async def create_draft(
 
     await db.refresh(draft_row)
 
+    if run_background:
+        return JobAIDraftResponse.model_validate(draft_row)
+
+    return await complete_draft_generation(
+        db=db,
+        draft_row=draft_row,
+        company_context=company_context,
+        source_job=source_job,
+        payload=payload,
+    )
+
+
+async def complete_draft_generation(
+    db: AsyncSession,
+    draft_row: JobAIDraft,
+    company_context: dict[str, Any],
+    source_job: dict[str, Any] | None,
+    payload: GenerateJobDraftRequest,
+) -> JobAIDraftResponse:
+    """Complete the draft generation by running the AI graph."""
     salary_research_input = None
 
     if payload.research_salary:
@@ -165,8 +206,8 @@ async def create_draft(
     state_input = {
         "draft_db_id": str(draft_row.id),
         "thread_id": draft_row.thread_id,
-        "recruiter_id": str(user.id),
-        "company_id": str(company_id),
+        "recruiter_id": str(draft_row.recruiter_id),
+        "company_id": str(draft_row.company_id),
         "mode": payload.mode,
         "title": payload.title,
         "rough_description": payload.rough_description,
@@ -226,6 +267,111 @@ async def create_draft(
     await db.refresh(draft_row)
 
     return JobAIDraftResponse.model_validate(draft_row)
+
+
+async def run_draft_generation_background(
+    draft_id: uuid.UUID,
+    thread_id: str,
+    recruiter_id: uuid.UUID,
+    company_id: uuid.UUID,
+    mode: str,
+    title: str | None,
+    rough_description: str | None,
+    source_job_id: uuid.UUID | None,
+    research_salary: bool,
+    locked_fields: list[str] | None,
+) -> None:
+    """Background task to generate AI job draft."""
+    from app.core.database import AsyncSessionLocal
+    from app.modules.job_ai.tools import (
+        get_company_context,
+        get_salary_research_data,
+        get_source_job_context,
+    )
+
+    async with AsyncSessionLocal() as db:
+        from sqlalchemy import select
+
+        draft_row = await db.scalar(select(JobAIDraft).where(JobAIDraft.id == draft_id))
+
+        if not draft_row:
+            return
+
+        company_context = await get_company_context(db, company_id)
+
+        source_job = None
+        if source_job_id:
+            source_job = await get_source_job_context(db, source_job_id)
+
+        salary_research_input = None
+        if research_salary:
+            role_for_salary = title or (source_job.get("title") if source_job else None)
+            country = company_context["company"].get("location") or "Kathmandu, Nepal"
+            if role_for_salary:
+                salary_research_input = await get_salary_research_data(
+                    role=role_for_salary,
+                    country=country,
+                )
+
+        graph = job_ai_runtime.get_graph()
+
+        config = {"configurable": {"thread_id": thread_id}}
+
+        state_input = {
+            "draft_db_id": str(draft_id),
+            "thread_id": thread_id,
+            "recruiter_id": str(recruiter_id),
+            "company_id": str(company_id),
+            "mode": mode,
+            "title": title,
+            "rough_description": rough_description,
+            "source_job": source_job,
+            "company_context": company_context,
+            "research_salary": research_salary,
+            "salary_role": None,
+            "salary_country": None,
+            "salary_research_input": salary_research_input,
+            "salary_research": None,
+            "locked_fields": locked_fields,
+            "draft": None,
+            "assumptions": [],
+            "warnings": [],
+            "missing_fields": [],
+            "validation_errors": [],
+            "human_decision": None,
+        }
+
+        try:
+            result = await graph.ainvoke(
+                cast(JobAgentState, state_input),
+                config=cast(RunnableConfig, config),
+            )
+
+            interrupt_payload = _extract_interrupt_payload(result)
+
+            if interrupt_payload:
+                draft_row.status = "review_required"
+                draft_row.last_interrupt = interrupt_payload
+                draft_row.latest_draft = interrupt_payload.get("draft")
+                draft_row.salary_research = interrupt_payload.get("salary_research")
+                draft_row.assumptions = interrupt_payload.get("assumptions", [])
+                draft_row.warnings = interrupt_payload.get("warnings", [])
+                draft_row.missing_fields = interrupt_payload.get("missing_fields", [])
+            else:
+                draft_row.status = "ready"
+                draft_row.latest_draft = result.get("draft")
+                draft_row.salary_research = result.get("salary_research")
+                draft_row.assumptions = result.get("assumptions", [])
+                draft_row.warnings = result.get("warnings", [])
+                draft_row.missing_fields = result.get("missing_fields", [])
+
+        except Exception as e:
+            draft_row.status = "failed"
+            draft_row.last_interrupt = {"error": str(e)}
+            await db.rollback()
+            return
+
+        await db.commit()
 
 
 async def get_draft(
@@ -422,3 +568,25 @@ async def commit_draft(
         "draft": JobAIDraftResponse.model_validate(draft),
         "job": created_job,
     }
+
+
+async def delete_draft(
+    db: AsyncSession,
+    user: User,
+    draft_id: uuid.UUID,
+) -> None:
+    """Delete an AI draft."""
+    _ensure_recruiting_user(user)
+
+    draft = await db.scalar(
+        select(JobAIDraft).where(
+            JobAIDraft.id == draft_id,
+            JobAIDraft.recruiter_id == user.id,
+        )
+    )
+
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    await db.delete(draft)
+    await db.commit()

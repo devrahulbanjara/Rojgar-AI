@@ -44,7 +44,9 @@ Rules:
 
 _llm = ChatGroq(
     model=settings.groq_model_recruiter_chat,
-    temperature=0.7,
+    # Lower temperature reduces hallucinated feedback in rejection/shortlist emails.
+    # 0.2 keeps tone natural while staying grounded in the provided strengths/weaknesses.
+    temperature=0.2,
     api_key=SecretStr(settings.groq_api_key),
 )
 

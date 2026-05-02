@@ -58,25 +58,31 @@ class ImportedExperienceInput(BaseSchema):
     description: list[str] = Field(
         default_factory=list,
         description="Bullet points exactly from the resume where possible.",
+        max_length=30,  # cap bullet count per role to prevent token-bombing
     )
 
 
 class ImportedCandidateDocument(BaseSchema):
     full_name: str | None = Field(default=None, max_length=255)
     headline: str | None = Field(default=None, max_length=255)
-    summary: str | None = None
+    summary: str | None = Field(default=None, max_length=2000)
     phone: str | None = Field(default=None, max_length=50)
     location: str | None = Field(default=None, max_length=255)
     linkedin_url: str | None = Field(default=None, max_length=500)
     github_url: str | None = Field(default=None, max_length=500)
     portfolio_url: str | None = Field(default=None, max_length=500)
     years_of_experience: int | None = None
-    target_roles: list[str] = Field(default_factory=list)
-    experiences: list[ImportedExperienceInput] = Field(default_factory=list)
-    educations: list[ImportedEducationInput] = Field(default_factory=list)
-    skills: list[ImportedSkillInput] = Field(default_factory=list)
+    target_roles: list[str] = Field(default_factory=list, max_length=20)
+    experiences: list[ImportedExperienceInput] = Field(
+        default_factory=list, max_length=30
+    )
+    educations: list[ImportedEducationInput] = Field(
+        default_factory=list, max_length=20
+    )
+    skills: list[ImportedSkillInput] = Field(default_factory=list, max_length=100)
     warnings: list[str] = Field(
         default_factory=list,
+        max_length=50,
         description="Non-persisted warnings about missing or uncertain extracted fields.",
     )
 

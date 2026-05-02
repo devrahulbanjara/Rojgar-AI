@@ -1,58 +1,62 @@
 // ============================================================
 // TOAST — react-toastify v11 overrides
-// Matches the existing ConvexHire UI design system.
+// Pastel design with outlined circle icon + title/description.
 // ============================================================
 
 @use '../variables' as *;
 
+// Pastel palette (matches the design reference)
+$toast-success-bg: #b8ecc6;
+$toast-info-bg: #b6dff5;
+$toast-warning-bg: #fbe0b3;
+$toast-error-bg: #f4b3b3;
+$toast-fg: #1d2230;
+$toast-fg-soft: rgb(29 34 48 / 78%);
+
 // ── Container ────────────────────────────────────────────────
 .Toastify__toast-container {
-  width: 360px;
-  padding: 0;
+  width: 420px;
+  padding: $space-3;
 
   @media (max-width: $bp-sm) {
     width: 100%;
     left: 0;
     right: 0;
-    padding: 0 $space-3;
+    padding: $space-3;
   }
 }
 
 // ── Base Toast ───────────────────────────────────────────────
 .Toastify__toast {
   font-family: $font-body;
-  font-size: $font-size-sm;
-  color: $color-gray-900;
+  color: $toast-fg;
   background: $color-white;
-  border: 1px solid $color-gray-200;
-  border-radius: $radius-xl;
-  box-shadow: $shadow-lg;
-  padding: $space-4;
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 8%);
+  padding: $space-4 $space-4 $space-4 $space-4;
   min-height: 0;
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: $space-3;
   cursor: default;
-
-  // Type-specific left accent stripe
-  border-left: 4px solid $color-gray-300; // default / fallback
+  margin-bottom: $space-3;
 }
 
-// ── Type Variants ────────────────────────────────────────────
+// ── Type Variants — pastel backgrounds ───────────────────────
 .Toastify__toast--success {
-  border-left-color: $color-success;
-}
-
-.Toastify__toast--error {
-  border-left-color: $color-error;
-}
-
-.Toastify__toast--warning {
-  border-left-color: $color-warning;
+  background: $toast-success-bg;
 }
 
 .Toastify__toast--info {
-  border-left-color: $color-primary;
+  background: $toast-info-bg;
+}
+
+.Toastify__toast--warning {
+  background: $toast-warning-bg;
+}
+
+.Toastify__toast--error {
+  background: $toast-error-bg;
 }
 
 // ── Body ─────────────────────────────────────────────────────
@@ -60,82 +64,78 @@
   font-family: $font-body;
   font-size: $font-size-sm;
   font-weight: $font-weight-regular;
-  color: $color-gray-900;
+  color: $toast-fg-soft;
   line-height: $line-height-normal;
   padding: 0;
   margin: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: $space-3;
+
+  > div:last-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-top: 1px;
+  }
 }
 
 // ── Icon ─────────────────────────────────────────────────────
 .Toastify__toast-icon {
-  width: 20px;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
   flex-shrink: 0;
+  color: $toast-fg;
+
+  svg {
+    display: block;
+  }
 }
 
-.Toastify__toast--success .Toastify__toast-icon svg {
-  fill: $color-success;
+// ── Structured (title + description) markup ──────────────────
+.toast-title {
+  display: block;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $toast-fg;
+  line-height: 1.2;
+  margin-bottom: 2px;
 }
 
-.Toastify__toast--error .Toastify__toast-icon svg {
-  fill: $color-error;
-}
-
-.Toastify__toast--warning .Toastify__toast-icon svg {
-  fill: $color-warning;
-}
-
-.Toastify__toast--info .Toastify__toast-icon svg {
-  fill: $color-primary;
+.toast-description {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-regular;
+  color: $toast-fg-soft;
+  line-height: 1.4;
 }
 
 // ── Close Button ─────────────────────────────────────────────
 .Toastify__close-button {
-  color: $color-gray-400;
-  opacity: 1;
-  align-self: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin-left: $space-2;
+  color: $toast-fg;
+  opacity: 0.85;
+  align-self: flex-start;
   flex-shrink: 0;
-  transition: color $transition-fast;
+  cursor: pointer;
+  transition: opacity $transition-fast;
 
   &:hover,
   &:focus {
-    color: $color-gray-700;
+    opacity: 1;
   }
 
   > svg {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
+    display: block;
   }
 }
 
-// ── Progress Bar ─────────────────────────────────────────────
-.Toastify__progress-bar {
-  height: 3px;
-  border-radius: 0 0 $radius-xl $radius-xl;
-  background: $color-gray-200; // fallback
-  opacity: 1;
-}
-
-.Toastify__progress-bar--success {
-  background: $color-success;
-}
-
-.Toastify__progress-bar--error {
-  background: $color-error;
-}
-
-.Toastify__progress-bar--warning {
-  background: $color-warning;
-}
-
-.Toastify__progress-bar--info {
-  background: $color-primary;
-}
-
 // ── Animations ───────────────────────────────────────────────
-// Keep react-toastify's slide-in but add a subtle fade
 .Toastify__toast--animate-enter {
   animation-duration: 250ms;
 }

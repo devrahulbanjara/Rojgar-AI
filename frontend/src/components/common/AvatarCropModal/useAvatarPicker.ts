@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import { validateImageFile } from '@/lib/mediaValidation'
+import { notify } from '@/lib/notify'
 
 import type { AvatarCropDraft } from './AvatarCropModal'
 
@@ -34,7 +34,7 @@ export function useAvatarPicker() {
     const validationError = validateImageFile(file)
     if (validationError) {
       setError(validationError)
-      toast.error(validationError)
+      notify.error(validationError)
       return
     }
 
@@ -51,7 +51,7 @@ export function useAvatarPicker() {
       URL.revokeObjectURL(sourceUrl)
       const message = 'We could not open that image for cropping. Please try another file.'
       setError(message)
-      toast.error(message)
+      notify.error(message)
     }
   }
 

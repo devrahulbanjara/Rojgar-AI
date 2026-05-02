@@ -1,13 +1,13 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import { useResetPasswordMutation } from '@/store/services/authApi'
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -81,10 +81,10 @@ function ResetPasswordInner() {
 
       if (result.success) {
         setDone(true)
-        toast.success(result.message ?? 'Password reset! Redirecting to sign in…')
+        notify.success(result.message ?? 'Password reset! Redirecting to sign in…')
         setTimeout(() => router.push('/login'), 2000)
       } else {
-        toast.error(result.message ?? 'Something went wrong. Please try again.')
+        notify.error(result.message ?? 'Something went wrong. Please try again.')
       }
     } catch (err: unknown) {
       const parsed = parseApiError(err, {
@@ -92,14 +92,14 @@ function ResetPasswordInner() {
         new_password: '_password',
       })
       if (parsed.fieldErrors._token) {
-        toast.error(parsed.fieldErrors._token + ' Please request a new password reset link.')
+        notify.error(parsed.fieldErrors._token + ' Please request a new password reset link.')
         return
       }
       if (parsed.fieldErrors._password) {
         setErrors({ password: parsed.fieldErrors._password })
         return
       }
-      toast.error(parsed.message)
+      notify.error(parsed.message)
     }
   }
 

@@ -1,10 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
@@ -188,9 +188,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
 
   const screeningStats = useMemo(() => {
     const pending = jobApplications.filter((row) => row.status === 'applied')
-    const scored = pending.filter(
-      (row) => row.score !== null && (row.strengths?.length || row.weaknesses?.length),
-    )
+    const scored = pending.filter((row) => row.score !== null)
     const above =
       threshold === null ? 0 : scored.filter((row) => (row.score ?? 0) >= threshold).length
     const below =
@@ -267,10 +265,10 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     setEvaluatingAppId(applicationId)
     try {
       const response = await evaluateSingle(applicationId).unwrap()
-      toast.success(`Evaluated with score ${response.data.score ?? '—'}.`)
+      notify.success(`Evaluated with score ${response.data.score ?? '—'}.`)
       await refetch()
     } catch {
-      toast.error('Could not evaluate this candidate.')
+      notify.error('Could not evaluate this candidate.')
     } finally {
       setEvaluatingAppId(null)
     }
@@ -306,14 +304,14 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
       }).unwrap()
       setIsConfirmOpen(false)
       setApprovedKey(currentKey)
-      toast.success(
+      notify.success(
         `Approved ${response.data.updated_applications} AI recommendation${
           response.data.updated_applications === 1 ? '' : 's'
         }.`,
       )
       await refetch()
     } catch {
-      toast.error('Could not approve AI recommendations.')
+      notify.error('Could not approve AI recommendations.')
     }
   }
 
@@ -321,14 +319,16 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     setOutreachConfirm(null)
     try {
       await prepareDrafts({ jobId, direct_send: directSend }).unwrap()
-      toast.success(
+      notify.success(
         directSend
           ? 'Drafts generated and queued to send.'
           : 'Drafts generated. Review before sending.',
       )
       await Promise.all([refetch(), refetchDrafts()])
     } catch {
-      toast.error(directSend ? 'Could not generate and send drafts.' : 'Could not generate drafts.')
+      notify.error(
+        directSend ? 'Could not generate and send drafts.' : 'Could not generate drafts.',
+      )
     }
   }
 
@@ -336,10 +336,10 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     setOutreachConfirm(null)
     try {
       await sendAllDrafts(jobId).unwrap()
-      toast.success('Emails queued for sending.')
+      notify.success('Emails queued for sending.')
       await Promise.all([refetch(), refetchDrafts()])
     } catch {
-      toast.error('Could not send emails.')
+      notify.error('Could not send emails.')
     }
   }
 
@@ -347,10 +347,10 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     setOutreachConfirm(null)
     try {
       await deleteAllDrafts(jobId).unwrap()
-      toast.success('Drafts discarded.')
+      notify.success('Drafts discarded.')
       await Promise.all([refetch(), refetchDrafts()])
     } catch {
-      toast.error('Could not discard drafts.')
+      notify.error('Could not discard drafts.')
     }
   }
 
@@ -358,10 +358,10 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     setRowActionId(draft.application_id)
     try {
       await approveDraft({ draftId: draft.draft_id, approved: true }).unwrap()
-      toast.success('Email sent.')
+      notify.success('Email sent.')
       await Promise.all([refetch(), refetchDrafts()])
     } catch {
-      toast.error('Could not send this email.')
+      notify.error('Could not send this email.')
     } finally {
       setRowActionId(null)
     }
@@ -371,10 +371,10 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     setRowActionId(applicationId)
     try {
       await generateDraftForApplication(applicationId).unwrap()
-      toast.success('Draft generated.')
+      notify.success('Draft generated.')
       await Promise.all([refetch(), refetchDrafts()])
     } catch {
-      toast.error('Could not generate a draft for this candidate.')
+      notify.error('Could not generate a draft for this candidate.')
     } finally {
       setRowActionId(null)
     }
@@ -657,7 +657,9 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                     ? `${row.strengths?.length ?? 0} strengths, ${row.weaknesses?.length ?? 0} gaps`
                     : isPostShortlistStage
                       ? 'Manual decision — no AI feedback'
-                      : 'No strengths or gaps yet.'}
+                      : row.score !== null
+                        ? 'ML scored — no detailed feedback'
+                        : 'Awaiting evaluation'}
                 </span>
 
                 {isPostShortlistStage ? (

@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
-import { toast } from 'react-toastify'
 
 import { parseApiError } from '@/lib/apiError'
 import { createCroppedImageFile } from '@/lib/cropImage'
 import { formatBytes, validateImageFile } from '@/lib/mediaValidation'
+import { notify } from '@/lib/notify'
 import { useAppSelector } from '@/store/hooks'
 import {
   useGetMyCompanyQuery,
@@ -142,14 +142,14 @@ export default function CompanySettingsPage() {
         description: form.description || null,
       }).unwrap()
       setSaveSuccess(true)
-      toast.success('Company details updated.')
+      notify.success('Company details updated.')
       setTimeout(() => setSaveSuccess(false), 2000)
     } catch (error: unknown) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ??
         'Failed to update company details.'
       setSaveError(message)
-      toast.error(message)
+      notify.error(message)
     }
   }
 
@@ -178,7 +178,7 @@ export default function CompanySettingsPage() {
     const validationError = validateImageFile(file)
     if (validationError) {
       setLogoError(validationError)
-      toast.error(validationError)
+      notify.error(validationError)
       return
     }
 
@@ -214,7 +214,7 @@ export default function CompanySettingsPage() {
       URL.revokeObjectURL(sourceUrl)
       const message = 'We could not open that image for cropping. Please try another file.'
       setLogoError(message)
-      toast.error(message)
+      notify.error(message)
     }
   }
 
@@ -249,7 +249,7 @@ export default function CompanySettingsPage() {
       })
 
       closeLogoCropModal()
-      toast.success('Company logo updated.')
+      notify.success('Company logo updated.')
     } catch (error: unknown) {
       const parsed = parseApiError(
         error,
@@ -261,7 +261,7 @@ export default function CompanySettingsPage() {
           ? 'We could not update your company logo right now. Please try again.'
           : parsed.message
       setLogoError(message)
-      toast.error(message)
+      notify.error(message)
       setIsSubmittingCroppedLogo(false)
     }
   }
@@ -277,12 +277,12 @@ export default function CompanySettingsPage() {
         }
         return null
       })
-      toast.success('Company logo removed.')
+      notify.success('Company logo removed.')
     } catch (error: unknown) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ?? 'Failed to remove logo.'
       setLogoError(message)
-      toast.error(message)
+      notify.error(message)
     }
   }
 
