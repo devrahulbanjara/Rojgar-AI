@@ -15,7 +15,8 @@ class EmailDraftResponse(BaseSchema):
     candidate_avatar_url: str | None = None
     application_status: ApplicationStatus
     score: int | None = None
-    application_feedback: str | None = None
+    application_strengths: list[str] | None = None
+    application_weaknesses: list[str] | None = None
     subject: str | None = None
     body: str | None = None
     is_approved: bool

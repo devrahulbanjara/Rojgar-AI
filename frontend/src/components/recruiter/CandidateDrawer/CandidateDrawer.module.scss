@@ -328,15 +328,67 @@
   }
 }
 
-.aiReview {
-  background: rgb(121 40 202 / 6%);
-  border: 1px solid rgb(121 40 202 / 14%);
-  border-radius: var(--radius-lg);
-  padding: 0.875rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.55;
+.reviewColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
   margin-top: 0.5rem;
+
+  @media (width <= 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reviewColumn {
+  min-width: 0;
+}
+
+.reviewColumnTitle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.5rem;
+  color: var(--color-text-muted);
+}
+
+.reviewList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.strengthItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
   color: var(--color-text);
+}
+
+.strengthIcon {
+  color: #059669;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.weaknessItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.weaknessIcon {
+  color: #dc2626;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
 }
 
 .timelineList {

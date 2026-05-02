@@ -270,6 +270,45 @@
   margin: 0;
 }
 
+.feedbackList {
+  list-style: none;
+  padding: 0;
+  margin: 0.375rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.feedbackStrength {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #059669;
+  padding-left: 1rem;
+  position: relative;
+
+  &::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    font-weight: 600;
+  }
+}
+
+.feedbackWeakness {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #dc2626;
+  padding-left: 1rem;
+  position: relative;
+
+  &::before {
+    content: '✗';
+    position: absolute;
+    left: 0;
+    font-weight: 600;
+  }
+}
+
 // ── Offer actions ─────────────────────────────────────────────
 .offerActions {
   display: flex;

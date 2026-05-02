@@ -34,7 +34,7 @@ from app.modules.outreach.schemas import (
     SendAllResponse,
     UpdateDraftRequest,
 )
-from app.modules.recruiter_preferences.models import RecruiterPreference
+from app.modules.auth.models import User
 from app.shared.enums import ApplicationStatus, SyncAction
 
 
@@ -43,27 +43,11 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-async def _apply_signature(
-    db: AsyncSession,
-    *,
-    user_id: uuid.UUID | None,
-    body: str,
-) -> str:
-    """Append the recruiter's saved outreach signature to an email body."""
-    if user_id is None:
-        return body
-
-    preference = await db.scalar(
-        select(RecruiterPreference).where(RecruiterPreference.user_id == user_id)
-    )
-    signature = (
-        preference.outreach_signature.strip()
-        if preference and preference.outreach_signature
-        else ""
-    )
-    if not signature:
-        return body
-    return f"{body}<p>{html.escape(signature).replace(chr(10), '<br />')}</p>"
+def _build_footer(recruiter_name: str, company_name: str) -> str:
+    """Build the deterministic email footer appended to every outreach email."""
+    safe_name = html.escape(recruiter_name)
+    safe_company = html.escape(company_name)
+    return f"<p>{safe_name}<br />{safe_company}<br />ConvexHire Recruiting Team</p>"
 
 
 async def _get_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
@@ -104,6 +88,12 @@ async def _get_company(db: AsyncSession, company_id: uuid.UUID) -> Company | Non
     return await db.scalar(select(Company).where(Company.id == company_id))
 
 
+async def _get_recruiter_name(db: AsyncSession, user_id: uuid.UUID) -> str:
+    """Fetch the recruiter's full name, falling back to a generic label."""
+    name = await db.scalar(select(User.full_name).where(User.id == user_id))
+    return name or "The Recruiting Team"
+
+
 async def _get_application_for_company(
     db: AsyncSession, application_id: uuid.UUID, company_id: uuid.UUID
 ) -> tuple[Application, Job]:
@@ -142,7 +132,7 @@ def _resolve_outreach_status(
         application.status == ApplicationStatus.applied
         and job.final_shortlist_completed
         and application.score is not None
-        and application.feedback is not None
+        and (application.strengths is not None or application.weaknesses is not None)
     ):
         return (
             ApplicationStatus.shortlisted
@@ -165,7 +155,8 @@ def _draft_to_response(draft: EmailDraft) -> EmailDraftResponse:
         candidate_avatar_url=user.avatar_url,
         application_status=app.status,
         score=app.score,
-        application_feedback=app.feedback,
+        application_strengths=app.strengths,
+        application_weaknesses=app.weaknesses,
         subject=draft.subject,
         body=draft.body,
         is_approved=draft.is_approved,
@@ -188,14 +179,14 @@ def _compose_draft(
     company_name: str,
     job_title: str,
     application_status: ApplicationStatus,
-    feedback: str | None,
+    strengths: list[str] | None,
+    weaknesses: list[str] | None,
     booking_url: str | None = None,
 ) -> tuple[str, str]:
     """Build a deterministic fallback outreach email draft."""
     safe_name = html.escape(candidate_name)
     safe_company = html.escape(company_name)
     safe_job = html.escape(job_title)
-    safe_feedback = html.escape(feedback or "")
 
     if application_status == ApplicationStatus.shortlisted:
         subject = f"Next steps for your {job_title} application"
@@ -220,13 +211,23 @@ def _compose_draft(
             "<p>After reviewing your application, we will not be moving forward at this time.</p>"
         )
 
-    if safe_feedback:
-        body += f"<p><strong>Review notes:</strong> {safe_feedback}</p>"
+    review_parts: list[str] = []
+    if strengths:
+        review_parts.append(
+            "<strong>Strengths:</strong> "
+            + ", ".join(html.escape(s) for s in strengths)
+        )
+    if weaknesses:
+        review_parts.append(
+            "<strong>Areas of concern:</strong> "
+            + ", ".join(html.escape(w) for w in weaknesses)
+        )
+    if review_parts:
+        body += "<p>" + "<br />".join(review_parts) + "</p>"
 
     body += (
         "<p>We appreciate the time you invested in applying and wish you the best.</p>"
     )
-    body += f"<p>Best regards,<br />{safe_company}</p>"
 
     return subject, body
 
@@ -236,7 +237,8 @@ async def _compose_draft_with_fallback(
     company_name: str,
     job_title: str,
     application_status: ApplicationStatus,
-    feedback: str | None,
+    strengths: list[str] | None,
+    weaknesses: list[str] | None,
     booking_url: str | None = None,
 ) -> tuple[str, str]:
     """Compose an AI outreach draft and fall back to the static template on failure."""
@@ -254,7 +256,8 @@ async def _compose_draft_with_fallback(
             company_name=company_name,
             job_title=job_title,
             application_status=application_status,
-            feedback=feedback,
+            strengths=strengths,
+            weaknesses=weaknesses,
             booking_url=booking_url,
         )
         if subject.strip() and body.strip():
@@ -276,7 +279,8 @@ async def _compose_draft_with_fallback(
         company_name=company_name,
         job_title=job_title,
         application_status=application_status,
-        feedback=feedback,
+        strengths=strengths,
+        weaknesses=weaknesses,
         booking_url=booking_url,
     )
 
@@ -309,34 +313,35 @@ async def _upsert_generated_draft(
             detail="Cannot regenerate a draft that has already been sent.",
         )
 
+    company_name = company.name if company else "ConvexHire"
+    recruiter_name = (
+        await _get_recruiter_name(db, generated_by_user_id)
+        if generated_by_user_id
+        else "The Recruiting Team"
+    )
+
     subject, body = await _compose_draft_with_fallback(
         candidate_name=application.user.full_name,
-        company_name=company.name if company else "ConvexHire",
+        company_name=company_name,
         job_title=job.title,
         application_status=outreach_status,
-        feedback=application.feedback,
+        strengths=application.strengths,
+        weaknesses=application.weaknesses,
         booking_url=company.cal_booking_url if company else None,
     )
+    body += _build_footer(recruiter_name, company_name)
 
     if draft is None:
         draft = EmailDraft(
             application_id=application.id,
             subject=subject,
-            body=await _apply_signature(
-                db,
-                user_id=generated_by_user_id,
-                body=body,
-            ),
+            body=body,
             generated_by_user_id=generated_by_user_id,
         )
         db.add(draft)
     else:
         draft.subject = subject
-        draft.body = await _apply_signature(
-            db,
-            user_id=generated_by_user_id,
-            body=body,
-        )
+        draft.body = body
         draft.is_discarded = False
         if generated_by_user_id is not None:
             draft.generated_by_user_id = generated_by_user_id
@@ -357,6 +362,8 @@ async def prepare_drafts(
     company_id = await _get_company_id(db, user_id)
     job = await _get_job_for_company(db, job_id, company_id)
     company = await _get_company(db, company_id)
+    company_name = company.name if company else "ConvexHire"
+    recruiter_name = await _get_recruiter_name(db, user_id)
 
     apps_result = await db.execute(
         select(Application).where(
@@ -420,17 +427,18 @@ async def prepare_drafts(
             continue
         subject, body = await _compose_draft_with_fallback(
             candidate_name=application.user.full_name,
-            company_name=company.name if company else "ConvexHire",
+            company_name=company_name,
             job_title=job.title,
             application_status=outreach_status,
-            feedback=application.feedback,
+            strengths=application.strengths,
+            weaknesses=application.weaknesses,
             booking_url=company.cal_booking_url if company else None,
         )
         db.add(
             EmailDraft(
                 application_id=application.id,
                 subject=subject,
-                body=await _apply_signature(db, user_id=user_id, body=body),
+                body=body + _build_footer(recruiter_name, company_name),
                 generated_by_user_id=user_id,
                 is_approved=direct_send,
             )

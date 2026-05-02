@@ -310,10 +310,27 @@ export default function CandidateApplicationDetailPage() {
           {buildNextStepCopy(application.status, application.next_step_hint)}
         </p>
 
-        {application.feedback ? (
+        {application.strengths?.length || application.weaknesses?.length ? (
           <div className={styles.feedback}>
             <div className={styles.feedbackLabel}>Recruiter note</div>
-            <p className={styles.feedbackText}>{application.feedback}</p>
+            {application.strengths?.length ? (
+              <ul className={styles.feedbackList}>
+                {application.strengths.map((s, i) => (
+                  <li key={i} className={styles.feedbackStrength}>
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {application.weaknesses?.length ? (
+              <ul className={styles.feedbackList}>
+                {application.weaknesses.map((w, i) => (
+                  <li key={i} className={styles.feedbackWeakness}>
+                    {w}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         ) : null}
 

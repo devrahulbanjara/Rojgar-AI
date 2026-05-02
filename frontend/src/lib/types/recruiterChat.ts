@@ -102,7 +102,8 @@ export interface CandidateDetailData {
   resume_name: string
   application_status: string
   score: number | null
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
   applied_at: string
   updated_at: string
   skills: Array<{ id: string; skill_name: string }>

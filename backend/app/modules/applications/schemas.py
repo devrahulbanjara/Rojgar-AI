@@ -54,7 +54,8 @@ class UpdateApplicationReviewRequest(BaseSchema):
     """Company/recruiter updates manual score and/or feedback for an application."""
 
     score: int | None = Field(default=None, ge=0, le=100)
-    feedback: str | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
 
 
 class ApplicationResponse(BaseSchema):
@@ -66,7 +67,8 @@ class ApplicationResponse(BaseSchema):
     created_at: datetime
     updated_at: datetime
     score: int | None = None
-    feedback: str | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
     resume: ResumeResponse | None = None
     job_title: str | None = None
     company_name: str | None = None
@@ -111,7 +113,8 @@ class CandidateApplicationView(BaseSchema):
     location: str | None = None
     location_type: LocationType
     score: int | None = None
-    feedback: str | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
 
 
 class RecruiterApplicationView(BaseSchema):
@@ -127,7 +130,8 @@ class RecruiterApplicationView(BaseSchema):
     job_title: str
     job_id: UUID
     score: int | None = None
-    feedback: str | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
 
 
 class RecruiterCandidateApplicationSummary(BaseSchema):
@@ -138,7 +142,8 @@ class RecruiterCandidateApplicationSummary(BaseSchema):
     created_at: datetime
     updated_at: datetime
     score: int | None = None
-    feedback: str | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
 
 
 class RecruiterCandidateInterviewView(BaseSchema):
@@ -186,7 +191,8 @@ class RecruiterCandidateDetailView(BaseSchema):
     job_title: str
     job_id: UUID
     score: int | None = None
-    feedback: str | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
     interview: RecruiterCandidateInterviewView | None = None
     resume: ResumeResponse | None = None
     share_settings: CandidateShareSettings
@@ -222,7 +228,8 @@ class SemanticCandidateSearchResult(BaseSchema):
     job_id: UUID
     status: ApplicationStatus
     score: int | None = None
-    feedback: str | None = None
+    strengths: list[str] | None = None
+    weaknesses: list[str] | None = None
     match_score: float = Field(description="Semantic similarity score from Qdrant")
     applied_at: datetime
     updated_at: datetime

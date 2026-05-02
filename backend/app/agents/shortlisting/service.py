@@ -18,7 +18,8 @@ class ShortlistingAgentResult:
 
     score: int
     reason: str
-    feedback: str
+    strengths: list[str] | None
+    weaknesses: list[str] | None
 
 
 def stringify_job(job: Job) -> str:
@@ -115,6 +116,8 @@ def build_shortlisting_inputs(job: Job, application: Application) -> dict:
         "hr_evals": [],
         "critiques": [],
         "is_satisfied": False,
+        "final_strengths": None,
+        "final_weaknesses": None,
     }
 
 
@@ -129,7 +132,8 @@ def build_shortlisting_result(result: dict) -> ShortlistingAgentResult:
     return ShortlistingAgentResult(
         score=result["final_score"],
         reason=result["final_reason"],
-        feedback=result["final_feedback"],
+        strengths=result.get("final_strengths"),
+        weaknesses=result.get("final_weaknesses"),
     )
 
 

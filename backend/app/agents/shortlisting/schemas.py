@@ -23,7 +23,8 @@ class JudgeResponse(BaseModel):
 class FinalResponse(BaseModel):
     score: int = Field(ge=0, le=100)
     reason: str = Field(min_length=1)
-    feedback: str = Field(min_length=1)
+    strengths: list[str] | None = Field(default=None)
+    weaknesses: list[str] | None = Field(default=None)
 
 
 class ShortlistState(TypedDict):
@@ -38,4 +39,5 @@ class ShortlistState(TypedDict):
     is_satisfied: bool
     final_score: int
     final_reason: str
-    final_feedback: str
+    final_strengths: list[str] | None
+    final_weaknesses: list[str] | None

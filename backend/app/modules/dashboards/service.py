@@ -692,7 +692,8 @@ async def _get_recruiter_applications_timeseries(
                 Application.created_at,
                 Application.updated_at,
                 Application.score,
-                Application.feedback,
+                Application.strengths,
+                Application.weaknesses,
             )
             .join(Job, Job.id == Application.job_id)
             .where(
@@ -730,7 +731,7 @@ async def _get_recruiter_applications_timeseries(
         if (
             updated_day in timeseries_by_date
             and row.score is not None
-            and bool((row.feedback or "").strip())
+            and (row.strengths is not None or row.weaknesses is not None)
         ):
             timeseries_by_date[updated_day]["completed_reviews"] += 1
 
@@ -878,7 +879,8 @@ async def _get_recruiter_velocity(
                 Application.created_at,
                 Application.updated_at,
                 Application.score,
-                Application.feedback,
+                Application.strengths,
+                Application.weaknesses,
                 Application.status,
             )
             .join(Job, Job.id == Application.job_id)
@@ -891,7 +893,9 @@ async def _get_recruiter_velocity(
     interview_rows: list[tuple[datetime, datetime]] = []
 
     for row in rows:
-        if row.score is not None and bool((row.feedback or "").strip()):
+        if row.score is not None and (
+            row.strengths is not None or row.weaknesses is not None
+        ):
             review_rows.append((row.created_at, row.updated_at))
         if row.status in SHORTLIST_RELATED_STATUSES:
             shortlist_rows.append((row.created_at, row.updated_at))

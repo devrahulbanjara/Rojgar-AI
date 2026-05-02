@@ -20,6 +20,13 @@ class TriggerShortlistResponse(BaseSchema):
     message: str
 
 
+class EvaluateSingleApplicationResponse(BaseSchema):
+    application_id: UUID
+    score: int | None
+    strengths: list[str] | None
+    weaknesses: list[str] | None
+
+
 class FinalizeShortlistRequest(BaseSchema):
     use_ai_recommendations: bool = False
     threshold: int | None = None

@@ -23,6 +23,7 @@ Rules:
 - Explicitly tell them to book using the exact name and email address they used to sign up to ConvexHire, so we can match their booking automatically
 - Keep it under 180 words
 - Sound human, not corporate
+- Do NOT include any closing, sign-off, signature, or footer (e.g. no "Warm regards", "Best", "[Your Name]", etc.)
 - Output only the HTML email body, no subject line, no ```html, direct html content
 """.strip()
 
@@ -37,6 +38,7 @@ Rules:
 - Be encouraging and wish them well
 - Keep it under 150 words
 - Sound human, not robotic
+- Do NOT include any closing, sign-off, signature, or footer (e.g. no "Warm regards", "Best", "[Your Name]", etc.)
 - Output only the HTML email body, no subject line, , no ```html, direct html content
 """.strip()
 
@@ -134,18 +136,31 @@ def _static_template(
     return subject, body
 
 
+def _format_review_text(
+    strengths: list[str] | None, weaknesses: list[str] | None
+) -> str:
+    """Join strengths/weaknesses into a compact text for the LLM chain."""
+    parts: list[str] = []
+    if strengths:
+        parts.append("Strengths: " + "; ".join(strengths))
+    if weaknesses:
+        parts.append("Weaknesses: " + "; ".join(weaknesses))
+    return " | ".join(parts)
+
+
 async def compose_email(
     candidate_name: str,
     company_name: str,
     job_title: str,
     application_status: ApplicationStatus,
-    feedback: str | None,
+    strengths: list[str] | None,
+    weaknesses: list[str] | None,
     booking_url: str | None = None,
 ) -> tuple[str, str]:
     """Compose an outreach email tailored to the candidate and job context."""
     first_name = _first_name(candidate_name)
 
-    feedback_text = (feedback or "").strip()
+    feedback_text = _format_review_text(strengths, weaknesses)
     if not feedback_text:
         logger.info(
             "outreach.compose.no_feedback_static candidate='{}' job='{}' status='{}'",

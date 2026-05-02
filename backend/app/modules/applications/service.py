@@ -170,15 +170,20 @@ def _job_decision_visible_to_candidate(job: Job) -> bool:
 
 def _mask_for_candidate(
     application: Application, job: Job
-) -> tuple[ApplicationStatus, int | None, str | None]:
-    """Return (visible_status, visible_score, visible_feedback) for a candidate view.
+) -> tuple[ApplicationStatus, int | None, list[str] | None, list[str] | None]:
+    """Return (visible_status, visible_score, visible_strengths, visible_weaknesses) for a candidate view.
 
     Pre-expiry: report the application as still in `applied` and hide AI signal so
     the recruiter is free to keep changing their mind. Post-expiry: show real values.
     """
     if _job_decision_visible_to_candidate(job):
-        return application.status, application.score, application.feedback
-    return ApplicationStatus.applied, None, None
+        return (
+            application.status,
+            application.score,
+            application.strengths,
+            application.weaknesses,
+        )
+    return ApplicationStatus.applied, None, None, None
 
 
 def _candidate_next_step_hint(status: ApplicationStatus) -> str:
@@ -569,8 +574,8 @@ async def list_candidate_applications(
 
     response = []
     for application, job, company in rows:
-        visible_status, visible_score, visible_feedback = _mask_for_candidate(
-            application, job
+        visible_status, visible_score, visible_strengths, visible_weaknesses = (
+            _mask_for_candidate(application, job)
         )
         response.append(
             CandidateApplicationView(
@@ -585,7 +590,8 @@ async def list_candidate_applications(
                 location=job.location,
                 location_type=job.location_type,
                 score=visible_score,
-                feedback=visible_feedback,
+                strengths=visible_strengths,
+                weaknesses=visible_weaknesses,
             )
         )
 
@@ -646,7 +652,8 @@ async def list_company_applications(
             job_title=job.title,
             job_id=job.id,
             score=application.score,
-            feedback=application.feedback,
+            strengths=application.strengths,
+            weaknesses=application.weaknesses,
         )
         for application, applicant, job in rows
     ]
@@ -708,7 +715,8 @@ async def list_company_candidates(
             created_at=application.created_at,
             updated_at=application.updated_at,
             score=application.score,
-            feedback=application.feedback,
+            strengths=application.strengths,
+            weaknesses=application.weaknesses,
         )
 
         if bucket is None:
@@ -835,7 +843,8 @@ async def get_company_candidate_detail(
         job_title=job.title,
         job_id=job.id,
         score=application.score,
-        feedback=application.feedback,
+        strengths=application.strengths,
+        weaknesses=application.weaknesses,
         interview=RecruiterCandidateInterviewView.model_validate(interview)
         if interview
         else None,
@@ -933,14 +942,15 @@ async def get_application(
             audience="candidate",
         )
         if job is not None:
-            visible_status, visible_score, visible_feedback = _mask_for_candidate(
-                application, job
+            visible_status, visible_score, visible_strengths, visible_weaknesses = (
+                _mask_for_candidate(application, job)
             )
         else:
-            visible_status, visible_score, visible_feedback = (
+            visible_status, visible_score, visible_strengths, visible_weaknesses = (
                 application.status,
                 application.score,
-                application.feedback,
+                application.strengths,
+                application.weaknesses,
             )
         return ApplicationResponse(
             id=application.id,
@@ -951,7 +961,8 @@ async def get_application(
             created_at=application.created_at,
             updated_at=application.updated_at,
             score=visible_score,
-            feedback=visible_feedback,
+            strengths=visible_strengths,
+            weaknesses=visible_weaknesses,
             resume=ResumeResponse.model_validate(application.resume)
             if application.resume
             else None,
@@ -1002,7 +1013,8 @@ async def get_application(
                 created_at=application.created_at,
                 updated_at=application.updated_at,
                 score=application.score,
-                feedback=application.feedback,
+                strengths=application.strengths,
+                weaknesses=application.weaknesses,
                 resume=ResumeResponse.model_validate(application.resume)
                 if application.resume
                 else None,
@@ -1235,7 +1247,7 @@ async def update_application_review(
     payload: UpdateApplicationReviewRequest,
     bg_tasks: BackgroundTasks | None = None,
 ) -> ApplicationResponse:
-    """Update manual score and/or feedback for an application (active company members only)."""
+    """Update manual score and/or review for an application (active company members only)."""
     company_id = await _get_active_company_id(db, user)
 
     result = await db.execute(
@@ -1259,17 +1271,23 @@ async def update_application_review(
             detail="This application's job does not belong to your company.",
         )
 
-    if payload.score is None and payload.feedback is None:
+    if (
+        payload.score is None
+        and payload.strengths is None
+        and payload.weaknesses is None
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provide a score, feedback, or both.",
+            detail="Provide a score, strengths, weaknesses, or a combination.",
         )
 
     old_score = application.score
     if payload.score is not None:
         application.score = payload.score
-    if payload.feedback is not None:
-        application.feedback = payload.feedback.strip() or None
+    if payload.strengths is not None:
+        application.strengths = payload.strengths or None
+    if payload.weaknesses is not None:
+        application.weaknesses = payload.weaknesses or None
 
     job = await db.scalar(select(Job).where(Job.id == application.job_id))
     company = (
@@ -1308,10 +1326,14 @@ async def update_application_review(
         actor_user_id=user.id,
         metadata={
             "score": application.score,
-            "has_feedback": bool(application.feedback),
+            "has_review": bool(application.strengths or application.weaknesses),
         },
     )
-    if payload.feedback is not None or payload.score is not None:
+    if (
+        payload.strengths is not None
+        or payload.weaknesses is not None
+        or payload.score is not None
+    ):
         await create_activity_event(
             db,
             event_type="application_review_ready",
@@ -1501,7 +1523,8 @@ async def semantic_search_candidates(
                 job_id=job.id,
                 status=application.status,
                 score=application.score,
-                feedback=application.feedback,
+                strengths=application.strengths,
+                weaknesses=application.weaknesses,
                 match_score=round(res["score"], 4),
                 applied_at=application.created_at,
                 updated_at=application.updated_at,

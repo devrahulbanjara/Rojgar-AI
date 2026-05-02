@@ -17,5 +17,6 @@ async def final_node(state: ShortlistState) -> dict:
     return {
         "final_score": response.score,
         "final_reason": response.reason,
-        "final_feedback": response.feedback,
+        "final_strengths": response.strengths,
+        "final_weaknesses": response.weaknesses,
     }
