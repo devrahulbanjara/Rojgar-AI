@@ -229,9 +229,7 @@ export default function RecruiterJobDetailPage() {
             {job.hiring_completed ? (
               <span
                 className="status-pill status-pill--success"
-                title={
-                  job.hired_at ? `Hiring completed on ${formatDate(job.hired_at)}` : undefined
-                }
+                title={job.hired_at ? `Hiring completed on ${formatDate(job.hired_at)}` : undefined}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

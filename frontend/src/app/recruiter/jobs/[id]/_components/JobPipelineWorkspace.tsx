@@ -657,7 +657,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                     ? `${row.strengths?.length ?? 0} strengths, ${row.weaknesses?.length ?? 0} gaps`
                     : isPostShortlistStage
                       ? 'Manual decision — no AI feedback'
-                      : 'No review yet.'}
+                      : 'No strengths or gaps yet.'}
                 </span>
 
                 {isPostShortlistStage ? (

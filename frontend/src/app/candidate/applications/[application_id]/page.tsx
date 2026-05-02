@@ -312,25 +312,32 @@ export default function CandidateApplicationDetailPage() {
 
         {application.strengths?.length || application.weaknesses?.length ? (
           <div className={styles.feedback}>
-            <div className={styles.feedbackLabel}>Recruiter note</div>
-            {application.strengths?.length ? (
-              <ul className={styles.feedbackList}>
-                {application.strengths.map((s, i) => (
-                  <li key={i} className={styles.feedbackStrength}>
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {application.weaknesses?.length ? (
-              <ul className={styles.feedbackList}>
-                {application.weaknesses.map((w, i) => (
-                  <li key={i} className={styles.feedbackWeakness}>
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <div className={styles.feedbackColumns}>
+              {application.strengths?.length ? (
+                <div className={styles.feedbackColumn}>
+                  <div className={styles.feedbackColumnHeader}>Strengths</div>
+                  <ul className={styles.feedbackList}>
+                    {application.strengths.map((s, i) => (
+                      <li key={i} className={styles.feedbackStrength}>
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {application.weaknesses?.length ? (
+                <div className={styles.feedbackColumn}>
+                  <div className={styles.feedbackColumnHeader}>Weaknesses</div>
+                  <ul className={styles.feedbackList}>
+                    {application.weaknesses.map((w, i) => (
+                      <li key={i} className={styles.feedbackWeakness}>
+                        {w}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : null}
 

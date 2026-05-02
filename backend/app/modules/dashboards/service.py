@@ -74,6 +74,16 @@ INTERVIEW_RELATED_STATUSES = {
     ApplicationStatus.offer,
 }
 
+CANDIDATE_VISIBLE_APPLICATION_STATUSES = {
+    ApplicationStatus.shortlisted,
+    ApplicationStatus.interview_booked,
+    ApplicationStatus.interview_completed,
+    ApplicationStatus.offer,
+    ApplicationStatus.offer_accepted,
+    ApplicationStatus.offer_declined,
+    ApplicationStatus.rejected,
+}
+
 
 def _utcnow() -> datetime:
     """Return the current UTC datetime."""
@@ -203,13 +213,13 @@ async def get_candidate_dashboard(
         .limit(8)
     )
 
-    now = _utcnow()
     applications = []
     for row in application_rows.all():
-        decision_visible = row.job_status == JobStatus.expired or (
-            row.job_expires_at is not None and row.job_expires_at <= now
+        visible_status = (
+            row.status
+            if row.status in CANDIDATE_VISIBLE_APPLICATION_STATUSES
+            else ApplicationStatus.applied
         )
-        visible_status = row.status if decision_visible else ApplicationStatus.applied
         applications.append(
             ApplicationPipelineItem(
                 id=row.id,

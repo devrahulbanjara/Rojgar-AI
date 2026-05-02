@@ -87,6 +87,16 @@ _EMAIL_STATUSES = {
     ApplicationStatus.offer,
 }
 
+_CANDIDATE_VISIBLE_STATUSES = {
+    ApplicationStatus.shortlisted,
+    ApplicationStatus.interview_booked,
+    ApplicationStatus.interview_completed,
+    ApplicationStatus.offer,
+    ApplicationStatus.offer_accepted,
+    ApplicationStatus.offer_declined,
+    ApplicationStatus.rejected,
+}
+
 
 def _status_email_html(
     status: ApplicationStatus,
@@ -161,22 +171,20 @@ def _status_event_copy(
     )
 
 
-def _job_decision_visible_to_candidate(job: Job) -> bool:
-    """Outcome reveal gate: only after the job is no longer accepting applicants."""
-    if job.status == JobStatus.expired:
-        return True
-    return job.expires_at is not None and job.expires_at <= datetime.now(timezone.utc)
+def _status_visible_to_candidate(status: ApplicationStatus) -> bool:
+    """Reveal recruiter decision fields when the application has moved beyond applied."""
+    return status in _CANDIDATE_VISIBLE_STATUSES
 
 
 def _mask_for_candidate(
-    application: Application, job: Job
+    application: Application, _job: Job
 ) -> tuple[ApplicationStatus, int | None, list[str] | None, list[str] | None]:
     """Return (visible_status, visible_score, visible_strengths, visible_weaknesses) for a candidate view.
 
-    Pre-expiry: report the application as still in `applied` and hide AI signal so
-    the recruiter is free to keep changing their mind. Post-expiry: show real values.
+    Show recruiter decisions/AI signals only after the application has progressed
+    to shortlist/interview/offer/rejected stages.
     """
-    if _job_decision_visible_to_candidate(job):
+    if _status_visible_to_candidate(application.status):
         return (
             application.status,
             application.score,
@@ -189,7 +197,7 @@ def _mask_for_candidate(
 def _candidate_next_step_hint(status: ApplicationStatus) -> str:
     """Return a human-friendly next-step hint for a candidate-facing status view."""
     if status == ApplicationStatus.applied:
-        return "Your application has been submitted. You'll see the recruiter's decision once the job has closed."
+        return "Your application has been submitted. You'll see updates when the recruiter moves this application forward."
     if status == ApplicationStatus.shortlisted:
         return "You have been shortlisted. Watch for outreach or interview booking instructions."
     if status == ApplicationStatus.interview_booked:

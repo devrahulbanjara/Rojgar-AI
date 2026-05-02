@@ -71,6 +71,14 @@ function fmtCell(value: number | null | undefined) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
+function getCriterionScoreTone(value: number, maxScore: number) {
+  if (maxScore <= 0) return ''
+  const normalized = (value / maxScore) * 100
+  if (normalized >= 75) return styles.scoreGood
+  if (normalized >= 60) return styles.scoreOkay
+  return styles.scoreLow
+}
+
 function buildDraft(
   criteria: EvaluationCriterion[],
   existing: HumanEvaluatorScore | null,
@@ -230,10 +238,7 @@ function RecruiterRowView({
             className={styles.evaluatorAvatar}
             sizes="28px"
           />
-          <div>
-            <div className={styles.evaluatorName}>{label}</div>
-            <div className={styles.evaluatorEmail}>Total: {fmtScore(row.weighted_total)}</div>
-          </div>
+          <div className={styles.evaluatorName}>{label}</div>
         </div>
         <div className={styles.actions}>
           <button
@@ -267,10 +272,11 @@ function RecruiterRowView({
       <div className={styles.recruiterScoreGrid}>
         {criteria.map((criterion) => {
           const value = row.scores?.[criterion.key]
+          const toneClass = value == null ? '' : getCriterionScoreTone(value, criterion.max_score)
           return (
             <div key={criterion.key} className={styles.recruiterScoreCell}>
               <span className={styles.recruiterScoreLabel}>{criterion.label}</span>
-              <span className={styles.recruiterScoreValue}>
+              <span className={`${styles.recruiterScoreValue} ${toneClass}`}>
                 {value == null ? (
                   <span className={styles.cellNull}>not rated</span>
                 ) : (
@@ -387,12 +393,7 @@ function HumansSection({
   return (
     <div className={styles.humansSection}>
       <div className={styles.sectionHeader}>
-        <div>
-          <div className={styles.sectionTitle}>Recruiter evaluations</div>
-          <div className={styles.sectionSubtitle}>
-            Add one row per recruiter. Leave any criterion unrated if they did not judge it.
-          </div>
-        </div>
+        <div className={styles.sectionTitle}>Recruiter evaluations</div>
         {editingId === '__new__' ? null : (
           <button type="button" className="btn btn--primary btn--sm" onClick={startCreate}>
             <Plus size={14} aria-hidden="true" />
@@ -444,20 +445,6 @@ function HumansSection({
           />
         ) : null}
       </div>
-
-      {evaluation.human_average && evaluation.humans.length > 0 ? (
-        <div className={styles.averageStrip}>
-          <span>
-            Average across {evaluation.human_average.evaluator_count} recruiter
-            {evaluation.human_average.evaluator_count === 1 ? '' : 's'}
-          </span>
-          <span
-            className={`${styles.summaryValue} ${getScoreTone(evaluation.human_average.weighted_total)}`}
-          >
-            {fmtScore(evaluation.human_average.weighted_total)}
-          </span>
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -573,8 +560,7 @@ export default function CandidateEvaluationCard({ applicationId }: Props) {
         <div>
           <div className="dash-card__title">Interview evaluation</div>
           <div className="dash-card__subtitle">
-            Add a row for each recruiter who scored this candidate. Final = average of recruiters
-            blended with the AI recruiter using the per-job weights.
+            Scores from all recruiters are averaged into a final result.
           </div>
         </div>
       </div>

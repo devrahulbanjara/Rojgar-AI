@@ -14,6 +14,7 @@ import {
   type RecruiterCandidateDetailView,
   useGetCompanyCandidateByIdQuery,
   useGetMyCompanyCandidatesQuery,
+  useUpdateApplicationReviewMutation,
   useUpdateApplicationStatusMutation,
 } from '@/store/services/applicationsApi'
 import {
@@ -30,7 +31,6 @@ import {
   ChevronDown,
   ChevronRight,
   Clock3,
-  ExternalLink,
   Hash,
   Mail,
   MapPin,
@@ -320,27 +320,64 @@ function ProfileTab({ candidate }: { candidate: Candidate }) {
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Contact</h3>
         <div className={styles.contactGrid}>
-          {candidate.applicant_email ? (
-            <span className={styles.contactItem}>
-              <Mail size={14} aria-hidden="true" />
-              {candidate.applicant_email}
-            </span>
-          ) : null}
-          {candidate.candidate_phone ? (
-            <span className={styles.contactItem}>
-              <Phone size={14} aria-hidden="true" />
-              {candidate.candidate_phone}
-            </span>
-          ) : null}
-          {candidate.candidate_location ? (
-            <span className={styles.contactItem}>
-              <MapPin size={14} aria-hidden="true" />
-              {candidate.candidate_location}
-            </span>
-          ) : null}
+          <div className={styles.contactColumn}>
+            {candidate.applicant_email ? (
+              <a href={`mailto:${candidate.applicant_email}`} className={styles.contactLink}>
+                <Mail size={14} aria-hidden="true" />
+                {candidate.applicant_email}
+              </a>
+            ) : null}
+            {candidate.candidate_phone ? (
+              <span className={styles.contactItem}>
+                <Phone size={14} aria-hidden="true" />
+                {candidate.candidate_phone}
+              </span>
+            ) : null}
+            {candidate.candidate_location ? (
+              <span className={styles.contactItem}>
+                <MapPin size={14} aria-hidden="true" />
+                {candidate.candidate_location}
+              </span>
+            ) : null}
+          </div>
+          <div className={styles.contactColumn}>
+            {candidate.linkedin_url ? (
+              <a
+                href={candidate.linkedin_url}
+                className={styles.contactLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                LinkedIn
+              </a>
+            ) : null}
+            {candidate.github_url ? (
+              <a
+                href={candidate.github_url}
+                className={styles.contactLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+            ) : null}
+            {candidate.portfolio_url ? (
+              <a
+                href={candidate.portfolio_url}
+                className={styles.contactLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Portfolio
+              </a>
+            ) : null}
+          </div>
           {!candidate.applicant_email &&
           !candidate.candidate_phone &&
-          !candidate.candidate_location ? (
+          !candidate.candidate_location &&
+          !candidate.linkedin_url &&
+          !candidate.github_url &&
+          !candidate.portfolio_url ? (
             <span className={styles.muted}>No contact details shared.</span>
           ) : null}
         </div>
@@ -354,71 +391,7 @@ function ProfileTab({ candidate }: { candidate: Candidate }) {
         ) : null}
       </div>
 
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Shared links</h3>
-        <div className={styles.linksRow}>
-          {candidate.linkedin_url ? (
-            <a
-              href={candidate.linkedin_url}
-              className={styles.link}
-              target="_blank"
-              rel="noreferrer"
-            >
-              LinkedIn <ExternalLink size={12} aria-hidden="true" />
-            </a>
-          ) : null}
-          {candidate.github_url ? (
-            <a href={candidate.github_url} className={styles.link} target="_blank" rel="noreferrer">
-              GitHub <ExternalLink size={12} aria-hidden="true" />
-            </a>
-          ) : null}
-          {candidate.portfolio_url ? (
-            <a
-              href={candidate.portfolio_url}
-              className={styles.link}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Portfolio <ExternalLink size={12} aria-hidden="true" />
-            </a>
-          ) : null}
-          {!candidate.linkedin_url && !candidate.github_url && !candidate.portfolio_url ? (
-            <span className={styles.muted}>None.</span>
-          ) : null}
-        </div>
-      </div>
-
-      {candidate.strengths?.length || candidate.weaknesses?.length ? (
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>AI review</h3>
-          <div className={styles.reviewColumns}>
-            {candidate.strengths?.length ? (
-              <div className={styles.reviewColumn}>
-                <h4 className={styles.reviewColumnTitle}>Strengths</h4>
-                <ul className={styles.reviewList}>
-                  {candidate.strengths.map((s, i) => (
-                    <li key={i} className={styles.strengthItem}>
-                      <Check size={14} className={styles.strengthIcon} /> {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {candidate.weaknesses?.length ? (
-              <div className={styles.reviewColumn}>
-                <h4 className={styles.reviewColumnTitle}>Gaps</h4>
-                <ul className={styles.reviewList}>
-                  {candidate.weaknesses.map((w, i) => (
-                    <li key={i} className={styles.weaknessItem}>
-                      <X size={14} className={styles.weaknessIcon} /> {w}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      <ShortlistingEvaluationEditor candidate={candidate} />
 
       {candidate.timeline.length > 0 ? (
         <div className={styles.section}>
@@ -440,6 +413,205 @@ function ProfileTab({ candidate }: { candidate: Candidate }) {
         </div>
       ) : null}
     </>
+  )
+}
+
+function normalizeFeedbackValues(values: string[]): string[] {
+  return values.map((entry) => entry.trim()).filter(Boolean)
+}
+
+function arraysEqual(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false
+  return left.every((item, index) => item === right[index])
+}
+
+function scoreDraftToPayload(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  return Number(trimmed)
+}
+
+function toDraftRows(values: string[] | null): string[] {
+  return values && values.length > 0 ? [...values] : ['']
+}
+
+function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
+  const [updateReview, { isLoading: isSaving }] = useUpdateApplicationReviewMutation()
+  const [scoreDraft, setScoreDraft] = useState(candidate.score?.toString() ?? '')
+  const [strengthsDraft, setStrengthsDraft] = useState<string[]>(toDraftRows(candidate.strengths))
+  const [weaknessesDraft, setWeaknessesDraft] = useState<string[]>(
+    toDraftRows(candidate.weaknesses),
+  )
+
+  useEffect(() => {
+    setScoreDraft(candidate.score?.toString() ?? '')
+    setStrengthsDraft(toDraftRows(candidate.strengths))
+    setWeaknessesDraft(toDraftRows(candidate.weaknesses))
+  }, [candidate.id, candidate.score, candidate.strengths, candidate.weaknesses])
+
+  const payloadScore = scoreDraftToPayload(scoreDraft)
+  const hasScoreInput = scoreDraft.trim().length > 0
+  const scoreError =
+    hasScoreInput &&
+    (typeof payloadScore !== 'number' ||
+      !Number.isInteger(payloadScore) ||
+      payloadScore < 0 ||
+      payloadScore > 100)
+      ? 'Enter a whole number from 0 to 100.'
+      : null
+
+  const parsedStrengths = normalizeFeedbackValues(strengthsDraft)
+  const parsedWeaknesses = normalizeFeedbackValues(weaknessesDraft)
+  const originalStrengths = candidate.strengths ?? []
+  const originalWeaknesses = candidate.weaknesses ?? []
+  const originalScore = candidate.score ?? null
+
+  const isDirty =
+    payloadScore !== originalScore ||
+    !arraysEqual(parsedStrengths, originalStrengths) ||
+    !arraysEqual(parsedWeaknesses, originalWeaknesses)
+
+  async function handleSave() {
+    if (scoreError) {
+      toast.error(scoreError)
+      return
+    }
+    try {
+      await updateReview({
+        application_id: candidate.id,
+        body: {
+          score: payloadScore,
+          strengths: parsedStrengths,
+          weaknesses: parsedWeaknesses,
+        },
+      }).unwrap()
+      toast.success('Shortlisting evaluation saved.')
+    } catch {
+      toast.error('Could not save shortlisting evaluation.')
+    }
+  }
+
+  function updateStrength(index: number, value: string) {
+    setStrengthsDraft((current) =>
+      current.map((item, itemIndex) => (itemIndex === index ? value : item)),
+    )
+  }
+
+  function updateWeakness(index: number, value: string) {
+    setWeaknessesDraft((current) =>
+      current.map((item, itemIndex) => (itemIndex === index ? value : item)),
+    )
+  }
+
+  function addStrength() {
+    setStrengthsDraft((current) => [...current, ''])
+  }
+
+  function addGap() {
+    setWeaknessesDraft((current) => [...current, ''])
+  }
+
+  function removeStrength(index: number) {
+    setStrengthsDraft((current) =>
+      current.length === 1 ? [''] : current.filter((_, itemIndex) => itemIndex !== index),
+    )
+  }
+
+  function removeGap(index: number) {
+    setWeaknessesDraft((current) =>
+      current.length === 1 ? [''] : current.filter((_, itemIndex) => itemIndex !== index),
+    )
+  }
+
+  return (
+    <div className={styles.section}>
+      <h3 className={styles.sectionTitle}>Shortlisting evaluation</h3>
+      <p className={styles.muted}>
+        Use AI output as a starting point, then adjust score, strengths, and gaps as needed.
+      </p>
+      <div className={styles.reviewEditorGrid}>
+        <label className={`${styles.reviewEditorField} ${styles.reviewEditorScoreRow}`}>
+          <span className={styles.reviewEditorLabel}>Score (0-100)</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            value={scoreDraft}
+            onChange={(event) => setScoreDraft(event.target.value)}
+            className={`${styles.reviewEditorInput} ${styles.reviewEditorScoreInput}`}
+            placeholder="e.g. 78"
+          />
+          {scoreError ? <span className={styles.reviewEditorError}>{scoreError}</span> : null}
+        </label>
+        <div className={styles.reviewEditorField}>
+          <span className={styles.reviewEditorLabel}>Strengths</span>
+          <ul className={styles.reviewList}>
+            {strengthsDraft.map((item, index) => (
+              <li key={`strength-${index}`} className={styles.listItem}>
+                <Check size={14} className={styles.strengthIcon} />
+                <input
+                  type="text"
+                  value={item}
+                  onChange={(event) => updateStrength(index, event.target.value)}
+                  className={styles.reviewListInput}
+                  placeholder="Add strength"
+                />
+                <button
+                  type="button"
+                  className={styles.removeBtn}
+                  onClick={() => removeStrength(index)}
+                  aria-label="Remove strength"
+                >
+                  <X size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={addStrength}>
+            Add strength
+          </button>
+        </div>
+        <div className={styles.reviewEditorField}>
+          <span className={styles.reviewEditorLabel}>Gaps</span>
+          <ul className={styles.reviewList}>
+            {weaknessesDraft.map((item, index) => (
+              <li key={`gap-${index}`} className={styles.listItem}>
+                <X size={14} className={styles.weaknessIcon} />
+                <input
+                  type="text"
+                  value={item}
+                  onChange={(event) => updateWeakness(index, event.target.value)}
+                  className={styles.reviewListInput}
+                  placeholder="Add gap"
+                />
+                <button
+                  type="button"
+                  className={styles.removeBtn}
+                  onClick={() => removeGap(index)}
+                  aria-label="Remove gap"
+                >
+                  <X size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={addGap}>
+            Add gap
+          </button>
+        </div>
+      </div>
+      <div className={styles.reviewEditorActions}>
+        <button
+          type="button"
+          className="btn btn--primary btn--sm"
+          onClick={() => void handleSave()}
+          disabled={Boolean(scoreError) || !isDirty || isSaving}
+        >
+          {isSaving ? 'Saving…' : 'Save evaluation'}
+        </button>
+      </div>
+    </div>
   )
 }
 

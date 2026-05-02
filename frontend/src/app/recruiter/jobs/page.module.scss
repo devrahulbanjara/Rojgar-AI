@@ -78,7 +78,7 @@
 .statusSelect {
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem 1.6rem 0.3rem 0.6rem;
+  padding: 0.3rem 1.6rem 0.3rem 1.2rem;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   background-color: transparent;
@@ -112,6 +112,38 @@
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
+  }
+}
+
+.statusSelectWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0.45rem;
+    top: 50%;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: var(--radius-full);
+    transform: translateY(-50%);
+    background: var(--color-text-muted);
+    pointer-events: none;
+  }
+
+  &[data-status='active']::before {
+    background: var(--color-success-600, #16a34a);
+  }
+
+  &[data-status='draft']::before {
+    background: var(--color-text-muted, #6b7280);
+  }
+
+  &[data-status='expired']::before {
+    background: var(--color-danger-600, #dc2626);
   }
 }
 

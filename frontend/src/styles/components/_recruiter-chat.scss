@@ -1312,8 +1312,7 @@
 }
 
 .recruiter-chat-card--job-edit {
-  background:
-    linear-gradient(180deg, rgba($color-primary, 0.05), rgb(255 255 255 / 98%) 72%), #fff;
+  background: linear-gradient(180deg, rgba($color-primary, 0.05), rgb(255 255 255 / 98%) 72%), #fff;
   border-color: rgba($color-primary, 0.12);
   box-shadow: 0 14px 34px rgb(15 23 42 / 8%);
 }
@@ -2328,30 +2327,30 @@
 }
 
 @media (width <= 1023px) {
-.recruiter-chat-page {
+  .recruiter-chat-page {
     width: 100%;
   }
 
-.recruiter-chat-page__sidebar {
+  .recruiter-chat-page__sidebar {
     display: none;
   }
 
-.recruiter-chat-mobile-drawer {
+  .recruiter-chat-mobile-drawer {
     display: block;
   }
 }
 
 @media (width <= 767px) {
-.recruiter-chat-message-view--empty::before,
+  .recruiter-chat-message-view--empty::before,
   .recruiter-chat-assistant-bubble {
     max-width: calc(100vw - 6rem);
   }
 
-.recruiter-chat-card--candidate-row {
+  .recruiter-chat-card--candidate-row {
     width: 100%;
   }
 
-.recruiter-chat-candidate-row__meta {
+  .recruiter-chat-candidate-row__meta {
     gap: 0.4rem;
   }
 }

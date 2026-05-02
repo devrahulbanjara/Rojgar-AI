@@ -140,6 +140,4 @@ async def complete_hiring(
 ) -> UnifiedResponse[dict]:
     """Close the hiring lifecycle for a job."""
     data = await service.complete_hiring(db, user, job_id, bg_tasks)
-    return ResponseBuilder.success(
-        data=data, message="Hiring completed for this job."
-    )
+    return ResponseBuilder.success(data=data, message="Hiring completed for this job.")
