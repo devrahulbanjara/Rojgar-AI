@@ -176,7 +176,7 @@ export default function RecruiterTalentPage() {
         <div className={styles.grid}>
           {filteredCandidates.map((candidate) => {
             const latestApp = [...candidate.applications].sort(
-              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
             )[0]
 
             return (
@@ -184,7 +184,9 @@ export default function RecruiterTalentPage() {
                 type="button"
                 key={candidate.candidate_id}
                 className={styles.card}
-                onClick={() => openDrawer(latestApp?.application_id || candidate.latest_application_id)}
+                onClick={() =>
+                  openDrawer(latestApp?.application_id || candidate.latest_application_id)
+                }
                 aria-label={`Open drawer for ${candidate.applicant_name}`}
               >
                 <Avatar

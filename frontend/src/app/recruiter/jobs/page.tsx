@@ -48,6 +48,12 @@ const FILTER_OPTIONS: { label: string; value: JobFilter }[] = [
   { label: 'Completed', value: 'completed' },
 ]
 
+const JOB_STATUS_OPTIONS: Array<{ value: JobStatus; label: string }> = [
+  { value: 'active', label: getJobStatusLabel('active') },
+  { value: 'draft', label: getJobStatusLabel('draft') },
+  { value: 'expired', label: getJobStatusLabel('expired') },
+]
+
 function formatSalary(min?: number | null, max?: number | null, currency = 'NPR') {
   return formatSalaryBase(min, max, currency) ?? 'Salary not specified'
 }
@@ -95,18 +101,22 @@ function StatusSelect({
   jobTitle: string
 }) {
   return (
-    <select
-      className={styles.statusSelect}
-      value={status}
-      onChange={(e) => onChange(e.target.value as JobStatus)}
-      onClick={(e) => e.stopPropagation()}
-      disabled={disabled}
-      aria-label={`Change status for ${jobTitle}`}
-    >
-      <option value="active">Active</option>
-      <option value="draft">Draft</option>
-      <option value="expired">Expired</option>
-    </select>
+    <span className={styles.statusSelectWrap} data-status={status}>
+      <select
+        className={styles.statusSelect}
+        value={status}
+        onChange={(e) => onChange(e.target.value as JobStatus)}
+        onClick={(e) => e.stopPropagation()}
+        disabled={disabled}
+        aria-label={`Change status for ${jobTitle}`}
+      >
+        {JOB_STATUS_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </span>
   )
 }
 
