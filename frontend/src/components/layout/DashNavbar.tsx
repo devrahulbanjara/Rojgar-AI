@@ -100,7 +100,6 @@ function buildNavItems(role: DashRole): NavItem[] {
       { label: 'Jobs', href: '/candidate/jobs' },
       { label: 'Applications', href: '/candidate/applications' },
       { label: 'Interviews', href: '/candidate/interviews' },
-      { label: 'Profile', href: '/candidate/profile' },
     ]
   }
   // "recruiter" or "recruiter_admin" — IA: Jobs · Talent · Inbox · Team(admin)

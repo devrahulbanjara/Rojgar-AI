@@ -93,6 +93,7 @@ class JobListItem(BaseSchema):
     applications_count: int = 0
     final_shortlist_completed: bool = False
     hiring_completed: bool = False
+    hired_at: datetime | None = None
     has_applied: bool = False
     created_at: datetime
 
@@ -129,6 +130,7 @@ class JobDetailResponse(BaseSchema):
     benefits: list[str] = []
     applications_count: int = 0
     hiring_completed: bool = False
+    hired_at: datetime | None = None
     has_applied: bool = False
     created_at: datetime
     updated_at: datetime

@@ -26,10 +26,9 @@ import {
 import { Bot, RefreshCw, Send, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
-import ButtonSpinner from '@/components/common/ButtonSpinner'
 import CandidateDrawer, {
-  DRAWER_TABS,
   type DrawerTab,
+  resolveDrawerTab,
 } from '@/components/recruiter/CandidateDrawer/CandidateDrawer'
 
 import styles from './JobPipelineWorkspace.module.scss'
@@ -76,9 +75,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
 
   const drawerAppId = searchParams.get('app')
   const drawerTabParam = searchParams.get('tab')
-  const drawerTab: DrawerTab = (DRAWER_TABS as readonly string[]).includes(drawerTabParam ?? '')
-    ? (drawerTabParam as DrawerTab)
-    : 'profile'
+  const drawerTab = resolveDrawerTab(drawerTabParam, 'profile')
 
   const updateParams = useCallback(
     (next: { stage?: PipelineStage; app?: string | null; tab?: DrawerTab | null }) => {
@@ -474,17 +471,15 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
           ) : (
             <button
               type="button"
-              className="btn btn--primary btn--sm"
+              className={`btn btn--primary btn--sm${isFinalizing ? ' btn--loading' : ''}`}
               disabled={!canApprove || isFinalizing}
               onClick={() => setIsConfirmOpen(true)}
             >
-              {isFinalizing ? (
-                <ButtonSpinner label="Approving..." />
-              ) : screeningStats.scored > 0 ? (
-                `Approve ${screeningStats.scored}`
-              ) : (
-                'Waiting for scores'
-              )}
+              {isFinalizing
+                ? 'Approving...'
+                : screeningStats.scored > 0
+                  ? `Approve ${screeningStats.scored}`
+                  : 'Waiting for scores'}
             </button>
           )}
         </div>
@@ -580,24 +575,20 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
               {outreachStats.missing > 0 ? (
                 <button
                   type="button"
-                  className="btn btn--primary btn--sm"
+                  className={`btn btn--primary btn--sm${isPreparing ? ' btn--loading' : ''}`}
                   disabled={isPreparing}
                   onClick={() => void handleGenerateDrafts(false)}
                 >
-                  {isPreparing ? (
-                    <ButtonSpinner label="Generating..." />
-                  ) : (
-                    `Generate ${outreachStats.missing}`
-                  )}
+                  {isPreparing ? 'Generating...' : `Generate ${outreachStats.missing}`}
                 </button>
               ) : sendable > 0 ? (
                 <button
                   type="button"
-                  className="btn btn--primary btn--sm"
+                  className={`btn btn--primary btn--sm${isSendingAll ? ' btn--loading' : ''}`}
                   disabled={isSendingAll}
                   onClick={() => setOutreachConfirm('sendAll')}
                 >
-                  {isSendingAll ? <ButtonSpinner label="Sending..." /> : `Send ${sendable}`}
+                  {isSendingAll ? 'Sending...' : `Send ${sendable}`}
                 </button>
               ) : null}
             </>
@@ -666,7 +657,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                     ? `${row.strengths?.length ?? 0} strengths, ${row.weaknesses?.length ?? 0} gaps`
                     : isPostShortlistStage
                       ? 'Manual decision — no AI feedback'
-                      : 'No review yet.'}
+                      : 'No strengths or gaps yet.'}
                 </span>
 
                 {isPostShortlistStage ? (
@@ -837,17 +828,15 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
               </button>
               <button
                 type="button"
-                className="btn btn--primary"
+                className={`btn btn--primary${isFinalizing ? ' btn--loading' : ''}`}
                 disabled={isFinalizing || screeningStats.scored === 0}
                 onClick={() => void handleApproveAll()}
               >
-                {isFinalizing ? (
-                  <ButtonSpinner label="Approving..." />
-                ) : (
-                  `Approve ${screeningStats.scored} recommendation${
-                    screeningStats.scored === 1 ? '' : 's'
-                  }`
-                )}
+                {isFinalizing
+                  ? 'Approving...'
+                  : `Approve ${screeningStats.scored} recommendation${
+                      screeningStats.scored === 1 ? '' : 's'
+                    }`}
               </button>
             </div>
           </div>
@@ -920,29 +909,29 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
               {outreachConfirm === 'trustAI' ? (
                 <button
                   type="button"
-                  className="btn btn--primary"
+                  className={`btn btn--primary${isPreparing ? ' btn--loading' : ''}`}
                   disabled={isPreparing}
                   onClick={() => void handleGenerateDrafts(true)}
                 >
-                  {isPreparing ? <ButtonSpinner label="Sending..." /> : 'Generate & send'}
+                  {isPreparing ? 'Sending...' : 'Generate & send'}
                 </button>
               ) : outreachConfirm === 'sendAll' ? (
                 <button
                   type="button"
-                  className="btn btn--primary"
+                  className={`btn btn--primary${isSendingAll ? ' btn--loading' : ''}`}
                   disabled={isSendingAll}
                   onClick={() => void handleSendAll()}
                 >
-                  {isSendingAll ? <ButtonSpinner label="Sending..." /> : `Send ${sendable}`}
+                  {isSendingAll ? 'Sending...' : `Send ${sendable}`}
                 </button>
               ) : (
                 <button
                   type="button"
-                  className="btn btn--danger"
+                  className={`btn btn--danger${isDeletingAll ? ' btn--loading' : ''}`}
                   disabled={isDeletingAll}
                   onClick={() => void handleDiscardAll()}
                 >
-                  {isDeletingAll ? <ButtonSpinner label="Discarding..." /> : 'Discard all'}
+                  {isDeletingAll ? 'Discarding...' : 'Discard all'}
                 </button>
               )}
             </div>

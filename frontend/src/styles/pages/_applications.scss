@@ -1,0 +1,67 @@
+// Shared application-adjacent dashboard states still used outside CSS modules.
+
+@use '../variables' as *;
+
+.dash-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-8;
+  text-align: center;
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    color: $color-gray-400;
+  }
+}
+
+.dashboard-error-state {
+  border-color: rgba($color-primary, 0.12);
+  background:
+    radial-gradient(circle at top right, rgba($color-primary, 0.08), transparent 35%), $color-white;
+
+  &:hover {
+    box-shadow: none;
+  }
+
+  &__inner {
+    max-width: 700px;
+    margin: 0 auto;
+    gap: $space-4;
+    padding-block: $space-10;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__description {
+    max-width: 60ch;
+    margin: 0;
+    color: $color-text-muted;
+    font-size: $font-size-sm;
+    line-height: 1.7;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-3;
+
+    .btn {
+      min-width: 150px;
+    }
+  }
+}
+
+.applications-page-skeleton__search {
+  flex: 1;
+  height: 2.5rem;
+  border-radius: $radius-lg;
+}

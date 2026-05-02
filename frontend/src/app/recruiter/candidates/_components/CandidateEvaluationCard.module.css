@@ -13,7 +13,7 @@
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -94,11 +94,6 @@
 .evaluatorName {
   font-weight: 600;
   color: #0f172a;
-}
-
-.evaluatorEmail {
-  font-size: 0.74rem;
-  color: #94a3b8;
 }
 
 .cellNull {
@@ -207,9 +202,19 @@
   background: #fff;
 }
 
+.inputInvalid {
+  border-color: #dc2626;
+}
+
 .textarea {
   min-height: 96px;
   resize: vertical;
+}
+
+.fieldError {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  color: #dc2626;
 }
 
 .actions {
@@ -217,6 +222,11 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+}
+
+.actionError {
+  font-size: 0.78rem;
+  color: #dc2626;
 }
 
 .notesList {
@@ -264,12 +274,6 @@
   color: #0f172a;
 }
 
-.sectionSubtitle {
-  font-size: 0.82rem;
-  color: #64748b;
-  margin-top: 0.15rem;
-}
-
 .recruiterList {
   display: grid;
   gap: 0.875rem;
@@ -308,15 +312,25 @@
 }
 
 .recruiterScoreLabel {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
   color: #64748b;
 }
 
 .recruiterScoreValue {
   font-weight: 600;
   color: #0f172a;
+}
+
+.recruiterScoreValue.scoreGood {
+  color: #15803d;
+}
+
+.recruiterScoreValue.scoreOkay {
+  color: #b45309;
+}
+
+.recruiterScoreValue.scoreLow {
+  color: #dc2626;
 }
 
 .editorCard {
@@ -332,17 +346,6 @@
 .editorField {
   display: grid;
   gap: 0.35rem;
-}
-
-.averageStrip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.7rem 0.95rem;
-  border-radius: 0.75rem;
-  background: #f1f5f9;
-  font-weight: 600;
-  color: #334155;
 }
 
 @media (max-width: 860px) {

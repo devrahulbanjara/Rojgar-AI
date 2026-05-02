@@ -24,8 +24,8 @@ class JobAIDraft(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="drafting")
     mode: Mapped[str] = mapped_column(String(50), nullable=False, default="create")
 
-    source_prompt: Mapped[str | None] = mapped_column(Text)
-    source_text: Mapped[str | None] = mapped_column(Text)
+    source_title: Mapped[str | None] = mapped_column(Text)
+    source_rough_description: Mapped[str | None] = mapped_column(Text)
 
     locked_fields: Mapped[list[str]] = mapped_column(
         ARRAY(String), nullable=False, default=list

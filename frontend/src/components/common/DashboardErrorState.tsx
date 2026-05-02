@@ -3,8 +3,6 @@
 import { parseApiError } from '@/lib/apiError'
 import { RefreshCw } from 'lucide-react'
 
-import ButtonSpinner from './ButtonSpinner'
-
 type DashboardErrorStateProps = {
   error: unknown
   onRetry: () => void | Promise<unknown>
@@ -30,12 +28,12 @@ export default function DashboardErrorState({
           <div className="dashboard-error-state__actions">
             <button
               type="button"
-              className="btn btn--primary"
+              className={`btn btn--primary${isRetrying ? ' btn--loading' : ''}`}
               onClick={() => void onRetry()}
               disabled={isRetrying}
             >
               {isRetrying ? (
-                <ButtonSpinner label="Retrying" />
+                'Retrying'
               ) : (
                 <>
                   <RefreshCw size={16} aria-hidden="true" />

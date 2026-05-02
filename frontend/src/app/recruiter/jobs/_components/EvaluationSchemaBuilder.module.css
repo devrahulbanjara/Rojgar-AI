@@ -59,6 +59,15 @@
   box-shadow: 0 0 0 3px rgb(0 112 243 / 14%);
 }
 
+span.input {
+  display: flex;
+  align-items: center;
+  background: var(--color-gray-50, #f9fafb);
+  color: var(--color-text, #1f2937);
+  cursor: default;
+  user-select: text;
+}
+
 .removeButton {
   align-self: end;
   min-height: 36px;

@@ -44,6 +44,7 @@ export interface JobListItem {
   applications_count: number
   final_shortlist_completed: boolean
   hiring_completed: boolean
+  hired_at: string | null
   has_applied: boolean
   created_at: string
   match_score: number | null
@@ -73,6 +74,7 @@ export interface JobDetail {
   benefits: string[]
   applications_count: number
   hiring_completed: boolean
+  hired_at: string | null
   has_applied: boolean
   created_at: string
   updated_at: string
@@ -108,9 +110,10 @@ export interface SearchJobsParams {
   size?: number
 }
 
-export interface SetHiringCompletedPayload {
-  id: string
+export interface CompleteHiringResponse {
   hiring_completed: boolean
+  hired_at: string
+  rejected_application_count: number
 }
 
 // ---------------------------------------------------------------------------
@@ -176,16 +179,17 @@ export const jobsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs'],
     }),
 
-    setHiringCompleted: builder.mutation<
-      ApiResponse<{ hiring_completed: boolean }>,
-      SetHiringCompletedPayload
-    >({
-      query: ({ id, hiring_completed }) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}/hiring-completed`,
-        method: 'PATCH',
-        params: { hiring_completed },
+    completeHiring: builder.mutation<ApiResponse<CompleteHiringResponse>, string>({
+      query: (id) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}/complete-hiring`,
+        method: 'POST',
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs', 'Interviews'],
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Jobs', id },
+        'Jobs',
+        'Interviews',
+        'Applications',
+      ],
     }),
 
     /** DELETE /jobs/{job_id} — delete a job posting (owner only) */
@@ -206,6 +210,6 @@ export const {
   useGetCompanyJobsQuery,
   useGetJobByIdQuery,
   useUpdateJobMutation,
-  useSetHiringCompletedMutation,
+  useCompleteHiringMutation,
   useDeleteJobMutation,
 } = jobsApi

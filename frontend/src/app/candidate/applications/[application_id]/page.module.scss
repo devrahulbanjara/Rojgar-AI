@@ -251,7 +251,6 @@
   background: var(--color-surface-muted, #f8fafc);
   border-radius: var(--radius-lg);
   padding: 0.875rem 1.125rem;
-  border-left: 3px solid var(--color-primary);
 }
 
 .feedbackLabel {
@@ -267,6 +266,23 @@
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--color-text);
+  margin: 0;
+}
+
+.feedbackColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.875rem;
+}
+
+.feedbackColumn {
+  min-width: 0;
+}
+
+.feedbackColumnHeader {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
   margin: 0;
 }
 

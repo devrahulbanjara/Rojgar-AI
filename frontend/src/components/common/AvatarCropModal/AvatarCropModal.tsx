@@ -6,8 +6,6 @@ import Cropper, { type Area } from 'react-easy-crop'
 import { createCroppedImageFile } from '@/lib/cropImage'
 import { X } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 export interface AvatarCropDraft {
   sourceUrl: string
   fileName: string
@@ -150,11 +148,11 @@ export default function AvatarCropModal({ draft, busy, onCancel, onSubmit }: Ava
           </button>
           <button
             type="button"
-            className="btn btn--primary"
+            className={`btn btn--primary${busy ? ' btn--loading' : ''}`}
             disabled={!croppedAreaPixels || busy}
             onClick={() => void handleConfirm()}
           >
-            {busy ? <ButtonSpinner label="Saving..." /> : 'Done'}
+            {busy ? 'Saving...' : 'Done'}
           </button>
         </div>
       </div>

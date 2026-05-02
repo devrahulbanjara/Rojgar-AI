@@ -10,6 +10,8 @@ export type ApplicationLifecycleStatus =
 
 export type JobLifecycleStatus = 'draft' | 'active' | 'expired'
 
+export type JobDisplayStatus = JobLifecycleStatus | 'completed'
+
 type StatusMetadata = {
   label: string
   variant: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'gray'
@@ -26,10 +28,11 @@ const APPLICATION_STATUS_METADATA: Record<ApplicationLifecycleStatus, StatusMeta
   rejected: { label: 'Rejected', variant: 'danger' },
 }
 
-const JOB_STATUS_METADATA: Record<JobLifecycleStatus, StatusMetadata> = {
+const JOB_STATUS_METADATA: Record<JobDisplayStatus, StatusMetadata> = {
   draft: { label: 'Draft', variant: 'gray' },
   active: { label: 'Active', variant: 'success' },
   expired: { label: 'Expired', variant: 'secondary' },
+  completed: { label: 'Hired', variant: 'success' },
 }
 
 export function getApplicationStatusLabel(status: ApplicationLifecycleStatus): string {
@@ -50,12 +53,19 @@ export function getApplicationStatusVariant(
   return APPLICATION_STATUS_METADATA[status].variant
 }
 
-export function getJobStatusLabel(status: JobLifecycleStatus): string {
+export function getJobStatusLabel(status: JobDisplayStatus): string {
   return JOB_STATUS_METADATA[status].label
 }
 
-export function getJobStatusVariant(status: JobLifecycleStatus): StatusMetadata['variant'] {
+export function getJobStatusVariant(status: JobDisplayStatus): StatusMetadata['variant'] {
   return JOB_STATUS_METADATA[status].variant
+}
+
+export function getJobDisplayStatus(args: {
+  status: JobLifecycleStatus
+  hiring_completed: boolean
+}): JobDisplayStatus {
+  return args.hiring_completed ? 'completed' : args.status
 }
 
 export function getApplicationStatusOrder(status: ApplicationLifecycleStatus): number {

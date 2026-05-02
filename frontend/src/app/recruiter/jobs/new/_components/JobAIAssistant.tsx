@@ -6,16 +6,16 @@ import type { JobListItem } from '@/store/services/jobsApi'
 import { Sparkles } from 'lucide-react'
 
 type JobAIAssistantProps = {
-  prompt: string
-  sourceText: string
+  title: string
+  roughDescription: string
   sourceJobId: string
   researchSalary: boolean
   followUpFeedback: string
   draftExists: boolean
   loading: boolean
   jobs: JobListItem[]
-  onPromptChange: (value: string) => void
-  onSourceTextChange: (value: string) => void
+  onTitleChange: (value: string) => void
+  onRoughDescriptionChange: (value: string) => void
   onSourceJobIdChange: (value: string) => void
   onResearchSalaryChange: (value: boolean) => void
   onFollowUpFeedbackChange: (value: string) => void
@@ -24,16 +24,16 @@ type JobAIAssistantProps = {
 }
 
 export default function JobAIAssistant({
-  prompt,
-  sourceText,
+  title,
+  roughDescription,
   sourceJobId,
   researchSalary,
   followUpFeedback,
   draftExists,
   loading,
   jobs,
-  onPromptChange,
-  onSourceTextChange,
+  onTitleChange,
+  onRoughDescriptionChange,
   onSourceJobIdChange,
   onResearchSalaryChange,
   onFollowUpFeedbackChange,
@@ -61,16 +61,30 @@ export default function JobAIAssistant({
         {!draftExists ? (
           <>
             <div className="job-ai-assistant__section">
-              <label className="job-ai-label" htmlFor="job-ai-prompt">
-                What role are you hiring for?
+              <label className="job-ai-label" htmlFor="job-ai-title">
+                Job title
+              </label>
+              <input
+                id="job-ai-title"
+                type="text"
+                className="job-ai-input"
+                value={title}
+                onChange={(event) => onTitleChange(event.target.value)}
+                placeholder="e.g. Senior AI Engineer"
+              />
+            </div>
+
+            <div className="job-ai-assistant__section">
+              <label className="job-ai-label" htmlFor="job-ai-rough-description">
+                Rough description
               </label>
               <textarea
-                id="job-ai-prompt"
+                id="job-ai-rough-description"
                 className="job-ai-textarea"
                 rows={4}
-                value={prompt}
-                onChange={(event) => onPromptChange(event.target.value)}
-                placeholder="e.g. Senior AI engineer for our platform team — LLM systems, production APIs, evaluation infra."
+                value={roughDescription}
+                onChange={(event) => onRoughDescriptionChange(event.target.value)}
+                placeholder="e.g. 5 years exp, need FastAPI advanced exp, PyTorch, skilled in LLMs"
               />
             </div>
 
@@ -81,46 +95,33 @@ export default function JobAIAssistant({
                   checked={showAdvanced}
                   onChange={(event) => setShowAdvanced(event.target.checked)}
                 />
-                <span>Add hiring notes or reuse a previous job</span>
+                <span>Add extra context or match writing style from a past job</span>
               </label>
             </div>
 
             {showAdvanced && (
-              <>
-                <div className="job-ai-assistant__section">
-                  <label className="job-ai-label" htmlFor="job-ai-source-text">
-                    Hiring notes or pasted JD
-                  </label>
-                  <textarea
-                    id="job-ai-source-text"
-                    className="job-ai-textarea job-ai-textarea--lg"
-                    rows={6}
-                    value={sourceText}
-                    onChange={(event) => onSourceTextChange(event.target.value)}
-                    placeholder="Paste raw notes, Slack messages, or an older job description."
-                  />
-                </div>
-
-                <div className="job-ai-assistant__section">
-                  <label className="job-ai-label" htmlFor="job-ai-source-job">
-                    Reuse a previous job
-                  </label>
-                  <select
-                    id="job-ai-source-job"
-                    className="job-ai-input"
-                    value={sourceJobId}
-                    onChange={(event) => onSourceJobIdChange(event.target.value)}
-                  >
-                    <option value="">None</option>
-                    {jobs.map((job) => (
-                      <option key={job.id} value={job.id}>
-                        {job.title}
-                        {job.auto_shortlist ? ' — AI evaluation on' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </>
+              <div className="job-ai-assistant__section">
+                <label className="job-ai-label" htmlFor="job-ai-source-job">
+                  Match writing style from a past job
+                </label>
+                <select
+                  id="job-ai-source-job"
+                  className="job-ai-input"
+                  value={sourceJobId}
+                  onChange={(event) => onSourceJobIdChange(event.target.value)}
+                >
+                  <option value="">None — use default style</option>
+                  {jobs.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {job.title}
+                      {job.auto_shortlist ? ' — AI evaluation on' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="job-ai-assistant__helper">
+                  AI will mirror the tone and phrasing of the selected job.
+                </p>
+              </div>
             )}
 
             <div className="job-ai-assistant__toggle">

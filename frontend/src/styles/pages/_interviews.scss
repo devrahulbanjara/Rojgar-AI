@@ -1,0 +1,423 @@
+// ============================================================
+// INTERVIEW RECORDING CARD
+// ============================================================
+
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.rec-card {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 8rem;
+  }
+
+  &__recording {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+    padding: $space-5 0;
+  }
+
+  &__recording--active {
+    .rec-card__dot {
+      animation: rec-pulse 1.2s ease-in-out infinite;
+    }
+  }
+
+  &__indicator {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  &__dot {
+    width: 12px;
+    height: 12px;
+    border-radius: $radius-full;
+    background: #ef4444;
+    flex-shrink: 0;
+  }
+
+  &__dot--pulse {
+    animation: none;
+  }
+
+  &__dot--paused {
+    background: $color-gray-400;
+  }
+
+  &__timer {
+    font-family: $font-mono;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    letter-spacing: 0.04em;
+  }
+
+  &__pauseLabel {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__visualizer {
+    width: 100%;
+    max-width: 560px;
+    height: 84px;
+    border-radius: 999px;
+    border: 1px solid rgb(148 163 184 / 26%);
+    background: linear-gradient(
+      135deg,
+      rgb(15 23 42 / 88%) 0%,
+      rgb(30 41 59 / 82%) 50%,
+      rgb(15 23 42 / 90%) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 8%),
+      0 10px 24px rgb(15 23 42 / 24%);
+    backdrop-filter: blur(8px);
+    display: block;
+    overflow: hidden;
+  }
+
+  &__mic--recording {
+    animation:
+      rec-pulse 1.2s ease-in-out infinite,
+      rec-mic-scale 1.4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  &__actions,
+  &__previewActions {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex-wrap: wrap;
+  }
+
+  &__preview {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__audio {
+    width: 100%;
+    height: 40px;
+    border-radius: $radius-lg;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    padding: $space-4 0;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    border-top: 1px solid $color-gray-200;
+    padding-top: $space-4;
+  }
+
+  &__spin {
+    animation: rec-spin 1s linear infinite;
+  }
+}
+
+// Individual recording item
+.rec-item {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  background: $color-gray-100;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.15);
+  }
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    flex-wrap: wrap;
+  }
+
+  &__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+  }
+
+  &__status--uploaded {
+    background: rgba($color-gray-400, 0.15);
+    color: $color-gray-600;
+  }
+
+  &__status--transcribing,
+  &__status--evaluating {
+    background: rgba(#3b82f6, 0.1);
+    color: #2563eb;
+  }
+
+  &__status--transcribed {
+    background: rgba($color-success, 0.1);
+    color: #059669;
+  }
+
+  &__status--evaluated {
+    background: rgba(#8b5cf6, 0.1);
+    color: #7c3aed;
+  }
+
+  &__status--failed {
+    background: rgba(#ef4444, 0.1);
+    color: #dc2626;
+  }
+
+  &__duration {
+    font-family: $font-mono;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex-wrap: wrap;
+  }
+
+  &__section {
+    border-top: 1px solid $color-gray-200;
+    padding-top: $space-3;
+  }
+
+  &__section--eval {
+    background: rgba(#8b5cf6, 0.04);
+    border: 1px solid rgba(#8b5cf6, 0.12);
+    border-radius: $radius-lg;
+    padding: $space-3;
+    margin-top: $space-1;
+  }
+
+  &__evalHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: #7c3aed;
+    margin-bottom: $space-2;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__text {
+    margin: $space-2 0 0;
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    line-height: 1.65;
+    white-space: pre-wrap;
+  }
+}
+
+@keyframes rec-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes rec-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rec-mic-scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.18);
+  }
+
+  70% {
+    transform: scale(1.08);
+  }
+}
+
+.audit-console {
+  &__filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: $space-4;
+  }
+}
+
+.audit-trail {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: $space-4;
+
+  @media (width <= 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    max-height: 36rem;
+    overflow-y: auto;
+  }
+
+  &__item--skeleton {
+    width: 100%;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-lg;
+    background: $color-white;
+    padding: $space-3;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  &__itemTitle {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text;
+    text-transform: capitalize;
+  }
+
+  &__itemTitleSkeleton {
+    width: 74%;
+    height: 0.95rem;
+  }
+
+  &__itemMeta {
+    margin-top: $space-1;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__itemMetaSkeleton {
+    width: 56%;
+    height: 0.75rem;
+    margin-top: $space-2;
+  }
+
+  &__detail {
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    background: $color-white;
+    padding: $space-4;
+  }
+
+  &__detail--skeleton {
+    min-height: 30rem;
+  }
+
+  &__headline {
+    display: flex;
+    justify-content: space-between;
+    gap: $space-3;
+    flex-wrap: wrap;
+    margin-bottom: $space-4;
+  }
+
+  &__headlineStack {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__headlinePrimarySkeleton {
+    width: 12rem;
+    height: 1rem;
+  }
+
+  &__headlineSecondarySkeleton {
+    width: 16rem;
+    height: 0.8rem;
+  }
+
+  &__headlineMetaSkeleton {
+    width: 9rem;
+    height: 0.8rem;
+  }
+
+  &__section + &__section {
+    margin-top: $space-4;
+  }
+
+  &__sectionLabelSkeleton {
+    width: 6rem;
+    height: 0.75rem;
+  }
+
+  &__code {
+    margin: $space-2 0 0;
+    padding: $space-3;
+    border-radius: $radius-lg;
+    background: rgba($color-gray-100, 0.85);
+    font-family: $font-mono;
+    font-size: $font-size-xs;
+    line-height: 1.6;
+    color: $color-text;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  &__codeSkeleton {
+    width: 100%;
+    height: 7rem;
+    margin-top: $space-2;
+    border-radius: $radius-lg;
+  }
+}

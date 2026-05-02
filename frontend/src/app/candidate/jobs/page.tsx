@@ -4,7 +4,8 @@ import { useState } from 'react'
 
 import Link from 'next/link'
 
-import { LOCATION_TYPE_LABELS, formatDate, formatSalary, getCompanyAccent } from '@/lib/jobHelpers'
+import { getCompanyAccent } from '@/lib/companyAccent'
+import { LOCATION_TYPE_LABELS, formatDate, formatSalary } from '@/lib/jobHelpers'
 import {
   type JobListItem,
   type LocationType,
@@ -73,7 +74,7 @@ function JobCard({ job, onApply }: { job: JobListItem; onApply: (job: JobListIte
           sizes="44px"
           style={
             {
-              '--logo-bg': accent.color + '1A',
+              '--logo-bg': accent.background,
               '--logo-color': accent.color,
             } as React.CSSProperties
           }
@@ -159,7 +160,13 @@ export default function UserJobsPage() {
   const [applyingToJob, setApplyingToJob] = useState<JobListItem | null>(null)
   const [appliedParams, setAppliedParams] = useState<SearchJobsParams>({})
 
-  const { data: jobsResp, isLoading, isError, refetch } = useSearchJobsQuery(appliedParams)
+  const {
+    data: jobsResp,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useSearchJobsQuery(appliedParams)
   const { items: jobs = [], pagination } = jobsResp?.data ?? {}
 
   function handleSearch() {
@@ -184,7 +191,7 @@ export default function UserJobsPage() {
           </div>
           <div className="dash-page-header__actions">
             <span className="page-header-hint">
-              {isLoading
+              {isLoading || isFetching
                 ? 'Loading jobs...'
                 : `${pagination?.total ?? 0} job${pagination?.total === 1 ? '' : 's'} available`}
             </span>
@@ -251,12 +258,17 @@ export default function UserJobsPage() {
               />
             </div>
           </div>
-          <button type="button" className="btn btn--primary" onClick={handleSearch}>
+          <button
+            type="button"
+            className={`btn btn--primary ${isFetching ? 'btn--loading' : ''}`}
+            onClick={handleSearch}
+            disabled={isFetching}
+          >
             Search
           </button>
         </Toolbar>
 
-        {isLoading ? (
+        {isLoading || isFetching ? (
           <div className={styles.skeleton}>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className={styles.skeletonCard} />

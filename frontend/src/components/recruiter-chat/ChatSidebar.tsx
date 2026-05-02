@@ -60,21 +60,12 @@ export function ChatSidebar({
       <div className="recruiter-chat-sidebar__header">
         <button
           type="button"
-          className="btn btn--primary btn--full"
+          className={`btn btn--primary btn--full${isCreating ? ' btn--loading' : ''}`}
           onClick={handleNewChat}
           disabled={isCreating}
         >
-          {isCreating ? (
-            <span className="button-spinner" aria-live="polite">
-              <Loader2 size={14} className="button-spinner__icon" />
-              <span>Creating...</span>
-            </span>
-          ) : (
-            <>
-              <Plus size={14} />
-              <span>New Chat</span>
-            </>
-          )}
+          {!isCreating && <Plus size={14} />}
+          <span>{isCreating ? 'Creating...' : 'New Chat'}</span>
         </button>
       </div>
 
