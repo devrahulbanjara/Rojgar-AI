@@ -335,7 +335,7 @@ export default function ApplicationsPage() {
         />
       </Toolbar>
 
-      {isLoading ? (
+      {isLoading || isFetching ? (
         <div className={styles.skeleton}>
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={styles.skeletonCard} />

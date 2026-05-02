@@ -147,33 +147,27 @@ export default function EvaluationSchemaSetupCard({
   }
 
   function updateCriterion(id: string, next: Partial<CriterionDraft>) {
-    setCriteria((current) => {
-      const updatedCriteria = current.map((criterion) => {
-        if (criterion.id !== id) return criterion
-        const updated = { ...criterion, ...next }
-        if ('label' in next) updated.key = toSnakeCase(updated.label)
-        return updated
-      })
-      syncDraft(updatedCriteria)
-      return updatedCriteria
+    const updatedCriteria = criteria.map((criterion) => {
+      if (criterion.id !== id) return criterion
+      const updated = { ...criterion, ...next }
+      if ('label' in next) updated.key = toSnakeCase(updated.label)
+      return updated
     })
+    setCriteria(updatedCriteria)
+    syncDraft(updatedCriteria)
   }
 
   function addCriterion() {
-    setCriteria((current) => {
-      const updatedCriteria = [...current, createCriterionDraft(current.length + 1)]
-      syncDraft(updatedCriteria)
-      return updatedCriteria
-    })
+    const updatedCriteria = [...criteria, createCriterionDraft(criteria.length + 1)]
+    setCriteria(updatedCriteria)
+    syncDraft(updatedCriteria)
   }
 
   function removeCriterion(id: string) {
-    setCriteria((current) => {
-      const updatedCriteria =
-        current.length === 1 ? current : current.filter((criterion) => criterion.id !== id)
-      syncDraft(updatedCriteria)
-      return updatedCriteria
-    })
+    const updatedCriteria =
+      criteria.length === 1 ? criteria : criteria.filter((criterion) => criterion.id !== id)
+    setCriteria(updatedCriteria)
+    syncDraft(updatedCriteria)
   }
 
   function updateHumanWeight(next: number) {

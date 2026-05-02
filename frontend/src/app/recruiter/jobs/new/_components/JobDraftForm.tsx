@@ -31,6 +31,7 @@ type JobDraftFormProps = {
   missingFields: string[]
   disabled: boolean
   isLoading?: boolean
+  showAiControls?: boolean
   onFieldChange: <K extends DraftField>(field: K, value: JobAIDraftPayload[K]) => void
   onToggleLock: (field: DraftField) => void
   onRequestUpdate: (fields: DraftField[], feedback: string) => void
@@ -49,6 +50,7 @@ function FieldChrome({
   dirtyFields,
   missingFields,
   disabled,
+  showAiControls = true,
   onToggleLock,
   onRequestUpdate,
   children,
@@ -61,6 +63,7 @@ function FieldChrome({
   dirtyFields: string[]
   missingFields: string[]
   disabled: boolean
+  showAiControls?: boolean
   onToggleLock: (field: DraftField) => void
   onRequestUpdate: (fields: DraftField[], feedback: string) => void
   children: ReactNode
@@ -76,23 +79,25 @@ function FieldChrome({
       <div className="job-ai-field__header">
         <div className="job-ai-field__title-row">
           <label className="job-ai-label">{label}</label>
-          <button
-            type="button"
-            className="btn btn--icon btn--sm"
-            aria-pressed={isLocked}
-            disabled={disabled}
-            onClick={() => onToggleLock(fieldKeys[0])}
-            aria-label={isLocked ? `Unlock ${label}` : `Lock ${label}`}
-            title={isLocked ? `Unlock ${label}` : `Lock ${label}`}
-          >
-            {isLocked ? (
-              <Lock size={15} aria-hidden="true" />
-            ) : (
-              <LockOpen size={15} aria-hidden="true" />
-            )}
-          </button>
+          {showAiControls ? (
+            <button
+              type="button"
+              className="btn btn--icon btn--sm"
+              aria-pressed={isLocked}
+              disabled={disabled}
+              onClick={() => onToggleLock(fieldKeys[0])}
+              aria-label={isLocked ? `Unlock ${label}` : `Lock ${label}`}
+              title={isLocked ? `Unlock ${label}` : `Lock ${label}`}
+            >
+              {isLocked ? (
+                <Lock size={15} aria-hidden="true" />
+              ) : (
+                <LockOpen size={15} aria-hidden="true" />
+              )}
+            </button>
+          ) : null}
           <div className="job-ai-field__badges">
-            {isLocked ? (
+            {showAiControls && isLocked ? (
               <span className="job-ai-field__label job-ai-field__label--locked">
                 <Lock size={10} aria-hidden="true" />
                 Locked
@@ -112,20 +117,22 @@ function FieldChrome({
 
       {children}
 
-      <div className="job-ai-assistant__toggle job-ai-field__toggle">
-        <label className="job-ai-checkbox" htmlFor={`field-feedback-toggle-${fieldKeys[0]}`}>
-          <input
-            id={`field-feedback-toggle-${fieldKeys[0]}`}
-            type="checkbox"
-            checked={showInstruction}
-            onChange={(event) => setShowInstruction(event.target.checked)}
-            disabled={disabled || isLocked}
-          />
-          <span>Any feedback for AI to modify this field?</span>
-        </label>
-      </div>
+      {showAiControls ? (
+        <div className="job-ai-assistant__toggle job-ai-field__toggle">
+          <label className="job-ai-checkbox" htmlFor={`field-feedback-toggle-${fieldKeys[0]}`}>
+            <input
+              id={`field-feedback-toggle-${fieldKeys[0]}`}
+              type="checkbox"
+              checked={showInstruction}
+              onChange={(event) => setShowInstruction(event.target.checked)}
+              disabled={disabled || isLocked}
+            />
+            <span>Any feedback for AI to modify this field?</span>
+          </label>
+        </div>
+      ) : null}
 
-      {showInstruction ? (
+      {showAiControls && showInstruction ? (
         <div
           className="job-ai-instruction"
           style={{ animation: 'content-fade-up 280ms ease both' }}
@@ -247,6 +254,7 @@ export default function JobDraftForm({
   missingFields,
   disabled,
   isLoading,
+  showAiControls = true,
   onFieldChange,
   onToggleLock,
   onRequestUpdate,
@@ -290,7 +298,9 @@ export default function JobDraftForm({
         <div>
           <h2 className="job-ai-card__title dash-card__title">Draft Details</h2>
           <p className="job-ai-card__subtitle dash-card__subtitle">
-            Edit directly, lock what must stay fixed, then send field-specific instructions to AI.
+            {showAiControls
+              ? 'Edit directly, lock what must stay fixed, then send field-specific instructions to AI.'
+              : 'Fill in the job details below.'}
           </p>
         </div>
       </div>
@@ -305,6 +315,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -324,6 +335,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -343,6 +355,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -371,6 +384,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -395,6 +409,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -419,6 +434,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -495,6 +511,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -515,6 +532,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -535,6 +553,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
@@ -555,6 +574,7 @@ export default function JobDraftForm({
             dirtyFields={dirtyFields}
             missingFields={missingFields}
             disabled={disabled}
+            showAiControls={showAiControls}
             onToggleLock={onToggleLock}
             onRequestUpdate={onRequestUpdate}
           >
