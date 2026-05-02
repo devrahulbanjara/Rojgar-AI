@@ -232,9 +232,10 @@ export default function ApplyModal({
 
             {flow.step === 'patching' ? (
               <StepPatching
-                isPatching={true}
+                isPatching={flow.patchedFields.length === 0}
                 onContinue={flow.handleSubmit}
                 patchedFields={flow.patchedFields}
+                patchedDiffs={flow.patchedDiffs}
               />
             ) : null}
 
@@ -256,6 +257,31 @@ export default function ApplyModal({
             ) : null}
           </div>
         </div>
+
+        {flow.step === 'gap_results' && flow.gapResult ? (
+          <div className={styles.applyModal__footer}>
+            <button className="btn btn--primary btn--full" onClick={flow.handleAutoPatch} type="button">
+              Let AI update my resume
+            </button>
+            <button className="btn btn--secondary btn--full" onClick={() => flow.handleOpenShareStep('gap_results')} type="button">
+              Apply with current resume
+            </button>
+            <button className="btn btn--ghost" onClick={flow.handleBackToChoice} type="button">
+              Back
+            </button>
+          </div>
+        ) : null}
+
+        {flow.step === 'share_profile' ? (
+          <div className={styles.applyModal__footer}>
+            <button className="btn btn--primary btn--full" onClick={flow.handleSubmit} type="button">
+              Submit application
+            </button>
+            <button className="btn btn--secondary btn--full" onClick={flow.handleBackFromShare} type="button">
+              Back
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   )

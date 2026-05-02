@@ -3,10 +3,10 @@
 @use '../mixins' as *;
 
 // ── Entrance animation ────────────────────────────────────────
-@keyframes cookie-enter {
+@keyframes cookie-banner-enter {
   from {
     opacity: 0;
-    transform: translateY(120%);
+    transform: translateY(12px);
   }
 
   to {
@@ -15,163 +15,75 @@
   }
 }
 
-// ── Block ────────────────────────────────────────────────────
+// ── Block: floating cookie card ───────────────────────────────
 .cookie-banner {
   position: fixed;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  z-index: $z-sticky + 2;
-  display: flex;
-  justify-content: center;
-  padding-inline: $space-4;
-  will-change: transform, opacity;
+  right: $space-6;
+  bottom: $space-6;
+  z-index: $z-modal;
+  width: min(400px, calc(100vw - #{$space-8}));
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  box-shadow:
+    0 12px 32px rgba($color-black, 0.12),
+    0 4px 12px rgba($color-black, 0.06);
+  padding: $space-5 $space-6;
+  animation: cookie-banner-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 
-  // Fires the moment the component mounts — no JS needed for entrance
-  animation: cookie-enter 0.52s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
+  @media (width <= 480px) {
+    right: $space-4;
+    left: $space-4;
+    bottom: $space-4;
+    width: auto;
+    padding: $space-5;
+  }
 
-  // ── Element: inner (floating pill) ───────────────────────
-  &__inner {
-    display: flex;
-    align-items: center;
-    gap: $space-5;
-    background: $color-white;
-    border-radius: 50px;
-    box-shadow:
-      0 8px 40px rgba($color-black, 0.12),
-      0 2px 8px rgba($color-black, 0.06);
-    padding: $space-3 $space-3 $space-3 $space-5;
-    max-width: 860px;
-    width: 100%;
+  // ── Element: close button ─────────────────────────────────
+  &__close {
+    position: absolute;
+    top: $space-3;
+    right: $space-3;
+    color: $color-gray-400;
 
-    @include md {
-      padding: $space-4 $space-4 $space-4 $space-8;
-    }
-
-    // Stack vertically on small screens
-    @media (width <= 639px) {
-      flex-direction: column;
-      align-items: flex-start;
-      border-radius: $radius-xl;
-      padding: $space-5;
+    &:hover {
+      color: $color-gray-600;
     }
   }
 
-  // ── Element: icon ─────────────────────────────────────────
-  &__icon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
-    line-height: 1;
-
-    @media (width <= 639px) {
-      font-size: 1.75rem;
-    }
-  }
-
-  // ── Element: content ──────────────────────────────────────
-  &__content {
-    flex: 1;
-    min-width: 0;
-  }
-
+  // ── Element: title ────────────────────────────────────────
   &__title {
     font-family: var(--font-heading);
     font-size: $font-size-base;
     font-weight: $font-weight-semibold;
     color: $color-gray-900;
-    margin-bottom: $space-1;
+    margin-bottom: $space-2;
+    padding-right: $space-8; // close button
   }
 
+  // ── Element: description ──────────────────────────────────
   &__desc {
     font-size: $font-size-sm;
-    color: $color-gray-500;
-    line-height: $line-height-normal;
+    color: $color-gray-600;
+    line-height: $line-height-loose;
+    margin-bottom: $space-4;
   }
 
   &__link {
     color: $color-primary;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration: none;
     @include transition(opacity, $transition-fast);
 
     &:hover {
       opacity: 0.75;
+      text-decoration: underline;
     }
   }
 
   // ── Element: actions ──────────────────────────────────────
   &__actions {
     display: flex;
-    align-items: center;
     gap: $space-2;
-    flex-shrink: 0;
-
-    @media (width <= 639px) {
-      width: 100%;
-      justify-content: flex-end;
-    }
-  }
-
-  // ── Element: btn ──────────────────────────────────────────
-  &__btn {
-    border-radius: $radius-full !important;
-    padding: $space-2 $space-5 !important;
-    font-size: $font-size-sm !important;
-    font-weight: $font-weight-semibold !important;
-    white-space: nowrap;
-
-    // Reject / Decline button
-    &--reject {
-      position: relative;
-      overflow: hidden;
-      background-color: transparent !important;
-      color: $color-gray-600 !important;
-      border: 1px solid $color-gray-300 !important;
-      z-index: 0;
-
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-color: $color-gray-100;
-        transform: scaleY(0);
-        transform-origin: top;
-        transition: transform $transition-base;
-        z-index: -1;
-      }
-
-      &:hover {
-        color: $color-gray-900 !important;
-        border-color: $color-gray-400 !important;
-
-        &::before {
-          transform: scaleY(1);
-          transform-origin: bottom;
-        }
-      }
-    }
-
-    // Accept button — same fill animation as header signup
-    &--accept {
-      position: relative;
-      overflow: hidden;
-      z-index: 0;
-
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-color: color.adjust($color-primary, $lightness: -12%);
-        transform: scaleY(0);
-        transform-origin: top;
-        transition: transform $transition-base;
-        z-index: -1;
-      }
-
-      &:hover::before {
-        transform: scaleY(1);
-        transform-origin: bottom;
-      }
-    }
+    justify-content: flex-end;
   }
 }

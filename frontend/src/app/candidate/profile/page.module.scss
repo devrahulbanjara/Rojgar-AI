@@ -254,6 +254,11 @@
   gap: 1rem;
 }
 
+.cardElevated {
+  position: relative;
+  z-index: 10;
+}
+
 .cardHeader {
   display: flex;
   align-items: center;

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { FileUp, Sparkles, X } from 'lucide-react'
+import { FileUp, X } from 'lucide-react'
 
 import styles from '../page.module.scss'
 import { AVAILABLE_ROLES, type FormProfile } from './profileForm'
@@ -98,7 +98,7 @@ function TargetRolesCard({ roles, isSaving, onAdd, onRemove }: TargetRolesProps)
   }
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${open ? styles.cardElevated : ''}`}>
       <div className={styles.cardHeader}>
         <div>
           <div className={styles.cardEyebrow}>What you want</div>
@@ -147,7 +147,11 @@ function TargetRolesCard({ roles, isSaving, onAdd, onRemove }: TargetRolesProps)
           }}
         />
         {open && (input.length > 0 || filtered.length > 0) && (
-          <div className={styles.rolesDropdown} role="listbox">
+          <div
+            className={styles.rolesDropdown}
+            role="listbox"
+            onWheel={(e) => e.stopPropagation()}
+          >
             {filtered.map((role) => (
               <button
                 key={role}
@@ -179,7 +183,6 @@ function ResumeImportCard({ onOpen }: { onOpen: () => void }) {
           <div className={styles.cardEyebrow}>Faster setup</div>
           <h2 className={styles.cardTitle}>Import from Resume</h2>
         </div>
-        <Sparkles size={16} aria-hidden="true" color="var(--color-primary)" />
       </div>
       <div className={styles.importCardBody}>
         Upload a PDF or DOCX and we&rsquo;ll pre-fill your profile and resume in seconds.
