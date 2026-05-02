@@ -7,6 +7,7 @@ import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
 import CandidateEvaluationCard from '@/app/recruiter/candidates/_components/CandidateEvaluationCard'
 import InterviewRecordingCard from '@/app/recruiter/candidates/_components/InterviewRecordingCard'
 import { mapRecruiterCandidateResume } from '@/app/recruiter/candidates/_lib/mapRecruiterCandidateResume'
+import { buildEmailPreviewDocument } from '@/lib/email/preview'
 import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
 import {
   type ApplicationStatus,
@@ -26,6 +27,8 @@ import {
 import {
   CalendarDays,
   Check,
+  ChevronDown,
+  ChevronRight,
   Clock3,
   ExternalLink,
   Hash,
@@ -42,7 +45,6 @@ import styles from './CandidateDrawer.module.scss'
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: 'Applied',
-  screening: 'Screening',
   shortlisted: 'Shortlisted',
   interview_booked: 'Interview booked',
   interview_completed: 'Interview completed',
@@ -278,7 +280,12 @@ export default function CandidateDrawer({
           ) : activeTab === 'interview' ? (
             <InterviewBookingSection interview={interview ?? null} />
           ) : activeTab === 'outreach' ? (
-            <OutreachTab applicationId={applicationId} jobId={candidate.job_id} />
+            <OutreachTab
+              applicationId={applicationId}
+              jobId={candidate.job_id}
+              feedback={candidate.feedback}
+              score={candidate.score}
+            />
           ) : (
             <ResumeTab renderedResume={renderedResume} />
           )}
@@ -463,12 +470,24 @@ function ResumeTab({
   )
 }
 
-function OutreachTab({ applicationId, jobId }: { applicationId: string; jobId: string }) {
+function OutreachTab({
+  applicationId,
+  jobId,
+  feedback,
+  score,
+}: {
+  applicationId: string
+  jobId: string
+  feedback: string | null
+  score: number | null
+}) {
   const { data, isLoading, refetch } = useGetDraftsQuery(jobId)
   const [generateDraft, { isLoading: isGenerating }] = useGenerateDraftForApplicationMutation()
 
   const allDrafts: EmailDraftRecord[] = data?.data ?? []
   const draft = allDrafts.find((entry) => entry.application_id === applicationId) ?? null
+  const resolvedFeedback = feedback ?? draft?.application_feedback ?? null
+  const resolvedScore = score ?? draft?.score ?? null
 
   async function handleGenerate() {
     try {
@@ -492,39 +511,70 @@ function OutreachTab({ applicationId, jobId }: { applicationId: string; jobId: s
     )
   }
 
-  if (!draft) {
-    return (
+  return (
+    <>
       <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Outreach</h3>
-        <p className={styles.muted}>
-          No draft yet for this candidate. Generate one to start outreach.
-        </p>
-        <div style={{ marginTop: '0.75rem' }}>
-          <button
-            type="button"
-            className="btn btn--primary btn--sm"
-            onClick={() => void handleGenerate()}
-            disabled={isGenerating}
-          >
-            <Mail size={14} aria-hidden="true" />
-            {isGenerating ? 'Generating…' : 'Generate AI draft'}
-          </button>
+        <div className={styles.outreachFeedbackHeader}>
+          <h3 className={styles.sectionTitle}>AI review</h3>
+          {resolvedScore !== null ? (
+            <span className={styles.outreachScoreChip}>Score {resolvedScore}</span>
+          ) : null}
         </div>
+        {resolvedFeedback ? (
+          <div className={styles.outreachFeedbackBody}>{resolvedFeedback}</div>
+        ) : (
+          <p className={styles.outreachFeedbackMuted}>
+            No AI feedback for this candidate. The email will use a generic template — no fabricated
+            reasons.
+          </p>
+        )}
       </div>
-    )
-  }
 
-  return <DraftEditor key={draft.draft_id} draft={draft} />
+      {draft ? (
+        <DraftEditor key={draft.draft_id} draft={draft} onRegenerated={() => void refetch()} />
+      ) : (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Email draft</h3>
+          <p className={styles.muted}>
+            No draft yet for this candidate. Generate one to start outreach.
+          </p>
+          <div className={styles.outreachActions}>
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              onClick={() => void handleGenerate()}
+              disabled={isGenerating}
+            >
+              <Mail size={14} aria-hidden="true" />
+              {isGenerating ? 'Generating…' : 'Generate AI draft'}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
 
-function DraftEditor({ draft }: { draft: EmailDraftRecord }) {
+function DraftEditor({
+  draft,
+  onRegenerated,
+}: {
+  draft: EmailDraftRecord
+  onRegenerated: () => void
+}) {
   const [updateDraft, { isLoading: isSaving }] = useUpdateDraftMutation()
   const [approveDraft, { isLoading: isApproving }] = useApproveDraftMutation()
   const [deleteDraft, { isLoading: isDeleting }] = useDeleteDraftMutation()
+  const [generateDraft, { isLoading: isRegenerating }] = useGenerateDraftForApplicationMutation()
 
   const [subject, setSubject] = useState(draft.subject ?? '')
   const [body, setBody] = useState(draft.body ?? '')
   const [dirty, setDirty] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+
+  const previewDocument = useMemo(() => buildEmailPreviewDocument(subject, body), [body, subject])
+
+  const editable = !draft.is_sent && !draft.is_discarded
 
   async function handleSave() {
     try {
@@ -536,12 +586,27 @@ function DraftEditor({ draft }: { draft: EmailDraftRecord }) {
     }
   }
 
-  async function handleApprove() {
+  async function handleSendNow() {
     try {
-      await approveDraft({ draftId: draft.draft_id, approved: !draft.is_approved }).unwrap()
-      toast.success(draft.is_approved ? 'Approval removed.' : 'Draft approved.')
+      if (dirty) {
+        await updateDraft({ draftId: draft.draft_id, subject, body }).unwrap()
+        setDirty(false)
+      }
+      await approveDraft({ draftId: draft.draft_id, approved: true }).unwrap()
+      toast.success('Email sent.')
     } catch {
-      toast.error('Could not update approval.')
+      toast.error('Could not send email.')
+    }
+  }
+
+  async function handleRegenerate() {
+    try {
+      await generateDraft(draft.application_id).unwrap()
+      toast.success('Draft regenerated.')
+      setDirty(false)
+      onRegenerated()
+    } catch {
+      toast.error('Could not regenerate draft.')
     }
   }
 
@@ -555,117 +620,119 @@ function DraftEditor({ draft }: { draft: EmailDraftRecord }) {
     }
   }
 
-  const sentBadge = draft.is_sent ? (
-    <span style={{ color: 'var(--color-success)', fontSize: '0.75rem' }}>
+  const statusBadge = draft.is_sent ? (
+    <span className={`${styles.outreachStatusBadge} ${styles.outreachStatusSent}`}>
       <Check size={12} aria-hidden="true" /> Sent
     </span>
+  ) : draft.is_discarded ? (
+    <span className={`${styles.outreachStatusBadge} ${styles.outreachStatusDiscarded}`}>
+      Discarded
+    </span>
   ) : draft.is_approved ? (
-    <span style={{ color: 'var(--color-primary)', fontSize: '0.75rem' }}>
-      <Check size={12} aria-hidden="true" /> Approved · ready to send
+    <span className={`${styles.outreachStatusBadge} ${styles.outreachStatusApproved}`}>
+      <Check size={12} aria-hidden="true" /> Approved
     </span>
   ) : (
-    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Pending approval</span>
+    <span className={`${styles.outreachStatusBadge} ${styles.outreachStatusPending}`}>Drafted</span>
   )
 
   return (
     <div className={styles.section}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '0.5rem',
-        }}
-      >
-        <h3 className={styles.sectionTitle} style={{ margin: 0 }}>
-          Email draft
-        </h3>
-        {sentBadge}
+      <div className={styles.outreachEditorHead}>
+        <h3 className={styles.sectionTitle}>Email draft</h3>
+        {statusBadge}
       </div>
 
-      <label
-        style={{
-          display: 'block',
-          fontSize: '0.75rem',
-          color: 'var(--color-text-muted)',
-          marginBottom: '0.25rem',
-        }}
-      >
+      <label className={styles.outreachFieldLabel} htmlFor="drawer-outreach-subject">
         Subject
       </label>
       <input
+        id="drawer-outreach-subject"
         type="text"
-        className="resume-field__input"
+        className={styles.outreachInput}
         value={subject}
-        disabled={draft.is_sent}
+        disabled={!editable}
         onChange={(event) => {
           setSubject(event.target.value)
           setDirty(true)
         }}
-        style={{ width: '100%', marginBottom: '0.75rem' }}
       />
 
-      <label
-        style={{
-          display: 'block',
-          fontSize: '0.75rem',
-          color: 'var(--color-text-muted)',
-          marginBottom: '0.25rem',
-        }}
-      >
-        Body
+      <label className={styles.outreachFieldLabel} htmlFor="drawer-outreach-body">
+        HTML body
       </label>
       <textarea
-        className="resume-field__input"
+        id="drawer-outreach-body"
+        className={styles.outreachTextarea}
         value={body}
-        disabled={draft.is_sent}
-        rows={10}
+        disabled={!editable}
+        rows={12}
         onChange={(event) => {
           setBody(event.target.value)
           setDirty(true)
         }}
-        style={{
-          width: '100%',
-          resize: 'vertical',
-          minHeight: '12rem',
-          fontFamily: 'var(--font-body)',
-        }}
       />
 
-      {!draft.is_sent ? (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.875rem' }}>
+      <button
+        type="button"
+        className={`btn btn--ghost btn--sm ${styles.outreachPreviewToggle}`}
+        onClick={() => setShowPreview((current) => !current)}
+        aria-expanded={showPreview}
+      >
+        {showPreview ? (
+          <ChevronDown size={14} aria-hidden="true" />
+        ) : (
+          <ChevronRight size={14} aria-hidden="true" />
+        )}
+        {showPreview ? 'Hide preview' : 'Show preview'}
+      </button>
+
+      {showPreview ? (
+        <iframe
+          title="Rendered email preview"
+          className={styles.outreachPreviewFrame}
+          sandbox=""
+          srcDoc={previewDocument}
+        />
+      ) : null}
+
+      {editable ? (
+        <div className={styles.outreachActions}>
           <button
             type="button"
             className="btn btn--primary btn--sm"
+            onClick={() => void handleSendNow()}
+            disabled={isApproving || isSaving}
+          >
+            {isApproving ? 'Sending…' : 'Send now'}
+          </button>
+          <button
+            type="button"
+            className="btn btn--secondary btn--sm"
             onClick={() => void handleSave()}
             disabled={!dirty || isSaving}
           >
-            {isSaving ? 'Saving…' : 'Save changes'}
+            {isSaving ? 'Saving…' : 'Save'}
           </button>
           <button
             type="button"
             className="btn btn--secondary btn--sm"
-            onClick={() => void handleApprove()}
-            disabled={isApproving}
+            onClick={() => void handleRegenerate()}
+            disabled={isRegenerating}
           >
-            {draft.is_approved ? 'Unapprove' : 'Approve'}
+            {isRegenerating ? 'Regenerating…' : 'Regenerate'}
           </button>
+          <span className={styles.outreachActionsSpacer} />
           <button
             type="button"
-            className="btn btn--secondary btn--sm"
+            className="btn btn--danger btn--sm"
             onClick={() => void handleDelete()}
             disabled={isDeleting}
-            style={{ marginLeft: 'auto', color: 'var(--color-error)' }}
           >
             Delete
           </button>
         </div>
       ) : null}
-
-      <p className={styles.muted} style={{ marginTop: '0.875rem', fontSize: '0.75rem' }}>
-        Approved drafts are sent in batch via the job pipeline. Use the &ldquo;Send all
-        shortlisted&rdquo; CTA in the Shortlist stage to dispatch.
-      </p>
     </div>
   )
 }

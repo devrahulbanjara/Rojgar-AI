@@ -406,7 +406,7 @@ async def prepare_drafts(
                     else f"Application closed for {job.title}"
                 ),
                 description=(
-                    f"{company.name if company else 'The recruiter'} updated your application after screening."
+                    f"{company.name if company else 'The recruiter'} updated your application after review."
                 ),
                 href=f"/candidate/applications/{application.id}",
                 user_id=application.user_id,
@@ -442,7 +442,7 @@ async def prepare_drafts(
             audience="recruiter",
             title=f"Draft prepared for {application.user.full_name}",
             description=f"An outreach draft is ready for {application.user.full_name} on {job.title}.",
-            href="/recruiter/outreach",
+            href=f"/recruiter/jobs/{job.id}?view=pipeline&stage=shortlist",
             company_id=company_id,
             application_id=application.id,
             job_id=job.id,
@@ -526,7 +526,7 @@ async def generate_draft_for_application(
         audience="recruiter",
         title=f"Draft prepared for {application.user.full_name}",
         description=f"An outreach draft is ready for {application.user.full_name} on {job.title}.",
-        href="/recruiter/outreach",
+        href=f"/recruiter/jobs/{job.id}?view=pipeline&stage=shortlist",
         company_id=company_id,
         application_id=application.id,
         draft_id=draft.id,
@@ -579,7 +579,7 @@ async def update_draft(
         audience="recruiter",
         title=f"Draft updated for {draft.application.user.full_name}",
         description=f"The outreach draft for {draft.application.user.full_name} was edited.",
-        href="/recruiter/outreach",
+        href=f"/recruiter/jobs/{draft.application.job_id}?view=pipeline&stage=shortlist",
         company_id=company_id,
         application_id=draft.application_id,
         draft_id=draft.id,
@@ -633,7 +633,7 @@ async def approve_draft(
         _draft_job_title = _draft_job.title if _draft_job else "unknown job"
         _email_type = (
             "shortlist"
-            if draft.application.status.value in ("shortlisted", "screening", "applied")
+            if draft.application.status.value in ("shortlisted", "applied")
             else "rejection"
         )
         await create_custom_audit_log(
@@ -657,7 +657,7 @@ async def approve_draft(
             audience="recruiter",
             title=f"Draft approved for {draft.application.user.full_name}",
             description=f"The outreach draft for {draft.application.user.full_name} was approved and sent.",
-            href="/recruiter/outreach",
+            href=f"/recruiter/jobs/{draft.application.job_id}?view=pipeline&stage=shortlist",
             company_id=company_id,
             application_id=draft.application_id,
             draft_id=draft.id,
@@ -692,7 +692,7 @@ async def approve_draft(
             audience="recruiter",
             title=f"Draft discarded for {draft.application.user.full_name}",
             description=f"The outreach draft for {draft.application.user.full_name} was discarded.",
-            href="/recruiter/outreach",
+            href=f"/recruiter/jobs/{draft.application.job_id}?view=pipeline&stage=shortlist",
             company_id=company_id,
             application_id=draft.application_id,
             draft_id=draft.id,

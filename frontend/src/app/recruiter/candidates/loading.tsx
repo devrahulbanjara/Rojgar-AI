@@ -43,7 +43,7 @@ export default function Loading() {
                     <div className="skeleton-block rec-apps-skeleton__date" />
                   </td>
                   <td>
-                    <div className="skeleton-block screening-skeleton__td-action" />
+                    <div className="skeleton-block rec-apps-skeleton__action" />
                   </td>
                 </tr>
               ))}

@@ -61,8 +61,6 @@ export function getStatusTone(status: string | null | undefined) {
   switch ((status ?? '').toLowerCase()) {
     case 'applied':
       return 'gray'
-    case 'screening':
-      return 'warning'
     case 'shortlisted':
       return 'primary'
     case 'interview_booked':

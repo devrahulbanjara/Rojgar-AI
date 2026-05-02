@@ -36,7 +36,7 @@
 
 **Growth — NPR 3,999/month** *(up to 5 recruiters)*
 - Up to 8 active jobs
-- AI screening on all applications (auto-score)
+- AI evaluation on all applications (auto-score)
 - Unlimited job draft assistant
 - Unlimited outreach email drafting
 - Recruiter AI Chat (candidate search, salary research, job lookup, job edits)

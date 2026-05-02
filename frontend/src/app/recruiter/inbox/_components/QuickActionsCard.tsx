@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 
-import { Calendar, ChevronRight, Mail } from 'lucide-react'
+import { Calendar, ChevronRight } from 'lucide-react'
 
 import styles from '../page.module.scss'
 
@@ -12,12 +12,6 @@ const ACTIONS = [
     icon: Calendar,
     title: 'Upcoming interviews',
     copy: "Open the calendar to see today's and upcoming bookings.",
-  },
-  {
-    href: '/recruiter/outreach',
-    icon: Mail,
-    title: 'Outreach drafts',
-    copy: 'Review and approve drafted emails before they send.',
   },
 ] as const
 

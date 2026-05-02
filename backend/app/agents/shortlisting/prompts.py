@@ -1,4 +1,4 @@
-CTO_PROMPT = """You are acting as the CTO in ConvexHire's candidate screening workflow.
+CTO_PROMPT = """You are acting as the CTO in ConvexHire's candidate evaluation workflow.
 
 You are evaluating one candidate for a software role.
 
@@ -21,7 +21,7 @@ Instructions:
 4. Return a fair score from 0 to 100 and concise structured reasoning.
 """
 
-HR_PROMPT = """You are acting as the HR lead in ConvexHire's candidate screening workflow.
+HR_PROMPT = """You are acting as the HR lead in ConvexHire's candidate evaluation workflow.
 
 You are evaluating one candidate for a software role.
 
@@ -60,7 +60,7 @@ Instructions:
 3. Keep the critique short, concrete, and actionable.
 """
 
-FINAL_PROMPT = """You are producing the final recruiter-facing screening output for ConvexHire.
+FINAL_PROMPT = """You are producing the final recruiter-facing evaluation output for ConvexHire.
 
 JOB TITLE:
 {job_title}

@@ -9,7 +9,7 @@ import { Minus, Plus } from 'lucide-react'
 const FAQS = [
   {
     q: 'What is ConvexHire?',
-    a: 'ConvexHire is an end-to-end AI recruitment platform. Candidates apply smarter with resume gap analysis, AI patching, and live pipeline tracking. Recruiters hire faster with automated screening, smart shortlisting, AI outreach drafting, and Cal.com-integrated interview ops — all in one place.',
+    a: 'ConvexHire is an end-to-end AI recruitment platform. Candidates apply smarter with resume gap analysis, AI patching, and live pipeline tracking. Recruiters hire faster with automated evaluation, smart shortlisting, AI outreach drafting, and Cal.com-integrated interview ops — all in one place.',
   },
   {
     q: 'How does the AI resume gap analysis work?',
@@ -17,19 +17,19 @@ const FAQS = [
   },
   {
     q: 'Can I see my AI score and feedback after applying?',
-    a: 'Yes. Once a recruiter runs AI screening on your application, you can see your score out of 100 and a written explanation of what matched and what was missing. Even rejected candidates get specific, actionable feedback — not a generic response.',
+    a: 'Yes. Once a recruiter runs AI evaluation on your application, you can see your score out of 100 and a written explanation of what matched and what was missing. Even rejected candidates get specific, actionable feedback — not a generic response.',
   },
   {
     q: 'How does interview scheduling work?',
     a: 'When shortlisted, you receive an email with a Cal.com booking link. Pick a slot, confirm your time, and ConvexHire auto-detects the booking via webhook — your application status updates to Interview Booked instantly, with no manual back-and-forth.',
   },
   {
-    q: 'How does AI screening work for recruiters?',
-    a: "Enable auto-screening on a job and every application is scored the moment it arrives. Or run manual batch screening whenever you're ready. Each candidate gets a 0–100 score with a plain-English paragraph explaining what aligned and what was missing. Scores can be edited manually too.",
+    q: 'How does AI evaluation work for recruiters?',
+    a: "Enable auto-evaluation on a job and every application is scored the moment it arrives. Or run manual batch evaluation whenever you're ready. Each candidate gets a 0–100 score with a plain-English paragraph explaining what aligned and what was missing. Scores can be edited manually too.",
   },
   {
     q: "What's included in the free plan?",
-    a: 'Candidates get full access: build a profile, create multiple resumes, run AI gap analysis, apply to jobs, and track applications in real time. Recruiters can register a company, post and manage jobs, and review applications. AI screening and outreach tools require an upgrade.',
+    a: 'Candidates get full access: build a profile, create multiple resumes, run AI gap analysis, apply to jobs, and track applications in real time. Recruiters can register a company, post and manage jobs, and review applications. AI evaluation and outreach tools require an upgrade.',
   },
 ]
 

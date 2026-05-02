@@ -32,7 +32,6 @@ const PIPELINE_STAGES: Array<{
   label: string
 }> = [
   { key: 'applied', label: 'Applied' },
-  { key: 'screening', label: 'Screening' },
   { key: 'shortlisted', label: 'Shortlisted' },
   { key: 'interview_booked', label: 'Interview' },
   { key: 'interview_completed', label: 'Completed' },
@@ -89,9 +88,7 @@ function buildNextStepCopy(status: ApplicationStatus, hint: string | null): stri
   if (hint) return hint
   switch (status) {
     case 'applied':
-      return 'Your application is in the queue. The recruiter will review it soon.'
-    case 'screening':
-      return 'The recruiter is reviewing your resume against the job requirements.'
+      return "Your application has been submitted. You'll see the recruiter's decision once the job has closed."
     case 'shortlisted':
       return "You've been shortlisted. Expect interview details soon."
     case 'interview_booked':

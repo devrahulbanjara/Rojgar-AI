@@ -36,7 +36,6 @@ const RANGE_OPTIONS: Array<{ label: string; value: RangeKey }> = [
 
 const FUNNEL_LABELS: Record<string, string> = {
   applied: 'Applied',
-  screening: 'Screening',
   shortlisted: 'Shortlisted',
   interview: 'Interview',
   offer: 'Offer',

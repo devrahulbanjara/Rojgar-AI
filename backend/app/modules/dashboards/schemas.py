@@ -48,7 +48,6 @@ class StageCountPoint(BaseSchema):
 
 class CandidateAnalyticsStats(BaseSchema):
     total_applications: int
-    screening: int
     shortlisted: int
     interviews: int
     offers: int
@@ -86,7 +85,6 @@ class JobPipelineItem(BaseSchema):
     days_until_expiry: int | None
     total_applications: int
     applied_count: int
-    screening_count: int
     shortlisted_count: int
     rejected_count: int
 
@@ -161,7 +159,6 @@ class RecruiterAdminDashboardResponse(BaseSchema):
 class RecruiterAnalyticsStats(BaseSchema):
     active_jobs: int
     applications: int
-    screening: int
     shortlisted: int
     interview_booked: int
     interview_completed: int

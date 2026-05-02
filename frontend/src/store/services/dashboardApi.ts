@@ -44,7 +44,6 @@ export interface StageCountPoint {
 
 export interface CandidateDashboardAnalyticsStats {
   total_applications: number
-  screening: number
   shortlisted: number
   interviews: number
   offers: number
@@ -82,7 +81,6 @@ export interface RecruiterDashboardJob {
   days_until_expiry: number | null
   total_applications: number
   applied_count: number
-  screening_count: number
   shortlisted_count: number
   rejected_count: number
 }
@@ -157,7 +155,6 @@ export interface RecruiterAdminDashboardData {
 export interface RecruiterDashboardAnalyticsStats {
   active_jobs: number
   applications: number
-  screening: number
   shortlisted: number
   interview_booked: number
   interview_completed: number

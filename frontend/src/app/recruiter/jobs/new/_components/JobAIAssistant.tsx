@@ -115,7 +115,7 @@ export default function JobAIAssistant({
                     {jobs.map((job) => (
                       <option key={job.id} value={job.id}>
                         {job.title}
-                        {job.auto_shortlist ? ' — AI screening on' : ''}
+                        {job.auto_shortlist ? ' — AI evaluation on' : ''}
                       </option>
                     ))}
                   </select>

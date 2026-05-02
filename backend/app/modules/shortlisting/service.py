@@ -190,8 +190,6 @@ async def process_auto_shortlist_for_application(
                 )
                 if not updated:
                     return
-                if application.status == ApplicationStatus.applied:
-                    application.status = ApplicationStatus.screening
                 enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
                 await db.commit()
 
@@ -265,8 +263,6 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
                     application=application,
                 )
                 _apply_review_if_missing(application, result.score, result.feedback)
-                if application.status == ApplicationStatus.applied:
-                    application.status = ApplicationStatus.screening
             reviewed_application_ids = [
                 application.id
                 for application in applications
@@ -410,9 +406,9 @@ async def trigger_shortlisting(
     await create_custom_audit_log(
         db,
         entity_type="job",
-        action_type="screening_triggered",
+        action_type="ai_evaluation_triggered",
         category="pipeline",
-        message=f"AI screening triggered for {job.title}",
+        message=f"AI evaluation triggered for {job.title}",
         entity_id=job_id,
         company_id=company_id,
         metadata={"job_title": job.title, "total_applications": total_applications},
@@ -438,6 +434,77 @@ async def trigger_shortlisting(
     )
 
 
+async def _apply_threshold_finalize(
+    db: AsyncSession, job: Job, threshold: int
+) -> tuple[int, list, list]:
+    """Apply the score threshold to all `applied` rows for a job. Returns (count, shortlisted, rejected)."""
+    shortlist_result = await db.execute(
+        update(Application)
+        .where(
+            and_(
+                Application.job_id == job.id,
+                Application.status == ApplicationStatus.applied,
+                Application.score.is_not(None),
+                Application.feedback.is_not(None),
+                Application.score >= threshold,
+            )
+        )
+        .values(status=ApplicationStatus.shortlisted)
+        .returning(Application.id, Application.user_id)
+    )
+    shortlisted_rows = shortlist_result.fetchall()
+
+    rejected_result = await db.execute(
+        update(Application)
+        .where(
+            and_(
+                Application.job_id == job.id,
+                Application.status == ApplicationStatus.applied,
+                Application.score.is_not(None),
+                Application.feedback.is_not(None),
+                Application.score < threshold,
+            )
+        )
+        .values(status=ApplicationStatus.rejected)
+        .returning(Application.id, Application.user_id)
+    )
+    rejected_rows = rejected_result.fetchall()
+
+    if shortlisted_rows or rejected_rows:
+        enqueue_application_sync_events(
+            db,
+            [row[0] for row in shortlisted_rows] + [row[0] for row in rejected_rows],
+            SyncAction.UPSERT,
+        )
+    return len(shortlisted_rows) + len(rejected_rows), shortlisted_rows, rejected_rows
+
+
+async def auto_finalize_expired_job(db: AsyncSession, job: Job) -> int:
+    """Run threshold finalize for a freshly-expired auto-shortlist job. Returns updated count."""
+    if not job.auto_shortlist or job.final_shortlist_completed:
+        return 0
+    updated, shortlisted_rows, rejected_rows = await _apply_threshold_finalize(
+        db, job, job.shortlist_threshold
+    )
+    job.final_shortlist_completed = True
+    await db.commit()
+
+    changed_user_ids = [
+        str(row[1]) for row in list(shortlisted_rows) + list(rejected_rows)
+    ]
+    if changed_user_ids:
+        await invalidate_candidate_read_caches_for_users(changed_user_ids)
+    await invalidate_company_application_caches(str(job.company_id))
+    await invalidate_company_dashboard_caches(db, str(job.company_id))
+    await redis_service.delete(f"shortlist:summary:{job.id}")
+    logger.info(
+        "Auto-finalize on expiry for job {} updated {} application(s).",
+        job.id,
+        updated,
+    )
+    return updated
+
+
 async def finalize_shortlist(
     db: AsyncSession,
     job_id: uuid.UUID,
@@ -449,8 +516,8 @@ async def finalize_shortlist(
     job = await _get_job_for_company(db, job_id, company_id)
 
     updated_count = 0
-    shortlisted_rows = []
-    rejected_rows = []
+    shortlisted_rows: list = []
+    rejected_rows: list = []
 
     if payload.use_ai_recommendations:
         threshold = (
@@ -458,47 +525,11 @@ async def finalize_shortlist(
             if payload.threshold is not None
             else job.shortlist_threshold
         )
-        shortlist_result = await db.execute(
-            update(Application)
-            .where(
-                and_(
-                    Application.job_id == job_id,
-                    Application.status.in_(
-                        [ApplicationStatus.applied, ApplicationStatus.screening]
-                    ),
-                    Application.score.is_not(None),
-                    Application.feedback.is_not(None),
-                    Application.score >= threshold,
-                )
-            )
-            .values(status=ApplicationStatus.shortlisted)
-            .returning(Application.id, Application.user_id)
-        )
-        shortlisted_rows = shortlist_result.fetchall()
-        updated_count += len(shortlisted_rows)
-
-        rejected_result = await db.execute(
-            update(Application)
-            .where(
-                and_(
-                    Application.job_id == job_id,
-                    Application.status.in_(
-                        [ApplicationStatus.applied, ApplicationStatus.screening]
-                    ),
-                    Application.score.is_not(None),
-                    Application.feedback.is_not(None),
-                    Application.score < threshold,
-                )
-            )
-            .values(status=ApplicationStatus.rejected)
-            .returning(Application.id, Application.user_id)
-        )
-        rejected_rows = rejected_result.fetchall()
-        enqueue_application_sync_events(
-            db,
-            [row[0] for row in shortlisted_rows] + [row[0] for row in rejected_rows],
-            SyncAction.UPSERT,
-        )
+        (
+            updated_count,
+            shortlisted_rows,
+            rejected_rows,
+        ) = await _apply_threshold_finalize(db, job, threshold)
 
     if _job_has_expired(job):
         job.final_shortlist_completed = True

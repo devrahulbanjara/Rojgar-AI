@@ -37,12 +37,12 @@ const BLOCKS = [
       {
         icon: 'bell',
         heading: 'Live Application Pipeline',
-        desc: 'Track every stage in real time: Applied → Screening → Shortlisted → Interview → Offer.',
+        desc: 'Track every stage in real time: Applied → Evaluated → Shortlisted → Interview → Offer.',
       },
       {
         icon: 'chart',
         heading: 'Your AI Score & Feedback Visible',
-        desc: "After screening, see your 0–100 score and the AI's written reasoning — not a generic rejection.",
+        desc: "After evaluation, see your 0–100 score and the AI's written reasoning — not a generic rejection.",
       },
     ],
     reverse: true,
@@ -57,7 +57,7 @@ const BLOCKS = [
     features: [
       {
         icon: 'brain',
-        heading: 'AI Screening + Smart Shortlisting',
+        heading: 'AI Evaluation + Smart Shortlisting',
         desc: 'Auto-score every applicant on arrival. Set a threshold and shortlist your entire cohort in one action.',
       },
       {

@@ -1,6 +1,6 @@
 # ConvexHire Repository Guidelines
 
-ConvexHire is an AI-assisted hiring platform that runs the full recruitment funnel for both sides of the market. Recruiters can register companies, manage team access, create jobs manually or with AI, review applications, run AI screening, shortlist candidates manually or with AI, manage outreach, interviews, interview evaluations, and final decisions, and use a persistent recruiter chat assistant connected to live platform data for candidate search, job lookup, job edits with preview-and-confirm, salary research, and session history. Candidates can onboard, build profiles, import or create resumes, discover and filter jobs, preview job details, run resume gap analysis during apply flow, choose how to act on those gaps before submitting, apply with selected resumes, and track application progress, AI feedback, interviews, and outcomes from application through offer.
+ConvexHire is an AI-assisted hiring platform that runs the full recruitment funnel for both sides of the market. Recruiters can register companies, manage team access, create jobs manually or with AI, review applications, run AI evaluation, shortlist candidates manually or with AI, manage outreach, interviews, interview evaluations, and final decisions, and use a persistent recruiter chat assistant connected to live platform data for candidate search, job lookup, job edits with preview-and-confirm, salary research, and session history. Candidates can onboard, build profiles, import or create resumes, discover and filter jobs, preview job details, run resume gap analysis during apply flow, choose how to act on those gaps before submitting, apply with selected resumes, and track application progress, AI feedback, interviews, and outcomes from application through offer.
 
 Early-stage startup. Ship clean, complete, non-overengineered features.
 
@@ -128,7 +128,7 @@ All button styles live in `frontend/src/styles/_buttons.scss`. Do NOT define but
 Status rules must hold:
 
 - Job: `draft -> active -> expired`
-- Application: `applied -> screening -> shortlisted -> rejected -> interview_booked -> interview_completed -> offer -> offer_accepted | offer_declined`
+- Application: `applied -> shortlisted -> rejected -> interview_booked -> interview_completed -> offer -> offer_accepted | offer_declined`
 - `offer_accepted` and `offer_declined` are terminal states set by the candidate via `POST /applications/{id}/offer/respond`
 - `rejected` is also a terminal state reachable from any active step
 
@@ -141,7 +141,7 @@ Never break these constraints:
 - Important AI actions require human confirmation.
 - Emails require explicit approval.
 
-## Before Mutating Jobs, Applications, Screening, or Shortlisting
+## Before Mutating Jobs, Applications, Evaluation, or Shortlisting
 
 Think through all affected layers:
 

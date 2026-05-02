@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
-import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import {
@@ -11,10 +10,19 @@ import {
   useGetMyCompanyCandidatesQuery,
 } from '@/store/services/applicationsApi'
 import {
+  type EmailDraftRecord,
+  useApproveDraftMutation,
+  useDeleteAllDraftsMutation,
+  useGenerateDraftForApplicationMutation,
+  useGetDraftsQuery,
+  usePrepareDraftsMutation,
+  useSendAllDraftsMutation,
+} from '@/store/services/outreachApi'
+import {
   useFinalizeShortlistMutation,
   useGetShortlistSummaryQuery,
 } from '@/store/services/shortlistingApi'
-import { ClipboardCheck, Mail, X } from 'lucide-react'
+import { RefreshCw, Send, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
@@ -27,7 +35,6 @@ import styles from './JobPipelineWorkspace.module.scss'
 
 const STAGES: Array<{ id: PipelineStage; label: string; statuses: ApplicationStatus[] }> = [
   { id: 'applied', label: 'Applied', statuses: ['applied'] },
-  { id: 'screening', label: 'Screening', statuses: ['screening'] },
   { id: 'shortlist', label: 'Shortlist', statuses: ['shortlisted'] },
   {
     id: 'interview',
@@ -38,7 +45,7 @@ const STAGES: Array<{ id: PipelineStage; label: string; statuses: ApplicationSta
   { id: 'rejected', label: 'Rejected', statuses: ['rejected'] },
 ]
 
-type PipelineStage = 'applied' | 'screening' | 'shortlist' | 'interview' | 'offer' | 'rejected'
+type PipelineStage = 'applied' | 'shortlist' | 'interview' | 'offer' | 'rejected'
 
 const STAGE_IDS = STAGES.map((stage) => stage.id) as readonly string[]
 
@@ -152,7 +159,6 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
   const stageCounts = useMemo(() => {
     const counts: Record<PipelineStage, number> = {
       applied: 0,
-      screening: 0,
       shortlist: 0,
       interview: 0,
       offer: 0,
@@ -174,16 +180,14 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     [jobApplications, visibleStage],
   )
 
-  // ── AI screening summary + bulk-approve wiring ──────────────────────────
-  const isPreShortlistStage = activeStage === 'applied' || activeStage === 'screening'
-  const { data: summaryResp } = useGetShortlistSummaryQuery(jobId, { skip: !isPreShortlistStage })
+  // ── AI evaluation summary + bulk-approve wiring ──────────────────────────
+  const isAppliedStage = activeStage === 'applied'
+  const { data: summaryResp } = useGetShortlistSummaryQuery(jobId, { skip: !isAppliedStage })
   const summary = summaryResp?.data
   const threshold = summary?.shortlist_threshold ?? null
 
   const screeningStats = useMemo(() => {
-    const pending = jobApplications.filter(
-      (row) => row.status === 'applied' || row.status === 'screening',
-    )
+    const pending = jobApplications.filter((row) => row.status === 'applied')
     const scored = pending.filter((row) => row.score !== null && row.feedback !== null)
     const above =
       threshold === null ? 0 : scored.filter((row) => (row.score ?? 0) >= threshold).length
@@ -204,22 +208,75 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
   const currentKey = `${jobId}:${activeStage}`
   const showOutreachCta = approvedKey === currentKey
 
+  // ── Outreach (post-shortlist) summary + bulk actions ─────────────────────
+  const isPostShortlistStage = activeStage === 'shortlist' || activeStage === 'rejected'
+  const { data: draftsResp, refetch: refetchDrafts } = useGetDraftsQuery(jobId, {
+    skip: !isPostShortlistStage,
+  })
+  const drafts = useMemo(() => draftsResp?.data ?? [], [draftsResp?.data])
+  const draftByApp = useMemo(
+    () => new Map(drafts.map((draft) => [draft.application_id, draft])),
+    [drafts],
+  )
+
+  const outreachStats = useMemo(() => {
+    let drafted = 0
+    let approved = 0
+    let sent = 0
+    let discarded = 0
+    let missing = 0
+    visibleApplications.forEach((row) => {
+      const draft = draftByApp.get(row.application_id)
+      if (!draft) {
+        missing += 1
+        return
+      }
+      if (draft.is_sent) sent += 1
+      else if (draft.is_discarded) discarded += 1
+      else if (draft.is_approved) approved += 1
+      else drafted += 1
+    })
+    return {
+      cohort: visibleApplications.length,
+      drafted,
+      approved,
+      sent,
+      discarded,
+      missing,
+    }
+  }, [visibleApplications, draftByApp])
+
+  const sendable = outreachStats.drafted + outreachStats.approved
+  const allOutreachComplete =
+    outreachStats.cohort > 0 && outreachStats.sent === outreachStats.cohort
+
+  type OutreachConfirm = 'trustAI' | 'sendAll' | 'discardAll' | null
+  const [outreachConfirm, setOutreachConfirm] = useState<OutreachConfirm>(null)
+  const [rowActionId, setRowActionId] = useState<string | null>(null)
+  const [prepareDrafts, { isLoading: isPreparing }] = usePrepareDraftsMutation()
+  const [sendAllDrafts, { isLoading: isSendingAll }] = useSendAllDraftsMutation()
+  const [deleteAllDrafts, { isLoading: isDeletingAll }] = useDeleteAllDraftsMutation()
+  const [approveDraft] = useApproveDraftMutation()
+  const [generateDraftForApplication] = useGenerateDraftForApplicationMutation()
+
   useEffect(() => {
-    if (!isConfirmOpen) return
+    if (!isConfirmOpen && outreachConfirm === null) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     function handleKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsConfirmOpen(false)
+      if (event.key !== 'Escape') return
+      setIsConfirmOpen(false)
+      setOutreachConfirm(null)
     }
     window.addEventListener('keydown', handleKey)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKey)
     }
-  }, [isConfirmOpen])
+  }, [isConfirmOpen, outreachConfirm])
 
   const canApprove =
-    isPreShortlistStage &&
+    isAppliedStage &&
     threshold !== null &&
     screeningStats.scored > 0 &&
     !summary?.final_shortlist_completed
@@ -243,6 +300,85 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     }
   }
 
+  async function handleGenerateDrafts(directSend: boolean) {
+    setOutreachConfirm(null)
+    try {
+      await prepareDrafts({ jobId, direct_send: directSend }).unwrap()
+      toast.success(
+        directSend
+          ? 'Drafts generated and queued to send.'
+          : 'Drafts generated. Review before sending.',
+      )
+      await Promise.all([refetch(), refetchDrafts()])
+    } catch {
+      toast.error(directSend ? 'Could not generate and send drafts.' : 'Could not generate drafts.')
+    }
+  }
+
+  async function handleSendAll() {
+    setOutreachConfirm(null)
+    try {
+      await sendAllDrafts(jobId).unwrap()
+      toast.success('Emails queued for sending.')
+      await Promise.all([refetch(), refetchDrafts()])
+    } catch {
+      toast.error('Could not send emails.')
+    }
+  }
+
+  async function handleDiscardAll() {
+    setOutreachConfirm(null)
+    try {
+      await deleteAllDrafts(jobId).unwrap()
+      toast.success('Drafts discarded.')
+      await Promise.all([refetch(), refetchDrafts()])
+    } catch {
+      toast.error('Could not discard drafts.')
+    }
+  }
+
+  async function handleRowSend(draft: EmailDraftRecord) {
+    setRowActionId(draft.application_id)
+    try {
+      await approveDraft({ draftId: draft.draft_id, approved: true }).unwrap()
+      toast.success('Email sent.')
+      await Promise.all([refetch(), refetchDrafts()])
+    } catch {
+      toast.error('Could not send this email.')
+    } finally {
+      setRowActionId(null)
+    }
+  }
+
+  async function handleRowRegenerate(applicationId: string) {
+    setRowActionId(applicationId)
+    try {
+      await generateDraftForApplication(applicationId).unwrap()
+      toast.success('Draft generated.')
+      await Promise.all([refetch(), refetchDrafts()])
+    } catch {
+      toast.error('Could not generate a draft for this candidate.')
+    } finally {
+      setRowActionId(null)
+    }
+  }
+
+  function getOutreachPill(draft: EmailDraftRecord | undefined) {
+    if (!draft) {
+      return { label: 'Pending', className: styles.outreachPillMissing }
+    }
+    if (draft.is_sent) {
+      return { label: 'Sent', className: styles.outreachPillSent }
+    }
+    if (draft.is_discarded) {
+      return { label: 'Discarded', className: styles.outreachPillDiscarded }
+    }
+    if (draft.is_approved) {
+      return { label: 'Approved', className: styles.outreachPillApproved }
+    }
+    return { label: 'Drafted', className: styles.outreachPillDrafted }
+  }
+
   return (
     <div>
       <div className={styles.tabBar} role="tablist" aria-label="Pipeline stages">
@@ -264,41 +400,41 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         })}
       </div>
 
-      {isPreShortlistStage && threshold !== null && screeningStats.pending > 0 ? (
+      {isAppliedStage && threshold !== null && screeningStats.pending > 0 ? (
         <div
-          className={styles.screeningBar}
+          className={styles.evaluationBar}
           title={
             showOutreachCta
               ? 'Statuses updated. Generate outreach emails next.'
               : `Score ≥ ${threshold} → Shortlisted · Score < ${threshold} → Rejected · Manual moves left alone`
           }
         >
-          <span className={styles.screeningBarEyebrow}>AI screening</span>
+          <span className={styles.evaluationBarEyebrow}>AI evaluation</span>
           {showOutreachCta ? (
-            <span className={styles.screeningBarText}>Recommendations applied</span>
+            <span className={styles.evaluationBarText}>Recommendations applied</span>
           ) : (
             <>
-              <span className={styles.screeningBarText}>
+              <span className={styles.evaluationBarText}>
                 <strong>{screeningStats.scored}</strong> of {screeningStats.pending} ready
               </span>
-              <span className={styles.screeningBarSep} aria-hidden="true">
+              <span className={styles.evaluationBarSep} aria-hidden="true">
                 ·
               </span>
               <span
-                className={`${styles.screeningBarChip} ${styles.screeningBarChipGood}`}
+                className={`${styles.evaluationBarChip} ${styles.evaluationBarChipGood}`}
                 title={`Ready to shortlist (≥ ${threshold})`}
               >
                 ✓ {screeningStats.above}
               </span>
               <span
-                className={`${styles.screeningBarChip} ${styles.screeningBarChipBad}`}
+                className={`${styles.evaluationBarChip} ${styles.evaluationBarChipBad}`}
                 title={`Ready to reject (< ${threshold})`}
               >
                 ✗ {screeningStats.below}
               </span>
               {screeningStats.awaiting > 0 ? (
                 <span
-                  className={`${styles.screeningBarChip} ${styles.screeningBarChipMuted}`}
+                  className={`${styles.evaluationBarChip} ${styles.evaluationBarChipMuted}`}
                   title="Still being scored"
                 >
                   … {screeningStats.awaiting}
@@ -306,11 +442,15 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
               ) : null}
             </>
           )}
-          <span className={styles.screeningBarSpacer} />
+          <span className={styles.evaluationBarSpacer} />
           {showOutreachCta ? (
-            <Link href={`/recruiter/outreach?job=${jobId}`} className="btn btn--primary btn--sm">
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              onClick={() => setStage('shortlist')}
+            >
               Draft outreach
-            </Link>
+            </button>
           ) : (
             <button
               type="button"
@@ -327,6 +467,121 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
               )}
             </button>
           )}
+        </div>
+      ) : null}
+
+      {isPostShortlistStage && outreachStats.cohort > 0 ? (
+        <div
+          className={styles.evaluationBar}
+          title={
+            allOutreachComplete
+              ? 'All emails sent for this cohort.'
+              : activeStage === 'shortlist'
+                ? 'Shortlist emails include the booking link from your company settings.'
+                : 'Rejection emails do not include a booking link.'
+          }
+        >
+          <span className={styles.evaluationBarEyebrow}>Outreach</span>
+          {allOutreachComplete ? (
+            <span className={styles.evaluationBarText}>
+              Complete · <strong>{outreachStats.sent}</strong> sent
+            </span>
+          ) : (
+            <>
+              <span className={styles.evaluationBarText}>
+                <strong>{outreachStats.cohort - outreachStats.missing}</strong> of{' '}
+                {outreachStats.cohort} drafted
+              </span>
+              {outreachStats.sent > 0 ||
+              outreachStats.drafted + outreachStats.approved > 0 ||
+              outreachStats.discarded > 0 ||
+              outreachStats.missing > 0 ? (
+                <span className={styles.evaluationBarSep} aria-hidden="true">
+                  ·
+                </span>
+              ) : null}
+              {outreachStats.sent > 0 ? (
+                <span
+                  className={`${styles.evaluationBarChip} ${styles.evaluationBarChipGood}`}
+                  title="Already sent"
+                >
+                  📧 {outreachStats.sent}
+                </span>
+              ) : null}
+              {outreachStats.drafted + outreachStats.approved > 0 ? (
+                <span
+                  className={`${styles.evaluationBarChip} ${styles.evaluationBarChipMuted}`}
+                  title="Drafted, awaiting send"
+                >
+                  ✏ {outreachStats.drafted + outreachStats.approved}
+                </span>
+              ) : null}
+              {outreachStats.missing > 0 ? (
+                <span
+                  className={`${styles.evaluationBarChip} ${styles.evaluationBarChipMuted}`}
+                  title="No draft yet"
+                >
+                  … {outreachStats.missing}
+                </span>
+              ) : null}
+              {outreachStats.discarded > 0 ? (
+                <span
+                  className={`${styles.evaluationBarChip} ${styles.evaluationBarChipBad}`}
+                  title="Discarded"
+                >
+                  ✗ {outreachStats.discarded}
+                </span>
+              ) : null}
+            </>
+          )}
+          <span className={styles.evaluationBarSpacer} />
+          {!allOutreachComplete ? (
+            <>
+              {outreachStats.missing > 0 ? (
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--sm"
+                  disabled={isPreparing}
+                  onClick={() => setOutreachConfirm('trustAI')}
+                >
+                  Generate &amp; send
+                </button>
+              ) : null}
+              {sendable > 0 ? (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  disabled={isDeletingAll}
+                  onClick={() => setOutreachConfirm('discardAll')}
+                >
+                  Discard
+                </button>
+              ) : null}
+              {outreachStats.missing > 0 ? (
+                <button
+                  type="button"
+                  className="btn btn--primary btn--sm"
+                  disabled={isPreparing}
+                  onClick={() => void handleGenerateDrafts(false)}
+                >
+                  {isPreparing ? (
+                    <ButtonSpinner label="Generating..." />
+                  ) : (
+                    `Generate ${outreachStats.missing}`
+                  )}
+                </button>
+              ) : sendable > 0 ? (
+                <button
+                  type="button"
+                  className="btn btn--primary btn--sm"
+                  disabled={isSendingAll}
+                  onClick={() => setOutreachConfirm('sendAll')}
+                >
+                  {isSendingAll ? <ButtonSpinner label="Sending..." /> : `Send ${sendable}`}
+                </button>
+              ) : null}
+            </>
+          ) : null}
         </div>
       ) : null}
 
@@ -349,18 +604,20 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         <div className={styles.list}>
           {visibleApplications.map((row) => {
             const defaultTab: DrawerTab =
-              activeStage === 'screening'
-                ? 'evaluation'
-                : activeStage === 'interview'
-                  ? 'interview'
-                  : activeStage === 'shortlist' || activeStage === 'rejected'
-                    ? 'outreach'
-                    : 'profile'
+              activeStage === 'interview'
+                ? 'interview'
+                : activeStage === 'shortlist' || activeStage === 'rejected'
+                  ? 'outreach'
+                  : 'profile'
+            const draft = isPostShortlistStage ? draftByApp.get(row.application_id) : undefined
+            const pill = isPostShortlistStage ? getOutreachPill(draft) : null
+            const canSend = Boolean(draft && !draft.is_sent && !draft.is_discarded)
+            const rowBusy = rowActionId === row.application_id
             return (
               <button
                 type="button"
                 key={row.application_id}
-                className={styles.row}
+                className={`${styles.row} ${isPostShortlistStage ? styles.rowOutreach : ''}`}
                 onClick={() => openDrawer(row.application_id, defaultTab)}
               >
                 <Avatar
@@ -376,25 +633,71 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                   <span className={styles.email}>{row.applicant_email ?? '—'}</span>
                 </span>
 
-                <span className={`${styles.score} ${scoreClass(row.score)}`}>
-                  {row.score === null ? 'No score' : row.score}
+                {pill ? (
+                  <span className={`${styles.outreachPill} ${pill.className}`}>{pill.label}</span>
+                ) : (
+                  <span className={`${styles.score} ${scoreClass(row.score)}`}>
+                    {row.score === null ? 'No score' : row.score}
+                  </span>
+                )}
+
+                <span className={styles.feedback}>
+                  {row.feedback ??
+                    (isPostShortlistStage ? 'Manual decision — no AI feedback' : 'No review yet.')}
                 </span>
 
-                <span className={styles.feedback}>{row.feedback ?? 'No review yet.'}</span>
-
-                <span className={styles.applied}>
-                  {activeStage === 'screening' ? (
-                    <>
-                      <ClipboardCheck size={12} aria-hidden="true" /> Score
-                    </>
-                  ) : activeStage === 'shortlist' || activeStage === 'rejected' ? (
-                    <>
-                      <Mail size={12} aria-hidden="true" /> Email
-                    </>
-                  ) : (
-                    `Applied ${formatDate(row.created_at)}`
-                  )}
-                </span>
+                {isPostShortlistStage ? (
+                  <span className={styles.outreachRowActions}>
+                    {canSend && draft ? (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className="btn btn--icon btn--sm"
+                        aria-label="Send this email"
+                        aria-disabled={rowBusy}
+                        title="Send"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          if (rowBusy) return
+                          void handleRowSend(draft)
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key !== 'Enter' && event.key !== ' ') return
+                          event.preventDefault()
+                          event.stopPropagation()
+                          if (rowBusy) return
+                          void handleRowSend(draft)
+                        }}
+                      >
+                        <Send size={14} aria-hidden="true" />
+                      </span>
+                    ) : null}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="btn btn--icon btn--sm"
+                      aria-label={draft ? 'Regenerate draft' : 'Generate draft'}
+                      aria-disabled={rowBusy}
+                      title={draft ? 'Regenerate' : 'Generate draft'}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        if (rowBusy) return
+                        void handleRowRegenerate(row.application_id)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return
+                        event.preventDefault()
+                        event.stopPropagation()
+                        if (rowBusy) return
+                        void handleRowRegenerate(row.application_id)
+                      }}
+                    >
+                      <RefreshCw size={14} aria-hidden="true" />
+                    </span>
+                  </span>
+                ) : (
+                  <span className={styles.applied}>{`Applied ${formatDate(row.created_at)}`}</span>
+                )}
               </button>
             )
           })}
@@ -438,8 +741,8 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
             </div>
             <div className="modal__body">
               <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-                Only candidates still in <strong>Applied</strong> or <strong>Screening</strong> will
-                be touched. Any status you already changed manually stays as-is.
+                Only candidates still in <strong>Applied</strong> will be touched. Any status you
+                already changed manually stays as-is.
               </p>
               <ul className={styles.confirmList}>
                 <li className={styles.confirmRow}>
@@ -497,6 +800,102 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                   }`
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {outreachConfirm !== null ? (
+        <div
+          className="modal-backdrop modal-backdrop--animated"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setOutreachConfirm(null)
+          }}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="outreach-confirm-title"
+          >
+            <div className="modal__header">
+              <div className="modal__title" id="outreach-confirm-title">
+                {outreachConfirm === 'trustAI'
+                  ? 'Generate and send without review?'
+                  : outreachConfirm === 'sendAll'
+                    ? `Send ${sendable} email${sendable === 1 ? '' : 's'}?`
+                    : 'Discard all unsent drafts?'}
+              </div>
+              <button
+                type="button"
+                className="btn btn--icon btn--sm"
+                aria-label="Close"
+                onClick={() => setOutreachConfirm(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal__body">
+              {outreachConfirm === 'trustAI' ? (
+                <p className={styles.confirmCopy}>
+                  Drafts will be generated for{' '}
+                  <strong>
+                    {outreachStats.missing} candidate
+                    {outreachStats.missing === 1 ? '' : 's'}
+                  </strong>{' '}
+                  and emailed immediately. AI feedback is used when present; otherwise a generic
+                  template is used. This cannot be undone.
+                </p>
+              ) : outreachConfirm === 'sendAll' ? (
+                <p className={styles.confirmCopy}>
+                  Every drafted email for this job will be queued for sending. Discarded drafts are
+                  skipped.
+                </p>
+              ) : (
+                <p className={styles.confirmCopy}>
+                  This removes every draft that has not been sent yet. You can generate them again
+                  later.
+                </p>
+              )}
+            </div>
+            <div className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                disabled={isPreparing || isSendingAll || isDeletingAll}
+                onClick={() => setOutreachConfirm(null)}
+              >
+                Cancel
+              </button>
+              {outreachConfirm === 'trustAI' ? (
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={isPreparing}
+                  onClick={() => void handleGenerateDrafts(true)}
+                >
+                  {isPreparing ? <ButtonSpinner label="Sending..." /> : 'Generate & send'}
+                </button>
+              ) : outreachConfirm === 'sendAll' ? (
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={isSendingAll}
+                  onClick={() => void handleSendAll()}
+                >
+                  {isSendingAll ? <ButtonSpinner label="Sending..." /> : `Send ${sendable}`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn--danger"
+                  disabled={isDeletingAll}
+                  onClick={() => void handleDiscardAll()}
+                >
+                  {isDeletingAll ? <ButtonSpinner label="Discarding..." /> : 'Discard all'}
+                </button>
+              )}
             </div>
           </div>
         </div>

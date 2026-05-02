@@ -97,6 +97,10 @@ async def expire_due_jobs(db: AsyncSession) -> int:
     This is date-based instead of timestamp-based so that a job with an
     expires_at date of "today" is expired on that day by the scheduled task.
     """
+    from app.core.cache import invalidate_candidate_read_caches_for_users
+    from app.modules.applications.models import Application
+    from app.modules.shortlisting.service import auto_finalize_expired_job
+
     today = _today_utc()
     result = await db.execute(
         select(Job).where(
@@ -126,6 +130,25 @@ async def expire_due_jobs(db: AsyncSession) -> int:
     for company_id in company_ids:
         await redis_service.delete(f"jobs:company:{company_id}")
         await invalidate_company_dashboard_caches(db, str(company_id))
+
+    # Auto-finalize threshold-classified outcomes for jobs that opted into AI shortlisting.
+    for job in jobs:
+        await auto_finalize_expired_job(db, job)
+
+    # Lift the candidate-side decision mask: invalidate every applicant's cached
+    # application list for jobs that just expired, so their next page-load reveals
+    # the outcome immediately instead of waiting up to 5 minutes for cache TTL.
+    job_ids = [job.id for job in jobs]
+    applicant_rows = (
+        await db.execute(
+            select(Application.user_id)
+            .where(Application.job_id.in_(job_ids))
+            .distinct()
+        )
+    ).all()
+    applicant_user_ids = [str(row[0]) for row in applicant_rows]
+    if applicant_user_ids:
+        await invalidate_candidate_read_caches_for_users(applicant_user_ids)
 
     for event_id in event_ids:
         await process_sync_event(event_id)

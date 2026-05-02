@@ -19,7 +19,7 @@ ConvexHire is an AI-assisted recruitment platform that connects companies with c
    - Creating Jobs
    - Applications Page
    - Candidates Page
-   - Screening
+   - Evaluation
    - Shortlisting
    - Outreach & Emails
    - Interviews
@@ -38,7 +38,7 @@ There are three types of users on the platform:
 
 **Candidates** — job seekers who build a profile, create resumes, browse jobs, apply, and track their application pipeline from submission to offer.
 
-**Recruiters** — hiring team members who create jobs, review applicants, run AI screening, manage interviews, and send outreach emails. They belong to a company and must be approved by an admin before gaining access.
+**Recruiters** — hiring team members who create jobs, review applicants, run AI evaluation, manage interviews, and send outreach emails. They belong to a company and must be approved by an admin before gaining access.
 
 **Recruiter Admins** — company founders or leads who have all recruiter capabilities plus the ability to register the company, invite and approve team members, and manage company settings.
 
@@ -124,7 +124,7 @@ Clicking Apply opens a structured multi-step application flow:
 
 **Step 4 — Share profile.** The candidate confirms they are happy for their profile and selected resume to be shared with the company.
 
-**Step 5 — Submit.** The application is created. If the job has auto-screening enabled, AI scoring begins in the background immediately.
+**Step 5 — Submit.** The application is created. If the job has auto-evaluation enabled, AI scoring begins in the background immediately.
 
 A candidate cannot apply to the same job twice, and expired jobs no longer accept new applications.
 
@@ -137,19 +137,18 @@ The **Applications page** shows each application in detail:
 - Job title, company, and the date applied
 - A visual progress bar showing where they are in the pipeline
 - Current status label
-- A side detail panel showing: the full application timeline, the AI score out of 100 and written feedback (both become visible after the screening phase), and the latest status update message
+- A side detail panel showing: the full application timeline, the AI score out of 100 and written feedback (both become visible after the evaluation phase), and the latest status update message
 
-Status updates are visible in real time. After screening, candidates can see their score and the written AI feedback explaining what matched well and what was missing — so even rejected candidates understand the reasoning behind the decision.
+Status updates are visible in real time. After evaluation, candidates can see their score and the written AI feedback explaining what matched well and what was missing — so even rejected candidates understand the reasoning behind the decision.
 
 The full pipeline a candidate moves through:
 
 1. **Applied** — submitted successfully, under consideration
-2. **Screening** — the AI has started evaluating the application
-3. **Shortlisted** — selected to move forward to interview
-4. **Interview Booked** — an interview slot has been confirmed
-5. **Interview Completed** — the interview has taken place
-6. **Offer** — a job offer has been extended
-7. **Rejected** — the application was unsuccessful (can happen after screening or after interview)
+2. **Shortlisted** — selected to move forward to interview
+3. **Interview Booked** — an interview slot has been confirmed
+4. **Interview Completed** — the interview has taken place
+5. **Offer** — a job offer has been extended
+6. **Rejected** — the application was unsuccessful (can happen after evaluation or after interview)
 
 ---
 
@@ -185,16 +184,16 @@ The Candidates page shows one row per person, not per application. If a candidat
 
 Clicking into a candidate shows each of their applications. For each one, the recruiter can see the job, when they applied, their score, the current status with a dropdown to update it directly, and a link to view their full submitted resume on the platform.
 
-### Screening
+### Evaluation
 
-The Screening page focuses on one job at a time. The recruiter selects a job and sees all candidates ranked by their AI score, with their written feedback and current status.
+The Evaluation page focuses on one job at a time. The recruiter selects a job and sees all candidates ranked by their AI score, with their written feedback and current status.
 
-**How AI screening works:** When triggered, the AI reads the candidate's attached resume and compares it against the job's requirements and preferred qualifications. It produces a score from 0 to 100 and writes a plain-English paragraph explaining what aligned well, what was missing, and any concerns. Each candidate is scored independently.
+**How AI evaluation works:** When triggered, the AI reads the candidate's attached resume and compares it against the job's requirements and preferred qualifications. It produces a score from 0 to 100 and writes a plain-English paragraph explaining what aligned well, what was missing, and any concerns. Each candidate is scored independently.
 
-Screening can run in two ways:
+Evaluation can run in two ways:
 
-- **Automatically per application** — if auto-screening is enabled on the job, each new application is scored as soon as it comes in, with no manual action needed.
-- **Manually in batch** — the recruiter clicks "Run AI screening" to score all currently unscored applications at once.
+- **Automatically per application** — if auto-evaluation is enabled on the job, each new application is scored as soon as it comes in, with no manual action needed.
+- **Manually in batch** — the recruiter clicks "Run AI evaluation" to score all currently unscored applications at once.
 
 Recruiters can also **manually edit** any candidate's score or feedback — useful when the recruiter has additional context the AI does not.
 
@@ -212,7 +211,7 @@ After reviewing screened applications, the recruiter decides who moves forward. 
 
 **AI-assisted finalize** — the recruiter clicks "Finalize". Candidates at or above the threshold score are automatically shortlisted; everyone below is rejected. The threshold can be adjusted before running. The entire cohort is processed in one action.
 
-Once a candidate is shortlisted, an outreach email draft is created inviting them to book an interview. Once rejected, a draft rejection email is created including their personalised AI feedback. Neither email is sent until the recruiter reviews and approves it.
+Once a candidate is shortlisted, an outreach email draft is created inviting them to book an interview. Once rejected, a draft rejection email is created including their personalized AI feedback. Neither email is sent until the recruiter reviews and approves it.
 
 ### Outreach & Emails
 
@@ -231,7 +230,7 @@ The two email types:
 
 **Shortlist email** — warm and encouraging. Tells the candidate they have been selected and includes a link to book an interview slot via Cal.com. Candidates are told to book using the same name and email they registered with on ConvexHire — this is how the platform automatically matches the booking back to their specific application.
 
-**Rejection email** — respectful and kind. Includes the AI-generated screening feedback so the candidate understands the specific reasons they were not selected, rather than receiving a generic rejection.
+**Rejection email** — respectful and kind. Includes the AI-generated evaluation feedback so the candidate understands the specific reasons they were not selected, rather than receiving a generic rejection.
 
 ### Interviews
 
@@ -308,7 +307,7 @@ Membership has two roles — **recruiter** (standard hiring access) and **admin*
 | View applications page (all jobs)           | —         | ✓         | ✓     |
 | View candidates page (all people)           | —         | ✓         | ✓     |
 | View candidate resumes on platform          | —         | ✓         | ✓     |
-| Run AI screening                            | —         | ✓         | ✓     |
+| Run AI evaluation                           | —         | ✓         | ✓     |
 | Edit candidate scores & feedback manually   | —         | ✓         | ✓     |
 | Shortlist / reject candidates               | —         | ✓         | ✓     |
 | Generate, review & approve outreach emails  | —         | ✓         | ✓     |
@@ -337,13 +336,11 @@ Candidate browses jobs
          ↓
        Applied
          ↓
-   AI Screening ←── auto on apply OR manually triggered by recruiter
+   AI Evaluation ←── auto on apply OR manually triggered by recruiter
          ↓
-      Screening
+   Recruiter reviews AI scores & written feedback on Evaluation page
          ↓
-   Recruiter reviews AI scores & written feedback on Screening page
-         ↓
-   Shortlisted ──────────────────────────── Rejected (post-screening)
+   Shortlisted ──────────────────────────── Rejected (post-evaluation)
          ↓                                           ↓
    Outreach: shortlist email drafted        Outreach: rejection email with AI feedback
          ↓                                           ↓
