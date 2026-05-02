@@ -1,4 +1,3 @@
-import json
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
@@ -487,12 +486,6 @@ async def search_jobs(
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     """List all jobs belonging to the user's company."""
     company_id = await _get_user_company_id(db, user)
-    cache_key = f"jobs:company:{company_id}"
-
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        data = json.loads(cached_data)
-        return [JobListItem.model_validate(item) for item in data]
 
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
@@ -507,12 +500,6 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
         _job_list_item_from_row(job, applications_count)
         for job, applications_count in rows
     ]
-
-    await redis_service.set(
-        cache_key,
-        json.dumps([item.model_dump(mode="json") for item in response]),
-        ttl_seconds=3600,
-    )
 
     return response
 

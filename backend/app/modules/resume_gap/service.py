@@ -286,7 +286,7 @@ async def auto_patch_resume(
         )
         await redis_service.set(
             _pending_patch_key(user.id, payload.resume_id, payload.job_id),
-            pending_update.model_dump_json(),
+            pending_update.model_dump_json(exclude_unset=True),
             ttl_seconds=PENDING_PATCH_TTL_SECONDS,
         )
 

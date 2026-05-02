@@ -1,11 +1,12 @@
 import requests
 import os
 
-USERNAME = "devrahulbanjara" 
+USERNAME = "devrahulbanjara"
 SPACE_NAME = "nepali-whisper-small"
 FILE_PATH = "/content/Recording (6).mp3"
 
 API_URL = f"https://{USERNAME.lower()}-{SPACE_NAME.lower().replace('_', '-')}.hf.space/transcribe"
+
 
 def test_inference():
     if not os.path.exists(FILE_PATH):
@@ -27,11 +28,14 @@ def test_inference():
             print(result.get("text"))
             print("-" * 30)
         elif response.status_code == 503:
-            print("\nAPI is sleeping. Please wait 30 seconds for it to wake up and try again.")
+            print(
+                "\nAPI is sleeping. Please wait 30 seconds for it to wake up and try again."
+            )
         else:
             print(f"\nAPI Error ({response.status_code}): {response.text}")
 
     except Exception as e:
         print(f"\nConnection Error: {e}")
+
 
 test_inference()

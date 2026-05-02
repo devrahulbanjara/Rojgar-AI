@@ -4,7 +4,9 @@ import uuid
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
+    make_application,
     make_candidate,
+    make_candidate_with_resume,
     make_recruiter_admin,
 )
 
@@ -70,6 +72,22 @@ class TestJobRead:
         assert resp.status_code == 200
         jobs = resp.json()["data"]
         assert len(jobs) >= 1
+
+    async def test_company_jobs_include_real_applications_count(self, client, db):
+        admin, company = await make_recruiter_admin(db)
+        job = await make_active_job(db, company.id)
+        candidate, resume = await make_candidate_with_resume(
+            db, email="jobs-count-candidate@test.com"
+        )
+        await make_application(db, candidate.id, job.id, resume.id)
+        await db.commit()
+
+        resp = await client.get("/jobs/company/me", headers=auth_headers(admin.id))
+        assert resp.status_code == 200
+        jobs = resp.json()["data"]
+        job_payload = next((item for item in jobs if item["id"] == str(job.id)), None)
+        assert job_payload is not None
+        assert job_payload["applications_count"] == 1
 
 
 class TestJobUpdate:
