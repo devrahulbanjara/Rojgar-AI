@@ -24,6 +24,7 @@ export interface RecruiterJobFormState {
   expires_at: string
   auto_shortlist: boolean
   shortlist_threshold: string
+  required_years_of_experience: string
   overview: string
   responsibilities: string[]
   requirements: string[]
@@ -42,6 +43,7 @@ export const EMPTY_JOB_FORM: RecruiterJobFormState = {
   expires_at: '',
   auto_shortlist: false,
   shortlist_threshold: '70',
+  required_years_of_experience: '',
   overview: '',
   responsibilities: [],
   requirements: [],
@@ -70,6 +72,10 @@ export function formFromDetail(detail: JobDetail): RecruiterJobFormState {
     expires_at: detail.expires_at ? toDateTimeLocalValue(detail.expires_at) : '',
     auto_shortlist: detail.auto_shortlist ?? false,
     shortlist_threshold: String(detail.shortlist_threshold ?? 70),
+    required_years_of_experience:
+      detail.required_years_of_experience != null
+        ? String(detail.required_years_of_experience)
+        : '',
     overview: detail.overview ?? '',
     responsibilities: detail.responsibilities ?? [],
     requirements: detail.requirements ?? [],
@@ -82,6 +88,9 @@ export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
   const salary_min = form.salary_min ? Number(form.salary_min) : null
   const salary_max = form.salary_max ? Number(form.salary_max) : null
   const shortlist_threshold = form.shortlist_threshold ? Number(form.shortlist_threshold) : 70
+  const required_yoe = form.required_years_of_experience
+    ? Number(form.required_years_of_experience)
+    : null
   const expires_at = form.expires_at ? new Date(form.expires_at).toISOString() : undefined
 
   return {
@@ -93,6 +102,7 @@ export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
     currency: form.currency || 'NPR',
     status: form.status,
     shortlist_threshold,
+    required_years_of_experience: required_yoe,
     ...(expires_at && { expires_at }),
     auto_shortlist: form.auto_shortlist,
     ...(form.overview && { overview: form.overview }),
@@ -386,6 +396,23 @@ export default function RecruiterJobEditor({
             <p className="job-ai-help">
               Used when applying agent shortlisting after the job expires.
             </p>
+          </div>
+
+          <div className="job-ai-field job-ai-field--manual job-editor-form__field">
+            <label className="job-ai-label" htmlFor="job-required-yoe">
+              Required Years of Experience <span className="auth__optional">(optional)</span>
+            </label>
+            <input
+              id="job-required-yoe"
+              type="number"
+              min={0}
+              max={50}
+              className="job-ai-input"
+              value={form.required_years_of_experience}
+              onChange={(event) => set('required_years_of_experience', event.target.value)}
+              placeholder="e.g. 3"
+              disabled={isLoading}
+            />
           </div>
 
           <div className="job-ai-field job-ai-field--manual job-editor-form__salary-field">

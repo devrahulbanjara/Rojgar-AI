@@ -62,12 +62,21 @@ def stringify_job(job: Job) -> str:
 
 
 def stringify_resume(application: Application) -> str:
-    """Serialise the application's attached resume into prompt-ready plain text."""
+    """Serialise the application's attached resume into prompt-ready plain text.
+
+    PII anonymisation: candidate name, email, phone, and personal URLs are
+    intentionally excluded so the shortlisting LLM cannot be influenced by
+    demographic signals embedded in those fields (gender-coded names, nationality
+    inferred from phone prefix, etc.).  Institution names are preserved because
+    they carry relevant academic context, but evaluators are instructed in the
+    system prompt not to weight prestige.
+    """
     resume = application.resume
     if resume is None:
         return "Resume: Not attached."
 
     sections: list[str] = [
+        # Name, email, phone, and URLs are deliberately omitted (PII / bias risk).
         f"Headline: {resume.headline or 'Not provided'}",
         f"Summary: {resume.summary or 'Not provided'}",
         f"Years of experience: {resume.years_of_experience if resume.years_of_experience is not None else 'Not provided'}",

@@ -40,6 +40,7 @@ export interface JobListItem {
   status: JobStatus
   auto_shortlist: boolean
   shortlist_threshold: number
+  required_years_of_experience: number | null
   expires_at: string | null
   applications_count: number
   final_shortlist_completed: boolean
@@ -66,6 +67,7 @@ export interface JobDetail {
   status: JobStatus
   auto_shortlist: boolean
   shortlist_threshold: number
+  required_years_of_experience: number | null
   expires_at: string | null
   overview: string | null
   responsibilities: string[]
@@ -90,6 +92,7 @@ export interface CreateJobPayload {
   status?: JobStatus
   auto_shortlist?: boolean
   shortlist_threshold?: number
+  required_years_of_experience?: number | null
   expires_at?: string
   overview?: string
   responsibilities?: string[]

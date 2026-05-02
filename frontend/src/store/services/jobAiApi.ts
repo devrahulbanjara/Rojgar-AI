@@ -38,6 +38,7 @@ export interface JobAIDraftPayload {
   status: JobAIJobStatus
   auto_shortlist: boolean
   shortlist_threshold: number
+  required_years_of_experience: number | null
   overview: string
   responsibilities: string[]
   requirements: string[]

@@ -16,6 +16,7 @@ type DraftField =
   | 'currency'
   | 'auto_shortlist'
   | 'shortlist_threshold'
+  | 'required_years_of_experience'
   | 'overview'
   | 'responsibilities'
   | 'requirements'
@@ -327,6 +328,28 @@ export default function JobDraftForm({
                 <option value="remote">Remote</option>
                 <option value="hybrid">Hybrid</option>
               </select>
+            </Field>
+
+            <Field
+              label="Required years of experience"
+              fieldKeys={['required_years_of_experience']}
+              {...fieldProps}
+            >
+              <input
+                type="number"
+                min={0}
+                max={50}
+                className="job-ai-input"
+                value={draft.required_years_of_experience ?? ''}
+                onChange={(event) =>
+                  onFieldChange(
+                    'required_years_of_experience',
+                    event.target.value ? Number(event.target.value) : null,
+                  )
+                }
+                placeholder="e.g. 3"
+                disabled={disabled}
+              />
             </Field>
           </div>
         </FormSection>

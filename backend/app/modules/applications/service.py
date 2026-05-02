@@ -71,6 +71,44 @@ from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, JobStatus
 
 
+async def _compute_resume_embedding(db: AsyncSession, resume_id: uuid.UUID) -> list[float]:
+    """Build resume text and compute its Gemini embedding for ML bouncer."""
+    from app.infrastructures.ai.service import ai_service
+
+    resume = await db.scalar(
+        select(Resume)
+        .where(Resume.id == resume_id)
+        .options(
+            selectinload(Resume.experiences),
+            selectinload(Resume.educations),
+            selectinload(Resume.skills),
+        )
+    )
+    parts = [
+        f"HEADLINE: {resume.headline or ''}",
+        f"SUMMARY: {resume.summary or ''}",
+        f"YEARS OF EXPERIENCE: {resume.years_of_experience if resume and resume.years_of_experience is not None else 'unknown'}",
+    ]
+    if resume.experiences:
+        exp_strs = [
+            f"{e.title or ''} at {e.company_name or ''}".strip()
+            for e in resume.experiences
+        ]
+        parts.append(f"EXPERIENCE: {', '.join(exp_strs)}")
+    if resume.educations:
+        edu_strs = [
+            " ".join(p for p in [e.degree, e.field_of_study, e.institution] if p)
+            for e in resume.educations
+        ]
+        parts.append(f"EDUCATION: {', '.join(edu_strs)}")
+    if resume.skills:
+        parts.append(
+            f"SKILLS: {', '.join(s.skill_name for s in resume.skills if s.skill_name)}"
+        )
+    text = "\n\n".join(parts)
+    return await ai_service.get_embeddings(text)
+
+
 def _application_detail_href(application_id: str) -> str:
     """Build the candidate-facing application detail URL path."""
     return f"/candidate/applications/{application_id}"
@@ -429,11 +467,14 @@ async def apply_to_job(
     profile = await db.scalar(select(Profile).where(Profile.user_id == user.id))
     share_settings = _build_share_settings(payload)
 
+    resume_embedding = await _compute_resume_embedding(db, payload.resume_id)
+
     # 4. Create and persist the application
     application = Application(
         job_id=payload.job_id,
         user_id=user.id,
         resume_id=payload.resume_id,
+        resume_embedding=resume_embedding,
         status=ApplicationStatus.applied,
         **share_settings.model_dump(),
         **_build_shared_profile_snapshot(user, profile, share_settings),
@@ -490,22 +531,6 @@ async def apply_to_job(
         )
     if bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
         bg_tasks.add_task(process_application_sync_event, sync_event.id)
-
-    if (
-        job.auto_shortlist
-        and _job_is_open_for_auto_shortlisting(job)
-        and bg_tasks is not None
-        and "PYTEST_CURRENT_TEST" not in os.environ
-    ):
-        from app.modules.shortlisting.service import (
-            process_auto_shortlist_for_application,
-        )
-
-        bg_tasks.add_task(
-            process_auto_shortlist_for_application,
-            application.id,
-            _background_database_url(db),
-        )
 
     # Re-fetch with resume + children eagerly loaded
     result = await db.execute(

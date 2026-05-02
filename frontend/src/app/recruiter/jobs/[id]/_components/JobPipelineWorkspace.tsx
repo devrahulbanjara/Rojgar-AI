@@ -187,9 +187,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
 
   const screeningStats = useMemo(() => {
     const pending = jobApplications.filter((row) => row.status === 'applied')
-    const scored = pending.filter(
-      (row) => row.score !== null && (row.strengths?.length || row.weaknesses?.length),
-    )
+    const scored = pending.filter((row) => row.score !== null)
     const above =
       threshold === null ? 0 : scored.filter((row) => (row.score ?? 0) >= threshold).length
     const below =
@@ -656,7 +654,9 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                     ? `${row.strengths?.length ?? 0} strengths, ${row.weaknesses?.length ?? 0} gaps`
                     : isPostShortlistStage
                       ? 'Manual decision — no AI feedback'
-                      : 'No strengths or gaps yet.'}
+                      : row.score !== null
+                        ? 'ML scored — no detailed feedback'
+                        : 'Awaiting evaluation'}
                 </span>
 
                 {isPostShortlistStage ? (
