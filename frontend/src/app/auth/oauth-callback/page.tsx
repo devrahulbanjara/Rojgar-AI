@@ -1,9 +1,10 @@
 'use client'
 
 import { Suspense, useEffect, useRef } from 'react'
-import { notify } from '@/lib/notify'
+
 import { useRouter, useSearchParams } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import { getRoleDashboard } from '@/lib/roleRoutes'
 import { useAppDispatch } from '@/store/hooks'
 import { setCredentials } from '@/store/slices/authSlice'

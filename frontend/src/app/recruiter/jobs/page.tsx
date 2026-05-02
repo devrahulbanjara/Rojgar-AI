@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { formatSalary as formatSalaryBase } from '@/lib/jobHelpers'
+import { notify } from '@/lib/notify'
 import { getJobStatusLabel as getJobDisplayStatusLabel } from '@/lib/statusMetadata'
 import {
   type JobAIDraftRecord,

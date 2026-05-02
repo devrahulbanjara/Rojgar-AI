@@ -34,7 +34,7 @@ class SalaryResearch(BaseModel):
 
 
 class JobDraft(BaseModel):
-    title: str = Field(min_length=1, max_length=255)
+    title: str = Field(default="", max_length=255)
     location: str | None
     location_type: LocationType
     salary_min: int | None
@@ -44,7 +44,7 @@ class JobDraft(BaseModel):
     shortlist_threshold: int = Field(default=70, ge=0, le=100)
     required_years_of_experience: int | None = None
 
-    overview: str = Field(min_length=1, max_length=5000)
+    overview: str = Field(default="", max_length=5000)
     responsibilities: list[str] = Field(max_length=50)
     requirements: list[str] = Field(max_length=50)
     preferred_qualifications: list[str] = Field(max_length=30)
@@ -92,10 +92,13 @@ class GenerateJobDraftRequest(BaseModel):
     mode: Literal["create", "improve", "clone"] = "create"
     research_salary: bool = False
     locked_fields: list[str] = []
+    manual: bool = False
 
     @model_validator(mode="after")
     def validate_input(self) -> "GenerateJobDraftRequest":
         """Require at least one source of draft-generation input."""
+        if self.manual:
+            return self
         if not self.title and not self.rough_description and not self.source_job_id:
             raise ValueError("Provide title, rough_description, or source_job_id")
         return self

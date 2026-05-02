@@ -74,9 +74,7 @@ def _build_resume_text(application: Application) -> str:
             for e in resume.educations
         )
     if resume.skills:
-        parts.append(
-            ", ".join(s.skill_name for s in resume.skills if s.skill_name)
-        )
+        parts.append(", ".join(s.skill_name for s in resume.skills if s.skill_name))
     return " ".join(parts)
 
 
@@ -108,9 +106,7 @@ def extract_features(job: Job, application: Application) -> list[float]:
     return [tfidf_sim, semantic_sim, yoe, num_companies, num_educations, num_skills]
 
 
-def score_applications(
-    job: Job, applications: list[Application]
-) -> list[float]:
+def score_applications(job: Job, applications: list[Application]) -> list[float]:
     """Run the ML bouncer on a batch of applications. Returns probability [0-1] per application."""
     model = _load_model()
     if model is None:

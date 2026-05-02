@@ -1,12 +1,13 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { applyFieldErrors, parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import { getRoleDashboard } from '@/lib/roleRoutes'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'

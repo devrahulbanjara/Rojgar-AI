@@ -17,9 +17,10 @@
  */
 import { type ReactNode, useEffect, useState } from 'react'
 import { useStore } from 'react-redux'
-import { notify } from '@/lib/notify'
+
 import { usePathname, useRouter } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import { getRoleDashboard } from '@/lib/roleRoutes'
 import type { PrimaryRole } from '@/lib/types/user'
 import type { RootState } from '@/store'

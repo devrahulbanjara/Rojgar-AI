@@ -71,7 +71,9 @@ from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, JobStatus
 
 
-async def _compute_resume_embedding(db: AsyncSession, resume_id: uuid.UUID) -> list[float]:
+async def _compute_resume_embedding(
+    db: AsyncSession, resume_id: uuid.UUID
+) -> list[float]:
     """Build resume text and compute its Gemini embedding for ML bouncer."""
     from app.infrastructures.ai.service import ai_service
 

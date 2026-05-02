@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
@@ -325,7 +326,9 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
       )
       await Promise.all([refetch(), refetchDrafts()])
     } catch {
-      notify.error(directSend ? 'Could not generate and send drafts.' : 'Could not generate drafts.')
+      notify.error(
+        directSend ? 'Could not generate and send drafts.' : 'Could not generate drafts.',
+      )
     }
   }
 

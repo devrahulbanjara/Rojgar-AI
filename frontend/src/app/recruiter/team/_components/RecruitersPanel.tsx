@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import { useRouter } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import { useAppSelector } from '@/store/hooks'
 import {
   useGetCompanyRecruitersQuery,

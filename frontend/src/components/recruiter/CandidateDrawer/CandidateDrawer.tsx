@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
 import CandidateEvaluationCard from '@/app/recruiter/candidates/_components/CandidateEvaluationCard'
 import InterviewRecordingCard from '@/app/recruiter/candidates/_components/InterviewRecordingCard'
 import { mapRecruiterCandidateResume } from '@/app/recruiter/candidates/_lib/mapRecruiterCandidateResume'
 import { buildEmailPreviewDocument } from '@/lib/email/preview'
+import { notify } from '@/lib/notify'
 import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
 import {
   type ApplicationStatus,

@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
-import { notify } from '@/lib/notify'
+
 import { parseApiError } from '@/lib/apiError'
 import { createCroppedImageFile } from '@/lib/cropImage'
 import { formatBytes, validateImageFile } from '@/lib/mediaValidation'
+import { notify } from '@/lib/notify'
 import { useAppSelector } from '@/store/hooks'
 import {
   useGetMyCompanyQuery,

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import { validateImageFile } from '@/lib/mediaValidation'
+import { notify } from '@/lib/notify'
 
 import type { AvatarCropDraft } from './AvatarCropModal'
 

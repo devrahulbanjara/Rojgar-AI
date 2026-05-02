@@ -616,8 +616,13 @@ async def update_job(
 
     if job.status == JobStatus.active:
         _jd_fields = {
-            "title", "overview", "responsibilities", "requirements",
-            "preferred_qualifications", "benefits", "status",
+            "title",
+            "overview",
+            "responsibilities",
+            "requirements",
+            "preferred_qualifications",
+            "benefits",
+            "status",
         }
         if _jd_fields & set(update_data.keys()):
             await _compute_and_store_jd_embedding(job)
