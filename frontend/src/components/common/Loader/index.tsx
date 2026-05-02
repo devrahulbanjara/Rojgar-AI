@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface LoaderProps {
   /** Visual size of the spinner. Defaults to "md". */
   size?: 'sm' | 'md' | 'lg' | 'xl'
