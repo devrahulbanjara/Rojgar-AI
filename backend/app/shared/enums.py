@@ -15,7 +15,6 @@ class JobStatus(str, Enum):
 
 class ApplicationStatus(str, Enum):
     applied = "applied"
-    screening = "screening"
     shortlisted = "shortlisted"
     rejected = "rejected"
     interview_booked = "interview_booked"

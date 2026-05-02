@@ -29,7 +29,6 @@ type StatusFilterKey = 'all' | ApplicationStatus
 const STATUS_FILTER_OPTIONS: Array<{ value: StatusFilterKey; label: string }> = [
   { value: 'all', label: 'All' },
   { value: 'applied', label: 'Applied' },
-  { value: 'screening', label: 'Screening' },
   { value: 'shortlisted', label: 'Shortlisted' },
   { value: 'interview_booked', label: 'Interview Booked' },
   { value: 'interview_completed', label: 'Interview Done' },
@@ -44,7 +43,6 @@ const PIPELINE_STAGES: Array<{
   label: string
 }> = [
   { key: 'applied', label: 'Applied' },
-  { key: 'screening', label: 'Screening' },
   { key: 'shortlisted', label: 'Shortlisted' },
   { key: 'interview_booked', label: 'Interview' },
   { key: 'interview_completed', label: 'Completed' },

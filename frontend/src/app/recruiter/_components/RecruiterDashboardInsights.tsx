@@ -26,7 +26,6 @@ const RANGE_OPTIONS: Array<{ label: string; value: RangeKey }> = [
 
 const FUNNEL_LABELS: Record<string, string> = {
   applied: 'Applied',
-  screening: 'Screening',
   shortlisted: 'Shortlisted',
   interview_booked: 'Interview booked',
   interview_completed: 'Interview completed',
@@ -329,8 +328,8 @@ export default function RecruiterDashboardInsights({
 
             <div className="dashboard-kpi-strip">
               <div className="dashboard-kpi-strip__item">
-                <span>Screening</span>
-                <strong>{analytics.stats.screening}</strong>
+                <span>Shortlisted</span>
+                <strong>{analytics.stats.shortlisted}</strong>
               </div>
               <div className="dashboard-kpi-strip__item">
                 <span>Interview booked</span>

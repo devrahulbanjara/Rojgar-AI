@@ -52,11 +52,10 @@ from app.shared.enums import ApplicationStatus, JobStatus
 
 PIPELINE_STEPS: dict[ApplicationStatus, int | None] = {
     ApplicationStatus.applied: 1,
-    ApplicationStatus.screening: 2,
-    ApplicationStatus.shortlisted: 3,
-    ApplicationStatus.interview_booked: 4,
-    ApplicationStatus.interview_completed: 4,
-    ApplicationStatus.offer: 5,
+    ApplicationStatus.shortlisted: 2,
+    ApplicationStatus.interview_booked: 3,
+    ApplicationStatus.interview_completed: 3,
+    ApplicationStatus.offer: 4,
     ApplicationStatus.rejected: None,
 }
 
@@ -191,6 +190,8 @@ async def get_candidate_dashboard(
             Company.logo_url.label("company_logo_url"),
             Job.location,
             Job.location_type,
+            Job.status.label("job_status"),
+            Job.expires_at.label("job_expires_at"),
             Application.status,
             Application.created_at,
             Application.updated_at,
@@ -202,22 +203,28 @@ async def get_candidate_dashboard(
         .limit(8)
     )
 
-    applications = [
-        ApplicationPipelineItem(
-            id=row.id,
-            job_id=row.job_id,
-            job_title=row.job_title,
-            company_name=row.company_name,
-            company_logo_url=row.company_logo_url,
-            location=row.location,
-            location_type=row.location_type,
-            status=row.status,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-            pipeline_step=_pipeline_step(row.status),
+    now = _utcnow()
+    applications = []
+    for row in application_rows.all():
+        decision_visible = row.job_status == JobStatus.expired or (
+            row.job_expires_at is not None and row.job_expires_at <= now
         )
-        for row in application_rows.all()
-    ]
+        visible_status = row.status if decision_visible else ApplicationStatus.applied
+        applications.append(
+            ApplicationPipelineItem(
+                id=row.id,
+                job_id=row.job_id,
+                job_title=row.job_title,
+                company_name=row.company_name,
+                company_logo_url=row.company_logo_url,
+                location=row.location,
+                location_type=row.location_type,
+                status=visible_status,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+                pipeline_step=_pipeline_step(visible_status),
+            )
+        )
 
     interview_rows = await db.execute(
         select(
@@ -287,11 +294,6 @@ async def get_candidate_dashboard_analytics(
                 func.count(Application.id).label("total_applications"),
                 func.sum(
                     case(
-                        (Application.status == ApplicationStatus.screening, 1), else_=0
-                    )
-                ).label("screening"),
-                func.sum(
-                    case(
                         (Application.status == ApplicationStatus.shortlisted, 1),
                         else_=0,
                     )
@@ -322,7 +324,6 @@ async def get_candidate_dashboard_analytics(
 
     stats = CandidateAnalyticsStats(
         total_applications=stats_row.total_applications or 0,
-        screening=stats_row.screening or 0,
         shortlisted=stats_row.shortlisted or 0,
         interviews=stats_row.interviews or 0,
         offers=stats_row.offers or 0,
@@ -415,7 +416,6 @@ async def get_candidate_dashboard_analytics(
         stats=stats,
         funnel=[
             StageCountPoint(stage="applied", count=stats.total_applications),
-            StageCountPoint(stage="screening", count=stats.screening),
             StageCountPoint(stage="shortlisted", count=stats.shortlisted),
             StageCountPoint(stage="interview", count=stats.interviews),
             StageCountPoint(stage="offer", count=stats.offers),
@@ -493,9 +493,6 @@ async def _get_active_jobs(
                 case((Application.status == ApplicationStatus.applied, 1), else_=0)
             ).label("applied_count"),
             func.sum(
-                case((Application.status == ApplicationStatus.screening, 1), else_=0)
-            ).label("screening_count"),
-            func.sum(
                 case((Application.status == ApplicationStatus.shortlisted, 1), else_=0)
             ).label("shortlisted_count"),
             func.sum(
@@ -519,7 +516,6 @@ async def _get_active_jobs(
             days_until_expiry=_job_days_until_expiry(row.expires_at),
             total_applications=row.total_applications or 0,
             applied_count=row.applied_count or 0,
-            screening_count=row.screening_count or 0,
             shortlisted_count=row.shortlisted_count or 0,
             rejected_count=row.rejected_count or 0,
         )
@@ -646,9 +642,6 @@ async def _get_recruiter_analytics_stats(
                 .label("active_jobs"),
                 func.count(func.distinct(Application.id)).label("applications"),
                 func.count(func.distinct(Application.id))
-                .filter(Application.status == ApplicationStatus.screening)
-                .label("screening"),
-                func.count(func.distinct(Application.id))
                 .filter(Application.status == ApplicationStatus.shortlisted)
                 .label("shortlisted"),
                 func.count(func.distinct(Application.id))
@@ -677,7 +670,6 @@ async def _get_recruiter_analytics_stats(
     return RecruiterAnalyticsStats(
         active_jobs=stats_row.active_jobs or 0,
         applications=stats_row.applications or 0,
-        screening=stats_row.screening or 0,
         shortlisted=stats_row.shortlisted or 0,
         interview_booked=stats_row.interview_booked or 0,
         interview_completed=stats_row.interview_completed or 0,
@@ -930,7 +922,6 @@ async def get_recruiter_dashboard_analytics(
             stats=RecruiterAnalyticsStats(
                 active_jobs=0,
                 applications=0,
-                screening=0,
                 shortlisted=0,
                 interview_booked=0,
                 interview_completed=0,
@@ -960,7 +951,6 @@ async def get_recruiter_dashboard_analytics(
         stats=stats,
         funnel=[
             StageCountPoint(stage="applied", count=stats.applications),
-            StageCountPoint(stage="screening", count=stats.screening),
             StageCountPoint(stage="shortlisted", count=stats.shortlisted),
             StageCountPoint(stage="interview_booked", count=stats.interview_booked),
             StageCountPoint(
@@ -1316,7 +1306,6 @@ async def get_recruiter_admin_dashboard_analytics(
         ),
         company_funnel=[
             StageCountPoint(stage="applied", count=recruiter_stats.applications),
-            StageCountPoint(stage="screening", count=recruiter_stats.screening),
             StageCountPoint(stage="shortlisted", count=recruiter_stats.shortlisted),
             StageCountPoint(
                 stage="interview_booked", count=recruiter_stats.interview_booked

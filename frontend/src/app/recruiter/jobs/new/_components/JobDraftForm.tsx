@@ -364,8 +364,8 @@ export default function JobDraftForm({
           </FieldChrome>
 
           <FieldChrome
-            label="Automatic AI Screening"
-            helper="Turn this on when each new application should be screened automatically right after submission."
+            label="Automatic AI Evaluation"
+            helper="Turn this on when each new application should be evaluated automatically right after submission."
             fieldKeys={['auto_shortlist']}
             lockedFields={lockedFields}
             dirtyFields={dirtyFields}
@@ -382,7 +382,7 @@ export default function JobDraftForm({
                 disabled={disabled}
               />
               <span>
-                Automatically generate screening scores and feedback for each new application
+                Automatically generate evaluation scores and feedback for each new application
               </span>
             </label>
           </FieldChrome>

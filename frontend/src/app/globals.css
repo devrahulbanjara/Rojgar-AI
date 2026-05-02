@@ -1065,7 +1065,7 @@ body {
 .recruiter-chat-badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 0.24rem 0.55rem;
   font-size: 0.74rem;
   font-weight: 600;

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import html
+
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
+from loguru import logger
 from pydantic import SecretStr
 
 from app.core.config import settings
@@ -87,6 +90,50 @@ def _first_name(candidate_name: str) -> str:
     return parts[0] if parts else "there"
 
 
+def _static_template(
+    application_status: ApplicationStatus,
+    first_name: str,
+    job_title: str,
+    company_name: str,
+    booking_url: str | None,
+) -> tuple[str, str]:
+    """Deterministic email body for cohorts without AI feedback.
+
+    Used when ``Application.feedback`` is null/empty so the LLM cannot
+    invent reasons. Mirrors a minimal, human-sounding template.
+    """
+    safe_name = html.escape(first_name)
+    safe_company = html.escape(company_name)
+    safe_job = html.escape(job_title)
+
+    if application_status == ApplicationStatus.shortlisted:
+        subject = f"You've been shortlisted for {job_title} at {company_name}"
+        body = (
+            f"<p>Hi {safe_name},</p>"
+            f"<p>Thanks for applying to <strong>{safe_job}</strong> at "
+            f"{safe_company}. We'd like to move forward with your application.</p>"
+        )
+        if booking_url:
+            safe_link = html.escape(booking_url, quote=True)
+            body += (
+                "<p>Please book a time using the same name and email you used "
+                "to sign up to ConvexHire so we can match your booking automatically:</p>"
+                f'<p><a href="{safe_link}">Book your interview</a></p>'
+            )
+        body += "<p>Looking forward to speaking soon.</p>"
+        return subject, body
+
+    subject = f"Update on your {job_title} application"
+    body = (
+        f"<p>Hi {safe_name},</p>"
+        f"<p>Thank you for your interest in <strong>{safe_job}</strong> at "
+        f"{safe_company}. After reviewing your application, we won't be moving "
+        "forward at this time.</p>"
+        "<p>We appreciate the time you took to apply and wish you the best.</p>"
+    )
+    return subject, body
+
+
 async def compose_email(
     candidate_name: str,
     company_name: str,
@@ -97,7 +144,22 @@ async def compose_email(
 ) -> tuple[str, str]:
     """Compose an outreach email tailored to the candidate and job context."""
     first_name = _first_name(candidate_name)
-    feedback_text = (feedback or "No specific feedback available.").strip()
+
+    feedback_text = (feedback or "").strip()
+    if not feedback_text:
+        logger.info(
+            "outreach.compose.no_feedback_static candidate='{}' job='{}' status='{}'",
+            candidate_name,
+            job_title,
+            application_status.value,
+        )
+        return _static_template(
+            application_status,
+            first_name,
+            job_title,
+            company_name,
+            booking_url,
+        )
 
     if application_status == ApplicationStatus.shortlisted:
         subject = f"You've been shortlisted for {job_title} at {company_name}"

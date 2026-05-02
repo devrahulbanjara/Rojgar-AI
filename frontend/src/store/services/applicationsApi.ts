@@ -6,7 +6,6 @@ import { type ApiResponse, baseApi } from './baseApi'
 
 export type ApplicationStatus =
   | 'applied'
-  | 'screening'
   | 'shortlisted'
   | 'interview_booked'
   | 'interview_completed'

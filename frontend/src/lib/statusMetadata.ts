@@ -1,6 +1,5 @@
 export type ApplicationLifecycleStatus =
   | 'applied'
-  | 'screening'
   | 'shortlisted'
   | 'interview_booked'
   | 'interview_completed'
@@ -18,7 +17,6 @@ type StatusMetadata = {
 
 const APPLICATION_STATUS_METADATA: Record<ApplicationLifecycleStatus, StatusMetadata> = {
   applied: { label: 'Applied', variant: 'gray' },
-  screening: { label: 'Screening', variant: 'warning' },
   shortlisted: { label: 'Shortlisted', variant: 'secondary' },
   interview_booked: { label: 'Interview Booked', variant: 'primary' },
   interview_completed: { label: 'Interview Completed', variant: 'primary' },
@@ -64,22 +62,20 @@ export function getApplicationStatusOrder(status: ApplicationLifecycleStatus): n
   switch (status) {
     case 'applied':
       return 0
-    case 'screening':
-      return 1
     case 'shortlisted':
-      return 2
+      return 1
     case 'interview_booked':
-      return 3
+      return 2
     case 'interview_completed':
-      return 4
+      return 3
     case 'offer':
-      return 5
+      return 4
     case 'offer_accepted':
-      return 6
+      return 5
     case 'offer_declined':
-      return 6
+      return 5
     case 'rejected':
-      return 7
+      return 6
     default:
       return 0
   }

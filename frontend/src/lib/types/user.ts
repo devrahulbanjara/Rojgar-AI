@@ -24,7 +24,6 @@ export interface RecruiterMember {
 
 export type ApplicationStatus =
   | 'applied'
-  | 'screening'
   | 'shortlisted'
   | 'interview_booked'
   | 'interview_completed'

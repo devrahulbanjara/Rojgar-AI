@@ -127,7 +127,7 @@ const COMPANY_TIERS: PricingTier[] = [
     features: [
       { text: 'Up to 5 recruiters', included: true },
       { text: 'Up to 8 active jobs', included: true },
-      { text: 'AI screening on all applications (auto-score)', included: true },
+      { text: 'AI evaluation on all applications (auto-score)', included: true },
       { text: 'Unlimited job draft assistant', included: true },
       { text: 'Unlimited outreach email drafting', included: true },
       {

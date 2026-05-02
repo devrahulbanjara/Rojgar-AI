@@ -158,12 +158,30 @@ def _status_event_copy(
     )
 
 
+def _job_decision_visible_to_candidate(job: Job) -> bool:
+    """Outcome reveal gate: only after the job is no longer accepting applicants."""
+    if job.status == JobStatus.expired:
+        return True
+    return job.expires_at is not None and job.expires_at <= datetime.now(timezone.utc)
+
+
+def _mask_for_candidate(
+    application: Application, job: Job
+) -> tuple[ApplicationStatus, int | None, str | None]:
+    """Return (visible_status, visible_score, visible_feedback) for a candidate view.
+
+    Pre-expiry: report the application as still in `applied` and hide AI signal so
+    the recruiter is free to keep changing their mind. Post-expiry: show real values.
+    """
+    if _job_decision_visible_to_candidate(job):
+        return application.status, application.score, application.feedback
+    return ApplicationStatus.applied, None, None
+
+
 def _candidate_next_step_hint(status: ApplicationStatus) -> str:
     """Return a human-friendly next-step hint for a candidate-facing status view."""
     if status == ApplicationStatus.applied:
-        return "Your application has been submitted. The next update will appear here when screening starts."
-    if status == ApplicationStatus.screening:
-        return "Your application is under review. Keep your profile and resume ready in case the recruiter requests next steps."
+        return "Your application has been submitted. You'll see the recruiter's decision once the job has closed."
     if status == ApplicationStatus.shortlisted:
         return "You have been shortlisted. Watch for outreach or interview booking instructions."
     if status == ApplicationStatus.interview_booked:
@@ -541,23 +559,27 @@ async def list_candidate_applications(
     )
     rows = (await db.execute(stmt)).all()
 
-    response = [
-        CandidateApplicationView(
-            id=application.id,
-            status=application.status,
-            created_at=application.created_at,
-            updated_at=application.updated_at,
-            job_id=job.id,
-            job_title=job.title,
-            company_name=company.name,
-            company_logo_url=company.logo_url,
-            location=job.location,
-            location_type=job.location_type,
-            score=application.score,
-            feedback=application.feedback,
+    response = []
+    for application, job, company in rows:
+        visible_status, visible_score, visible_feedback = _mask_for_candidate(
+            application, job
         )
-        for application, job, company in rows
-    ]
+        response.append(
+            CandidateApplicationView(
+                id=application.id,
+                status=visible_status,
+                created_at=application.created_at,
+                updated_at=application.updated_at,
+                job_id=job.id,
+                job_title=job.title,
+                company_name=company.name,
+                company_logo_url=company.logo_url,
+                location=job.location,
+                location_type=job.location_type,
+                score=visible_score,
+                feedback=visible_feedback,
+            )
+        )
 
     # 3. Save to Cache (TTL 5 minutes - applications status can change)
     import json
@@ -902,16 +924,26 @@ async def get_application(
             application_id=str(application.id),
             audience="candidate",
         )
+        if job is not None:
+            visible_status, visible_score, visible_feedback = _mask_for_candidate(
+                application, job
+            )
+        else:
+            visible_status, visible_score, visible_feedback = (
+                application.status,
+                application.score,
+                application.feedback,
+            )
         return ApplicationResponse(
             id=application.id,
             job_id=application.job_id,
             user_id=application.user_id,
             resume_id=application.resume_id,
-            status=application.status,
+            status=visible_status,
             created_at=application.created_at,
             updated_at=application.updated_at,
-            score=application.score,
-            feedback=application.feedback,
+            score=visible_score,
+            feedback=visible_feedback,
             resume=ResumeResponse.model_validate(application.resume)
             if application.resume
             else None,
@@ -924,7 +956,7 @@ async def get_application(
             if interview
             else None,
             timeline=timeline,
-            next_step_hint=_candidate_next_step_hint(application.status),
+            next_step_hint=_candidate_next_step_hint(visible_status),
         )
 
     # Active company members (recruiter / recruiter_admin) can see applications

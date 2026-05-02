@@ -32,7 +32,7 @@ export default function ActiveJobsCard({ jobs }: Props) {
         <span className={styles.cardCount}>{jobs.length}</span>
       </div>
       <p className={styles.cardCopy}>
-        Jump into a pipeline. Screening, interviews, and outreach live inside the job.
+        Jump into a pipeline. Evaluation, interviews, and outreach live inside the job.
       </p>
       <div className={styles.list}>
         {visible.map((job) => (

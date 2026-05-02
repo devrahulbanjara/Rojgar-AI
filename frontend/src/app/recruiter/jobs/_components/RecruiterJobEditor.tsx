@@ -343,9 +343,9 @@ export default function RecruiterJobEditor({
           <div className="job-ai-field job-ai-field--manual job-editor-form__toggle-field">
             <label className="job-editor-toggle" htmlFor="job-auto-shortlist">
               <div className="job-editor-toggle__copy">
-                <span className="job-editor-toggle__title">Automatic Agent Screening</span>
+                <span className="job-editor-toggle__title">Automatic AI Evaluation</span>
                 <span className="job-editor-toggle__description">
-                  Generate screening scores and feedback for new applications with the reflection
+                  Generate evaluation scores and feedback for new applications with the reflection
                   workflow.
                 </span>
               </div>

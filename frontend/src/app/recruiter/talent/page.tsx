@@ -23,7 +23,6 @@ import styles from './page.module.scss'
 const STATUS_OPTIONS: Array<{ value: 'all' | ApplicationStatus; label: string }> = [
   { value: 'all', label: 'All statuses' },
   { value: 'applied', label: 'Applied' },
-  { value: 'screening', label: 'Screening' },
   { value: 'shortlisted', label: 'Shortlisted' },
   { value: 'interview_booked', label: 'Interview booked' },
   { value: 'interview_completed', label: 'Interview completed' },
