@@ -128,16 +128,18 @@ async def delete_job(
     return ResponseBuilder.success(data=None, message="Job deleted.")
 
 
-@router.patch(
-    "/{job_id}/hiring-completed",
-    summary="Mark a job as hiring completed (hides from interviews view)",
+@router.post(
+    "/{job_id}/complete-hiring",
+    summary="Complete hiring for a job (one-way; auto-rejects pending applicants)",
 )
-async def set_hiring_completed(
+async def complete_hiring(
     job_id: uuid.UUID,
-    hiring_completed: bool,
+    bg_tasks: BackgroundTasks,
     user: ActiveMember,
     db: DbSession,
 ) -> UnifiedResponse[dict]:
-    """Mark a job as having completed hiring."""
-    data = await service.set_hiring_completed(db, user, job_id, hiring_completed)
-    return ResponseBuilder.success(data=data)
+    """Close the hiring lifecycle for a job."""
+    data = await service.complete_hiring(db, user, job_id, bg_tasks)
+    return ResponseBuilder.success(
+        data=data, message="Hiring completed for this job."
+    )

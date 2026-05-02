@@ -148,7 +148,8 @@ export default function JobDetailPage() {
   const recommended = (jobsResp?.data?.items ?? []).filter((j) => j.id !== jobId).slice(0, 6)
 
   const salary = job ? formatSalary(job.salary_min, job.salary_max, job.currency) : null
-  const isActive = job?.status === 'active'
+  const hiringCompleted = job?.hiring_completed === true
+  const isActive = job?.status === 'active' && !hiringCompleted
   const hasApplied = job?.has_applied
 
   if (isLoading) {
@@ -231,20 +232,28 @@ export default function JobDetailPage() {
             <button
               className="btn btn--primary"
               onClick={() => {
-                if (!hasApplied) setApplying(true)
+                if (!hasApplied && !hiringCompleted) setApplying(true)
               }}
-              disabled={!isActive || hasApplied}
+              disabled={!isActive || hasApplied || hiringCompleted}
               title={
-                hasApplied
-                  ? 'You have already applied to this job.'
-                  : isActive
-                    ? undefined
-                    : job.status === 'draft'
-                      ? 'This job is still in draft.'
-                      : 'This job has expired.'
+                hiringCompleted
+                  ? 'This position has been filled.'
+                  : hasApplied
+                    ? 'You have already applied to this job.'
+                    : isActive
+                      ? undefined
+                      : job.status === 'draft'
+                        ? 'This job is still in draft.'
+                        : 'This job has expired.'
               }
             >
-              {hasApplied ? 'Applied' : isActive ? 'Apply Now' : getJobStatusLabel(job.status)}
+              {hiringCompleted
+                ? 'Position filled'
+                : hasApplied
+                  ? 'Applied'
+                  : isActive
+                    ? 'Apply Now'
+                    : getJobStatusLabel(job.status)}
             </button>
             <button
               className="btn btn--icon btn--sm"
@@ -259,6 +268,23 @@ export default function JobDetailPage() {
             </button>
           </div>
         </div>
+
+        {hiringCompleted ? (
+          <div
+            role="status"
+            style={{
+              padding: '1rem 1.25rem',
+              borderRadius: 12,
+              background: 'var(--color-gray-50, #f9fafb)',
+              border: '1px solid var(--color-gray-200, #e5e7eb)',
+              color: 'var(--color-gray-700, #374151)',
+              fontSize: '0.9375rem',
+            }}
+          >
+            <strong>This position has been filled.</strong> The company is no longer accepting
+            applications for this role.
+          </div>
+        ) : null}
 
         <div className="jd-detail">
           <div className="jd-detail__main">

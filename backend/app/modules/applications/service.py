@@ -381,6 +381,11 @@ async def apply_to_job(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found.",
         )
+    if job.hiring_completed:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="position_filled",
+        )
     if not _job_is_open_for_auto_shortlisting(job):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

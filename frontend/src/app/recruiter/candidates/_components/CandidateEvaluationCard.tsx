@@ -31,6 +31,29 @@ type DraftState = {
   notes: string
 }
 
+function getDraftScoreErrors(
+  draft: DraftState,
+  criteria: EvaluationCriterion[],
+): Record<string, string> {
+  const errors: Record<string, string> = {}
+  for (const criterion of criteria) {
+    if (!draft.rated[criterion.key]) continue
+    const value = draft.scores[criterion.key]
+    if (!Number.isFinite(value)) {
+      errors[criterion.key] = 'Enter a valid score.'
+      continue
+    }
+    if (value < 0) {
+      errors[criterion.key] = 'Score cannot be negative.'
+      continue
+    }
+    if (value > criterion.max_score) {
+      errors[criterion.key] = `Score cannot exceed ${criterion.max_score}.`
+    }
+  }
+  return errors
+}
+
 function getScoreTone(score: number | null) {
   if (score == null) return ''
   if (score >= 75) return styles.scoreGood
@@ -81,6 +104,9 @@ function RecruiterRowEditor({
   isSaving: boolean
   saveLabel: string
 }) {
+  const scoreErrors = getDraftScoreErrors(draft, criteria)
+  const hasScoreErrors = Object.keys(scoreErrors).length > 0
+
   return (
     <div className={styles.editorCard}>
       <label className={styles.editorField}>
@@ -97,6 +123,7 @@ function RecruiterRowEditor({
       <div className={styles.criteriaList}>
         {criteria.map((criterion) => {
           const isRated = draft.rated[criterion.key] ?? true
+          const scoreError = scoreErrors[criterion.key]
           return (
             <div key={criterion.key} className={styles.criterionRowToggle}>
               <div className={styles.criterionMeta}>
@@ -104,6 +131,7 @@ function RecruiterRowEditor({
                 <div className={styles.criterionHint}>
                   Max {criterion.max_score} | Weight {criterion.weight}
                 </div>
+                {scoreError ? <div className={styles.fieldError}>{scoreError}</div> : null}
               </div>
               <label className={styles.rateToggle}>
                 <input
@@ -119,21 +147,23 @@ function RecruiterRowEditor({
                 Rate this
               </label>
               <input
-                className={`${styles.input} ${isRated ? '' : styles.inputDisabled}`}
+                className={`${styles.input} ${isRated ? '' : styles.inputDisabled} ${scoreError ? styles.inputInvalid : ''}`}
                 type="number"
                 min={0}
                 max={criterion.max_score}
                 value={draft.scores[criterion.key] ?? 0}
                 disabled={!isRated}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const value = event.target.value.trim()
+                  const parsed = value === '' ? 0 : Number(value)
                   setDraft({
                     ...draft,
                     scores: {
                       ...draft.scores,
-                      [criterion.key]: Number(event.target.value || 0),
+                      [criterion.key]: parsed,
                     },
                   })
-                }
+                }}
               />
             </div>
           )
@@ -155,7 +185,7 @@ function RecruiterRowEditor({
           type="button"
           className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
           onClick={onSave}
-          disabled={isSaving}
+          disabled={isSaving || hasScoreErrors}
         >
           {isSaving ? 'Saving...' : saveLabel}
         </button>
@@ -167,6 +197,9 @@ function RecruiterRowEditor({
         >
           Cancel
         </button>
+        {hasScoreErrors ? (
+          <span className={styles.actionError}>Fix highlighted scores to continue.</span>
+        ) : null}
       </div>
     </div>
   )
@@ -214,7 +247,7 @@ function RecruiterRowView({
           </button>
           <button
             type="button"
-            className={`btn btn--secondary btn--sm${isDeleting ? ' btn--loading' : ''}`}
+            className={`btn btn--danger btn--sm${isDeleting ? ' btn--loading' : ''}`}
             onClick={onDelete}
             disabled={isDeleting}
             aria-label="Delete recruiter row"
@@ -300,6 +333,11 @@ function HumansSection({
     const label = draft.label.trim()
     if (!label) {
       toast.error('Enter recruiter name (e.g. "Ravi (Tech Lead)").')
+      return
+    }
+    const scoreErrors = getDraftScoreErrors(draft, criteria)
+    if (Object.keys(scoreErrors).length > 0) {
+      toast.error(Object.values(scoreErrors)[0] ?? 'Please fix invalid criterion scores.')
       return
     }
     try {
@@ -483,14 +521,12 @@ function EvaluationBody({
   const humanAvg = evaluation.human_average?.weighted_total ?? null
   const llmTotal = evaluation.llm?.weighted_total ?? null
   const finalScore = evaluation.final_score ?? null
-  const humanWeight = evaluation.schema?.human_weight ?? 0
-  const llmWeight = evaluation.schema?.llm_weight ?? 0
 
   return (
     <>
       <div className={styles.summaryGrid}>
         <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Avg Human</span>
+          <span className={styles.summaryLabel}>Average human score</span>
           <span className={`${styles.summaryValue} ${getScoreTone(humanAvg)}`}>
             {fmtScore(humanAvg)}
           </span>
@@ -500,26 +536,16 @@ function EvaluationBody({
           </span>
         </div>
         <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>AI Recruiter</span>
+          <span className={styles.summaryLabel}>AI score</span>
           <span className={`${styles.summaryValue} ${getScoreTone(llmTotal)}`}>
             {fmtScore(llmTotal)}
           </span>
           <span className={styles.summaryMeta}>{evaluation.llm ? 'Scored' : 'Not run'}</span>
         </div>
         <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Final blended</span>
+          <span className={styles.summaryLabel}>Overall score</span>
           <span className={`${styles.summaryValue} ${getScoreTone(finalScore)}`}>
             {fmtScore(finalScore)}
-          </span>
-          <span className={styles.summaryMeta}>
-            {Math.round(humanWeight * 100)}% human / {Math.round(llmWeight * 100)}% AI
-          </span>
-        </div>
-        <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Schema version</span>
-          <span className={styles.summaryValue}>v{evaluation.schema?.version ?? 0}</span>
-          <span className={styles.summaryMeta}>
-            {evaluation.schema?.criteria.length ?? 0} criteria
           </span>
         </div>
       </div>
