@@ -1,8 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -163,10 +162,10 @@ function LoginPageInner() {
       }).unwrap()
 
       if (result.success) {
-        toast.success('Signed in! Redirecting…')
+        notify.success('Signed in! Redirecting…')
         router.push(nextUrl ?? getRoleDashboard(result.data?.user?.primary_role))
       } else {
-        toast.error(result.message ?? 'Login failed. Please try again.')
+        notify.error(result.message ?? 'Login failed. Please try again.')
       }
     } catch (err: unknown) {
       const fieldMap: Record<string, string> = {
@@ -183,7 +182,7 @@ function LoginPageInner() {
       const parsed = parseApiError(err, fieldMap, 'Invalid credentials. Please try again.')
       const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
       if (!hadFieldErrors) {
-        toast.error(parsed.message)
+        notify.error(parsed.message)
       }
     }
   }

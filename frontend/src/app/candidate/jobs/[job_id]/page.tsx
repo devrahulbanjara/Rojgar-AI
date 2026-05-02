@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
@@ -260,7 +259,7 @@ export default function JobDetailPage() {
               onClick={() => {
                 navigator.clipboard
                   .writeText(window.location.href)
-                  .then(() => toast.info('Link copied!'))
+                  .then(() => notify.info('Link copied!'))
               }}
               aria-label="Share link"
             >

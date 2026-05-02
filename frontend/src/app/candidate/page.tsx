@@ -1,8 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import { calculateProfileCompletionPercentage } from '@/lib/profileCompletion'
 import { useAppSelector } from '@/store/hooks'
 import {
@@ -56,10 +55,10 @@ export default function UserDashboardPage() {
     try {
       const newStatus = !dashboardData.is_open_to_work
       await updateProfile({ is_open_to_work: newStatus }).unwrap()
-      toast.success(newStatus ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
+      notify.success(newStatus ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
       refetchDashboard()
     } catch {
-      toast.error('Failed to update status.')
+      notify.error('Failed to update status.')
     }
   }
 

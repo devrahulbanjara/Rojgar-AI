@@ -1,8 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useRef, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -392,7 +391,7 @@ function SignupContent() {
         if (result.success) {
           router.push('/candidate')
         } else {
-          toast.error(result.message ?? 'Something went wrong. Please try again.')
+          notify.error(result.message ?? 'Something went wrong. Please try again.')
         }
       } else {
         const result = await signup({
@@ -405,7 +404,7 @@ function SignupContent() {
         if (result.success) {
           setStep('email-verify')
         } else {
-          toast.error(result.message ?? 'Something went wrong. Please try again.')
+          notify.error(result.message ?? 'Something went wrong. Please try again.')
         }
       }
     } catch (err: unknown) {
@@ -416,7 +415,7 @@ function SignupContent() {
       }
       const parsed = parseApiError(err, fieldMap)
       const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
-      if (!hadFieldErrors) toast.error(parsed.message)
+      if (!hadFieldErrors) notify.error(parsed.message)
       if (!isOAuth && Object.keys(parsed.fieldErrors ?? {}).length > 0) setStep('credentials')
     }
   }
@@ -448,7 +447,7 @@ function SignupContent() {
         }).unwrap()
 
         if (!signupResult.success || !signupResult.data) {
-          toast.error(signupResult.message ?? 'Signup failed.')
+          notify.error(signupResult.message ?? 'Signup failed.')
           return
         }
 
@@ -470,7 +469,7 @@ function SignupContent() {
         }).unwrap()
 
         if (!signupResult.success || !signupResult.data?.setup_token) {
-          toast.error(signupResult.message ?? 'Signup failed.')
+          notify.error(signupResult.message ?? 'Signup failed.')
           return
         }
         finalSetupToken = signupResult.data.setup_token
@@ -486,7 +485,7 @@ function SignupContent() {
         description: companyDetails.description || undefined,
       }).unwrap()
 
-      toast.success('Almost there! Please check your email to verify and activate your company.')
+      notify.success('Almost there! Please check your email to verify and activate your company.')
       router.push('/login')
     } catch (err: unknown) {
       const fieldMap: Record<string, string> = {
@@ -499,7 +498,7 @@ function SignupContent() {
       }
       const parsed = parseApiError(err, fieldMap)
       const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
-      if (!hadFieldErrors) toast.error(parsed.message)
+      if (!hadFieldErrors) notify.error(parsed.message)
     }
   }
 
@@ -522,7 +521,7 @@ function SignupContent() {
 
         const data = signupResult.data
         if (!signupResult.success || !data || !('setup_token' in data)) {
-          toast.error(signupResult.message ?? 'Signup failed.')
+          notify.error(signupResult.message ?? 'Signup failed.')
           return
         }
         finalSetupToken = (data as { setup_token: string }).setup_token
@@ -536,7 +535,7 @@ function SignupContent() {
 
         const data = signupResult.data
         if (!signupResult.success || !data || !('setup_token' in data)) {
-          toast.error(signupResult.message ?? 'Signup failed.')
+          notify.error(signupResult.message ?? 'Signup failed.')
           return
         }
         finalSetupToken = (data as { setup_token: string }).setup_token
@@ -556,7 +555,7 @@ function SignupContent() {
       }
       const parsed = parseApiError(err, fieldMap)
       const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
-      if (!hadFieldErrors) toast.error(parsed.message)
+      if (!hadFieldErrors) notify.error(parsed.message)
     }
   }
 

@@ -73,3 +73,155 @@
   flex-wrap: wrap;
   margin-left: auto;
 }
+
+// ── AI thinking state ─────────────────────────────────────────
+.thinking {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  min-height: 60vh;
+  padding: 3rem 1.5rem;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  text-align: center;
+}
+
+.thinkingOrb {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #ec4899, #f59e0b, #6366f1);
+    animation: orb-spin 4s linear infinite;
+  }
+
+  &::after {
+    inset: 6px;
+    background: #fff;
+    animation: none;
+  }
+}
+
+.thinkingOrbCore {
+  position: relative;
+  z-index: 1;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #a78bfa, #6366f1 70%);
+  box-shadow:
+    0 0 24px rgb(99 102 241 / 45%),
+    0 0 48px rgb(139 92 246 / 25%);
+  animation: orb-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orb-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(0.88);
+    opacity: 0.85;
+  }
+}
+
+.thinkingTitle {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  background: linear-gradient(
+    90deg,
+    #6366f1 0%,
+    #8b5cf6 25%,
+    #ec4899 50%,
+    #8b5cf6 75%,
+    #6366f1 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.thinkingStep {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  min-height: 1.4em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.thinkingDots {
+  display: inline-flex;
+  gap: 4px;
+
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #8b5cf6;
+    animation: dot-bounce 1.2s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+@keyframes dot-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+.thinkingHint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  max-width: 32rem;
+  line-height: 1.55;
+  margin: 0;
+  opacity: 0.8;
+}

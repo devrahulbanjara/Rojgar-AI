@@ -3,7 +3,23 @@
 import { useState } from 'react'
 
 import type { JobListItem } from '@/store/services/jobsApi'
-import { Sparkles } from 'lucide-react'
+
+export type RefineTarget =
+  | 'all'
+  | 'overview'
+  | 'responsibilities'
+  | 'requirements'
+  | 'preferred_qualifications'
+  | 'benefits'
+
+export const REFINE_TARGET_OPTIONS: { value: RefineTarget; label: string }[] = [
+  { value: 'all', label: 'Entire job draft' },
+  { value: 'overview', label: 'Overview only' },
+  { value: 'responsibilities', label: 'Responsibilities only' },
+  { value: 'requirements', label: 'Requirements only' },
+  { value: 'preferred_qualifications', label: 'Preferred qualifications only' },
+  { value: 'benefits', label: 'Benefits only' },
+]
 
 type JobAIAssistantProps = {
   title: string
@@ -11,6 +27,7 @@ type JobAIAssistantProps = {
   sourceJobId: string
   researchSalary: boolean
   followUpFeedback: string
+  refineTarget: RefineTarget
   draftExists: boolean
   loading: boolean
   jobs: JobListItem[]
@@ -19,6 +36,7 @@ type JobAIAssistantProps = {
   onSourceJobIdChange: (value: string) => void
   onResearchSalaryChange: (value: boolean) => void
   onFollowUpFeedbackChange: (value: string) => void
+  onRefineTargetChange: (value: RefineTarget) => void
   onGenerate: () => void
   onGeneralUpdate: () => void
 }
@@ -29,6 +47,7 @@ export default function JobAIAssistant({
   sourceJobId,
   researchSalary,
   followUpFeedback,
+  refineTarget,
   draftExists,
   loading,
   jobs,
@@ -37,6 +56,7 @@ export default function JobAIAssistant({
   onSourceJobIdChange,
   onResearchSalaryChange,
   onFollowUpFeedbackChange,
+  onRefineTargetChange,
   onGenerate,
   onGeneralUpdate,
 }: JobAIAssistantProps) {
@@ -142,13 +162,34 @@ export default function JobAIAssistant({
                 disabled={loading}
                 onClick={onGenerate}
               >
-                <Sparkles size={16} aria-hidden="true" />
                 {loading ? 'Generating…' : 'Generate draft'}
               </button>
             </div>
           </>
         ) : (
           <>
+            <div className="job-ai-assistant__section">
+              <label className="job-ai-label" htmlFor="job-ai-refine-target">
+                Apply changes to
+              </label>
+              <select
+                id="job-ai-refine-target"
+                className="job-ai-input"
+                value={refineTarget}
+                onChange={(event) => onRefineTargetChange(event.target.value as RefineTarget)}
+                disabled={loading}
+              >
+                {REFINE_TARGET_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="job-ai-assistant__helper">
+                AI will only edit the section you pick — other sections stay exactly as they are.
+              </p>
+            </div>
+
             <div className="job-ai-assistant__section">
               <label className="job-ai-label" htmlFor="job-ai-feedback">
                 What should AI change?
@@ -159,10 +200,15 @@ export default function JobAIAssistant({
                 rows={3}
                 value={followUpFeedback}
                 onChange={(event) => onFollowUpFeedbackChange(event.target.value)}
-                placeholder="e.g. shorten the overview and make the requirements more realistic."
+                placeholder={
+                  refineTarget === 'all'
+                    ? 'e.g. shorten the overview and make the role more senior.'
+                    : 'Describe what should change in this section.'
+                }
               />
               <p className="job-ai-assistant__helper">
-                AI rewrites unlocked fields only. Lock anything you want preserved.
+                Locked fields are always preserved, even when &quot;Entire job draft&quot; is
+                selected.
               </p>
             </div>
 
@@ -173,7 +219,6 @@ export default function JobAIAssistant({
                 disabled={loading || !followUpFeedback.trim()}
                 onClick={onGeneralUpdate}
               >
-                <Sparkles size={16} aria-hidden="true" />
                 Apply update
               </button>
             </div>

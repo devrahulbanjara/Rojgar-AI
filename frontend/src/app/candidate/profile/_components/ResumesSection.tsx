@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import { useRouter } from 'next/navigation'
 
 import type { RootState } from '@/store'
@@ -126,7 +125,7 @@ export default function ResumesSection() {
       dispatch(removeResume(confirmDeleteId))
       setConfirmDeleteId(null)
     } catch {
-      toast.error('Failed to delete resume. Please try again.')
+      notify.error('Failed to delete resume. Please try again.')
     } finally {
       setDeletingId(null)
     }

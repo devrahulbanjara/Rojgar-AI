@@ -1,8 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useRef } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { getRoleDashboard } from '@/lib/roleRoutes'
@@ -38,7 +37,7 @@ function OAuthCallbackInner() {
       }
 
       if (errorParam || !accessToken) {
-        toast.error('Google sign-in failed. Please try again.')
+        notify.error('Google sign-in failed. Please try again.')
         router.replace(`/login?error=${errorParam ?? 'oauth_failed'}`)
         return
       }
@@ -65,17 +64,17 @@ function OAuthCallbackInner() {
         }
 
         if (!user) {
-          toast.error('Could not load your profile. Please try again.')
+          notify.error('Could not load your profile. Please try again.')
           router.replace('/login?error=oauth_failed')
           return
         }
 
         dispatch(setCredentials({ accessToken, user }))
 
-        toast.success(`Welcome, ${user.full_name}!`)
+        notify.success(`Welcome, ${user.full_name}!`)
         router.replace(getRoleDashboard(user.primary_role))
       } catch {
-        toast.error('Something went wrong during sign-in. Please try again.')
+        notify.error('Something went wrong during sign-in. Please try again.')
         router.replace('/login?error=oauth_failed')
       }
     }

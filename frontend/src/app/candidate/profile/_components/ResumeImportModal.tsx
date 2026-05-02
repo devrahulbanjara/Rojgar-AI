@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import { parseApiError } from '@/lib/apiError'
 import {
   type CandidateProfileData,
@@ -223,7 +222,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
       setProcessingFileName('')
       setTaskId(null)
       setError(parsed.message)
-      toast.error(parsed.message)
+      notify.error(parsed.message)
     }
   }
 
@@ -248,7 +247,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
         data: draft,
       }).unwrap()
 
-      toast.success(
+      notify.success(
         action === 'update_profile'
           ? 'Your profile was updated from the imported resume.'
           : 'Resume import applied successfully.',
@@ -257,7 +256,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
     } catch (commitError) {
       const parsed = parseApiError(commitError, {}, 'We could not apply that import right now.')
       setError(parsed.message)
-      toast.error(parsed.message)
+      notify.error(parsed.message)
     }
   }
 

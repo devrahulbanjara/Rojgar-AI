@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { notify } from '@/lib/notify'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
@@ -13,7 +12,9 @@ import EvaluationSchemaSetupCard, {
   validateEvaluationSchemaDraft,
 } from '@/app/recruiter/jobs/_components/EvaluationSchemaSetupCard'
 import AssumptionsWarnings from '@/app/recruiter/jobs/new/_components/AssumptionsWarnings'
-import JobAIAssistant from '@/app/recruiter/jobs/new/_components/JobAIAssistant'
+import JobAIAssistant, {
+  type RefineTarget,
+} from '@/app/recruiter/jobs/new/_components/JobAIAssistant'
 import JobDraftForm from '@/app/recruiter/jobs/new/_components/JobDraftForm'
 import SalaryResearchCard from '@/app/recruiter/jobs/new/_components/SalaryResearchCard'
 import { parseApiError } from '@/lib/apiError'
@@ -27,7 +28,7 @@ import {
   useRespondToJobAIDraftMutation,
 } from '@/store/services/jobAiApi'
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
-import { ArrowLeft, CheckCheck, CircleSlash, FolderCheck, Send } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CircleSlash, FolderCheck, Send } from 'lucide-react'
 
 import styles from './page.module.scss'
 
@@ -145,6 +146,7 @@ export default function RecruiterJobAIDraftPage() {
   const [sourceJobId, setSourceJobId] = useState('')
   const [researchSalary, setResearchSalary] = useState(true)
   const [followUpFeedback, setFollowUpFeedback] = useState('')
+  const [refineTarget, setRefineTarget] = useState<RefineTarget>('all')
   const [evaluationEnabled, setEvaluationEnabled] = useState(false)
   const [evaluationDraft, setEvaluationDraft] = useState<EvaluationSchemaDraft>(
     DEFAULT_EVALUATION_SCHEMA_DRAFT,
@@ -163,6 +165,36 @@ export default function RecruiterJobAIDraftPage() {
 
   const jobs = jobsResp?.data ?? []
 
+  const isThinking = pageState.status === 'drafting'
+
+  const thinkingSteps = useMemo(
+    () => [
+      'Reading your brief',
+      'Studying your company context',
+      researchSalary ? 'Researching salary benchmarks' : 'Calibrating role expectations',
+      'Drafting the overview',
+      'Outlining responsibilities',
+      'Shaping requirements & qualifications',
+      'Polishing tone and structure',
+      'Almost there',
+    ],
+    [researchSalary],
+  )
+
+  const [thinkingStepIndex, setThinkingStepIndex] = useState(0)
+
+  useEffect(() => {
+    if (!isThinking) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setThinkingStepIndex(0)
+      return
+    }
+    const id = setInterval(() => {
+      setThinkingStepIndex((idx) => Math.min(idx + 1, thinkingSteps.length - 1))
+    }, 4000)
+    return () => clearInterval(id)
+  }, [isThinking, thinkingSteps.length])
+
   const isBusy = useMemo(
     () => pageState.loading || pageState.saving || isCreatingDraft || isResponding || isCommitting,
     [isCommitting, isCreatingDraft, isResponding, pageState.loading, pageState.saving],
@@ -170,14 +202,17 @@ export default function RecruiterJobAIDraftPage() {
 
   function showApiToast(error: unknown, fallback: string) {
     const parsed = parseApiError(error, {}, fallback)
-    toast.error(parsed.message)
+    notify.error(parsed.message)
   }
 
-  function syncRouteWithDraftId(draftId: string) {
-    const next = new URLSearchParams(searchParams.toString())
-    next.set('draftId', draftId)
-    router.replace(`${pathname}?${next.toString()}`)
-  }
+  const syncRouteWithDraftId = useCallback(
+    (draftId: string) => {
+      const next = new URLSearchParams(searchParams.toString())
+      next.set('draftId', draftId)
+      router.replace(`${pathname}?${next.toString()}`)
+    },
+    [pathname, router, searchParams],
+  )
 
   function applyDraftRecord(record: JobAIDraftRecord, useLocalCache = true) {
     const cached = useLocalCache ? readLocalDraftCache(record.id) : null
@@ -196,10 +231,6 @@ export default function RecruiterJobAIDraftPage() {
       saving: false,
       dirtyFields: cached?.dirtyFields ?? [],
     })
-  }
-
-  function getUnlockedFields() {
-    return ALL_DRAFT_FIELDS.filter((field) => !pageState.lockedFields.includes(field))
   }
 
   useEffect(() => {
@@ -225,6 +256,29 @@ export default function RecruiterJobAIDraftPage() {
       lockedFields: pageState.lockedFields,
     })
   }, [pageState.draft, pageState.draftId, pageState.dirtyFields, pageState.lockedFields])
+
+  useEffect(() => {
+    if (pageState.status !== 'drafting' || !pageState.draftId) return
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetchDraft(pageState.draftId!).unwrap()
+        if (response.data.status === 'failed') {
+          setPageState((prev) => ({ ...prev, loading: false, saving: false }))
+          notify.error('AI draft generation failed. Please try again.')
+          clearInterval(interval)
+        } else if (response.data.status !== 'drafting') {
+          applyDraftRecord(response.data, false)
+          syncRouteWithDraftId(response.data.id)
+          clearInterval(interval)
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [pageState.draftId, pageState.status, fetchDraft, syncRouteWithDraftId])
 
   function handleFieldChange<K extends DraftField>(field: K, value: JobAIDraftPayload[K]) {
     setPageState((prev) => {
@@ -256,7 +310,7 @@ export default function RecruiterJobAIDraftPage() {
 
   async function handleGenerate() {
     if (!title.trim() && !roughDescription.trim() && !sourceJobId) {
-      toast.error('Add a title, description, or choose a previous job before generating.')
+      notify.error('Add a title, description, or choose a previous job before generating.')
       return
     }
 
@@ -271,9 +325,24 @@ export default function RecruiterJobAIDraftPage() {
         locked_fields: pageState.lockedFields,
       }).unwrap()
 
-      applyDraftRecord(response.data, false)
-      syncRouteWithDraftId(response.data.id)
-      toast.success('AI draft created.')
+      const draftId = response.data.id
+
+      if (response.data.status === 'drafting') {
+        setPageState((prev) => ({
+          ...prev,
+          draftId,
+          threadId: response.data.thread_id,
+          status: 'drafting',
+          loading: true,
+          saving: false,
+        }))
+        syncRouteWithDraftId(draftId)
+        notify.success('AI draft generation started...')
+      } else {
+        applyDraftRecord(response.data, false)
+        syncRouteWithDraftId(draftId)
+        notify.success('AI draft created.')
+      }
     } catch (error) {
       setPageState((prev) => ({ ...prev, saving: false }))
       showApiToast(error, 'We could not generate a draft right now.')
@@ -298,26 +367,38 @@ export default function RecruiterJobAIDraftPage() {
     return response.data
   }
 
-  async function handleSaveProgress() {
+  async function handleSaveDraft() {
     if (!pageState.draftId || !pageState.draft) return
 
     setPageState((prev) => ({ ...prev, saving: true }))
 
     try {
       await persistDraft('save_draft')
-      toast.success('Draft progress saved.')
+      notify.success('Draft saved.')
+      router.push('/recruiter/jobs?filter=draft')
     } catch (error) {
       setPageState((prev) => ({ ...prev, saving: false }))
-      showApiToast(error, 'Unable to save draft progress right now.')
+      showApiToast(error, 'Unable to save draft right now.')
     }
   }
 
-  async function handleRegenerate(fields: DraftField[], feedback?: string) {
+  async function handleGeneralUpdate() {
     if (!pageState.draftId || !pageState.draft) return
+    if (!followUpFeedback.trim()) {
+      notify.info('Add update instructions first so AI knows what to change.')
+      return
+    }
 
-    const unlockedFields = fields.filter((field) => !pageState.lockedFields.includes(field))
+    const targetFields: DraftField[] =
+      refineTarget === 'all' ? ALL_DRAFT_FIELDS : [refineTarget as DraftField]
+
+    const unlockedFields = targetFields.filter((field) => !pageState.lockedFields.includes(field))
     if (unlockedFields.length === 0) {
-      toast.info('Unlock at least one field before asking AI to change it.')
+      notify.info(
+        refineTarget === 'all'
+          ? 'Every field is locked — unlock at least one before asking AI to change it.'
+          : 'That section is locked. Unlock it first or pick a different target.',
+      )
       return
     }
 
@@ -331,43 +412,19 @@ export default function RecruiterJobAIDraftPage() {
           edited_fields: { ...pageState.draft },
           regenerate_fields: unlockedFields,
           locked_fields: pageState.lockedFields,
-          ...((feedback ?? followUpFeedback).trim() && {
-            feedback: (feedback ?? followUpFeedback).trim(),
-          }),
+          feedback: followUpFeedback.trim(),
         },
       }).unwrap()
 
       clearLocalDraftCache(pageState.draftId)
       applyDraftRecord(response.data, false)
-      toast.success('Draft updated.')
+      setFollowUpFeedback('')
+      notify.success(
+        refineTarget === 'all' ? 'Draft updated.' : `${refineTarget.replace('_', ' ')} updated.`,
+      )
     } catch (error) {
       setPageState((prev) => ({ ...prev, saving: false }))
       showApiToast(error, 'Unable to update the draft right now.')
-    }
-  }
-
-  async function handleGeneralUpdate() {
-    if (!pageState.draftId || !pageState.draft) return
-    if (!followUpFeedback.trim()) {
-      toast.info('Add update instructions first so AI knows what to change.')
-      return
-    }
-
-    await handleRegenerate(getUnlockedFields(), followUpFeedback)
-  }
-
-  async function handleApprove() {
-    if (!pageState.draftId || !pageState.draft) return
-
-    setPageState((prev) => ({ ...prev, saving: true }))
-
-    try {
-      await persistDraft('approve')
-      toast.success('Draft approved and saved to your drafts.')
-      router.push('/recruiter/jobs?filter=draft')
-    } catch (error) {
-      setPageState((prev) => ({ ...prev, saving: false }))
-      showApiToast(error, 'Unable to approve this draft right now.')
     }
   }
 
@@ -379,7 +436,7 @@ export default function RecruiterJobAIDraftPage() {
 
     try {
       await persistDraft('reject')
-      toast.success('Draft discarded.')
+      notify.success('Draft discarded.')
       router.push('/recruiter/jobs')
     } catch (error) {
       setPageState((prev) => ({ ...prev, saving: false }))
@@ -392,7 +449,7 @@ export default function RecruiterJobAIDraftPage() {
     if (evaluationEnabled) {
       const validationMessage = validateEvaluationSchemaDraft(evaluationDraft)
       if (validationMessage) {
-        toast.error(validationMessage)
+        notify.error(validationMessage)
         return
       }
     }
@@ -415,11 +472,11 @@ export default function RecruiterJobAIDraftPage() {
             jobId: response.data.job.id,
             ...buildEvaluationSchemaPayload(evaluationDraft),
           }).unwrap()
-          toast.success(`"${response.data.job.title}" was posted with its evaluation schema.`)
+          notify.success(`"${response.data.job.title}" was posted with its evaluation schema.`)
           router.push(`/recruiter/jobs/${response.data.job.id}`)
           return
         } catch {
-          toast.warn(
+          notify.warning(
             'Job posted, but the evaluation schema could not be saved. You can add it from the job page.',
           )
           router.push(`/recruiter/jobs/${response.data.job.id}`)
@@ -427,7 +484,7 @@ export default function RecruiterJobAIDraftPage() {
         }
       }
 
-      toast.success(`"${response.data.job.title}" was posted successfully.`)
+      notify.success(`"${response.data.job.title}" was posted successfully.`)
       router.push('/recruiter/jobs')
     } catch (error) {
       setPageState((prev) => ({ ...prev, saving: false }))
@@ -487,7 +544,28 @@ export default function RecruiterJobAIDraftPage() {
         </div>
       </div>
 
-      {!pageState.draftId ? (
+      {isThinking ? (
+        <section className={styles.thinking} aria-live="polite" aria-busy="true">
+          <div className={styles.thinkingOrb}>
+            <div className={styles.thinkingOrbCore} />
+          </div>
+          <h3 className={styles.thinkingTitle}>AI is drafting your job</h3>
+          <p className={styles.thinkingStep}>
+            <span>{thinkingSteps[thinkingStepIndex]}</span>
+            <span className={styles.thinkingDots} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </p>
+          <p className={styles.thinkingHint}>
+            This usually takes 20–60 seconds. You can leave this page and return — your draft will
+            be waiting under <Link href="/recruiter/jobs?filter=draft">Drafts</Link>.
+          </p>
+        </section>
+      ) : null}
+
+      {!isThinking && !pageState.draftId ? (
         <div className="team-tabs" role="tablist" aria-label="How to start">
           <button
             type="button"
@@ -510,13 +588,14 @@ export default function RecruiterJobAIDraftPage() {
         </div>
       ) : null}
 
-      {!isManualMode ? (
+      {!isThinking && !isManualMode ? (
         <JobAIAssistant
           title={title}
           roughDescription={roughDescription}
           sourceJobId={sourceJobId}
           researchSalary={researchSalary}
           followUpFeedback={followUpFeedback}
+          refineTarget={refineTarget}
           draftExists={Boolean(pageState.draftId)}
           loading={isBusy}
           jobs={jobs}
@@ -525,10 +604,11 @@ export default function RecruiterJobAIDraftPage() {
           onSourceJobIdChange={setSourceJobId}
           onResearchSalaryChange={setResearchSalary}
           onFollowUpFeedbackChange={setFollowUpFeedback}
+          onRefineTargetChange={setRefineTarget}
           onGenerate={handleGenerate}
           onGeneralUpdate={() => void handleGeneralUpdate()}
         />
-      ) : !pageState.draftId ? (
+      ) : !isThinking && !pageState.draftId ? (
         <section className={styles.startBlank}>
           <h2 className={styles.startBlankTitle}>Start a blank draft</h2>
           <p className={styles.startBlankCopy}>
@@ -547,7 +627,7 @@ export default function RecruiterJobAIDraftPage() {
         </section>
       ) : null}
 
-      {pageState.draftId ? (
+      {!isThinking && pageState.draftId ? (
         <div className={isManualMode ? styles.singleColumn : 'job-ai-page'}>
           <section className={isManualMode ? styles.singleColumnMain : 'job-ai-page__main'}>
             <JobDraftForm
@@ -558,9 +638,16 @@ export default function RecruiterJobAIDraftPage() {
               disabled={isBusy}
               isLoading={isBusy}
               showAiControls={!isManualMode}
+              salaryWarning={
+                pageState.salaryResearch?.insufficient_evidence ? (
+                  <>
+                    <AlertTriangle size={12} />
+                    Limited evidence — treat as directional
+                  </>
+                ) : undefined
+              }
               onFieldChange={handleFieldChange}
               onToggleLock={handleToggleLock}
-              onRequestUpdate={(fields, feedback) => void handleRegenerate(fields, feedback)}
             />
             <EvaluationSchemaSetupCard
               enabled={evaluationEnabled}
@@ -574,7 +661,10 @@ export default function RecruiterJobAIDraftPage() {
             <aside className="job-ai-page__sidebar">
               <AssumptionsWarnings
                 assumptions={pageState.assumptions}
-                warnings={pageState.warnings}
+                warnings={pageState.warnings.filter(
+                  (w) =>
+                    !w.toLowerCase().includes('salary') && !w.toLowerCase().includes('evidence'),
+                )}
                 missingFields={pageState.missingFields}
               />
               <SalaryResearchCard research={pageState.salaryResearch} />
@@ -583,7 +673,7 @@ export default function RecruiterJobAIDraftPage() {
         </div>
       ) : null}
 
-      {pageState.draftId ? (
+      {!isThinking && pageState.draftId ? (
         <div className={styles.footer}>
           <button
             type="button"
@@ -597,21 +687,12 @@ export default function RecruiterJobAIDraftPage() {
           <div className={styles.footerActions}>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="btn btn--secondary btn--sm"
               disabled={!pageState.draft || isBusy}
-              onClick={() => void handleSaveProgress()}
+              onClick={() => void handleSaveDraft()}
             >
               <FolderCheck size={14} aria-hidden="true" />
-              Save changes
-            </button>
-            <button
-              type="button"
-              className="btn btn--secondary btn--sm"
-              disabled={!pageState.draftId || isBusy}
-              onClick={() => void handleApprove()}
-            >
-              <CheckCheck size={14} aria-hidden="true" />
-              Save &amp; exit
+              Save as draft
             </button>
             <button
               type="button"

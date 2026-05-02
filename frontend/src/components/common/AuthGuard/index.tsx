@@ -17,8 +17,7 @@
  */
 import { type ReactNode, useEffect, useState } from 'react'
 import { useStore } from 'react-redux'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import { usePathname, useRouter } from 'next/navigation'
 
 import { getRoleDashboard } from '@/lib/roleRoutes'
@@ -98,21 +97,21 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
     if (!mounted || !sessionChecked) return
 
     if (!isAuthenticated || !user) {
-      toast.error('Please log in to access that page.')
+      notify.error('Please log in to access that page.')
       const next = encodeURIComponent(pathname)
       router.replace(`/login?next=${next}`)
       return
     }
 
     if (!hasRequiredRole(user.primary_role, requiredRole)) {
-      toast.error("You don't have permission to access that page.")
+      notify.error("You don't have permission to access that page.")
       router.replace(getRoleDashboard(user.primary_role))
       return
     }
 
     if (user.primary_role === 'candidate') {
       if (!user.is_onboarded && !pathname.startsWith('/onboarding')) {
-        toast.info('Please complete your onboarding profile first.')
+        notify.info('Please complete your onboarding profile first.')
         router.replace('/onboarding')
         return
       }

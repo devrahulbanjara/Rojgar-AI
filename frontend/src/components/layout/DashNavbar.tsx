@@ -108,7 +108,6 @@ function buildNavItems(role: DashRole): NavItem[] {
     { label: 'Jobs', href: '/recruiter/jobs' },
     { label: 'Talent', href: '/recruiter/talent' },
     { label: 'Interviews', href: '/recruiter/interviews' },
-    { label: 'Inbox', href: '/recruiter/inbox' },
   ]
   if (role === 'recruiter_admin') {
     items.push({ label: 'Team', href: '/recruiter/team' })
@@ -149,11 +148,11 @@ export default function DashNavbar({
       text: notification.body ?? notification.title,
       title: notification.title,
       time: notification.created_at,
-      href: notification.href ?? (isCandidate ? '/candidate/notifications' : '/recruiter/inbox'),
+      href: notification.href ?? (isCandidate ? '/candidate/notifications' : '/recruiter'),
       isRead: notification.is_read,
     })) ?? []
   const notificationsCount = notifications.filter((notification) => !notification.isRead).length
-  const notificationsLink = isCandidate ? '/candidate/notifications' : '/recruiter/inbox'
+  const notificationsLink = isCandidate ? '/candidate/notifications' : '/recruiter'
 
   const displayName = user?.full_name ?? userName
   const displayRole =

@@ -1,7 +1,6 @@
 'use client'
 
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 
@@ -32,11 +31,11 @@ export default function RecruiterEditJobPage() {
   async function handleUpdate(payload: CreateJobPayload) {
     try {
       await updateJob({ id: jobId, ...payload }).unwrap()
-      toast.success('Job updated successfully.')
+      notify.success('Job updated successfully.')
       router.push('/recruiter/jobs')
     } catch (error) {
       const parsed = parseApiError(error, {}, 'Failed to update job. Please try again.')
-      toast.error(parsed.message)
+      notify.error(parsed.message)
     }
   }
 
