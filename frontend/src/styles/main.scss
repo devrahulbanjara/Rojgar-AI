@@ -35,6 +35,12 @@
 @use 'pages/legal';
 @use 'pages/auth';
 @use 'pages/dashboard';
+@use 'pages/applications';
+@use 'pages/resume';
+@use 'pages/profile';
+@use 'pages/job-drafting';
+@use 'pages/interviews';
+@use 'components/recruiter-chat';
 
 // ── 6. Global tokens (CSS custom properties + body defaults) ─
 :root {

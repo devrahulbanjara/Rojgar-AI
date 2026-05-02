@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
+import { formatSalary as formatSalaryBase } from '@/lib/jobHelpers'
 import { type JobAIDraftRecord, useGetJobAIDraftsQuery } from '@/store/services/jobAiApi'
 import {
   type JobListItem,
@@ -28,8 +29,6 @@ import {
   X,
 } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 import styles from './page.module.scss'
 
 const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
@@ -46,10 +45,7 @@ const FILTER_OPTIONS: { label: string; value: JobStatus | 'all' }[] = [
 ]
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'NPR') {
-  if (!min && !max) return 'Salary not specified'
-  if (min && max) return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()}`
-  if (min) return `From ${currency} ${min.toLocaleString()}`
-  return `Up to ${currency} ${max!.toLocaleString()}`
+  return formatSalaryBase(min, max, currency) ?? 'Salary not specified'
 }
 
 function getAIDraftStatusLabel(status: string) {
@@ -315,12 +311,12 @@ function DeleteConfirmModal({
           </button>
           <button
             type="button"
-            className="btn btn--danger btn--sm"
+            className={`btn btn--danger btn--sm${isLoading ? ' btn--loading' : ''}`}
             onClick={onConfirm}
             disabled={isLoading}
             aria-busy={isLoading}
           >
-            {isLoading ? <ButtonSpinner label="Deleting..." /> : 'Delete'}
+            {isLoading ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>

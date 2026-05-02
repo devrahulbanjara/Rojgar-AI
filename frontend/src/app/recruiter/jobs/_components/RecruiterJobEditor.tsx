@@ -5,8 +5,6 @@ import { type FormEvent, useState } from 'react'
 import type { CreateJobPayload, JobDetail, JobStatus, LocationType } from '@/store/services/jobsApi'
 import { Plus, X } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 type RecruiterJobEditorProps = {
   initial?: RecruiterJobFormState
   onSubmit: (payload: CreateJobPayload) => Promise<void>
@@ -460,11 +458,11 @@ export default function RecruiterJobEditor({
         ) : null}
         <button
           type="submit"
-          className="btn btn--primary"
+          className={`btn btn--primary${isLoading ? ' btn--loading' : ''}`}
           disabled={isLoading}
           aria-busy={isLoading}
         >
-          {isLoading ? <ButtonSpinner label="Saving..." /> : submitLabel}
+          {isLoading ? 'Saving...' : submitLabel}
         </button>
       </div>
     </form>

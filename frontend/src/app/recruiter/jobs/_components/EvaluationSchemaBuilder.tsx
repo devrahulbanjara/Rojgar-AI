@@ -11,8 +11,6 @@ import {
 } from '@/store/services/evaluationApi'
 import { Plus, Trash2 } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 import styles from './EvaluationSchemaBuilder.module.css'
 
 interface Props {
@@ -221,11 +219,11 @@ function SchemaEditor({
       <div className={styles.actions}>
         <button
           type="button"
-          className="btn btn--primary btn--sm"
+          className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
           onClick={() => void handleSave()}
           disabled={isSaving}
         >
-          {isSaving ? <ButtonSpinner label="Saving..." /> : 'Save schema'}
+          {isSaving ? 'Saving...' : 'Save schema'}
         </button>
         <span className={styles.helper}>
           Current blend: {(humanWeight * 100).toFixed(0)}% human, {(llmWeight * 100).toFixed(0)}%{' '}
