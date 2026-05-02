@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 
@@ -109,9 +108,9 @@ export default function RecruiterJobDetailPage() {
     if (!job || job.status === nextStatus) return
     try {
       await updateJob({ id: job.id, status: nextStatus }).unwrap()
-      toast.success(`Marked as ${getJobStatusLabel(nextStatus).toLowerCase()}.`)
+      notify.success(`Marked as ${getJobStatusLabel(nextStatus).toLowerCase()}.`)
     } catch {
-      toast.error('Failed to update job status.')
+      notify.error('Failed to update job status.')
     }
   }
 
@@ -119,10 +118,10 @@ export default function RecruiterJobDetailPage() {
     if (!job) return
     try {
       await deleteJob(job.id).unwrap()
-      toast.success(`"${job.title}" deleted.`)
+      notify.success(`"${job.title}" deleted.`)
       router.push('/recruiter/jobs')
     } catch {
-      toast.error('Failed to delete job.')
+      notify.error('Failed to delete job.')
     }
   }
 
@@ -131,7 +130,7 @@ export default function RecruiterJobDetailPage() {
     try {
       const resp = await completeHiring(job.id).unwrap()
       const rejected = resp.data?.rejected_application_count ?? 0
-      toast.success(
+      notify.success(
         rejected > 0
           ? `Hiring complete. ${rejected} pending application${rejected === 1 ? '' : 's'} closed.`
           : 'Hiring complete.',
@@ -139,7 +138,7 @@ export default function RecruiterJobDetailPage() {
       setShowCompleteHiringModal(false)
       void refetch()
     } catch {
-      toast.error('Failed to complete hiring.')
+      notify.error('Failed to complete hiring.')
     }
   }
 
@@ -276,7 +275,7 @@ export default function RecruiterJobDetailPage() {
               onClick={() => {
                 navigator.clipboard
                   .writeText(window.location.href)
-                  .then(() => toast.info('Link copied!'))
+                  .then(() => notify.info('Link copied!'))
               }}
               aria-label="Share link"
             >

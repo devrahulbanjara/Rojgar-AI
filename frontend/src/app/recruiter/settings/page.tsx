@@ -1,8 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import { useRouter } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
@@ -49,10 +48,10 @@ export default function RecruiterSettingsPage() {
         chat_default_scope: form.chat_default_scope,
       }).unwrap()
       setDraftForm(null)
-      toast.success('Recruiter settings updated.')
+      notify.success('Recruiter settings updated.')
     } catch (err) {
       const parsed = parseApiError(err, {}, 'Could not save recruiter settings.')
-      toast.error(parsed.message)
+      notify.error(parsed.message)
     }
   }
 
@@ -62,7 +61,7 @@ export default function RecruiterSettingsPage() {
       dispatch(clearCredentials())
       router.push('/login')
     } catch {
-      toast.error('Failed to delete account. Please try again.')
+      notify.error('Failed to delete account. Please try again.')
     }
   }
 

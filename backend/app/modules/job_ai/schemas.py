@@ -131,6 +131,7 @@ class JobAIDraftResponse(BaseModel):
     missing_fields: list[str]
     last_interrupt: dict | None
     committed_job_id: UUID | None
+    company_id: UUID
     created_at: datetime
     updated_at: datetime
 

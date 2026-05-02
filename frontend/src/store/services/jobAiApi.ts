@@ -141,6 +141,14 @@ export const jobAiApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['JobAIDrafts', 'Jobs'],
     }),
+
+    deleteJobAIDraft: builder.mutation<ApiResponse<void>, string>({
+      query: (draftId) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/ai/drafts/${draftId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['JobAIDrafts'],
+    }),
   }),
   overrideExisting: process.env.NODE_ENV !== 'production',
 })
@@ -148,6 +156,7 @@ export const jobAiApi = baseApi.injectEndpoints({
 export const {
   useCommitJobAIDraftMutation,
   useCreateJobAIDraftMutation,
+  useDeleteJobAIDraftMutation,
   useGetJobAIDraftsQuery,
   useGetJobAIDraftQuery,
   useLazyGetJobAIDraftQuery,

@@ -215,12 +215,12 @@ class AIService:
             request_kwargs["temperature"] = temperature
 
         try:
-            async with asyncio.timeout(30):
+            async with asyncio.timeout(120):
                 response = await self._llm_client.chat.completions.create(
                     **request_kwargs
                 )
         except TimeoutError:
-            logger.error("Groq structured generation timed out after 30s")
+            logger.error("Groq structured generation timed out after 120s")
             raise HTTPException(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                 detail="The AI service did not respond in time. Please try again.",

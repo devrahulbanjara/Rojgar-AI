@@ -1,8 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import {
   type CombinedEvaluation,
   type EvaluationCriterion,
@@ -338,12 +337,12 @@ function HumansSection({
     if (!draft) return
     const label = draft.label.trim()
     if (!label) {
-      toast.error('Enter recruiter name (e.g. "Ravi (Tech Lead)").')
+      notify.error('Enter recruiter name (e.g. "Ravi (Tech Lead)").')
       return
     }
     const scoreErrors = getDraftScoreErrors(draft, criteria)
     if (Object.keys(scoreErrors).length > 0) {
-      toast.error(Object.values(scoreErrors)[0] ?? 'Please fix invalid criterion scores.')
+      notify.error(Object.values(scoreErrors)[0] ?? 'Please fix invalid criterion scores.')
       return
     }
     try {
@@ -354,7 +353,7 @@ function HumansSection({
           scores: buildScorePayload(),
           notes: draft.notes,
         }).unwrap()
-        toast.success('Recruiter row added.')
+        notify.success('Recruiter row added.')
       } else if (editingId) {
         await updateHuman({
           applicationId,
@@ -363,12 +362,12 @@ function HumansSection({
           scores: buildScorePayload(),
           notes: draft.notes,
         }).unwrap()
-        toast.success('Recruiter row updated.')
+        notify.success('Recruiter row updated.')
       }
       cancel()
       onRefresh()
     } catch {
-      toast.error('Could not save recruiter row.')
+      notify.error('Could not save recruiter row.')
     }
   }
 
@@ -378,11 +377,11 @@ function HumansSection({
     setPendingDeleteId(row.id)
     try {
       await deleteHuman({ applicationId, scoreId: row.id }).unwrap()
-      toast.success('Recruiter row deleted.')
+      notify.success('Recruiter row deleted.')
       if (editingId === row.id) cancel()
       onRefresh()
     } catch {
-      toast.error('Could not delete recruiter row.')
+      notify.error('Could not delete recruiter row.')
     } finally {
       setPendingDeleteId(null)
     }
@@ -463,10 +462,10 @@ function LlmCard({
   async function handleRunLlm() {
     try {
       await runLlmEvaluation(applicationId).unwrap()
-      toast.success('AI recruiter evaluation complete.')
+      notify.success('AI recruiter evaluation complete.')
       onRefresh()
     } catch {
-      toast.error('Could not run the AI evaluation.')
+      notify.error('Could not run the AI evaluation.')
     }
   }
 

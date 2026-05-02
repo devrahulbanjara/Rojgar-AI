@@ -1,5 +1,7 @@
 'use client'
 
+import { useRef, useState } from 'react'
+
 import type { SalaryResearch } from '@/store/services/jobAiApi'
 
 function formatMoney(value: number | null, currency: string | null) {
@@ -17,7 +19,27 @@ function formatMoney(value: number | null, currency: string | null) {
 }
 
 export default function SalaryResearchCard({ research }: { research: SalaryResearch | null }) {
+  const [expanded, setExpanded] = useState(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
+
   if (!research) return null
+
+  const isLong = research.rationale.length > 200
+  const displayText =
+    isLong && !expanded ? `${research.rationale.slice(0, 200)}...` : research.rationale
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (bodyRef.current) {
+      const { scrollHeight, clientHeight, scrollTop } = bodyRef.current
+      const atTop = scrollTop === 0
+      const atBottom = scrollTop >= scrollHeight - clientHeight - 1
+
+      if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+        return
+      }
+      e.stopPropagation()
+    }
+  }
 
   return (
     <section className="job-ai-card salary-research-card dash-card">
@@ -30,7 +52,11 @@ export default function SalaryResearchCard({ research }: { research: SalaryResea
         </div>
       </div>
 
-      <div className="job-ai-card__body dash-card__body">
+      <div
+        ref={bodyRef}
+        className="job-ai-card__body dash-card__body salary-research-card__body"
+        onWheel={handleWheel}
+      >
         <div className="salary-research-card__range">
           <div className="salary-research-card__range-item">
             <span className="salary-research-card__range-label">Suggested Min</span>
@@ -42,13 +68,18 @@ export default function SalaryResearchCard({ research }: { research: SalaryResea
           </div>
         </div>
 
-        <p className="salary-research-card__rationale">{research.rationale}</p>
-
-        {research.insufficient_evidence ? (
-          <div className="job-ai-callout job-ai-callout--warning">
-            Evidence is limited, so treat this salary guidance as directional rather than final.
-          </div>
-        ) : null}
+        <p className="salary-research-card__rationale">
+          {displayText}
+          {isLong && (
+            <button
+              type="button"
+              className="salary-research-card__toggle"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? ' Show less' : ' Read more'}
+            </button>
+          )}
+        </p>
 
         {research.sources.length > 0 ? (
           <div className="salary-research-card__sources">

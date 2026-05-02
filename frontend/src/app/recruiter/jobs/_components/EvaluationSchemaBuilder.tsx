@@ -1,8 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import {
   type EvaluationCriterion,
   type JobEvaluationSchema,
@@ -86,7 +85,7 @@ function SchemaEditor({
 
   async function handleSave() {
     if (hasEmptyLabels) {
-      toast.error('Every criterion needs a label before saving.')
+      notify.error('Every criterion needs a label before saving.')
       return
     }
 
@@ -98,7 +97,7 @@ function SchemaEditor({
     }))
 
     if (payload.some((criterion) => !criterion.key)) {
-      toast.error('Every criterion needs a valid key.')
+      notify.error('Every criterion needs a valid key.')
       return
     }
 
@@ -109,9 +108,9 @@ function SchemaEditor({
         human_weight: humanWeight,
         llm_weight: llmWeight,
       }).unwrap()
-      toast.success('Evaluation schema saved.')
+      notify.success('Evaluation schema saved.')
     } catch {
-      toast.error('Could not save the evaluation schema.')
+      notify.error('Could not save the evaluation schema.')
     }
   }
 

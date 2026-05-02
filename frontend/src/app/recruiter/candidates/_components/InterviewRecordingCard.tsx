@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import {
   type InterviewRecording,
   useDeleteRecordingMutation,
@@ -265,7 +264,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
         setSeconds((prev) => prev + 1)
       }, 1000)
     } catch {
-      toast.error('Could not access your microphone. Please check browser permissions.')
+      notify.error('Could not access your microphone. Please check browser permissions.')
     }
   }
 
@@ -309,10 +308,10 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
         file: audioBlob,
         durationSeconds: seconds,
       }).unwrap()
-      toast.success('Recording saved.')
+      notify.success('Recording saved.')
       resetRecorder()
     } catch {
-      toast.error('Failed to save recording.')
+      notify.error('Failed to save recording.')
     }
   }
 
@@ -320,7 +319,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
   const handleTranscribe = async (recordingId: string, isRetry = false) => {
     try {
       await transcribeRecording(recordingId).unwrap()
-      toast.success('Transcription complete.')
+      notify.success('Transcription complete.')
     } catch (error) {
       const detail =
         typeof error === 'object' && error && 'data' in error
@@ -339,13 +338,13 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
         /warming up|cold[- ]?start/i.test(typeof detail === 'string' ? detail : '')
 
       if (isColdStart && !isRetry) {
-        toast.info('Transcription model is warming up. Retrying in 20s...')
+        notify.info('Transcription model is warming up. Retrying in 20s...')
         setTimeout(() => {
           void handleTranscribe(recordingId, true)
         }, 20000)
         return
       }
-      toast.error(
+      notify.error(
         isColdStart
           ? 'Transcription still warming up. Try again shortly.'
           : 'Transcription failed.',
@@ -356,9 +355,9 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
   const handleDelete = async (recordingId: string) => {
     try {
       await deleteRecording({ recordingId, applicationId }).unwrap()
-      toast.success('Recording deleted.')
+      notify.success('Recording deleted.')
     } catch {
-      toast.error('Failed to delete recording.')
+      notify.error('Failed to delete recording.')
     }
   }
 

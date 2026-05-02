@@ -1,14 +1,17 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { toast } from 'react-toastify'
-
+import { notify } from '@/lib/notify'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { formatSalary as formatSalaryBase } from '@/lib/jobHelpers'
 import { getJobStatusLabel as getJobDisplayStatusLabel } from '@/lib/statusMetadata'
-import { type JobAIDraftRecord, useGetJobAIDraftsQuery } from '@/store/services/jobAiApi'
+import {
+  type JobAIDraftRecord,
+  useDeleteJobAIDraftMutation,
+  useGetJobAIDraftsQuery,
+} from '@/store/services/jobAiApi'
 import {
   type JobListItem,
   type JobStatus,
@@ -264,16 +267,51 @@ function RecruiterJobCard({
 
 function RecruiterAIDraftCard({ draft }: { draft: JobAIDraftRecord }) {
   const router = useRouter()
+  const [deleteDraft, { isLoading: isDeleting }] = useDeleteJobAIDraftMutation()
+  const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const jobDraft = draft.latest_draft
   const draftTitle = getAIDraftTitle(draft)
   const locationLabel = jobDraft?.location
     ? `${jobDraft.location} · ${LOCATION_TYPE_LABELS[jobDraft.location_type]}`
     : LOCATION_TYPE_LABELS[jobDraft?.location_type ?? 'remote']
 
+  useEffect(() => {
+    if (!showMenu) return
+    function handler(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false)
+    }
+    function keyHandler(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowMenu(false)
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('keydown', keyHandler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('keydown', keyHandler)
+    }
+  }, [showMenu])
+
+  const handleDelete = async () => {
+    try {
+      await deleteDraft(draft.id).unwrap()
+      notify.success('Draft deleted.')
+    } catch {
+      notify.error('Failed to delete draft.')
+    }
+  }
+
+  const handleEdit = () => {
+    router.push(`/recruiter/jobs/new?draftId=${draft.id}`)
+  }
+
   return (
     <div
       className={styles.card}
-      onClick={() => router.push(`/recruiter/jobs/new?draftId=${draft.id}`)}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest(`.${styles.kebabWrap}`)) return
+        router.push(`/recruiter/jobs/new?draftId=${draft.id}`)
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -282,6 +320,50 @@ function RecruiterAIDraftCard({ draft }: { draft: JobAIDraftRecord }) {
     >
       <div className={styles.cardHead}>
         <h3 className={styles.title}>{draftTitle}</h3>
+        <div ref={menuRef} className={styles.kebabWrap} onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className={styles.kebabBtn}
+            onClick={() => setShowMenu((v) => !v)}
+            aria-label="Draft actions"
+            aria-haspopup="menu"
+            aria-expanded={showMenu}
+            disabled={isDeleting}
+          >
+            <MoreVertical size={16} aria-hidden="true" />
+          </button>
+          {showMenu ? (
+            <div className={`${styles.menu} ${styles['menu--up']}`} role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                className={styles.menuItem}
+                onClick={() => {
+                  setShowMenu(false)
+                  handleEdit()
+                }}
+              >
+                <Pencil size={14} aria-hidden="true" />
+                Edit draft
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={`${styles.menuItem} ${styles['menuItem--danger']}`}
+                onClick={() => {
+                  setShowMenu(false)
+                  handleDelete()
+                }}
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                Delete draft
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className={styles.cardHead}>
         <span className={styles.statusText}>{getAIDraftStatusLabel(draft.status)}</span>
       </div>
 
@@ -421,10 +503,10 @@ export default function CompanyJobsPage() {
     if (!deletingJob) return
     try {
       await deleteJob(deletingJob.id).unwrap()
-      toast.success(`"${deletingJob.title}" deleted.`)
+      notify.success(`"${deletingJob.title}" deleted.`)
       setDeletingJob(null)
     } catch {
-      toast.error('Failed to delete job.')
+      notify.error('Failed to delete job.')
     }
   }
 
@@ -433,9 +515,9 @@ export default function CompanyJobsPage() {
     try {
       setUpdatingStatusId(job.id)
       await updateJob({ id: job.id, status: nextStatus }).unwrap()
-      toast.success(`${job.title} marked as ${getJobStatusLabel(nextStatus).toLowerCase()}.`)
+      notify.success(`${job.title} marked as ${getJobStatusLabel(nextStatus).toLowerCase()}.`)
     } catch {
-      toast.error('Failed to update job status.')
+      notify.error('Failed to update job status.')
     } finally {
       setUpdatingStatusId(null)
     }
