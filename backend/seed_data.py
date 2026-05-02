@@ -5537,9 +5537,7 @@ async def seed_applications(
 ):
     """Seed applications, shortlisting, outreach emails, and interview bookings."""
 
-    print(
-        "\n📋 Seeding applications, shortlisting, outreach, and interviews..."
-    )
+    print("\n📋 Seeding applications, shortlisting, outreach, and interviews...")
 
     interview_counter = 0
     application_counter = 0
