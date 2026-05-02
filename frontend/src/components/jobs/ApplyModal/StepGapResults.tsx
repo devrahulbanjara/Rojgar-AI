@@ -5,9 +5,6 @@ import styles from './applyModal.module.scss'
 
 interface StepGapResultsProps {
   result: GapAnalysisResult
-  onAutoPatch: () => void
-  onApplyAnyway: () => void
-  onBack: () => void
 }
 
 type Tone = 'good' | 'warn' | 'bad'
@@ -137,12 +134,7 @@ function IconList({ title, items, icon, tone }: IconListProps) {
   )
 }
 
-export default function StepGapResults({
-  result,
-  onAutoPatch,
-  onApplyAnyway,
-  onBack,
-}: StepGapResultsProps) {
+export default function StepGapResults({ result }: StepGapResultsProps) {
   return (
     <div className={styles.applyModal__results} onWheel={(e) => e.stopPropagation()}>
       <div className={styles.applyModal__hero}>

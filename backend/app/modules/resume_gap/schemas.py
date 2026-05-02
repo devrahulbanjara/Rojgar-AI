@@ -38,12 +38,20 @@ class AutoPatchRequest(BaseModel):
     gap_result: GapAnalysisResult
 
 
+class ExperiencePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    index: int = Field(ge=0)
+    description: list[str]
+
+
 class AutoPatchResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     headline: str
     summary: str
-    skills_to_add: list[str]
+    skills: list[str]
+    experience_patches: list[ExperiencePatch]
 
 
 class PatchedFieldDiff(BaseModel):

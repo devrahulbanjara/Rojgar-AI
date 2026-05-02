@@ -147,11 +147,7 @@ function TargetRolesCard({ roles, isSaving, onAdd, onRemove }: TargetRolesProps)
           }}
         />
         {open && (input.length > 0 || filtered.length > 0) && (
-          <div
-            className={styles.rolesDropdown}
-            role="listbox"
-            onWheel={(e) => e.stopPropagation()}
-          >
+          <div className={styles.rolesDropdown} role="listbox" onWheel={(e) => e.stopPropagation()}>
             {filtered.map((role) => (
               <button
                 key={role}
