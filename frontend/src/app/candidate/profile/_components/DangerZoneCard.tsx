@@ -4,8 +4,6 @@ import { useState } from 'react'
 
 import { AlertTriangle, Trash2, X } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 import styles from '../page.module.scss'
 
 interface DangerZoneCardProps {
@@ -101,11 +99,11 @@ export default function DangerZoneCard({ isDeleting, onDelete }: DangerZoneCardP
               </button>
               <button
                 type="button"
-                className="btn btn--danger"
+                className={`btn btn--danger${isDeleting ? ' btn--loading' : ''}`}
                 onClick={() => void onDelete()}
                 disabled={isDeleting || confirmText !== 'DELETE'}
               >
-                {isDeleting ? <ButtonSpinner label="Deleting…" /> : 'Delete account'}
+                {isDeleting ? 'Deleting…' : 'Delete account'}
               </button>
             </div>
           </div>

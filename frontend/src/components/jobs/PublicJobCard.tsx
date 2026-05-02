@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 
-import { LOCATION_TYPE_LABELS, formatDate, formatSalary, getCompanyAccent } from '@/lib/jobHelpers'
+import { getCompanyAccent } from '@/lib/companyAccent'
+import { LOCATION_TYPE_LABELS, formatDate, formatSalary } from '@/lib/jobHelpers'
 import type { JobListItem } from '@/store/services/jobsApi'
 import { Briefcase, ChevronRight, Clock, MapPin } from 'lucide-react'
 
@@ -28,7 +29,7 @@ export default function PublicJobCard({ job }: { job: JobListItem }) {
           sizes="40px"
           style={
             {
-              '--logo-bg': accent.color + '1A',
+              '--logo-bg': accent.background,
               '--logo-color': accent.color,
             } as React.CSSProperties
           }

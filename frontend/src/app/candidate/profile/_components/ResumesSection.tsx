@@ -15,8 +15,6 @@ import {
 import { apiResumeToUi, removeResume, setResumes, upsertResume } from '@/store/slices/resumeSlice'
 import { ChevronRight, FileText, Plus, X } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 import CreateResumeModal from '../../resume/_components/CreateResumeModal'
 import styles from './resumesSection.module.scss'
 
@@ -58,11 +56,11 @@ function DeleteResumeModal({
           </button>
           <button
             type="button"
-            className="btn btn--danger"
+            className={`btn btn--danger${isDeleting ? ' btn--loading' : ''}`}
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? <ButtonSpinner label="Deleting…" /> : 'Delete'}
+            {isDeleting ? 'Deleting…' : 'Delete'}
           </button>
         </div>
       </div>

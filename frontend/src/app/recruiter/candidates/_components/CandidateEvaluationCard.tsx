@@ -17,7 +17,6 @@ import { useGetRecordingsQuery } from '@/store/services/recordingsApi'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
-import ButtonSpinner from '@/components/common/ButtonSpinner'
 
 import styles from './CandidateEvaluationCard.module.css'
 
@@ -154,11 +153,11 @@ function RecruiterRowEditor({
       <div className={styles.actions}>
         <button
           type="button"
-          className="btn btn--primary btn--sm"
+          className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? <ButtonSpinner label="Saving..." /> : saveLabel}
+          {isSaving ? 'Saving...' : saveLabel}
         </button>
         <button
           type="button"
@@ -215,13 +214,13 @@ function RecruiterRowView({
           </button>
           <button
             type="button"
-            className="btn btn--secondary btn--sm"
+            className={`btn btn--secondary btn--sm${isDeleting ? ' btn--loading' : ''}`}
             onClick={onDelete}
             disabled={isDeleting}
             aria-label="Delete recruiter row"
           >
             {isDeleting ? (
-              <ButtonSpinner label="Deleting..." />
+              'Deleting...'
             ) : (
               <>
                 <Trash2 size={14} aria-hidden="true" />
@@ -452,17 +451,15 @@ function LlmCard({
       <div className={styles.actions}>
         <button
           type="button"
-          className="btn btn--secondary btn--sm"
+          className={`btn btn--secondary btn--sm${isRunningLlm ? ' btn--loading' : ''}`}
           onClick={() => void handleRunLlm()}
           disabled={isRunningLlm}
         >
-          {isRunningLlm ? (
-            <ButtonSpinner label="Running..." />
-          ) : evaluation.llm ? (
-            'Re-run AI evaluation'
-          ) : (
-            'Run AI evaluation'
-          )}
+          {isRunningLlm
+            ? 'Running...'
+            : evaluation.llm
+              ? 'Re-run AI evaluation'
+              : 'Run AI evaluation'}
         </button>
       </div>
       {evaluation.llm?.notes ? (

@@ -17,7 +17,6 @@ import {
 import { Camera, MapPin, Trash2, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
-import ButtonSpinner from '@/components/common/ButtonSpinner'
 
 import { CompanySettingsDataSkeleton } from './_components/CompanySettingsSkeletons'
 
@@ -453,18 +452,12 @@ export default function CompanySettingsPage() {
               </div>
               <div className="profile-aside-card__actions">
                 <button
-                  className="btn btn--primary btn--sm"
+                  className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
                   disabled={isWorking || isReadOnly}
                   onClick={() => void handleSave()}
                   type="button"
                 >
-                  {isReadOnly ? (
-                    'Read only'
-                  ) : isSaving ? (
-                    <ButtonSpinner label="Saving..." />
-                  ) : (
-                    'Save'
-                  )}
+                  {isReadOnly ? 'Read only' : isSaving ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </div>
@@ -681,12 +674,12 @@ export default function CompanySettingsPage() {
                 Cancel
               </button>
               <button
-                className="btn btn--primary"
+                className={`btn btn--primary${isSubmittingCroppedLogo ? ' btn--loading' : ''}`}
                 disabled={!logoCroppedAreaPixels || isSubmittingCroppedLogo}
                 onClick={() => void handleLogoCropConfirm()}
                 type="button"
               >
-                {isSubmittingCroppedLogo ? <ButtonSpinner label="Saving..." /> : 'Done'}
+                {isSubmittingCroppedLogo ? 'Saving...' : 'Done'}
               </button>
             </div>
           </div>

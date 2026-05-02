@@ -6,16 +6,6 @@ export const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   hybrid: 'Hybrid',
 }
 
-export function getCompanyAccent(name: string): { logo: string; color: string } {
-  const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
-  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-
-  return {
-    logo: name.trim().charAt(0).toUpperCase() || 'C',
-    color: palette[seed % palette.length],
-  }
-}
-
 export function formatSalary(
   min?: number | null,
   max?: number | null,

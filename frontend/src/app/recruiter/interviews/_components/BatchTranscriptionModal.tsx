@@ -9,8 +9,6 @@ import {
 } from '@/store/services/recordingsApi'
 import { X } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
-
 import styles from './BatchTranscriptionModal.module.css'
 
 interface Props {
@@ -184,26 +182,22 @@ export default function BatchTranscriptionModal({ jobId, onClose }: Props) {
             {phase === 'select' ? (
               <button
                 type="button"
-                className="btn btn--primary btn--sm"
+                className={`btn btn--primary btn--sm${isRunning ? ' btn--loading' : ''}`}
                 onClick={() => void handleRun()}
                 disabled={isRunning || effectiveSelectedIds.length === 0}
               >
-                {isRunning ? <ButtonSpinner label="Running..." /> : 'Run transcription'}
+                {isRunning ? 'Running...' : 'Run transcription'}
               </button>
             ) : phase === 'done' ? (
               <>
                 {failedIds.length > 0 ? (
                   <button
                     type="button"
-                    className="btn btn--secondary btn--sm"
+                    className={`btn btn--secondary btn--sm${isRunning ? ' btn--loading' : ''}`}
                     onClick={() => void handleRetryFailed()}
                     disabled={isRunning}
                   >
-                    {isRunning ? (
-                      <ButtonSpinner label="Retrying..." />
-                    ) : (
-                      `Retry failed (${failedIds.length})`
-                    )}
+                    {isRunning ? 'Retrying...' : `Retry failed (${failedIds.length})`}
                   </button>
                 ) : null}
                 <button type="button" className="btn btn--primary btn--sm" onClick={onClose}>

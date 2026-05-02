@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 
+import { formatSalary } from '@/lib/jobHelpers'
 import {
   type JobDetail,
   type JobStatus,
@@ -28,7 +29,6 @@ import {
 } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
-import ButtonSpinner from '@/components/common/ButtonSpinner'
 import { FilterSelect } from '@/components/common/Toolbar'
 
 import EvaluationSchemaBuilder from '../_components/EvaluationSchemaBuilder'
@@ -48,13 +48,6 @@ const JOB_STATUS_OPTIONS: Array<{ value: JobStatus; label: string }> = [
   { value: 'draft', label: 'Draft' },
   { value: 'expired', label: 'Expired' },
 ]
-
-function formatSalary(min?: number | null, max?: number | null, currency = 'USD'): string | null {
-  if (!min && !max) return null
-  if (min && max) return `${currency} ${min.toLocaleString()} – ${max.toLocaleString()}`
-  if (min) return `From ${currency} ${min.toLocaleString()}`
-  return `Up to ${currency} ${max!.toLocaleString()}`
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -380,12 +373,12 @@ export default function RecruiterJobDetailPage() {
               </button>
               <button
                 type="button"
-                className="btn btn--danger btn--sm"
+                className={`btn btn--danger btn--sm${isDeleting ? ' btn--loading' : ''}`}
                 onClick={handleDeleteConfirm}
                 disabled={isDeleting}
                 aria-busy={isDeleting}
               >
-                {isDeleting ? <ButtonSpinner label="Deleting..." /> : 'Delete'}
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
