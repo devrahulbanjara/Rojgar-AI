@@ -67,7 +67,12 @@ function getAIDraftStatusLabel(status: string) {
 }
 
 function getAIDraftTitle(draft: JobAIDraftRecord) {
-  return draft.latest_draft?.title?.trim() || draft.source_prompt?.trim() || 'Untitled AI draft'
+  return (
+    draft.latest_draft?.title?.trim() ||
+    draft.source_title?.trim() ||
+    draft.source_rough_description?.trim() ||
+    'Untitled AI draft'
+  )
 }
 
 function isVisibleAIDraft(draft: JobAIDraftRecord) {
@@ -341,7 +346,12 @@ export default function CompanyJobsPage() {
     isLoading: isLoadingJobs,
     isError: isJobsError,
     refetch: refetchJobs,
-  } = useGetCompanyJobsQuery()
+  } = useGetCompanyJobsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    pollingInterval: 15000,
+  })
   const {
     data: draftsResp,
     isLoading: isLoadingDrafts,

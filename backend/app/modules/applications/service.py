@@ -507,6 +507,7 @@ async def apply_to_job(
     await invalidate_company_application_caches(str(job.company_id))
     await invalidate_job_detail_caches(str(payload.job_id))
     await redis_service.delete(f"shortlist:summary:{payload.job_id}")
+    await redis_service.delete(f"jobs:company:{job.company_id}")
 
     logger.info(
         "User {user_id} applied to job {job_id}", user_id=user.id, job_id=payload.job_id

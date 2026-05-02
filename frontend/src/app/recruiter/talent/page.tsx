@@ -177,12 +177,16 @@ export default function RecruiterTalentPage() {
       ) : (
         <div className={styles.grid}>
           {filteredCandidates.map((candidate) => {
+            const latestApp = [...candidate.applications].sort(
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0]
+
             return (
               <button
                 type="button"
                 key={candidate.candidate_id}
                 className={styles.card}
-                onClick={() => openDrawer(candidate.latest_application_id)}
+                onClick={() => openDrawer(latestApp?.application_id || candidate.latest_application_id)}
                 aria-label={`Open drawer for ${candidate.applicant_name}`}
               >
                 <Avatar
@@ -196,7 +200,7 @@ export default function RecruiterTalentPage() {
                   <p className={styles.name}>{candidate.applicant_name}</p>
                   <p className={styles.email}>{candidate.applicant_email}</p>
                   <p className={styles.role}>
-                    Applied for: <span>{candidate.primary_job_title}</span>
+                    Applied for: <span>{latestApp?.job_title || candidate.primary_job_title}</span>
                   </p>
                 </div>
                 <span className={styles.chevron} aria-hidden="true">
