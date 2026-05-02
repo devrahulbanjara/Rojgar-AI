@@ -21,6 +21,7 @@ class ApplyRequest(BaseSchema):
     share_location: bool = True
     share_links: bool = True
     share_headline_summary: bool = True
+    apply_pending_patch: bool = False
 
 
 class CandidateShareSettings(BaseSchema):

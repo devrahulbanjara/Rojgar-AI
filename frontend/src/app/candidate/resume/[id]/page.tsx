@@ -124,9 +124,9 @@ function ResumeViewer({ resume, onEdit }: { resume: Resume; onEdit: () => void }
     <div className="rv-overlay">
       <div className="rv-overlay__bar">
         <div className="rv-overlay__bar-left">
-          <Link href="/candidate/resume" className="btn btn--ghost btn--sm">
+          <Link href="/candidate/profile" className="btn btn--ghost btn--sm">
             <ArrowLeft size={16} aria-hidden="true" />
-            Back to Resumes
+            Back to Profile
           </Link>
         </div>
         <span className="rv-overlay__bar-title">{resume.name}</span>
@@ -232,9 +232,9 @@ export default function ResumeDetailPage({
           <p>Resume not found.</p>
           <button
             className="btn btn--ghost btn--sm"
-            onClick={() => router.push('/candidate/resume')}
+            onClick={() => router.push('/candidate/profile')}
           >
-            Back to Resumes
+            Back to Profile
           </button>
         </div>
       </div>
@@ -248,9 +248,9 @@ export default function ResumeDetailPage({
           <p>Failed to load resume.</p>
           <button
             className="btn btn--ghost btn--sm"
-            onClick={() => router.push('/candidate/resume')}
+            onClick={() => router.push('/candidate/profile')}
           >
-            Back to Resumes
+            Back to Profile
           </button>
         </div>
       </div>
@@ -263,7 +263,7 @@ export default function ResumeDetailPage({
         {saveError && <p className="resume-field__error">{saveError}</p>}
         <ResumeEditor
           resume={resume}
-          onClose={() => router.push('/candidate/resume')}
+          onClose={() => router.push('/candidate/profile')}
           onPreview={() => router.replace(`/candidate/resume/${id}`)}
           onSave={handleSave}
           onChange={handleResumeChange}

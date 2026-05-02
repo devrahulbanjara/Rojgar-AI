@@ -39,7 +39,7 @@ export type FormProfile = {
   is_open_to_work: boolean
 }
 
-export const SECTIONS = ['Overview', 'Experience', 'Education', 'Skills'] as const
+export const SECTIONS = ['Overview', 'Experience', 'Education', 'Skills', 'Resumes'] as const
 export type Section = (typeof SECTIONS)[number]
 
 export const EMPTY_FORM: FormProfile = {

@@ -47,7 +47,6 @@ const SERIES_META = [
   { key: 'shortlisted' as const, label: 'Shortlisted', tone: 'success' as const },
   { key: 'interviews' as const, label: 'Interviews', tone: 'secondary' as const },
   { key: 'offers' as const, label: 'Offers', tone: 'accent' as const },
-  { key: 'rejected' as const, label: 'Rejected', tone: 'danger' as const },
 ]
 
 const ACTIVITY_GROUPS = [
@@ -127,7 +126,7 @@ function ActivityGroupedBar({
 
 function InsightsSkeleton() {
   return (
-    <div className="candidate-dashboard__analytics">
+    <div className="candidate-dashboard__analytics dashboard-stagger">
       <SegmentedControl
         options={RANGE_OPTIONS}
         value="30d"
@@ -179,6 +178,18 @@ function InsightsSkeleton() {
       <div className="dash-card" aria-hidden="true">
         <div className="dash-card__header">
           <div>
+            <div className="dash-card__title">Pipeline speed</div>
+            <div className="dash-card__subtitle">Average time from application to each stage.</div>
+          </div>
+        </div>
+        <div className="dash-card__body">
+          <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+        </div>
+      </div>
+
+      <div className="dash-card" aria-hidden="true">
+        <div className="dash-card__header">
+          <div>
             <div className="dash-card__title">Activity over time</div>
             <div className="dash-card__subtitle">
               Applications sent and key milestones by period.
@@ -224,12 +235,13 @@ export default function CandidateDashboardInsights({
   }
 
   const funnelMax = Math.max(...analytics.funnel.map((item) => item.count), 1)
+  const funnelEmpty = analytics.funnel.every((item) => item.count === 0)
   const progressStyle = {
     '--dashboard-progress': `${readiness.completion}%`,
   } as CSSProperties
 
   return (
-    <div className="candidate-dashboard__analytics">
+    <div className="candidate-dashboard__analytics dashboard-stagger">
       <SegmentedControl
         options={RANGE_OPTIONS}
         value={rangeKey}
@@ -251,22 +263,31 @@ export default function CandidateDashboardInsights({
             </div>
           </div>
           <div className="dash-card__body candidate-dashboard__analytics-body">
-            <div className="dashboard-funnel-list">
-              {analytics.funnel.map((item) => (
-                <div key={item.stage} className="dashboard-funnel-list__row">
-                  <div className="dashboard-funnel-list__label">
-                    {FUNNEL_LABELS[item.stage] ?? item.stage}
+            {funnelEmpty ? (
+              <div className="dashboard-empty">
+                <div className="dashboard-empty__title">No applications yet</div>
+                <p className="dashboard-empty__copy">
+                  Start applying to jobs and your funnel will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="dashboard-funnel-list">
+                {analytics.funnel.map((item) => (
+                  <div key={item.stage} className="dashboard-funnel-list__row">
+                    <div className="dashboard-funnel-list__label">
+                      {FUNNEL_LABELS[item.stage] ?? item.stage}
+                    </div>
+                    <div className="dashboard-funnel-list__track">
+                      <span
+                        className={`dashboard-funnel-list__fill dashboard-funnel-list__fill--${item.stage}`}
+                        style={{ width: `${(item.count / funnelMax) * 100}%` }}
+                      />
+                    </div>
+                    <div className="dashboard-funnel-list__value">{item.count}</div>
                   </div>
-                  <div className="dashboard-funnel-list__track">
-                    <span
-                      className={`dashboard-funnel-list__fill dashboard-funnel-list__fill--${item.stage}`}
-                      style={{ width: `${(item.count / funnelMax) * 100}%` }}
-                    />
-                  </div>
-                  <div className="dashboard-funnel-list__value">{item.count}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -303,38 +324,49 @@ export default function CandidateDashboardInsights({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="dashboard-velocity-grid">
-              <div className="dashboard-velocity-grid__item">
-                <span>Avg. to shortlist</span>
-                <strong>
-                  {analytics.velocity.avg_days_to_shortlist != null
-                    ? `${analytics.velocity.avg_days_to_shortlist}d`
-                    : 'N/A'}
-                </strong>
-              </div>
-              <div className="dashboard-velocity-grid__item">
-                <span>Avg. to interview</span>
-                <strong>
-                  {analytics.velocity.avg_days_to_interview != null
-                    ? `${analytics.velocity.avg_days_to_interview}d`
-                    : 'N/A'}
-                </strong>
-              </div>
-              <div className="dashboard-velocity-grid__item">
-                <span>Avg. to offer</span>
-                <strong>
-                  {analytics.velocity.avg_days_to_offer != null
-                    ? `${analytics.velocity.avg_days_to_offer}d`
-                    : 'N/A'}
-                </strong>
-              </div>
+      {/* Row 2: Pipeline speed */}
+      <div className="dash-card">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Pipeline speed</div>
+            <div className="dash-card__subtitle">Average time from application to each stage.</div>
+          </div>
+        </div>
+        <div className="dash-card__body">
+          <div className="dashboard-velocity-grid">
+            <div className="dashboard-velocity-grid__item">
+              <span>Avg. to shortlist</span>
+              <strong>
+                {analytics.velocity.avg_days_to_shortlist != null
+                  ? `${analytics.velocity.avg_days_to_shortlist}d`
+                  : 'N/A'}
+              </strong>
+            </div>
+            <div className="dashboard-velocity-grid__item">
+              <span>Avg. to interview</span>
+              <strong>
+                {analytics.velocity.avg_days_to_interview != null
+                  ? `${analytics.velocity.avg_days_to_interview}d`
+                  : 'N/A'}
+              </strong>
+            </div>
+            <div className="dashboard-velocity-grid__item">
+              <span>Avg. to offer</span>
+              <strong>
+                {analytics.velocity.avg_days_to_offer != null
+                  ? `${analytics.velocity.avg_days_to_offer}d`
+                  : 'N/A'}
+              </strong>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Row 2: Full-width Activity bar */}
+      {/* Row 3: Full-width Activity bar */}
       <div className="dash-card">
         <div className="dash-card__header">
           <div>

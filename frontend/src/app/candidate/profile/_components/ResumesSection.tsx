@@ -16,11 +16,9 @@ import { apiResumeToUi, removeResume, setResumes, upsertResume } from '@/store/s
 import { ChevronRight, FileText, Plus, X } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import { SearchInput, Toolbar, ToolbarCount } from '@/components/common/Toolbar'
 
-import CreateResumeModal from './_components/CreateResumeModal'
-import { ResumeGridSkeleton } from './_components/ResumeSkeletons'
-import styles from './page.module.scss'
+import CreateResumeModal from '../../resume/_components/CreateResumeModal'
+import styles from './resumesSection.module.scss'
 
 function DeleteResumeModal({
   resumeName,
@@ -72,7 +70,7 @@ function DeleteResumeModal({
   )
 }
 
-export default function ResumePage() {
+export default function ResumesSection() {
   const router = useRouter()
   const dispatch = useDispatch()
   const resumes = useSelector((state: RootState) => state.resumes.resumes)
@@ -82,7 +80,6 @@ export default function ResumePage() {
   const [createError, setCreateError] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
 
   const {
     data: resumesResponse,
@@ -101,15 +98,10 @@ export default function ResumePage() {
     }
   }, [resumesResponse, dispatch, user])
 
-  const filteredResumes = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
-    if (!normalizedSearch) return resumes
-    return resumes.filter(
-      (resume) =>
-        resume.name.toLowerCase().includes(normalizedSearch) ||
-        resume.headline?.toLowerCase().includes(normalizedSearch),
-    )
-  }, [resumes, searchTerm])
+  const confirmResume = useMemo(
+    () => resumes.find((r) => r.id === confirmDeleteId),
+    [resumes, confirmDeleteId],
+  )
 
   async function handleCreateConfirm(name: string) {
     setCreateError(null)
@@ -142,8 +134,6 @@ export default function ResumePage() {
     }
   }, [confirmDeleteId, deleteResumeMutation, dispatch])
 
-  const confirmResume = resumes.find((r) => r.id === confirmDeleteId)
-
   const openResume = useCallback(
     (resumeId: string) => {
       router.push(`/candidate/resume/${resumeId}`)
@@ -152,7 +142,7 @@ export default function ResumePage() {
   )
 
   return (
-    <div className={`dash-content container container--app-shell ${styles.page}`}>
+    <>
       {showCreateModal && (
         <CreateResumeModal
           onConfirm={handleCreateConfirm}
@@ -174,47 +164,42 @@ export default function ResumePage() {
         />
       )}
 
-      <div className="dash-page-header">
-        <div className="dash-page-header__left">
-          <h2 className="dash-page-header__title">My Resumes</h2>
-          <p className="dash-page-header__subtitle">
-            Build tailored resumes for different job applications.
-          </p>
-        </div>
-        <div className="dash-page-header__actions">
-          <button className="btn btn--primary" onClick={() => setShowCreateModal(true)}>
+      <div className={styles.section}>
+        <div className={styles.header}>
+          <div>
+            <h3 className={styles.title}>My Resumes</h3>
+            <p className={styles.subtitle}>
+              Build tailored resumes for different job applications.
+            </p>
+          </div>
+          <button className="btn btn--primary btn--sm" onClick={() => setShowCreateModal(true)}>
             <Plus size={14} />
             New Resume
           </button>
         </div>
-      </div>
 
-      <Toolbar>
-        <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Search resumes" />
-        <ToolbarCount>
-          {filteredResumes.length} resume{filteredResumes.length === 1 ? '' : 's'} found
-        </ToolbarCount>
-      </Toolbar>
-
-      {isLoadingResumes ? (
-        <ResumeGridSkeleton rows={6} />
-      ) : isResumesError ? (
-        <div className={styles.empty}>
-          <FileText size={28} aria-hidden="true" />
-          <p>Failed to load resumes.</p>
-        </div>
-      ) : filteredResumes.length === 0 ? (
-        <div className={styles.empty}>
-          <FileText size={28} aria-hidden="true" />
-          <p>No resumes match these filters.</p>
-          <button className="btn btn--secondary btn--sm" onClick={() => setShowCreateModal(true)}>
-            Create Resume
-          </button>
-        </div>
-      ) : (
-        <div className={styles.grid}>
-          {filteredResumes.map((resume) => {
-            return (
+        {isLoadingResumes ? (
+          <div className={styles.skeleton}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} />
+            ))}
+          </div>
+        ) : isResumesError ? (
+          <div className={styles.empty}>
+            <FileText size={24} aria-hidden="true" />
+            <p>Failed to load resumes.</p>
+          </div>
+        ) : resumes.length === 0 ? (
+          <div className={styles.empty}>
+            <FileText size={24} aria-hidden="true" />
+            <p>No resumes yet. Create one to get started.</p>
+            <button className="btn btn--secondary btn--sm" onClick={() => setShowCreateModal(true)}>
+              Create Resume
+            </button>
+          </div>
+        ) : (
+          <div className={styles.grid}>
+            {resumes.map((resume) => (
               <article
                 key={resume.id}
                 className={styles.card}
@@ -233,14 +218,27 @@ export default function ResumePage() {
                   <p className={styles.name}>{resume.name}</p>
                   <p className={styles.meta}>Updated {resume.updatedAt}</p>
                 </div>
-                <span className={styles.chevron} aria-hidden="true">
-                  <ChevronRight size={18} />
-                </span>
+                <div className={styles.actions}>
+                  <button
+                    type="button"
+                    className={styles.deleteBtn}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setConfirmDeleteId(resume.id)
+                    }}
+                    aria-label={`Delete ${resume.name}`}
+                  >
+                    <X size={14} />
+                  </button>
+                  <span className={styles.chevron} aria-hidden="true">
+                    <ChevronRight size={16} />
+                  </span>
+                </div>
               </article>
-            )
-          })}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   )
 }

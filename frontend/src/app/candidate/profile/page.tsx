@@ -27,6 +27,7 @@ import IdentityCard from './_components/IdentityCard'
 import OverviewSection from './_components/OverviewSection'
 import { ProfileDataSkeleton } from './_components/ProfileSkeletons'
 import ResumeImportModal from './_components/ResumeImportModal'
+import ResumesSection from './_components/ResumesSection'
 import SidePanel from './_components/SidePanel'
 import SkillsSection from './_components/SkillsSection'
 import {
@@ -413,6 +414,8 @@ export default function ProfilePage() {
                   onRemove={removeSkill}
                 />
               )}
+
+              {activeSection === 'Resumes' && <ResumesSection />}
             </div>
 
             <div className={styles.sideCol}>

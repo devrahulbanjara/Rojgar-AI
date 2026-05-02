@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -23,6 +24,43 @@ from app.shared.schemas import EducationBase, ExperienceBase, SkillBase
 
 _provider = GroqGapAnalysisProvider()
 CACHE_TTL_SECONDS = 600
+PENDING_PATCH_TTL_SECONDS = 1800
+
+
+def _pending_patch_key(user_id: UUID, resume_id: UUID, job_id: UUID) -> str:
+    """Redis key for an un-applied resume patch awaiting final apply confirmation."""
+    return f"resume_patch_pending:{user_id}:{resume_id}:{job_id}"
+
+
+async def consume_pending_patch(
+    db: AsyncSession,
+    user: User,
+    resume_id: UUID,
+    job_id: UUID,
+) -> bool:
+    """Apply a pending resume patch and clear it. Returns True if a patch was applied."""
+    key = _pending_patch_key(user.id, resume_id, job_id)
+    cached = await redis_service.get(key)
+    if not cached:
+        return False
+    try:
+        update = ResumeUpdate.model_validate_json(cached)
+    except Exception:
+        await redis_service.delete(key)
+        return False
+    await resumes_service.update_resume(db, user, str(resume_id), update)
+    await redis_service.delete(key)
+    await redis_service.delete(f"resume_gap:{resume_id}:{job_id}")
+    return True
+
+
+async def discard_pending_patch(
+    user: User,
+    resume_id: UUID,
+    job_id: UUID,
+) -> None:
+    """Discard a pending resume patch (e.g., user abandoned the apply flow)."""
+    await redis_service.delete(_pending_patch_key(user.id, resume_id, job_id))
 
 
 def _serialize_resume(resume: Resume) -> dict:
@@ -136,6 +174,17 @@ async def auto_patch_resume(
         resume_data=_serialize_resume(resume),
         gap_result=payload.gap_result,
     )
+    logger.info(
+        "auto_patch raw LLM output | resume_id={} headline_len={} summary_len={} "
+        "skills={} experience_patches={} headline_preview={!r} summary_preview={!r}",
+        payload.resume_id,
+        len(patch.headline),
+        len(patch.summary),
+        len(patch.skills),
+        [(p.index, len(p.description)) for p in patch.experience_patches],
+        patch.headline[:80],
+        patch.summary[:120],
+    )
 
     existing_skills = [skill.skill_name for skill in resume.skills]
     existing_by_lower = {s.strip().lower(): s for s in existing_skills}
@@ -228,21 +277,18 @@ async def auto_patch_resume(
             )
             for education in resume.educations
         ]
-        await resumes_service.update_resume(
-            db,
-            user,
-            str(payload.resume_id),
-            ResumeUpdate(
-                headline=new_headline
-                if "headline" in updated_fields
-                else resume.headline,
-                summary=new_summary if "summary" in updated_fields else resume.summary,
-                skills=merged_skills,
-                experiences=rebuilt_experiences,
-                educations=rebuilt_educations,
-            ),
+        pending_update = ResumeUpdate(
+            headline=new_headline if "headline" in updated_fields else resume.headline,
+            summary=new_summary if "summary" in updated_fields else resume.summary,
+            skills=merged_skills,
+            experiences=rebuilt_experiences,
+            educations=rebuilt_educations,
         )
-        await redis_service.delete(f"resume_gap:{payload.resume_id}:{payload.job_id}")
+        await redis_service.set(
+            _pending_patch_key(user.id, payload.resume_id, payload.job_id),
+            pending_update.model_dump_json(),
+            ttl_seconds=PENDING_PATCH_TTL_SECONDS,
+        )
 
     diffs: list[PatchedFieldDiff] = []
     if "headline" in updated_fields:

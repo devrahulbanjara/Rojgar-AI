@@ -408,21 +408,28 @@
 
 .stat-card {
   background: $color-white;
-  border: 1px solid $color-gray-200;
+  border: 1px solid $color-border;
   border-radius: $radius-xl;
   padding: $space-4 $space-5;
   display: flex;
   flex-direction: column;
   gap: $space-2;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  animation: dashboard-card-in 320ms ease both;
 
   &--compact {
     padding: $space-3 $space-4;
   }
 
-  transition: box-shadow $transition-fast;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
 
   &:hover {
-    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgb(0 0 0 / 8%);
+    border-color: $color-primary;
   }
 
   &__value {
@@ -689,22 +696,37 @@
 // ── Cards ────────────────────────────────────────────────────
 .dash-card {
   background: $color-white;
-  border: 1px solid $color-gray-200;
+  border: 1px solid $color-border;
   border-radius: $radius-xl;
   overflow: hidden;
-  transition: box-shadow $transition-fast;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  animation: dashboard-card-in 320ms ease both;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
 
   &:hover {
-    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgb(0 0 0 / 8%);
+    border-color: $color-primary;
   }
 
   &__header {
     padding: $space-4 $space-5;
-    border-bottom: 1px solid $color-gray-200;
+    border-bottom: 1px solid $color-border;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: $space-4;
+  }
+
+  &__eyebrow {
+    font-size: 0.7rem;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-text-muted;
   }
 
   &__title {
@@ -726,7 +748,7 @@
 
   &__footer {
     padding: $space-3 $space-5;
-    border-top: 1px solid $color-gray-200;
+    border-top: 1px solid $color-border;
     background: $color-gray-100;
     display: flex;
     align-items: center;
@@ -2383,7 +2405,7 @@
 // ── Two/Three column grid ─────────────────────────────────────
 .dash-grid {
   display: grid;
-  gap: $space-6;
+  gap: $space-4;
 
   &--2col {
     grid-template-columns: 1fr 1fr;
@@ -2407,6 +2429,10 @@
 
   &--3070 {
     grid-template-columns: 3fr 7fr;
+  }
+
+  &--4060 {
+    grid-template-columns: 2fr 3fr;
   }
 }
 
@@ -12921,7 +12947,7 @@
   gap: $space-4;
 
   &--candidate-top {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   &--recruiter-top {
@@ -13142,7 +13168,7 @@
     justify-content: space-between;
     gap: $space-3;
     padding-bottom: $space-2;
-    border-bottom: 1px solid rgba($color-gray-200, 0.8);
+    border-bottom: 1px solid $color-border;
 
     &:last-child {
       padding-bottom: 0;
@@ -13174,9 +13200,9 @@
 
   &__item {
     padding: $space-3;
-    border: 1px solid rgba($color-gray-200, 0.85);
+    border: 1px solid $color-border;
     border-radius: $radius-lg;
-    background: rgba($color-gray-100, 0.45);
+    background: $color-surface-subtle;
     display: flex;
     flex-direction: column;
     gap: $space-1;
@@ -13203,7 +13229,8 @@
   &__item {
     padding: $space-3;
     border-radius: $radius-lg;
-    background: rgba($color-primary, 0.04);
+    border: 1px solid $color-border;
+    background: $color-surface-subtle;
     display: flex;
     flex-direction: column;
     gap: $space-1;
@@ -13726,7 +13753,8 @@
     gap: $space-1;
     padding: $space-2 $space-3;
     border-radius: $radius-md;
-    background: $color-gray-100;
+    border: 1px solid $color-border;
+    background: $color-surface-subtle;
 
     strong {
       font-size: $font-size-lg;
@@ -13778,7 +13806,8 @@
   }
 
   .dash-grid--6040,
-  .dash-grid--3070 {
+  .dash-grid--3070,
+  .dash-grid--4060 {
     grid-template-columns: 1fr;
   }
 
@@ -13788,6 +13817,160 @@
 
   .dashboard-outreach-row__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// ── Dashboard card entrance animation ──────────────────────
+@keyframes dashboard-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ── Staggered entrance for card groups ─────────────────────
+.dashboard-stagger {
+  > * {
+    animation: dashboard-card-in 320ms ease both;
+  }
+
+  @for $i from 1 through 8 {
+    > *:nth-child(#{$i}) {
+      animation-delay: #{($i - 1) * 50}ms;
+    }
+  }
+}
+
+// ── Empty state (dashed border, centered) ──────────────────
+.dashboard-empty {
+  border: 1px dashed $color-border;
+  border-radius: $radius-xl;
+  padding: $space-12 $space-4;
+  text-align: center;
+  color: $color-text-muted;
+  background: $color-bg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    font-size: $font-size-base;
+    margin: 0;
+  }
+
+  &__copy {
+    font-size: $font-size-sm;
+    max-width: 22rem;
+    margin: 0;
+  }
+}
+
+// ── Admin section body spacing ─────────────────────────────
+.dashboard-admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+// ── Admin metric grid ──────────────────────────────────────
+.dashboard-metric-grid--admin {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+// ── Admin team activity list ───────────────────────────────
+.dashboard-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) 6rem 5rem 5rem;
+    gap: $space-3;
+    align-items: center;
+    padding: $space-3 $space-4;
+    border: 1px solid $color-border;
+    border-radius: $radius-lg;
+    background: $color-white;
+    font-size: $font-size-sm;
+  }
+
+  &__name {
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__status {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: $radius-full;
+    flex-shrink: 0;
+
+    &--active {
+      background: $color-success;
+    }
+
+    &--pending {
+      background: $color-warning;
+    }
+
+    &--rejected {
+      background: $color-error;
+    }
+  }
+
+  &__metric {
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    text-align: center;
+  }
+
+  &__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) 6rem 5rem 5rem;
+    gap: $space-3;
+    padding: 0 $space-4 $space-2;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-text-muted;
+
+    span:nth-child(n + 2) {
+      text-align: center;
+    }
+  }
+}
+
+@media (max-width: $bp-md) {
+  .dashboard-metric-grid--admin {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-team-list__row,
+  .dashboard-team-list__header {
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: $space-2;
   }
 }
 

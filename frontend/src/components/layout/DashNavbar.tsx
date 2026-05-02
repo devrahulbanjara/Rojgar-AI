@@ -18,7 +18,6 @@ import {
   Building2,
   ChevronDown,
   ClipboardList,
-  FileText,
   LogOut,
   Settings,
   User,
@@ -98,11 +97,9 @@ function NotificationsSkeleton({ count }: { count: number }) {
 function buildNavItems(role: DashRole): NavItem[] {
   if (role === 'candidate') {
     return [
-      { label: 'Dashboard', href: '/candidate' },
       { label: 'Jobs', href: '/candidate/jobs' },
       { label: 'Applications', href: '/candidate/applications' },
       { label: 'Interviews', href: '/candidate/interviews' },
-      { label: 'Resumes', href: '/candidate/resume' },
       { label: 'Profile', href: '/candidate/profile' },
     ]
   }
@@ -399,16 +396,7 @@ export default function DashNavbar({
                   View Profile
                 </Link>
 
-                {activeRole === 'candidate' ? (
-                  <Link
-                    href="/candidate/resume"
-                    className="btn btn--ghost btn--menu"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <FileText size={15} />
-                    My Resume
-                  </Link>
-                ) : (
+                {activeRole !== 'candidate' ? (
                   <>
                     <Link
                       href="/recruiter/settings"
@@ -440,7 +428,7 @@ export default function DashNavbar({
                       </>
                     ) : null}
                   </>
-                )}
+                ) : null}
 
                 <div className="dash-navbar__dropdown-divider" />
 

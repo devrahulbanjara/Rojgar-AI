@@ -163,6 +163,7 @@ class AIService:
         user_payload: dict[str, Any],
         schema_model: Type[SchemaT],
         model: str | None = None,
+        temperature: float | None = None,
     ) -> SchemaT:
         """
         Generate structured JSON output conforming to a Pydantic schema.
@@ -181,36 +182,42 @@ class AIService:
         schema = _to_groq_strict_json_schema(schema_model)
 
         # Groq-specific implementation (swap this block for OpenAI/Anthropic)
+        request_kwargs: dict[str, Any] = dict(
+            model=model or self._llm_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        f"{system_prompt.strip()}\n\n"
+                        "Output requirements:\n"
+                        "- Return exactly one JSON object matching the schema.\n"
+                        "- Do not wrap the result in another object.\n"
+                        "- Do not echo the input payload.\n"
+                        "- Do not include prose, markdown, or explanations."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(user_payload, ensure_ascii=False),
+                },
+            ],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema_model.__name__,
+                    "strict": True,
+                    "schema": schema,
+                },
+            },
+            max_tokens=4096,
+        )
+        if temperature is not None:
+            request_kwargs["temperature"] = temperature
+
         try:
             async with asyncio.timeout(30):
                 response = await self._llm_client.chat.completions.create(
-                    model=model or self._llm_model,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                f"{system_prompt.strip()}\n\n"
-                                "Output requirements:\n"
-                                "- Return exactly one JSON object matching the schema.\n"
-                                "- Do not wrap the result in another object.\n"
-                                "- Do not echo the input payload.\n"
-                                "- Do not include prose, markdown, or explanations."
-                            ),
-                        },
-                        {
-                            "role": "user",
-                            "content": json.dumps(user_payload, ensure_ascii=False),
-                        },
-                    ],
-                    response_format={
-                        "type": "json_schema",
-                        "json_schema": {
-                            "name": schema_model.__name__,
-                            "strict": True,
-                            "schema": schema,
-                        },
-                    },
-                    max_tokens=4096,
+                    **request_kwargs
                 )
         except TimeoutError:
             logger.error("Groq structured generation timed out after 30s")
