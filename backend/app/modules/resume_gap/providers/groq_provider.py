@@ -33,4 +33,5 @@ class GroqGapAnalysisProvider(GapAnalysisProvider):
                 "gap_analysis": gap_result.model_dump(),
             },
             schema_model=AutoPatchResult,
+            temperature=0.4,
         )

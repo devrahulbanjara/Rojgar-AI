@@ -51,6 +51,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
   const [patchedDiffs, setPatchedDiffs] = useState<PatchedFieldDiff[]>([])
   const [patchMessage, setPatchMessage] = useState<string>('')
   const [isPatching, setIsPatching] = useState(false)
+  const [hasPendingPatch, setHasPendingPatch] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [shareSettings, setShareSettings] = useState<ShareSettingsDraft>(DEFAULT_SHARE_SETTINGS)
   const [shareReturnStep, setShareReturnStep] = useState<
@@ -68,6 +69,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     setPatchedDiffs([])
     setPatchMessage('')
     setIsPatching(false)
+    setHasPendingPatch(false)
     setShareSettings(DEFAULT_SHARE_SETTINGS)
     setError(null)
     setStep('gap_choice')
@@ -129,6 +131,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
       setPatchedFields(response.data.updated_fields)
       setPatchedDiffs(response.data.diffs)
       setPatchMessage(response.data.message)
+      setHasPendingPatch(response.data.updated_fields.length > 0)
       setIsPatching(false)
     } catch (err: unknown) {
       const message =
@@ -181,6 +184,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         job_id: jobId,
         resume_id: selectedResumeId,
         ...shareSettings,
+        apply_pending_patch: hasPendingPatch,
       }).unwrap()
       onSuccess()
     } catch (err: unknown) {
@@ -191,7 +195,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
       setError(message)
       setStep('share_profile')
     }
-  }, [applyToJob, jobId, onSuccess, selectedResumeId, shareSettings])
+  }, [applyToJob, hasPendingPatch, jobId, onSuccess, selectedResumeId, shareSettings])
 
   return {
     step,

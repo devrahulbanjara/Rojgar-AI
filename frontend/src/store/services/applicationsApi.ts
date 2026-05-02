@@ -163,6 +163,7 @@ export interface ApplyToJobPayload {
   share_location?: boolean
   share_links?: boolean
   share_headline_summary?: boolean
+  apply_pending_patch?: boolean
 }
 
 export interface UpdateApplicationStatusPayload {

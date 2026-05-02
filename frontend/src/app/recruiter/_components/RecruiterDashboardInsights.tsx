@@ -191,7 +191,7 @@ function OutreachStatRow({
 
 function InsightsSkeleton() {
   return (
-    <div className="recruiter-dashboard__analytics">
+    <div className="recruiter-dashboard__analytics dashboard-stagger">
       <SegmentedControl
         options={RANGE_OPTIONS}
         value="30d"
@@ -225,7 +225,7 @@ function InsightsSkeleton() {
         ))}
       </div>
 
-      <div className="dash-grid dash-grid--3070 recruiter-dashboard__grid">
+      <div className="dash-grid dash-grid--4060 recruiter-dashboard__grid">
         {['Outreach summary', 'Hiring activity'].map((title) => (
           <div key={title} className="dash-card" aria-hidden="true">
             <div className="dash-card__header">
@@ -260,7 +260,7 @@ export default function RecruiterDashboardInsights({
   const funnelMax = Math.max(...analytics.funnel.map((item) => item.count), 1)
 
   return (
-    <div className="recruiter-dashboard__analytics">
+    <div className="recruiter-dashboard__analytics dashboard-stagger">
       <SegmentedControl
         options={RANGE_OPTIONS}
         value={rangeKey}
@@ -314,15 +314,27 @@ export default function RecruiterDashboardInsights({
             <div className="dashboard-velocity-grid dashboard-velocity-grid--compact">
               <div className="dashboard-velocity-grid__item">
                 <span>To review</span>
-                <strong>{analytics.velocity.avg_days_to_review ?? '--'}d</strong>
+                <strong>
+                  {analytics.velocity.avg_days_to_review != null
+                    ? `${analytics.velocity.avg_days_to_review}d`
+                    : 'N/A'}
+                </strong>
               </div>
               <div className="dashboard-velocity-grid__item">
                 <span>To shortlist</span>
-                <strong>{analytics.velocity.avg_days_to_shortlist ?? '--'}d</strong>
+                <strong>
+                  {analytics.velocity.avg_days_to_shortlist != null
+                    ? `${analytics.velocity.avg_days_to_shortlist}d`
+                    : 'N/A'}
+                </strong>
               </div>
               <div className="dashboard-velocity-grid__item">
                 <span>To interview</span>
-                <strong>{analytics.velocity.avg_days_to_interview ?? '--'}d</strong>
+                <strong>
+                  {analytics.velocity.avg_days_to_interview != null
+                    ? `${analytics.velocity.avg_days_to_interview}d`
+                    : 'N/A'}
+                </strong>
               </div>
             </div>
 
@@ -345,7 +357,7 @@ export default function RecruiterDashboardInsights({
       </div>
 
       {/* Row 2: Outreach summary (condensed) + Hiring activity */}
-      <div className="dash-grid dash-grid--3070 recruiter-dashboard__grid">
+      <div className="dash-grid dash-grid--4060 recruiter-dashboard__grid">
         <div className="dash-card">
           <div className="dash-card__header">
             <div>

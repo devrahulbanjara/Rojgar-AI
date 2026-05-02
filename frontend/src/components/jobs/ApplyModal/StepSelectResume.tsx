@@ -42,7 +42,7 @@ export default function StepSelectResume({
       <div className={styles.applyModal__empty}>
         <p>You need a resume before you can apply for this job.</p>
         <div className={styles.applyModal__stepActions}>
-          <Link href="/candidate/resume" className="btn btn--primary">
+          <Link href="/candidate/profile" className="btn btn--primary">
             Create Resume
           </Link>
           <button className="btn btn--ghost" onClick={onCancel} type="button">

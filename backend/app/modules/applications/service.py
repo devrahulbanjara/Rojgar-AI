@@ -63,6 +63,9 @@ from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
+from app.modules.resume_gap.service import (
+    consume_pending_patch as consume_pending_resume_patch,
+)
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, JobStatus
@@ -386,6 +389,11 @@ async def apply_to_job(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid resume ID or access denied.",
         )
+
+    # 2b. Apply any pending AI resume patch the candidate accepted in the apply flow.
+    if payload.apply_pending_patch:
+        await consume_pending_resume_patch(db, user, payload.resume_id, payload.job_id)
+        resume = await db.scalar(select(Resume).where(Resume.id == payload.resume_id))
 
     # 3. Check for duplicate application before inserting
     existing = await db.execute(
