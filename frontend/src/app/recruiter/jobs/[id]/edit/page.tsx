@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 
+import EvaluationSchemaBuilder from '@/app/recruiter/jobs/_components/EvaluationSchemaBuilder'
 import RecruiterJobEditor, {
   formFromDetail,
 } from '@/app/recruiter/jobs/_components/RecruiterJobEditor'
@@ -129,6 +130,8 @@ export default function RecruiterEditJobPage() {
             />
           </div>
         </section>
+
+        <EvaluationSchemaBuilder jobId={jobId} />
       </div>
     </div>
   )

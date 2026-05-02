@@ -20,8 +20,8 @@ class JobAgentState(TypedDict):
     company_id: str
     mode: Literal["create", "improve", "clone"]
 
-    prompt: str | None
-    source_text: str | None
+    title: str | None
+    rough_description: str | None
     source_job: dict[str, Any] | None
     company_context: dict[str, Any] | None
 
@@ -58,8 +58,8 @@ def build_job_ai_graph():
     async def generate_draft_node(state: JobAgentState) -> dict[str, Any]:
         payload = {
             "mode": state["mode"],
-            "prompt": state["prompt"],
-            "source_text": state["source_text"],
+            "title": state["title"],
+            "rough_description": state["rough_description"],
             "source_job": state["source_job"],
             "company_context": state["company_context"],
             "company_default_location": (

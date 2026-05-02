@@ -331,7 +331,7 @@ export default function RecruiterJobDetailPage() {
               </aside>
             </div>
 
-            <EvaluationSchemaBuilder jobId={job.id} />
+            <EvaluationSchemaBuilder jobId={job.id} readOnly />
           </>
         )}
       </div>

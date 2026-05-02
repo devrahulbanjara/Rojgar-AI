@@ -140,8 +140,8 @@ export default function RecruiterJobAIDraftPage() {
   const draftIdFromUrl = searchParams.get('draftId')
   const isManualMode = searchParams.get('mode') === 'manual'
 
-  const [prompt, setPrompt] = useState('')
-  const [sourceText, setSourceText] = useState('')
+  const [title, setTitle] = useState('')
+  const [roughDescription, setRoughDescription] = useState('')
   const [sourceJobId, setSourceJobId] = useState('')
   const [researchSalary, setResearchSalary] = useState(true)
   const [followUpFeedback, setFollowUpFeedback] = useState('')
@@ -255,8 +255,8 @@ export default function RecruiterJobAIDraftPage() {
   }
 
   async function handleGenerate() {
-    if (!prompt.trim() && !sourceText.trim() && !sourceJobId) {
-      toast.error('Add a prompt, notes, or choose a previous job before generating.')
+    if (!title.trim() && !roughDescription.trim() && !sourceJobId) {
+      toast.error('Add a title, description, or choose a previous job before generating.')
       return
     }
 
@@ -264,8 +264,8 @@ export default function RecruiterJobAIDraftPage() {
 
     try {
       const response = await createDraft({
-        ...(prompt.trim() && { prompt: prompt.trim() }),
-        ...(sourceText.trim() && { source_text: sourceText.trim() }),
+        ...(title.trim() && { title: title.trim() }),
+        ...(roughDescription.trim() && { rough_description: roughDescription.trim() }),
         ...(sourceJobId && { source_job_id: sourceJobId }),
         research_salary: researchSalary,
         locked_fields: pageState.lockedFields,
@@ -446,7 +446,8 @@ export default function RecruiterJobAIDraftPage() {
     setPageState((prev) => ({ ...prev, saving: true }))
     try {
       const response = await createDraft({
-        prompt: 'Untitled role — recruiter will fill in details manually.',
+        title: 'Untitled role',
+        rough_description: 'Recruiter will fill in details manually.',
         research_salary: false,
         locked_fields: [],
       }).unwrap()
@@ -511,16 +512,16 @@ export default function RecruiterJobAIDraftPage() {
 
       {!isManualMode ? (
         <JobAIAssistant
-          prompt={prompt}
-          sourceText={sourceText}
+          title={title}
+          roughDescription={roughDescription}
           sourceJobId={sourceJobId}
           researchSalary={researchSalary}
           followUpFeedback={followUpFeedback}
           draftExists={Boolean(pageState.draftId)}
           loading={isBusy}
           jobs={jobs}
-          onPromptChange={setPrompt}
-          onSourceTextChange={setSourceText}
+          onTitleChange={setTitle}
+          onRoughDescriptionChange={setRoughDescription}
           onSourceJobIdChange={setSourceJobId}
           onResearchSalaryChange={setResearchSalary}
           onFollowUpFeedbackChange={setFollowUpFeedback}
@@ -556,6 +557,7 @@ export default function RecruiterJobAIDraftPage() {
               missingFields={pageState.missingFields}
               disabled={isBusy}
               isLoading={isBusy}
+              showAiControls={!isManualMode}
               onFieldChange={handleFieldChange}
               onToggleLock={handleToggleLock}
               onRequestUpdate={(fields, feedback) => void handleRegenerate(fields, feedback)}

@@ -85,8 +85,8 @@ class JobDraft(BaseModel):
 
 
 class GenerateJobDraftRequest(BaseModel):
-    prompt: str | None = None
-    source_text: str | None = None
+    title: str | None = None
+    rough_description: str | None = None
     source_job_id: UUID | None = None
     mode: Literal["create", "improve", "clone"] = "create"
     research_salary: bool = False
@@ -95,8 +95,8 @@ class GenerateJobDraftRequest(BaseModel):
     @model_validator(mode="after")
     def validate_input(self) -> "GenerateJobDraftRequest":
         """Require at least one source of draft-generation input."""
-        if not self.prompt and not self.source_text and not self.source_job_id:
-            raise ValueError("Provide prompt, source_text, or source_job_id")
+        if not self.title and not self.rough_description and not self.source_job_id:
+            raise ValueError("Provide title, rough_description, or source_job_id")
         return self
 
 
@@ -121,8 +121,8 @@ class JobAIDraftResponse(BaseModel):
     thread_id: str
     status: str
     mode: str
-    source_prompt: str | None
-    source_text: str | None
+    source_title: str | None
+    source_rough_description: str | None
     locked_fields: list[str]
     latest_draft: JobDraft | None
     salary_research: SalaryResearch | None

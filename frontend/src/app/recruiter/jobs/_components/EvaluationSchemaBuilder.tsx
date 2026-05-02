@@ -15,6 +15,7 @@ import styles from './EvaluationSchemaBuilder.module.css'
 
 interface Props {
   jobId: string
+  readOnly?: boolean
 }
 
 type CriterionDraft = EvaluationCriterion & { id: string }
@@ -234,7 +235,40 @@ function SchemaEditor({
   )
 }
 
-export default function EvaluationSchemaBuilder({ jobId }: Props) {
+function SchemaReadOnly({ schema }: { schema: JobEvaluationSchema | null | undefined }) {
+  if (!schema || schema.criteria.length === 0) {
+    return <p className={styles.intro}>No evaluation schema defined yet.</p>
+  }
+
+  return (
+    <>
+      <div className={styles.criteriaList}>
+        {schema.criteria.map((criterion) => (
+          <div key={criterion.key} className={styles.criteriaRow}>
+            <div className={styles.field}>
+              <span className={styles.label}>Label</span>
+              <span className={styles.input}>{criterion.label}</span>
+            </div>
+            <div className={styles.field}>
+              <span className={styles.label}>Max Score</span>
+              <span className={styles.input}>{criterion.max_score}</span>
+            </div>
+            <div className={styles.field}>
+              <span className={styles.label}>Criterion Weight</span>
+              <span className={styles.input}>{criterion.weight}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className={styles.helper}>
+        Score blend: {((schema.human_weight ?? 0.5) * 100).toFixed(0)}% human,{' '}
+        {((schema.llm_weight ?? 0.5) * 100).toFixed(0)}% LLM
+      </p>
+    </>
+  )
+}
+
+export default function EvaluationSchemaBuilder({ jobId, readOnly = false }: Props) {
   const { data: schemaResp, isLoading } = useGetJobEvaluationSchemaQuery(jobId)
   const schema = schemaResp?.data
 
@@ -257,6 +291,8 @@ export default function EvaluationSchemaBuilder({ jobId }: Props) {
 
         {isLoading ? (
           <div className={styles.helper}>Loading schema...</div>
+        ) : readOnly ? (
+          <SchemaReadOnly schema={schema} />
         ) : (
           <SchemaEditor key={schema?.updated_at ?? 'new'} jobId={jobId} schema={schema} />
         )}

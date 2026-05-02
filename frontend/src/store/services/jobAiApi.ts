@@ -49,8 +49,8 @@ export interface JobAIDraftPayload {
 }
 
 export interface GenerateJobAIDraftRequest {
-  prompt?: string
-  source_text?: string
+  title?: string
+  rough_description?: string
   source_job_id?: string
   mode?: JobAIMode
   research_salary?: boolean
@@ -70,8 +70,8 @@ export interface JobAIDraftRecord {
   thread_id: string
   status: string
   mode: JobAIMode
-  source_prompt: string | null
-  source_text: string | null
+  source_title: string | null
+  source_rough_description: string | null
   locked_fields: string[]
   latest_draft: JobAIDraftPayload | null
   salary_research: SalaryResearch | null

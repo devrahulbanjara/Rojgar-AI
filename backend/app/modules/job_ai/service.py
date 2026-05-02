@@ -128,8 +128,8 @@ async def create_draft(
         thread_id=thread_id,
         status="drafting",
         mode=payload.mode,
-        source_prompt=payload.prompt,
-        source_text=payload.source_text,
+        source_title=payload.title,
+        source_rough_description=payload.rough_description,
         locked_fields=payload.locked_fields,
     )
 
@@ -144,8 +144,8 @@ async def create_draft(
     if payload.research_salary:
         role_for_salary = None
 
-        if payload.prompt:
-            role_for_salary = payload.prompt
+        if payload.title:
+            role_for_salary = payload.title
 
         elif source_job:
             role_for_salary = source_job.get("title")
@@ -168,8 +168,8 @@ async def create_draft(
         "recruiter_id": str(user.id),
         "company_id": str(company_id),
         "mode": payload.mode,
-        "prompt": payload.prompt,
-        "source_text": payload.source_text,
+        "title": payload.title,
+        "rough_description": payload.rough_description,
         "source_job": source_job,
         "company_context": company_context,
         "research_salary": payload.research_salary,
