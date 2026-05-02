@@ -421,7 +421,7 @@ export default function RecruiterJobDetailPage() {
             <div className="modal__footer">
               <button
                 type="button"
-                className="btn btn--ghost btn--sm"
+className="btn btn--danger btn--sm"
                 onClick={() => setShowCompleteHiringModal(false)}
                 disabled={isCompletingHiring}
               >
@@ -429,7 +429,7 @@ export default function RecruiterJobDetailPage() {
               </button>
               <button
                 type="button"
-                className={`btn btn--success btn--sm${isCompletingHiring ? ' btn--loading' : ''}`}
+                className={`btn btn--primary btn--sm${isCompletingHiring ? ' btn--loading' : ''}`}
                 onClick={handleCompleteHiringConfirm}
                 disabled={isCompletingHiring}
                 aria-busy={isCompletingHiring}
