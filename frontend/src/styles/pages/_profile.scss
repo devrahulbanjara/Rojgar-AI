@@ -1230,11 +1230,6 @@
   }
 }
 
-.modal--recruiter-chat {
-  width: min(100%, 60rem);
-  max-width: 60rem;
-}
-
 .recruiter-chat-page-container {
   display: flex;
   height: calc(100vh - 5rem);
@@ -1281,32 +1276,6 @@
   min-width: 0;
 }
 
-.recruiter-chat-topbar__menu-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  flex-shrink: 0;
-  border: 0;
-  border-radius: $radius-md;
-  background: transparent;
-  color: $color-gray-500;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast;
-
-  &:hover {
-    background: $color-gray-100;
-    color: $color-gray-800;
-  }
-
-  @include lg {
-    display: none;
-  }
-}
-
 .recruiter-chat-topbar__title {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
@@ -1321,34 +1290,6 @@
   display: flex;
   align-items: center;
   gap: $space-2;
-}
-
-.recruiter-chat-topbar__action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: $space-2;
-  padding: 0.4rem 0.75rem;
-  height: 2rem;
-  border: 0;
-  border-radius: $radius-md;
-  background: transparent;
-  color: $color-gray-600;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast;
-
-  &:hover:not(:disabled) {
-    background: $color-gray-100;
-    color: $color-gray-900;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 }
 
 // ── Mobile drawer ─────────────────────────────────────────────
@@ -2490,15 +2431,6 @@
     flex-direction: column;
   }
 
-  .recruiter-chat-sidebar__new-btn {
-    width: 100%;
-    padding-inline: 0;
-
-    span {
-      font-size: 0.7rem;
-    }
-  }
-
   .recruiter-chat-sidebar__groups {
     padding-right: 0;
   }
@@ -2712,47 +2644,6 @@
 
 .recruiter-chat-message--user .recruiter-chat-message__body {
   align-items: flex-end;
-}
-
-.recruiter-chat-message__copy-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.9rem;
-  height: 1.9rem;
-  border: 1px solid rgba($color-primary, 0.16);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 88%);
-  color: $color-primary;
-  cursor: pointer;
-  opacity: 0.88;
-  transition:
-    opacity $transition-fast,
-    transform $transition-fast,
-    background-color $transition-fast,
-    border-color $transition-fast,
-    color $transition-fast,
-    box-shadow $transition-fast;
-
-  &:hover {
-    opacity: 1;
-    transform: translateY(-1px);
-    background: rgba($color-primary, 0.08);
-    border-color: rgba($color-primary, 0.3);
-    box-shadow: 0 8px 18px rgba($color-primary, 0.14);
-  }
-
-  &:focus-visible {
-    outline: none;
-    opacity: 1;
-    box-shadow: 0 0 0 4px rgba($color-primary, 0.12);
-  }
-
-  &--copied {
-    background: rgba($color-success, 0.12);
-    border-color: rgba($color-success, 0.28);
-    color: color.adjust($color-success, $lightness: -8%);
-  }
 }
 
 .recruiter-chat-message__tool-content {
