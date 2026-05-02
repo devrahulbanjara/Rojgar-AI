@@ -19,10 +19,11 @@ import {
   useSendAllDraftsMutation,
 } from '@/store/services/outreachApi'
 import {
+  useEvaluateSingleApplicationMutation,
   useFinalizeShortlistMutation,
   useGetShortlistSummaryQuery,
 } from '@/store/services/shortlistingApi'
-import { RefreshCw, Send, X } from 'lucide-react'
+import { Bot, RefreshCw, Send, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
@@ -131,7 +132,8 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
       job_title: string
       status: ApplicationStatus
       score: number | null
-      feedback: string | null
+      strengths: string[] | null
+      weaknesses: string[] | null
       created_at: string
     }> = []
     candidates.forEach((candidate) => {
@@ -148,7 +150,8 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
             job_title: application.job_title,
             status: application.status,
             score: application.score,
-            feedback: application.feedback,
+            strengths: application.strengths,
+            weaknesses: application.weaknesses,
             created_at: application.created_at,
           })
         })
@@ -188,7 +191,9 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
 
   const screeningStats = useMemo(() => {
     const pending = jobApplications.filter((row) => row.status === 'applied')
-    const scored = pending.filter((row) => row.score !== null && row.feedback !== null)
+    const scored = pending.filter(
+      (row) => row.score !== null && (row.strengths?.length || row.weaknesses?.length),
+    )
     const above =
       threshold === null ? 0 : scored.filter((row) => (row.score ?? 0) >= threshold).length
     const below =
@@ -258,6 +263,21 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
   const [deleteAllDrafts, { isLoading: isDeletingAll }] = useDeleteAllDraftsMutation()
   const [approveDraft] = useApproveDraftMutation()
   const [generateDraftForApplication] = useGenerateDraftForApplicationMutation()
+  const [evaluateSingle] = useEvaluateSingleApplicationMutation()
+  const [evaluatingAppId, setEvaluatingAppId] = useState<string | null>(null)
+
+  async function handleEvaluateSingle(applicationId: string) {
+    setEvaluatingAppId(applicationId)
+    try {
+      const response = await evaluateSingle(applicationId).unwrap()
+      toast.success(`Evaluated with score ${response.data.score ?? '—'}.`)
+      await refetch()
+    } catch {
+      toast.error('Could not evaluate this candidate.')
+    } finally {
+      setEvaluatingAppId(null)
+    }
+  }
 
   useEffect(() => {
     if (!isConfirmOpen && outreachConfirm === null) return
@@ -642,8 +662,11 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                 )}
 
                 <span className={styles.feedback}>
-                  {row.feedback ??
-                    (isPostShortlistStage ? 'Manual decision — no AI feedback' : 'No review yet.')}
+                  {row.strengths?.length || row.weaknesses?.length
+                    ? `${row.strengths?.length ?? 0} strengths, ${row.weaknesses?.length ?? 0} gaps`
+                    : isPostShortlistStage
+                      ? 'Manual decision — no AI feedback'
+                      : 'No review yet.'}
                 </span>
 
                 {isPostShortlistStage ? (
@@ -696,7 +719,33 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                     </span>
                   </span>
                 ) : (
-                  <span className={styles.applied}>{`Applied ${formatDate(row.created_at)}`}</span>
+                  <span className={styles.rowActions}>
+                    <span
+                      className={styles.appliedDate}
+                    >{`Applied ${formatDate(row.created_at)}`}</span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className={`btn btn--icon btn--sm ${evaluatingAppId === row.application_id ? styles.evaluatingIcon : ''}`}
+                      aria-label="Run AI evaluation"
+                      aria-disabled={evaluatingAppId === row.application_id}
+                      title={row.score !== null ? 'Re-run AI evaluation' : 'Run AI evaluation'}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        if (evaluatingAppId === row.application_id) return
+                        void handleEvaluateSingle(row.application_id)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return
+                        event.preventDefault()
+                        event.stopPropagation()
+                        if (evaluatingAppId === row.application_id) return
+                        void handleEvaluateSingle(row.application_id)
+                      }}
+                    >
+                      <Bot size={14} aria-hidden="true" />
+                    </span>
+                  </span>
                 )}
               </button>
             )

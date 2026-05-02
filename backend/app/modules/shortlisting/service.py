@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
-from sqlalchemy import and_, func, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import selectinload
 
@@ -52,22 +52,31 @@ def _job_has_expired(job: Job) -> bool:
 
 
 def _application_has_complete_review(application: Application) -> bool:
-    """Return True when an application already has score and feedback."""
-    return application.score is not None and application.feedback is not None
+    """Return True when an application already has score and review."""
+    return application.score is not None and (
+        bool(application.strengths) or bool(application.weaknesses)
+    )
+
+
+def _has_review_filter():
+    """SQLAlchemy filter: at least one of strengths/weaknesses is non-null."""
+    return or_(Application.strengths.is_not(None), Application.weaknesses.is_not(None))
 
 
 def _apply_review_if_missing(
     application: Application,
     score: int,
-    feedback: str,
+    strengths: list[str] | None,
+    weaknesses: list[str] | None,
 ) -> bool:
     """Populate review fields that are still missing on an application."""
     updated = False
     if application.score is None:
         application.score = score
         updated = True
-    if application.feedback is None:
-        application.feedback = feedback
+    if application.strengths is None and application.weaknesses is None:
+        application.strengths = strengths
+        application.weaknesses = weaknesses
         updated = True
     return updated
 
@@ -105,53 +114,39 @@ async def _get_job_for_company(
     return job
 
 
-def _score_application(application: Application) -> tuple[int, str]:
+def _score_application(
+    application: Application,
+) -> tuple[int, list[str] | None, list[str] | None]:
     """Fallback-score an application from resume completeness."""
     resume = application.resume
     if resume is None:
-        return (
-            10,
-            "No resume was attached, so this application could not be meaningfully ranked.",
-        )
+        return 10, None, ["No resume attached"]
 
     score = 25
     strengths: list[str] = []
 
     if resume.headline:
         score += 10
-        strengths.append("a clear professional headline")
+        strengths.append("Clear professional headline")
     if resume.summary:
         score += 10
-        strengths.append("a written profile summary")
+        strengths.append("Written profile summary")
     if resume.years_of_experience:
         score += min(resume.years_of_experience * 5, 20)
-        strengths.append(f"{resume.years_of_experience} year(s) of stated experience")
+        strengths.append(f"{resume.years_of_experience} years of experience")
     if resume.experiences:
         score += min(len(resume.experiences) * 8, 24)
-        strengths.append(
-            f"{len(resume.experiences)} experience entr{'y' if len(resume.experiences) == 1 else 'ies'}"
-        )
+        strengths.append(f"{len(resume.experiences)} experience entries")
     if resume.educations:
         score += min(len(resume.educations) * 4, 8)
-        strengths.append("education history")
+        strengths.append("Education history present")
     if resume.skills:
         score += min(len(resume.skills) * 3, 18)
-        strengths.append(f"{len(resume.skills)} listed skill(s)")
+        strengths.append(f"{len(resume.skills)} listed skills")
 
     score = max(0, min(100, score))
 
-    if strengths:
-        feedback = (
-            "This application was ranked from resume completeness and structure. "
-            f"Strong signals included {', '.join(strengths)}."
-        )
-    else:
-        feedback = (
-            "This application was reviewed, but the resume had limited structured information "
-            "available for ranking."
-        )
-
-    return score, feedback
+    return score, strengths or None, None
 
 
 async def process_auto_shortlist_for_application(
@@ -186,7 +181,7 @@ async def process_auto_shortlist_for_application(
                     application=application,
                 )
                 updated = _apply_review_if_missing(
-                    application, result.score, result.feedback
+                    application, result.score, result.strengths, result.weaknesses
                 )
                 if not updated:
                     return
@@ -262,11 +257,15 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
                     job=job,
                     application=application,
                 )
-                _apply_review_if_missing(application, result.score, result.feedback)
+                _apply_review_if_missing(
+                    application, result.score, result.strengths, result.weaknesses
+                )
             reviewed_application_ids = [
                 application.id
                 for application in applications
-                if application.score is not None or application.feedback is not None
+                if application.score is not None
+                or application.strengths is not None
+                or application.weaknesses is not None
             ]
             enqueue_application_sync_events(
                 db, reviewed_application_ids, SyncAction.UPSERT
@@ -287,6 +286,62 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
                 await db.commit()
             logger.exception("Shortlisting failed for job {}: {}", job_id, exc)
     await engine.dispose()
+
+
+async def evaluate_single_application(
+    db: AsyncSession,
+    application_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> Application:
+    """Run AI evaluation on a single application, overwriting any existing review."""
+    company_id = await _get_company_id_for_user(db, user_id)
+
+    application = await db.scalar(
+        select(Application)
+        .where(Application.id == application_id)
+        .options(
+            selectinload(Application.resume).selectinload(Resume.experiences),
+            selectinload(Application.resume).selectinload(Resume.educations),
+            selectinload(Application.resume).selectinload(Resume.skills),
+        )
+    )
+    if application is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found.",
+        )
+
+    job = await _get_job_for_company(db, application.job_id, company_id)
+
+    try:
+        result = await evaluate_application_with_shortlisting_agent(
+            job=job,
+            application=application,
+        )
+        application.score = result.score
+        application.strengths = result.strengths
+        application.weaknesses = result.weaknesses
+    except Exception:
+        score, strengths, weaknesses = _score_application(application)
+        application.score = score
+        application.strengths = strengths
+        application.weaknesses = weaknesses
+        logger.warning(
+            "AI evaluation failed for application {}, used fallback scoring",
+            application_id,
+        )
+
+    enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
+    await db.commit()
+
+    await invalidate_candidate_read_caches(str(application.user_id))
+    await invalidate_company_dashboard_caches(db, str(job.company_id))
+    await invalidate_company_application_caches(
+        str(job.company_id), str(application.id)
+    )
+    await redis_service.delete(f"shortlist:summary:{application.job_id}")
+
+    return application
 
 
 async def get_shortlist_summary(
@@ -315,7 +370,7 @@ async def get_shortlist_summary(
             select(func.count(Application.id)).where(
                 Application.job_id == job_id,
                 Application.score.is_not(None),
-                Application.feedback.is_not(None),
+                _has_review_filter(),
             )
         )
         or 0
@@ -370,7 +425,7 @@ async def trigger_shortlisting(
             select(func.count(Application.id)).where(
                 Application.job_id == job_id,
                 Application.score.is_not(None),
-                Application.feedback.is_not(None),
+                _has_review_filter(),
             )
         )
         or 0
@@ -445,7 +500,7 @@ async def _apply_threshold_finalize(
                 Application.job_id == job.id,
                 Application.status == ApplicationStatus.applied,
                 Application.score.is_not(None),
-                Application.feedback.is_not(None),
+                _has_review_filter(),
                 Application.score >= threshold,
             )
         )
@@ -461,7 +516,7 @@ async def _apply_threshold_finalize(
                 Application.job_id == job.id,
                 Application.status == ApplicationStatus.applied,
                 Application.score.is_not(None),
-                Application.feedback.is_not(None),
+                _has_review_filter(),
                 Application.score < threshold,
             )
         )

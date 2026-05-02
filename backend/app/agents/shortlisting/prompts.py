@@ -74,6 +74,7 @@ HR FINAL EVALUATION:
 Instructions:
 1. Produce a final consensus score from 0 to 100.
 2. Produce one concise final reason.
-3. Produce recruiter-facing feedback in 2-4 sentences that summarizes strengths, concerns, and recommended next step.
-4. The response must be suitable for storing directly on the application record.
+3. List concise strengths (e.g. "10+ years product experience"). Each item under 12 words. Omit if none.
+4. List concise weaknesses (e.g. "No B2B SaaS experience"). Each item under 12 words. Omit if none.
+5. Optimize for brevity — no verbose sentences, no filler words.
 """

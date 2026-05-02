@@ -34,10 +34,27 @@ export function CandidateDetailPanel({ data }: { data: CandidateDetailData }) {
         </div>
       </div>
 
-      {data.feedback ? (
+      {data.strengths?.length || data.weaknesses?.length ? (
         <div className="recruiter-chat-feedback">
           <div className="recruiter-chat-feedback-label">Recruiter Notes</div>
-          <p>{data.feedback}</p>
+          {data.strengths?.length ? (
+            <ul className="recruiter-chat-review-list">
+              {data.strengths.map((s, i) => (
+                <li key={i} className="recruiter-chat-strength">
+                  {s}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {data.weaknesses?.length ? (
+            <ul className="recruiter-chat-review-list">
+              {data.weaknesses.map((w, i) => (
+                <li key={i} className="recruiter-chat-weakness">
+                  {w}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
 

@@ -10,7 +10,8 @@ export interface EmailDraftRecord {
   candidate_avatar_url: string | null
   application_status: ApplicationStatus
   score: number | null
-  application_feedback: string | null
+  application_strengths: string[] | null
+  application_weaknesses: string[] | null
   subject: string | null
   body: string | null
   is_approved: boolean

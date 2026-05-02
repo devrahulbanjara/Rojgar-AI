@@ -23,7 +23,8 @@ export interface ApplicationResponse {
   created_at: string
   updated_at: string
   score: number | null
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
   resume: {
     id: string
     user_id: string
@@ -121,7 +122,8 @@ export interface CandidateApplicationView {
   location: string | null
   location_type: 'remote' | 'onsite' | 'hybrid'
   score: number | null
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
 }
 
 export interface RecruiterApplicationView {
@@ -135,7 +137,8 @@ export interface RecruiterApplicationView {
   job_title: string
   job_id: string
   score: number | null
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
 }
 
 export interface ApplicationApplicantSummary {
@@ -172,7 +175,8 @@ export interface UpdateApplicationStatusPayload {
 
 export interface UpdateApplicationReviewPayload {
   score?: number | null
-  feedback?: string | null
+  strengths?: string[] | null
+  weaknesses?: string[] | null
 }
 
 export interface CandidateShareSettings {
@@ -208,7 +212,8 @@ export interface RecruiterCandidateApplicationSummary {
   created_at: string
   updated_at: string
   score: number | null
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
 }
 
 export interface RecruiterCandidateDetailView {
@@ -230,7 +235,8 @@ export interface RecruiterCandidateDetailView {
   job_title: string
   job_id: string
   score: number | null
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
   interview: {
     id: string
     cal_booking_uid: string
@@ -288,7 +294,8 @@ export interface SemanticCandidateSearchResult {
   job_id: string
   status: ApplicationStatus
   score: number | null
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
   match_score: number
   applied_at: string
   updated_at: string

@@ -5586,7 +5586,7 @@ async def seed_applications(
             user_id=candidate_user.id,
             resume_id=resume.id,
             score=score,
-            feedback=feedback,
+            strengths=[feedback] if feedback else None,
             status=target_status,
             shortlist_notified=True,
             created_at=app_created,
@@ -5736,7 +5736,7 @@ async def seed_live_pipeline_data(
             user_id=candidate_user.id,
             resume_id=resume.id,
             score=spec.get("score"),
-            feedback=spec.get("feedback"),
+            strengths=[spec["feedback"]] if spec.get("feedback") else None,
             status=spec["status"],
             shortlist_notified=spec.get("email_state") == "sent",
             created_at=created_at,
@@ -6151,7 +6151,11 @@ async def seed_preferences_and_activity(
         )
         activity_counter += 1
 
-        if application.score is not None or application.feedback:
+        if (
+            application.score is not None
+            or application.strengths
+            or application.weaknesses
+        ):
             review_at = max(
                 application.created_at + timedelta(hours=18),
                 application.updated_at - timedelta(days=1),
@@ -7323,10 +7327,14 @@ async def seed_audit_history(
             request_path="/applications",
             request_method="POST",
         )
-        if application.score is not None or application.feedback:
+        if (
+            application.score is not None
+            or application.strengths
+            or application.weaknesses
+        ):
             review_before, review_after, review_diff = _build_audit_snapshots(
                 application,
-                before_overrides={"score": None, "feedback": None},
+                before_overrides={"score": None, "strengths": None, "weaknesses": None},
             )
             record(
                 created_at=application.created_at + timedelta(hours=18),

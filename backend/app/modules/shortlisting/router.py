@@ -6,6 +6,7 @@ from app.core.dependencies import ActiveMember, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.shortlisting import service
 from app.modules.shortlisting.schemas import (
+    EvaluateSingleApplicationResponse,
     FinalizeShortlistRequest,
     FinalizeShortlistResponse,
     ShortlistSummaryResponse,
@@ -29,6 +30,28 @@ async def trigger_shortlisting(
     """Trigger AI shortlisting for a job."""
     data = await service.trigger_shortlisting(db, job_id, user.id, background_tasks)
     return ResponseBuilder.success(data=data, message=data.message)
+
+
+@router.post(
+    "/applications/{application_id}/evaluate",
+    summary="Run AI evaluation on a single application (overwrites existing review)",
+)
+async def evaluate_single_application(
+    application_id: uuid.UUID,
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[EvaluateSingleApplicationResponse]:
+    """Run AI evaluation on a single application, regardless of existing score."""
+    application = await service.evaluate_single_application(db, application_id, user.id)
+    return ResponseBuilder.success(
+        data=EvaluateSingleApplicationResponse(
+            application_id=application.id,
+            score=application.score,
+            strengths=application.strengths,
+            weaknesses=application.weaknesses,
+        ),
+        message="Application evaluated successfully.",
+    )
 
 
 @router.get(

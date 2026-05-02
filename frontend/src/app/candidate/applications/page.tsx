@@ -83,9 +83,11 @@ function formatRelativeDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function getReviewFeedback(feedback: string | null): string | null {
-  const trimmed = feedback?.trim()
-  return trimmed || null
+function getReviewSummary(strengths: string[] | null, weaknesses: string[] | null): string | null {
+  const parts: string[] = []
+  if (strengths?.length) parts.push(strengths.join(', '))
+  if (weaknesses?.length) parts.push(weaknesses.join(', '))
+  return parts.length ? parts.join(' · ') : null
 }
 
 function getStatusDotClass(variant: string): string {
@@ -160,7 +162,7 @@ function ApplicationCard({ application }: { application: CandidateApplicationVie
   const router = useRouter()
   const accent = getCompanyAccent(application.company_name)
   const variant = getApplicationStatusVariant(application.status)
-  const feedback = getReviewFeedback(application.feedback)
+  const reviewSummary = getReviewSummary(application.strengths, application.weaknesses)
   const detailHref = `/candidate/applications/${application.id}`
 
   return (
@@ -231,8 +233,8 @@ function ApplicationCard({ application }: { application: CandidateApplicationVie
         </div>
       </div>
 
-      <p className={`${styles.feedback} ${feedback ? '' : styles['feedback--empty']}`}>
-        {feedback ?? 'No recruiter feedback yet.'}
+      <p className={`${styles.feedback} ${reviewSummary ? '' : styles['feedback--empty']}`}>
+        {reviewSummary ?? 'No recruiter feedback yet.'}
       </p>
 
       <div className={styles.cardActions}>

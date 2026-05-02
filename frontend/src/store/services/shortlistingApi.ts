@@ -19,6 +19,13 @@ export interface TriggerShortlistResponse {
   message: string
 }
 
+export interface EvaluateSingleApplicationResponse {
+  application_id: string
+  score: number | null
+  strengths: string[] | null
+  weaknesses: string[] | null
+}
+
 export interface FinalizeShortlistResponse {
   job_id: string
   updated_applications: number
@@ -39,6 +46,16 @@ export const shortlistingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Applications', 'Jobs'],
     }),
+    evaluateSingleApplication: builder.mutation<
+      ApiResponse<EvaluateSingleApplicationResponse>,
+      string
+    >({
+      query: (applicationId) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/shortlisting/applications/${applicationId}/evaluate`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Applications', 'Jobs'],
+    }),
     finalizeShortlist: builder.mutation<
       ApiResponse<FinalizeShortlistResponse>,
       { jobId: string; use_ai_recommendations: boolean; threshold?: number }
@@ -54,6 +71,7 @@ export const shortlistingApi = baseApi.injectEndpoints({
 })
 
 export const {
+  useEvaluateSingleApplicationMutation,
   useFinalizeShortlistMutation,
   useGetShortlistSummaryQuery,
   useTriggerShortlistingMutation,

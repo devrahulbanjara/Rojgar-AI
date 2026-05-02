@@ -283,7 +283,8 @@ export default function CandidateDrawer({
             <OutreachTab
               applicationId={applicationId}
               jobId={candidate.job_id}
-              feedback={candidate.feedback}
+              strengths={candidate.strengths}
+              weaknesses={candidate.weaknesses}
               score={candidate.score}
             />
           ) : (
@@ -384,10 +385,35 @@ function ProfileTab({ candidate }: { candidate: Candidate }) {
         </div>
       </div>
 
-      {candidate.feedback ? (
+      {candidate.strengths?.length || candidate.weaknesses?.length ? (
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>AI review</h3>
-          <div className={styles.aiReview}>{candidate.feedback}</div>
+          <div className={styles.reviewColumns}>
+            {candidate.strengths?.length ? (
+              <div className={styles.reviewColumn}>
+                <h4 className={styles.reviewColumnTitle}>Strengths</h4>
+                <ul className={styles.reviewList}>
+                  {candidate.strengths.map((s, i) => (
+                    <li key={i} className={styles.strengthItem}>
+                      <Check size={14} className={styles.strengthIcon} /> {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {candidate.weaknesses?.length ? (
+              <div className={styles.reviewColumn}>
+                <h4 className={styles.reviewColumnTitle}>Gaps</h4>
+                <ul className={styles.reviewList}>
+                  {candidate.weaknesses.map((w, i) => (
+                    <li key={i} className={styles.weaknessItem}>
+                      <X size={14} className={styles.weaknessIcon} /> {w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -473,12 +499,14 @@ function ResumeTab({
 function OutreachTab({
   applicationId,
   jobId,
-  feedback,
+  strengths,
+  weaknesses,
   score,
 }: {
   applicationId: string
   jobId: string
-  feedback: string | null
+  strengths: string[] | null
+  weaknesses: string[] | null
   score: number | null
 }) {
   const { data, isLoading, refetch } = useGetDraftsQuery(jobId)
@@ -486,7 +514,9 @@ function OutreachTab({
 
   const allDrafts: EmailDraftRecord[] = data?.data ?? []
   const draft = allDrafts.find((entry) => entry.application_id === applicationId) ?? null
-  const resolvedFeedback = feedback ?? draft?.application_feedback ?? null
+  const resolvedStrengths = strengths ?? draft?.application_strengths ?? null
+  const resolvedWeaknesses = weaknesses ?? draft?.application_weaknesses ?? null
+  const hasReview = !!(resolvedStrengths?.length || resolvedWeaknesses?.length)
   const resolvedScore = score ?? draft?.score ?? null
 
   async function handleGenerate() {
@@ -520,8 +550,33 @@ function OutreachTab({
             <span className={styles.outreachScoreChip}>Score {resolvedScore}</span>
           ) : null}
         </div>
-        {resolvedFeedback ? (
-          <div className={styles.outreachFeedbackBody}>{resolvedFeedback}</div>
+        {hasReview ? (
+          <div className={styles.reviewColumns}>
+            {resolvedStrengths?.length ? (
+              <div className={styles.reviewColumn}>
+                <h4 className={styles.reviewColumnTitle}>Strengths</h4>
+                <ul className={styles.reviewList}>
+                  {resolvedStrengths.map((s, i) => (
+                    <li key={i} className={styles.strengthItem}>
+                      <Check size={14} className={styles.strengthIcon} /> {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {resolvedWeaknesses?.length ? (
+              <div className={styles.reviewColumn}>
+                <h4 className={styles.reviewColumnTitle}>Gaps</h4>
+                <ul className={styles.reviewList}>
+                  {resolvedWeaknesses.map((w, i) => (
+                    <li key={i} className={styles.weaknessItem}>
+                      <X size={14} className={styles.weaknessIcon} /> {w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <p className={styles.outreachFeedbackMuted}>
             No AI feedback for this candidate. The email will use a generic template — no fabricated
