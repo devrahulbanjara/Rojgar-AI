@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
   useChangeMyPasswordMutation,

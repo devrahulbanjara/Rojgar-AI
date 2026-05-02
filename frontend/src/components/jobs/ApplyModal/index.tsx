@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import { useApplyFlow } from '@/hooks/useApplyFlow'
+import { notify } from '@/lib/notify'
 import { useGetMyResumesQuery } from '@/store/services/resumeApi'
 import { X } from 'lucide-react'
 

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { notify } from '@/lib/notify'
+
 import { useRouter } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import type { RootState } from '@/store'
 import {
   useCreateResumeMutation,

@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
 import { getCompanyAccent } from '@/lib/companyAccent'
 import { formatDate, formatSalary } from '@/lib/jobHelpers'
+import { notify } from '@/lib/notify'
 import {
   type JobDetail,
   type JobListItem,

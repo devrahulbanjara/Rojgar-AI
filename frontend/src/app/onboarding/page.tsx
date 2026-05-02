@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
+import { notify } from '@/lib/notify'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useCompleteOnboardingMutation } from '@/store/services/profileApi'
 import { updateUser } from '@/store/slices/authSlice'

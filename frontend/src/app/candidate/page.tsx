@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+
 import { notify } from '@/lib/notify'
 import { calculateProfileCompletionPercentage } from '@/lib/profileCompletion'
 import { useAppSelector } from '@/store/hooks'

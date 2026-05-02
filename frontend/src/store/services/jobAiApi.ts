@@ -56,6 +56,7 @@ export interface GenerateJobAIDraftRequest {
   mode?: JobAIMode
   research_salary?: boolean
   locked_fields?: string[]
+  manual?: boolean
 }
 
 export interface JobAIDecision {

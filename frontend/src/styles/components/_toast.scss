@@ -7,11 +7,11 @@
 
 // Pastel palette (matches the design reference)
 $toast-success-bg: #b8ecc6;
-$toast-info-bg:    #b6dff5;
+$toast-info-bg: #b6dff5;
 $toast-warning-bg: #fbe0b3;
-$toast-error-bg:   #f4b3b3;
-$toast-fg:         #1d2230;
-$toast-fg-soft:    rgba(29, 34, 48, 0.78);
+$toast-error-bg: #f4b3b3;
+$toast-fg: #1d2230;
+$toast-fg-soft: rgb(29 34 48 / 78%);
 
 // ── Container ────────────────────────────────────────────────
 .Toastify__toast-container {
@@ -33,7 +33,7 @@ $toast-fg-soft:    rgba(29, 34, 48, 0.78);
   background: $color-white;
   border: none;
   border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 6px 20px rgb(15 23 42 / 8%);
   padding: $space-4 $space-4 $space-4 $space-4;
   min-height: 0;
   align-items: flex-start;
@@ -43,10 +43,21 @@ $toast-fg-soft:    rgba(29, 34, 48, 0.78);
 }
 
 // ── Type Variants — pastel backgrounds ───────────────────────
-.Toastify__toast--success { background: $toast-success-bg; }
-.Toastify__toast--info    { background: $toast-info-bg; }
-.Toastify__toast--warning { background: $toast-warning-bg; }
-.Toastify__toast--error   { background: $toast-error-bg; }
+.Toastify__toast--success {
+  background: $toast-success-bg;
+}
+
+.Toastify__toast--info {
+  background: $toast-info-bg;
+}
+
+.Toastify__toast--warning {
+  background: $toast-warning-bg;
+}
+
+.Toastify__toast--error {
+  background: $toast-error-bg;
+}
 
 // ── Body ─────────────────────────────────────────────────────
 .Toastify__toast-body {
@@ -76,7 +87,9 @@ $toast-fg-soft:    rgba(29, 34, 48, 0.78);
   flex-shrink: 0;
   color: $toast-fg;
 
-  svg { display: block; }
+  svg {
+    display: block;
+  }
 }
 
 // ── Structured (title + description) markup ──────────────────
@@ -123,5 +136,10 @@ $toast-fg-soft:    rgba(29, 34, 48, 0.78);
 }
 
 // ── Animations ───────────────────────────────────────────────
-.Toastify__toast--animate-enter { animation-duration: 250ms; }
-.Toastify__toast--animate-exit  { animation-duration: 200ms; }
+.Toastify__toast--animate-enter {
+  animation-duration: 250ms;
+}
+
+.Toastify__toast--animate-exit {
+  animation-duration: 200ms;
+}

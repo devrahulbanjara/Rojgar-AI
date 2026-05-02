@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import Image from 'next/image'
 import Link from 'next/link'
 
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import { useForgotPasswordMutation } from '@/store/services/authApi'
 
 // ── Validation ─────────────────────────────────────────────────────────────

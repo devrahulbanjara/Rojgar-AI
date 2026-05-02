@@ -114,14 +114,34 @@ async def create_draft(
 
     company_id = await get_recruiter_company_id(db, user.id)
 
+    thread_id = _new_thread_id()
+
+    if payload.manual:
+        draft_row = JobAIDraft(
+            recruiter_id=user.id,
+            company_id=company_id,
+            thread_id=thread_id,
+            status="ready",
+            mode=payload.mode,
+            source_title=None,
+            source_rough_description=None,
+            locked_fields=payload.locked_fields,
+            latest_draft=None,
+            assumptions=[],
+            warnings=[],
+            missing_fields=[],
+        )
+        db.add(draft_row)
+        await db.commit()
+        await db.refresh(draft_row)
+        return JobAIDraftResponse.model_validate(draft_row)
+
     company_context = await get_company_context(db, company_id)
 
     source_job = None
 
     if payload.source_job_id:
         source_job = await get_source_job_context(db, payload.source_job_id)
-
-    thread_id = _new_thread_id()
 
     draft_row = JobAIDraft(
         recruiter_id=user.id,

@@ -1,10 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import { useRouter } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import {
   calculateProfileCompletionPercentage,
   getProfileCompletionMeta,

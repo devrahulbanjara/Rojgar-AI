@@ -73,8 +73,12 @@ class ImportedCandidateDocument(BaseSchema):
     portfolio_url: str | None = Field(default=None, max_length=500)
     years_of_experience: int | None = None
     target_roles: list[str] = Field(default_factory=list, max_length=20)
-    experiences: list[ImportedExperienceInput] = Field(default_factory=list, max_length=30)
-    educations: list[ImportedEducationInput] = Field(default_factory=list, max_length=20)
+    experiences: list[ImportedExperienceInput] = Field(
+        default_factory=list, max_length=30
+    )
+    educations: list[ImportedEducationInput] = Field(
+        default_factory=list, max_length=20
+    )
     skills: list[ImportedSkillInput] = Field(default_factory=list, max_length=100)
     warnings: list[str] = Field(
         default_factory=list,

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import {
   type CandidateProfileData,
   type ResumeImportAction,

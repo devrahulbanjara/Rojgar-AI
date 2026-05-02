@@ -1,6 +1,5 @@
 'use client'
 
-import { notify } from '@/lib/notify'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 
@@ -9,6 +8,7 @@ import RecruiterJobEditor, {
   formFromDetail,
 } from '@/app/recruiter/jobs/_components/RecruiterJobEditor'
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import {
   type CreateJobPayload,
   useGetJobByIdQuery,

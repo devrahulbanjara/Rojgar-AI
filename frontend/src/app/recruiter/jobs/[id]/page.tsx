@@ -1,11 +1,12 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import Link from 'next/link'
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { formatSalary } from '@/lib/jobHelpers'
+import { notify } from '@/lib/notify'
 import {
   type JobDetail,
   type JobStatus,

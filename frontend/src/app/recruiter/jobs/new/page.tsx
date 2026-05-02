@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { notify } from '@/lib/notify'
+
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
@@ -18,6 +18,7 @@ import JobAIAssistant, {
 import JobDraftForm from '@/app/recruiter/jobs/new/_components/JobDraftForm'
 import SalaryResearchCard from '@/app/recruiter/jobs/new/_components/SalaryResearchCard'
 import { parseApiError } from '@/lib/apiError'
+import { notify } from '@/lib/notify'
 import { useUpsertJobEvaluationSchemaMutation } from '@/store/services/evaluationApi'
 import {
   type JobAIDraftPayload,
@@ -82,6 +83,27 @@ const ALL_DRAFT_FIELDS: DraftField[] = [
   'preferred_qualifications',
   'benefits',
 ]
+
+const EMPTY_MANUAL_DRAFT: JobAIDraftPayload = {
+  title: '',
+  location: null,
+  location_type: 'onsite',
+  salary_min: null,
+  salary_max: null,
+  currency: 'USD',
+  status: 'draft',
+  auto_shortlist: false,
+  shortlist_threshold: 70,
+  required_years_of_experience: null,
+  overview: '',
+  responsibilities: [],
+  requirements: [],
+  preferred_qualifications: [],
+  benefits: [],
+  assumptions: [],
+  missing_fields: [],
+  warnings: [],
+}
 
 const EMPTY_PAGE_STATE: PageState = {
   draftId: null,
@@ -505,12 +527,15 @@ export default function RecruiterJobAIDraftPage() {
     setPageState((prev) => ({ ...prev, saving: true }))
     try {
       const response = await createDraft({
-        title: 'Untitled role',
-        rough_description: 'Recruiter will fill in details manually.',
+        manual: true,
         research_salary: false,
         locked_fields: [],
       }).unwrap()
-      applyDraftRecord(response.data, false)
+      const seeded: JobAIDraftRecord = {
+        ...response.data,
+        latest_draft: response.data.latest_draft ?? { ...EMPTY_MANUAL_DRAFT },
+      }
+      applyDraftRecord(seeded, false)
       syncRouteWithDraftId(response.data.id)
     } catch (error) {
       setPageState((prev) => ({ ...prev, saving: false }))

@@ -1,4 +1,4 @@
-import { toast, type ToastOptions, type Id } from 'react-toastify'
+import { type Id, type ToastOptions, toast } from 'react-toastify'
 
 type NotifyType = 'success' | 'error' | 'info' | 'warning'
 
@@ -41,11 +41,18 @@ function fire(
   let description: React.ReactNode | undefined
   let options: ToastOptions | undefined
 
-  if (typeof descriptionOrOptions === 'string' || (descriptionOrOptions != null && typeof descriptionOrOptions !== 'object')) {
+  if (
+    typeof descriptionOrOptions === 'string' ||
+    (descriptionOrOptions != null && typeof descriptionOrOptions !== 'object')
+  ) {
     title = message
     description = descriptionOrOptions as React.ReactNode
     options = maybeOptions
-  } else if (descriptionOrOptions && isOptions(descriptionOrOptions) && !('$$typeof' in descriptionOrOptions)) {
+  } else if (
+    descriptionOrOptions &&
+    isOptions(descriptionOrOptions) &&
+    !('$$typeof' in descriptionOrOptions)
+  ) {
     // ToastOptions object
     title = DEFAULT_TITLES[type]
     description = message
@@ -63,22 +70,31 @@ function fire(
 
   const content = <ToastBody title={String(title)} description={description} />
   switch (type) {
-    case 'success': return toast.success(content, options)
-    case 'error':   return toast.error(content, options)
-    case 'warning': return toast.warning(content, options)
+    case 'success':
+      return toast.success(content, options)
+    case 'error':
+      return toast.error(content, options)
+    case 'warning':
+      return toast.warning(content, options)
     case 'info':
-    default:        return toast.info(content, options)
+    default:
+      return toast.info(content, options)
   }
 }
 
 export const notify = {
-  success: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) => fire('success', msg, d, o),
-  error:   (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) => fire('error',   msg, d, o),
-  info:    (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) => fire('info',    msg, d, o),
-  warning: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) => fire('warning', msg, d, o),
-  warn:    (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) => fire('warning', msg, d, o),
+  success: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
+    fire('success', msg, d, o),
+  error: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
+    fire('error', msg, d, o),
+  info: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
+    fire('info', msg, d, o),
+  warning: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
+    fire('warning', msg, d, o),
+  warn: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
+    fire('warning', msg, d, o),
   dismiss: toast.dismiss,
-  update:  toast.update,
+  update: toast.update,
   isActive: toast.isActive,
 }
 

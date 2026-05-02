@@ -29,19 +29,20 @@ async def create_ai_job_draft(
     """Generate a new AI-assisted job draft."""
     draft = await service.create_draft(db, user, payload, run_background=True)
 
-    background_tasks.add_task(
-        service.run_draft_generation_background,
-        draft_id=draft.id,
-        thread_id=draft.thread_id,
-        recruiter_id=user.id,
-        company_id=draft.company_id,
-        mode=payload.mode,
-        title=payload.title,
-        rough_description=payload.rough_description,
-        source_job_id=payload.source_job_id,
-        research_salary=payload.research_salary,
-        locked_fields=payload.locked_fields,
-    )
+    if not payload.manual:
+        background_tasks.add_task(
+            service.run_draft_generation_background,
+            draft_id=draft.id,
+            thread_id=draft.thread_id,
+            recruiter_id=user.id,
+            company_id=draft.company_id,
+            mode=payload.mode,
+            title=payload.title,
+            rough_description=payload.rough_description,
+            source_job_id=payload.source_job_id,
+            research_salary=payload.research_salary,
+            locked_fields=payload.locked_fields,
+        )
 
     return ResponseBuilder.success(
         data=draft,
