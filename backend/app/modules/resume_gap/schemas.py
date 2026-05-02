@@ -46,8 +46,16 @@ class AutoPatchResult(BaseModel):
     skills_to_add: list[str]
 
 
+class PatchedFieldDiff(BaseModel):
+    field: str
+    label: str
+    old_value: str | None
+    new_value: str | None
+
+
 class AutoPatchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     updated_fields: list[str]
     message: str
+    diffs: list[PatchedFieldDiff]

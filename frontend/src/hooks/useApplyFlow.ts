@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { useApplyToJobMutation } from '@/store/services/applicationsApi'
 import {
   type GapAnalysisResult,
+  type PatchedFieldDiff,
   useAnalyzeResumeGapMutation,
   useAutoPatchResumeMutation,
 } from '@/store/services/resumeGapApi'
@@ -47,6 +48,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
   const [gapResult, setGapResult] = useState<GapAnalysisResult | null>(null)
   const [patchedFields, setPatchedFields] = useState<string[]>([])
+  const [patchedDiffs, setPatchedDiffs] = useState<PatchedFieldDiff[]>([])
   const [error, setError] = useState<string | null>(null)
   const [shareSettings, setShareSettings] = useState<ShareSettingsDraft>(DEFAULT_SHARE_SETTINGS)
   const [shareReturnStep, setShareReturnStep] = useState<
@@ -61,6 +63,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     setSelectedResumeId(resumeId)
     setGapResult(null)
     setPatchedFields([])
+    setPatchedDiffs([])
     setShareSettings(DEFAULT_SHARE_SETTINGS)
     setError(null)
     setStep('gap_choice')
@@ -116,7 +119,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         gap_result: gapResult,
       }).unwrap()
       setPatchedFields(response.data.updated_fields)
-      handleOpenShareStep('patch_done')
+      setPatchedDiffs(response.data.diffs)
     } catch (err: unknown) {
       const message =
         (err as { data?: { detail?: string; message?: string } })?.data?.detail ||
@@ -184,6 +187,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     selectedResumeId,
     gapResult,
     patchedFields,
+    patchedDiffs,
     shareSettings,
     error,
     handleResumeConfirmed,

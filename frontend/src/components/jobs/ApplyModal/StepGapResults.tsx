@@ -144,7 +144,7 @@ export default function StepGapResults({
   onBack,
 }: StepGapResultsProps) {
   return (
-    <div className={styles.applyModal__results}>
+    <div className={styles.applyModal__results} onWheel={(e) => e.stopPropagation()}>
       <div className={styles.applyModal__hero}>
         <ScoreRing score={result.overall_score_estimate} />
         <div className={styles.applyModal__heroCopy}>
@@ -176,20 +176,6 @@ export default function StepGapResults({
           icon="minus"
           tone="muted"
         />
-      </div>
-
-      <div className={styles.applyModal__ctaBar}>
-        <button className="btn btn--ghost" onClick={onBack} type="button">
-          Back
-        </button>
-        <div className={styles.applyModal__ctaActions}>
-          <button className="btn btn--secondary" onClick={onApplyAnyway} type="button">
-            Apply with current resume
-          </button>
-          <button className="btn btn--primary" onClick={onAutoPatch} type="button">
-            Let AI update my resume
-          </button>
-        </div>
       </div>
     </div>
   )

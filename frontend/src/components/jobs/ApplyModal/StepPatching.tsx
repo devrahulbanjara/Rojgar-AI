@@ -1,20 +1,22 @@
 import { CheckCircle2 } from 'lucide-react'
 
-import styles from './applyModal.module.scss'
+import type { PatchedFieldDiff } from '@/store/services/resumeGapApi'
 
-const FIELD_LABELS: Record<string, string> = {
-  headline: 'Professional headline',
-  summary: 'Profile summary',
-  skills: 'Skills section',
-}
+import styles from './applyModal.module.scss'
 
 interface StepPatchingProps {
   isPatching: boolean
   patchedFields: string[]
+  patchedDiffs?: PatchedFieldDiff[]
   onContinue: () => void
 }
 
-export default function StepPatching({ isPatching, patchedFields, onContinue }: StepPatchingProps) {
+export default function StepPatching({
+  isPatching,
+  patchedFields,
+  patchedDiffs,
+  onContinue,
+}: StepPatchingProps) {
   if (isPatching) {
     return (
       <div className={styles.applyModal__loading}>
@@ -36,32 +38,48 @@ export default function StepPatching({ isPatching, patchedFields, onContinue }: 
   return (
     <div className={styles.applyModal__patchSuccess}>
       <div className={styles.applyModal__patchHero}>
-        <span className={styles.applyModal__patchIcon}>
+        <div className={styles.applyModal__patchIconWrap}>
           <CheckCircle2 size={20} />
-        </span>
+        </div>
         <div>
           <p className={styles.applyModal__patchTitle}>Resume updated</p>
           <p className={styles.applyModal__patchCopy}>
-            Your selected resume is now better aligned for this role. Review the sections below,
-            then submit when ready.
+            Your resume has been enhanced with AI suggestions to better match this job.
           </p>
         </div>
       </div>
 
-      {patchedFields.length > 0 && (
-        <div className={styles.applyModal__updatedList}>
-          {patchedFields.map((field) => (
-            <div className={styles.applyModal__updatedRow} key={field}>
-              <CheckCircle2 size={14} />
-              <span>{FIELD_LABELS[field] ?? field}</span>
-            </div>
-          ))}
+      {patchedDiffs && patchedDiffs.length > 0 && (
+        <div className={styles.applyModal__diffSection} onWheel={(e) => e.stopPropagation()}>
+          {patchedDiffs
+            .filter((diff) => diff.old_value !== diff.new_value)
+            .map((diff) => (
+              <div className={styles.applyModal__diffCard} key={diff.field}>
+                <div className={styles.applyModal__diffHeader}>
+                  <span className={styles.applyModal__diffLabel}>{diff.label}</span>
+                </div>
+                <div className={styles.applyModal__diffContent}>
+                  {diff.old_value && (
+                    <div className={styles.applyModal__diffRow}>
+                      <span className={styles.applyModal__diffLabelOld}>Before</span>
+                      <p className={styles.applyModal__diffValue}>{diff.old_value}</p>
+                    </div>
+                  )}
+                  {diff.new_value && (
+                    <div className={styles.applyModal__diffRow}>
+                      <span className={styles.applyModal__diffLabelNew}>After</span>
+                      <p className={styles.applyModal__diffValue}>{diff.new_value}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
         </div>
       )}
 
       <div className={styles.applyModal__stepActions}>
         <button className="btn btn--primary" onClick={onContinue} type="button">
-          Submit Application
+          Continue to submit
         </button>
       </div>
     </div>

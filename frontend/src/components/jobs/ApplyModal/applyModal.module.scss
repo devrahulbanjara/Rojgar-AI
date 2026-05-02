@@ -16,8 +16,8 @@
 .applyModal {
   // ── Modal shell ────────────────────────────────────────────
   &__modal {
-    width: min(100%, 36rem);
-    max-width: 36rem;
+    width: min(100%, 72rem);
+    max-width: 90vw;
     max-height: min(90vh, 56rem);
     height: auto;
     display: flex;
@@ -34,12 +34,12 @@
 
   &__modal--wide {
     width: min(100%, 56rem);
-    max-width: 56rem;
+    max-width: 90vw;
   }
 
   &__modal--results {
-    width: min(100%, 42rem);
-    max-width: 42rem;
+    width: min(100%, 84rem);
+    max-width: 90vw;
   }
 
   // ── Body (scroll container) ────────────────────────────────
@@ -63,6 +63,17 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+
+  // ── Footer (fixed, outside scroll) ───────────────────────────
+  &__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.25rem 2rem 1.75rem;
+    border-top: 1px solid var(--color-border);
+    background: #fff;
+    flex-shrink: 0;
   }
 
   // ── Header ─────────────────────────────────────────────────
@@ -390,6 +401,7 @@
     flex-direction: column;
     gap: 1.25rem;
     min-height: 0;
+    padding-bottom: 0.5rem;
   }
 
   // Hero — bordered group: ring left, copy right, one cohesive block.
@@ -674,29 +686,16 @@
   // ── Footer / CTA bar (sticky inside body) ──────────────────
   &__ctaBar {
     position: sticky;
-    bottom: -1.75rem;
+    bottom: 0;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.625rem;
     width: calc(100% + 4rem);
-    margin: 0 -2rem -1.75rem;
-    padding: 1rem 2rem 1.75rem;
-    background: linear-gradient(
-      to bottom,
-      rgb(255 255 255 / 0%) 0%,
-      rgb(255 255 255 / 95%) 30%,
-      #fff 60%
-    );
-    flex-wrap: wrap;
+    margin: 1rem -2rem -1.75rem;
+    padding: 1.25rem 2rem 1.75rem;
+    background: #fff;
+    border-top: 1px solid var(--color-border);
     z-index: 1;
-  }
-
-  &__ctaActions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
   }
 
   // ── Patch success ──────────────────────────────────────────
@@ -741,6 +740,134 @@
     font-size: 0.8125rem;
     color: var(--color-text-muted);
     line-height: 1.6;
+  }
+
+  &__patchIconWrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-full);
+    background: rgb(37 99 235 / 12%);
+    color: #2563eb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__patchedFieldsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1rem 1.125rem;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-muted, #f8fafc);
+    border: 1px solid var(--color-border-light, #f3f4f6);
+  }
+
+  &__patchedFieldsLabel {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  &__patchedFieldsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__patchedFieldTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-lg);
+    background: #fff;
+    border: 1px solid var(--color-border);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__patchedFieldsNote {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin: 0.25rem 0 0;
+    line-height: 1.5;
+  }
+
+  &__diffSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 16rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.25rem;
+  }
+
+  &__diffCard {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: #fff;
+    overflow: hidden;
+  }
+
+  &__diffHeader {
+    padding: 0.625rem 0.875rem;
+    background: var(--color-surface-muted, #f8fafc);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  &__diffLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__diffContent {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__diffRow {
+    padding: 0.75rem 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--color-border-light, #f3f4f6);
+    }
+  }
+
+  &__diffLabelOld {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #dc2626;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__diffLabelNew {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #16a34a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__diffValue {
+    font-size: 0.8125rem;
+    color: var(--color-text);
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   &__updatedList {

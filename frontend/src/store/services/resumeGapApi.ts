@@ -17,9 +17,17 @@ export interface GapAnalysisResult {
   overall_verdict: string
 }
 
+export interface PatchedFieldDiff {
+  field: string
+  label: string
+  old_value: string | null
+  new_value: string | null
+}
+
 export interface AutoPatchResponse {
   updated_fields: string[]
   message: string
+  diffs: PatchedFieldDiff[]
 }
 
 export const resumeGapApi = baseApi.injectEndpoints({

@@ -14,6 +14,7 @@ from app.modules.resume_gap.schemas import (
     AutoPatchResponse,
     GapAnalysisRequest,
     GapAnalysisResult,
+    PatchedFieldDiff,
 )
 from app.modules.resumes import service as resumes_service
 from app.modules.resumes.models import Resume
@@ -168,6 +169,31 @@ async def auto_patch_resume(
     )
     await redis_service.delete(f"resume_gap:{payload.resume_id}:{payload.job_id}")
 
+    diffs: list[PatchedFieldDiff] = []
+    if "headline" in updated_fields:
+        diffs.append(PatchedFieldDiff(
+            field="headline",
+            label="Professional headline",
+            old_value=resume.headline,
+            new_value=patch.headline,
+        ))
+    if "summary" in updated_fields:
+        diffs.append(PatchedFieldDiff(
+            field="summary",
+            label="Profile summary",
+            old_value=resume.summary,
+            new_value=patch.summary,
+        ))
+    if "skills" in updated_fields:
+        old_skills = ", ".join(existing_skills) if existing_skills else None
+        new_skills = ", ".join([s.skill_name for s in merged_skills]) if merged_skills else None
+        diffs.append(PatchedFieldDiff(
+            field="skills",
+            label="Skills section",
+            old_value=old_skills,
+            new_value=new_skills,
+        ))
+
     return AutoPatchResponse(
         updated_fields=updated_fields,
         message=(
@@ -175,4 +201,5 @@ async def auto_patch_resume(
             if updated_fields
             else "Resume already well-aligned - no changes needed."
         ),
+        diffs=diffs,
     )
