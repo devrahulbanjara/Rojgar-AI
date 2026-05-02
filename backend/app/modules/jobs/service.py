@@ -36,7 +36,7 @@ from app.modules.jobs.schemas import (
 )
 from app.modules.jobs.sync import process_sync_event
 from app.modules.profiles.models import Profile
-from app.shared.enums import JobStatus, LocationType, SyncAction
+from app.shared.enums import ApplicationStatus, JobStatus, LocationType, SyncAction
 
 
 def _utcnow() -> datetime:
@@ -79,8 +79,10 @@ def _validate_expires_at_for_write(expires_at: datetime | None) -> datetime | No
 
 def _should_be_searchable(job: Job) -> bool:
     """Return True when a job should be indexed for search."""
-    return _effective_job_status(job) == JobStatus.active and (
-        job.expires_at is None or job.expires_at > _utcnow()
+    return (
+        _effective_job_status(job) == JobStatus.active
+        and not job.hiring_completed
+        and (job.expires_at is None or job.expires_at > _utcnow())
     )
 
 
@@ -188,6 +190,7 @@ def _job_list_item_from_row(
             "applications_count": int(applications_count or 0),
             "final_shortlist_completed": job.final_shortlist_completed,
             "hiring_completed": job.hiring_completed,
+            "hired_at": job.hired_at,
             "has_applied": has_applied,
             "created_at": job.created_at,
             "match_score": match_score,
@@ -224,6 +227,7 @@ def _job_detail_response_from_row(
             "benefits": job.benefits,
             "applications_count": int(applications_count or 0),
             "hiring_completed": job.hiring_completed,
+            "hired_at": job.hired_at,
             "has_applied": has_applied,
             "created_at": job.created_at,
             "updated_at": job.updated_at,
@@ -716,13 +720,32 @@ async def delete_job(
     logger.info(f"Job '{job_title}' deleted by user {user.id}")
 
 
-async def set_hiring_completed(
+_PENDING_APPLICATION_STATUSES = (
+    ApplicationStatus.applied,
+    ApplicationStatus.shortlisted,
+    ApplicationStatus.interview_booked,
+    ApplicationStatus.interview_completed,
+)
+
+
+async def complete_hiring(
     db: AsyncSession,
     user: User,
     job_id: uuid.UUID,
-    hiring_completed: bool,
-) -> dict[str, bool]:
-    """Update a job's hiring-completed flag and invalidate dependent state."""
+    bg_tasks: BackgroundTasks,
+) -> dict:
+    """
+    Mark hiring as complete for a job (one-way action).
+
+    Side effects:
+    - Sets hiring_completed=True and hired_at=now()
+    - Bulk-rejects pending applications (applied/shortlisted/interview_*)
+    - Leaves offer/offer_accepted/offer_declined untouched
+    - Removes the job from candidate search (via re-index)
+    - Emits audit + activity events
+    """
+    from app.modules.activity.service import create_activity_event
+
     company_id = await _get_user_company_id(db, user)
     result = await db.execute(
         select(Job).where(Job.id == job_id, Job.company_id == company_id)
@@ -731,13 +754,90 @@ async def set_hiring_completed(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
 
-    applicant_user_ids = await get_job_applicant_user_ids(db, str(job_id))
-    job.hiring_completed = hiring_completed
+    if job.hiring_completed:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Hiring has already been completed for this job.",
+        )
+
+    pending_apps_result = await db.execute(
+        select(Application).where(
+            Application.job_id == job_id,
+            Application.status.in_(_PENDING_APPLICATION_STATUSES),
+        )
+    )
+    pending_apps = list(pending_apps_result.scalars().all())
+
+    job.hiring_completed = True
+    job.hired_at = _utcnow()
+
+    application_sync_event_ids: list[uuid.UUID] = []
+    rejected_user_ids: set[str] = set()
+    for app in pending_apps:
+        app.status = ApplicationStatus.rejected
+        rejected_user_ids.add(str(app.user_id))
+        sync_event = ApplicationSyncEvent(
+            application_id=app.id, action=SyncAction.UPSERT
+        )
+        db.add(sync_event)
+        application_sync_event_ids.append(sync_event.id)
+        await create_activity_event(
+            db,
+            event_type="application_rejected",
+            audience="candidate",
+            title=f"Application closed for {job.title}",
+            description=(
+                f"Hiring is complete for {job.title}; the position has been filled."
+            ),
+            href=f"/candidate/applications/{app.id}",
+            user_id=app.user_id,
+            company_id=company_id,
+            application_id=app.id,
+            job_id=job.id,
+            actor_user_id=user.id,
+            metadata={
+                "status": ApplicationStatus.rejected.value,
+                "reason": "position_filled",
+                "job_title": job.title,
+            },
+        )
+
+    job_sync_event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
+    db.add(job_sync_event)
+
+    await create_custom_audit_log(
+        db,
+        entity_type="job",
+        action_type="job_hiring_completed",
+        category="jobs",
+        message=(
+            f"Hiring completed for '{job.title}' by {user.full_name}; "
+            f"{len(pending_apps)} pending application(s) auto-rejected."
+        ),
+        entity_id=job.id,
+        company_id=company_id,
+        metadata={
+            "job_title": job.title,
+            "rejected_application_count": len(pending_apps),
+        },
+    )
+
     await db.commit()
 
+    bg_tasks.add_task(process_sync_event, job_sync_event.id)
+    for sync_event_id in application_sync_event_ids:
+        bg_tasks.add_task(process_application_sync_event, sync_event_id)
+
+    applicant_user_ids = await get_job_applicant_user_ids(db, str(job_id))
     await invalidate_job_detail_caches(str(job_id))
     await redis_service.delete(f"jobs:company:{job.company_id}")
     await invalidate_company_dashboard_caches(db, str(job.company_id))
+    await invalidate_company_application_caches(str(job.company_id))
+    await invalidate_interview_list_caches(str(job.company_id))
     await invalidate_candidate_read_caches_for_users(applicant_user_ids)
 
-    return {"hiring_completed": hiring_completed}
+    return {
+        "hiring_completed": True,
+        "hired_at": job.hired_at.isoformat(),
+        "rejected_application_count": len(pending_apps),
+    }

@@ -11,6 +11,7 @@ import {
   type JobDetail,
   type JobStatus,
   getJobStatusLabel,
+  useCompleteHiringMutation,
   useDeleteJobMutation,
   useGetJobByIdQuery,
   useUpdateJobMutation,
@@ -18,6 +19,7 @@ import {
 import {
   ArrowLeft,
   Briefcase,
+  CheckCircle2,
   Clock,
   DollarSign,
   MapPin,
@@ -99,7 +101,9 @@ export default function RecruiterJobDetailPage() {
 
   const [updateJob, { isLoading: isUpdatingStatus }] = useUpdateJobMutation()
   const [deleteJob, { isLoading: isDeleting }] = useDeleteJobMutation()
+  const [completeHiring, { isLoading: isCompletingHiring }] = useCompleteHiringMutation()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showCompleteHiringModal, setShowCompleteHiringModal] = useState(false)
 
   async function handleStatusChange(nextStatus: JobStatus) {
     if (!job || job.status === nextStatus) return
@@ -119,6 +123,23 @@ export default function RecruiterJobDetailPage() {
       router.push('/recruiter/jobs')
     } catch {
       toast.error('Failed to delete job.')
+    }
+  }
+
+  async function handleCompleteHiringConfirm() {
+    if (!job) return
+    try {
+      const resp = await completeHiring(job.id).unwrap()
+      const rejected = resp.data?.rejected_application_count ?? 0
+      toast.success(
+        rejected > 0
+          ? `Hiring complete. ${rejected} pending application${rejected === 1 ? '' : 's'} closed.`
+          : 'Hiring complete.',
+      )
+      setShowCompleteHiringModal(false)
+      void refetch()
+    } catch {
+      toast.error('Failed to complete hiring.')
     }
   }
 
@@ -205,20 +226,53 @@ export default function RecruiterJobDetailPage() {
             <p className="dash-page-header__subtitle">{buildSubtitle(job)}</p>
           </div>
           <div className="dash-page-header__actions">
-            <FilterSelect<JobStatus>
-              value={job.status}
-              onChange={(next) => void handleStatusChange(next)}
-              options={JOB_STATUS_OPTIONS}
-              ariaLabel="Change job status"
-              disabled={isUpdatingStatus}
-            />
-            <button
-              className="btn btn--primary btn--sm"
-              onClick={() => router.push(`/recruiter/jobs/${job.id}/edit`)}
-            >
-              <Pencil size={14} aria-hidden="true" />
-              Edit Job
-            </button>
+            {job.hiring_completed ? (
+              <span
+                className="status-pill status-pill--success"
+                title={
+                  job.hired_at ? `Hiring completed on ${formatDate(job.hired_at)}` : undefined
+                }
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 10px',
+                  borderRadius: 999,
+                  background: 'var(--color-success-50, #ecfdf5)',
+                  color: 'var(--color-success-700, #047857)',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                }}
+              >
+                <CheckCircle2 size={14} aria-hidden="true" />
+                Hired{job.hired_at ? ` · ${formatDate(job.hired_at)}` : ''}
+              </span>
+            ) : (
+              <>
+                <FilterSelect<JobStatus>
+                  value={job.status}
+                  onChange={(next) => void handleStatusChange(next)}
+                  options={JOB_STATUS_OPTIONS}
+                  ariaLabel="Change job status"
+                  disabled={isUpdatingStatus}
+                />
+                <button
+                  className="btn btn--success btn--sm"
+                  onClick={() => setShowCompleteHiringModal(true)}
+                  title="Mark hiring as complete and close this job"
+                >
+                  <CheckCircle2 size={14} aria-hidden="true" />
+                  Complete Hiring
+                </button>
+                <button
+                  className="btn btn--primary btn--sm"
+                  onClick={() => router.push(`/recruiter/jobs/${job.id}/edit`)}
+                >
+                  <Pencil size={14} aria-hidden="true" />
+                  Edit Job
+                </button>
+              </>
+            )}
             <button
               className="btn btn--icon btn--sm"
               onClick={() => {
@@ -230,13 +284,15 @@ export default function RecruiterJobDetailPage() {
             >
               <Share2 size={16} />
             </button>
-            <button
-              className="btn btn--icon btn--sm"
-              onClick={() => setShowDeleteModal(true)}
-              aria-label="Delete job"
-            >
-              <Trash2 size={16} />
-            </button>
+            {!job.hiring_completed && (
+              <button
+                className="btn btn--icon btn--sm"
+                onClick={() => setShowDeleteModal(true)}
+                aria-label="Delete job"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -335,6 +391,57 @@ export default function RecruiterJobDetailPage() {
           </>
         )}
       </div>
+
+      {showCompleteHiringModal ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal__header">
+              <span className="modal__title">Complete hiring for this job?</span>
+              <button
+                type="button"
+                className="btn btn--icon btn--sm"
+                onClick={() => setShowCompleteHiringModal(false)}
+                aria-label="Close"
+              >
+                <X />
+              </button>
+            </div>
+            <div className="modal__body">
+              <p
+                style={{
+                  fontSize: '0.9375rem',
+                  color: 'var(--color-gray-700,#374151)',
+                  lineHeight: 1.6,
+                }}
+              >
+                This will close <strong>&ldquo;{job.title}&rdquo;</strong>, automatically reject all
+                pending applicants (with reason: <em>position filled</em>), and remove the job from
+                candidate search. Offers already extended will not be affected.{' '}
+                <strong>This cannot be undone.</strong>
+              </p>
+            </div>
+            <div className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => setShowCompleteHiringModal(false)}
+                disabled={isCompletingHiring}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`btn btn--success btn--sm${isCompletingHiring ? ' btn--loading' : ''}`}
+                onClick={handleCompleteHiringConfirm}
+                disabled={isCompletingHiring}
+                aria-busy={isCompletingHiring}
+              >
+                {isCompletingHiring ? 'Completing...' : 'Complete hiring'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showDeleteModal ? (
         <div className="modal-backdrop" role="dialog" aria-modal="true">

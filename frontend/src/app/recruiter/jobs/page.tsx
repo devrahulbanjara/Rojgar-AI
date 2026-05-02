@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { formatSalary as formatSalaryBase } from '@/lib/jobHelpers'
+import { getJobStatusLabel as getJobDisplayStatusLabel } from '@/lib/statusMetadata'
 import { type JobAIDraftRecord, useGetJobAIDraftsQuery } from '@/store/services/jobAiApi'
 import {
   type JobListItem,
@@ -37,11 +38,14 @@ const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   hybrid: 'Hybrid',
 }
 
-const FILTER_OPTIONS: { label: string; value: JobStatus | 'all' }[] = [
+type JobFilter = JobStatus | 'all' | 'completed'
+
+const FILTER_OPTIONS: { label: string; value: JobFilter }[] = [
   { label: 'All', value: 'all' },
   { label: 'Active', value: 'active' },
   { label: 'Draft', value: 'draft' },
   { label: 'Expired', value: 'expired' },
+  { label: 'Completed', value: 'completed' },
 ]
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'NPR') {
@@ -191,18 +195,36 @@ function RecruiterJobCard({
       onClick={() => router.push(`/recruiter/jobs/${job.id}`)}
       role="button"
       tabIndex={0}
+      style={job.hiring_completed ? { opacity: 0.7 } : undefined}
       onKeyDown={(e) => {
         if (e.key === 'Enter') router.push(`/recruiter/jobs/${job.id}`)
       }}
     >
       <div className={styles.cardHead}>
         <h3 className={styles.title}>{job.title}</h3>
-        <StatusSelect
-          status={job.status}
-          onChange={onStatusChange}
-          disabled={isUpdatingStatus}
-          jobTitle={job.title}
-        />
+        {job.hiring_completed ? (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderRadius: 999,
+              background: 'var(--color-success-50, #ecfdf5)',
+              color: 'var(--color-success-700, #047857)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+            }}
+          >
+            Hired
+          </span>
+        ) : (
+          <StatusSelect
+            status={job.status}
+            onChange={onStatusChange}
+            disabled={isUpdatingStatus}
+            jobTitle={job.title}
+          />
+        )}
       </div>
 
       <div className={styles.row}>
@@ -225,7 +247,7 @@ function RecruiterJobCard({
         </span>
       </div>
 
-      <KebabMenu onEdit={onEdit} onDelete={onDelete} />
+      {!job.hiring_completed && <KebabMenu onEdit={onEdit} onDelete={onDelete} />}
     </div>
   )
 }
@@ -333,8 +355,11 @@ export default function CompanyJobsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const filterFromUrl = searchParams.get('filter')
-  const [activeFilter, setActiveFilter] = useState<JobStatus | 'all'>(
-    filterFromUrl === 'active' || filterFromUrl === 'draft' || filterFromUrl === 'expired'
+  const [activeFilter, setActiveFilter] = useState<JobFilter>(
+    filterFromUrl === 'active' ||
+      filterFromUrl === 'draft' ||
+      filterFromUrl === 'expired' ||
+      filterFromUrl === 'completed'
       ? filterFromUrl
       : 'all',
   )
@@ -364,17 +389,22 @@ export default function CompanyJobsPage() {
   const allJobs: JobListItem[] = jobsResp?.data ?? []
   const allAIDrafts = (draftsResp?.data ?? []).filter(isVisibleAIDraft)
   const visibleAIDrafts = activeFilter === 'draft' || activeFilter === 'all' ? allAIDrafts : []
-  const filteredJobs =
-    activeFilter === 'all' ? allJobs : allJobs.filter((job) => job.status === activeFilter)
+  const filteredJobs = (() => {
+    if (activeFilter === 'all') return allJobs.filter((job) => !job.hiring_completed)
+    if (activeFilter === 'completed') return allJobs.filter((job) => job.hiring_completed)
+    return allJobs.filter((job) => !job.hiring_completed && job.status === activeFilter)
+  })()
   const isLoading = isLoadingJobs || isLoadingDrafts
   const isError = isJobsError || isDraftsError
   const hasVisibleItems = filteredJobs.length > 0 || visibleAIDrafts.length > 0
 
-  const counts: Record<JobStatus | 'all', number> = {
-    all: allJobs.length + allAIDrafts.length,
-    active: allJobs.filter((job) => job.status === 'active').length,
-    draft: allJobs.filter((job) => job.status === 'draft').length + allAIDrafts.length,
-    expired: allJobs.filter((job) => job.status === 'expired').length,
+  const openJobs = allJobs.filter((job) => !job.hiring_completed)
+  const counts: Record<JobFilter, number> = {
+    all: openJobs.length + allAIDrafts.length,
+    active: openJobs.filter((job) => job.status === 'active').length,
+    draft: openJobs.filter((job) => job.status === 'draft').length + allAIDrafts.length,
+    expired: openJobs.filter((job) => job.status === 'expired').length,
+    completed: allJobs.filter((job) => job.hiring_completed).length,
   }
 
   async function handleDeleteConfirm() {
@@ -475,12 +505,12 @@ export default function CompanyJobsPage() {
             <p className={styles.emptyTitle}>
               {activeFilter === 'all'
                 ? 'No jobs yet'
-                : `No ${getJobStatusLabel(activeFilter)} jobs`}
+                : `No ${getJobDisplayStatusLabel(activeFilter)} jobs`}
             </p>
             <p className={styles.emptyCopy}>
               {activeFilter === 'all'
                 ? 'Post your first job to start attracting candidates.'
-                : `You have no ${getJobStatusLabel(activeFilter).toLowerCase()} job postings.`}
+                : `You have no ${getJobDisplayStatusLabel(activeFilter).toLowerCase()} job postings.`}
             </p>
             {activeFilter === 'all' ? (
               <Link href="/recruiter/jobs/manual" className="btn btn--primary btn--sm">

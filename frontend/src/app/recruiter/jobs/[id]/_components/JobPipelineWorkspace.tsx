@@ -27,8 +27,8 @@ import { Bot, RefreshCw, Send, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 import CandidateDrawer, {
-  DRAWER_TABS,
   type DrawerTab,
+  resolveDrawerTab,
 } from '@/components/recruiter/CandidateDrawer/CandidateDrawer'
 
 import styles from './JobPipelineWorkspace.module.scss'
@@ -75,9 +75,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
 
   const drawerAppId = searchParams.get('app')
   const drawerTabParam = searchParams.get('tab')
-  const drawerTab: DrawerTab = (DRAWER_TABS as readonly string[]).includes(drawerTabParam ?? '')
-    ? (drawerTabParam as DrawerTab)
-    : 'profile'
+  const drawerTab = resolveDrawerTab(drawerTabParam, 'profile')
 
   const updateParams = useCallback(
     (next: { stage?: PipelineStage; app?: string | null; tab?: DrawerTab | null }) => {

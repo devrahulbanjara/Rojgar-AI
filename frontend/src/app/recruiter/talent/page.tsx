@@ -14,8 +14,8 @@ import { ChevronRight, UserRound } from 'lucide-react'
 import Avatar from '@/components/common/Avatar'
 import { FilterSelect, SearchInput, Toolbar, ToolbarCount } from '@/components/common/Toolbar'
 import CandidateDrawer, {
-  DRAWER_TABS,
   type DrawerTab,
+  resolveDrawerTab,
 } from '@/components/recruiter/CandidateDrawer/CandidateDrawer'
 
 import styles from './page.module.scss'
@@ -38,9 +38,7 @@ export default function RecruiterTalentPage() {
   const initialJobId = searchParams.get('job_id') ?? 'all'
   const drawerAppId = searchParams.get('app')
   const drawerTabParam = searchParams.get('tab')
-  const drawerTab: DrawerTab = (DRAWER_TABS as readonly string[]).includes(drawerTabParam ?? '')
-    ? (drawerTabParam as DrawerTab)
-    : 'profile'
+  const drawerTab = resolveDrawerTab(drawerTabParam, 'profile')
 
   const [selectedJobId, setSelectedJobId] = useState(initialJobId)
   const [selectedStatus, setSelectedStatus] = useState<'all' | ApplicationStatus>('all')

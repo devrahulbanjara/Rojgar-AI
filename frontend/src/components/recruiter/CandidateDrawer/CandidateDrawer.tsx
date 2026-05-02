@@ -54,15 +54,22 @@ const STATUS_LABELS: Record<ApplicationStatus, string> = {
   rejected: 'Rejected',
 }
 
-export const DRAWER_TABS = ['profile', 'evaluation', 'interview', 'outreach', 'resume'] as const
+export const DRAWER_TABS = ['profile', 'interview', 'outreach', 'resume'] as const
 export type DrawerTab = (typeof DRAWER_TABS)[number]
 
 const TAB_LABELS: Record<DrawerTab, string> = {
   profile: 'Profile',
-  evaluation: 'Evaluation',
   interview: 'Interview',
   outreach: 'Outreach',
   resume: 'Resume',
+}
+
+export function resolveDrawerTab(tabParam: string | null, fallback: DrawerTab): DrawerTab {
+  // Keep old shared links (?tab=evaluation) working after merging evaluation into Interview.
+  if (tabParam === 'evaluation') return 'interview'
+  return (DRAWER_TABS as readonly string[]).includes(tabParam ?? '')
+    ? (tabParam as DrawerTab)
+    : fallback
 }
 
 function formatInterviewDate(value: string) {
@@ -275,10 +282,14 @@ export default function CandidateDrawer({
             </div>
           ) : activeTab === 'profile' ? (
             <ProfileTab candidate={candidate} />
-          ) : activeTab === 'evaluation' ? (
-            <CandidateEvaluationCard applicationId={applicationId} />
           ) : activeTab === 'interview' ? (
-            <InterviewBookingSection interview={interview ?? null} />
+            <>
+              <InterviewBookingSection interview={interview ?? null} />
+              <InterviewRecordingCard key={applicationId} applicationId={applicationId} />
+              <div className={styles.interviewEvaluationSpacing}>
+                <CandidateEvaluationCard applicationId={applicationId} />
+              </div>
+            </>
           ) : activeTab === 'outreach' ? (
             <OutreachTab
               applicationId={applicationId}
@@ -290,14 +301,6 @@ export default function CandidateDrawer({
           ) : (
             <ResumeTab renderedResume={renderedResume} />
           )}
-          {!isLoading && !isError && candidate && applicationId ? (
-            <div
-              className={activeTab === 'interview' ? undefined : styles.hiddenRecordingPanel}
-              aria-hidden={activeTab !== 'interview'}
-            >
-              <InterviewRecordingCard key={applicationId} applicationId={applicationId} />
-            </div>
-          ) : null}
         </div>
       </aside>
     </>

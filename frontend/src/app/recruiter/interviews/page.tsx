@@ -7,8 +7,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { type InterviewItem, useGetInterviewsQuery } from '@/store/services/interviewsApi'
 
 import CandidateDrawer, {
-  DRAWER_TABS,
   type DrawerTab,
+  resolveDrawerTab,
 } from '@/components/recruiter/CandidateDrawer/CandidateDrawer'
 
 import Calendar, { type CalendarView } from './_components/Calendar'
@@ -71,9 +71,7 @@ export default function RecruiterInterviewsPage() {
 
   const drawerAppId = searchParams.get('app')
   const drawerTabParam = searchParams.get('tab')
-  const drawerTab: DrawerTab = (DRAWER_TABS as readonly string[]).includes(drawerTabParam ?? '')
-    ? (drawerTabParam as DrawerTab)
-    : 'interview'
+  const drawerTab = resolveDrawerTab(drawerTabParam, 'interview')
 
   const updateParams = useCallback(
     (next: {

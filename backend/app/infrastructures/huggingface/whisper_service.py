@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import subprocess
 
 import httpx
 from loguru import logger
@@ -47,31 +48,34 @@ _HF_NATIVE_EXTS: frozenset[str] = frozenset({"mp3", "wav", "flac"})
 
 async def _transcode_to_wav(audio_bytes: bytes, src_ext: str) -> bytes:
     """Transcode arbitrary audio bytes to 16 kHz mono WAV via ffmpeg."""
-    proc = await asyncio.create_subprocess_exec(
-        "ffmpeg",
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-i",
-        "pipe:0",
-        "-ac",
-        "1",
-        "-ar",
-        "16000",
-        "-f",
-        "wav",
-        "pipe:1",
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+    # Windows selector event loops do not support asyncio subprocess APIs.
+    proc = await asyncio.to_thread(
+        subprocess.run,
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            "pipe:0",
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-f",
+            "wav",
+            "pipe:1",
+        ],
+        input=audio_bytes,
+        capture_output=True,
+        check=False,
     )
-    stdout, stderr = await proc.communicate(audio_bytes)
-    if proc.returncode != 0 or not stdout:
+    if proc.returncode != 0 or not proc.stdout:
         raise HFSpaceTranscriptionError(
             f"Audio transcode (ffmpeg, src={src_ext}) failed: "
-            f"{stderr.decode(errors='replace')[:300]}"
+            f"{proc.stderr.decode(errors='replace')[:300]}"
         )
-    return stdout
+    return proc.stdout
 
 
 class HFSpaceWhisperService:
