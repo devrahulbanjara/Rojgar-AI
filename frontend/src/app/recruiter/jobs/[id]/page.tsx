@@ -59,6 +59,19 @@ function formatDate(iso: string): string {
   })
 }
 
+function defaultReactivationDate(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 30)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function nowDatetimeLocal(): string {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 function buildSubtitle(job: JobDetail): string {
   const parts: string[] = []
   if (job.company?.name) parts.push(job.company.name)
@@ -104,14 +117,51 @@ export default function RecruiterJobDetailPage() {
   const [completeHiring, { isLoading: isCompletingHiring }] = useCompleteHiringMutation()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCompleteHiringModal, setShowCompleteHiringModal] = useState(false)
+  const [showReactivateModal, setShowReactivateModal] = useState(false)
+  const [reactivateDate, setReactivateDate] = useState('')
+  const [reactivateError, setReactivateError] = useState<string | null>(null)
 
   async function handleStatusChange(nextStatus: JobStatus) {
     if (!job || job.status === nextStatus) return
+    if (nextStatus === 'active' && job.status === 'expired') {
+      setReactivateDate(defaultReactivationDate())
+      setReactivateError(null)
+      setShowReactivateModal(true)
+      return
+    }
     try {
       await updateJob({ id: job.id, status: nextStatus }).unwrap()
       notify.success(`Marked as ${getJobStatusLabel(nextStatus).toLowerCase()}.`)
     } catch {
       notify.error('Failed to update job status.')
+    }
+  }
+
+  async function handleReactivateConfirm() {
+    if (!job) return
+    if (!reactivateDate) {
+      setReactivateError('Pick a new expiry date.')
+      return
+    }
+    const next = new Date(reactivateDate)
+    if (Number.isNaN(next.getTime())) {
+      setReactivateError('Invalid date.')
+      return
+    }
+    if (next.getTime() <= Date.now()) {
+      setReactivateError('Expiry must be in the future.')
+      return
+    }
+    try {
+      await updateJob({
+        id: job.id,
+        status: 'active',
+        expires_at: next.toISOString(),
+      }).unwrap()
+      notify.success('Job reactivated.')
+      setShowReactivateModal(false)
+    } catch {
+      setReactivateError('Failed to reactivate job.')
     }
   }
 
@@ -446,6 +496,87 @@ export default function RecruiterJobDetailPage() {
                 aria-busy={isCompletingHiring}
               >
                 {isCompletingHiring ? 'Completing...' : 'Complete hiring'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showReactivateModal ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal__header">
+              <span className="modal__title">Reactivate job</span>
+              <button
+                type="button"
+                className="btn btn--icon btn--sm"
+                onClick={() => setShowReactivateModal(false)}
+                aria-label="Close"
+                disabled={isUpdatingStatus}
+              >
+                <X />
+              </button>
+            </div>
+            <div className="modal__body">
+              <p
+                style={{
+                  fontSize: '0.9375rem',
+                  color: 'var(--color-gray-700,#374151)',
+                  lineHeight: 1.6,
+                  marginBottom: 12,
+                }}
+              >
+                Set a new expiry date and time for <strong>&ldquo;{job.title}&rdquo;</strong>. The
+                job becomes visible to candidates again until then.
+              </p>
+              <label
+                className="job-ai-label"
+                htmlFor="reactivate-expires-at"
+                style={{ display: 'block', marginBottom: 6 }}
+              >
+                New Expiry Date & Time
+              </label>
+              <input
+                id="reactivate-expires-at"
+                type="datetime-local"
+                className="job-ai-input"
+                value={reactivateDate}
+                min={nowDatetimeLocal()}
+                onChange={(event) => {
+                  setReactivateDate(event.target.value)
+                  if (reactivateError) setReactivateError(null)
+                }}
+                disabled={isUpdatingStatus}
+              />
+              {reactivateError ? (
+                <p
+                  style={{
+                    color: 'var(--color-danger-600,#dc2626)',
+                    fontSize: '0.8125rem',
+                    marginTop: 8,
+                  }}
+                >
+                  {reactivateError}
+                </p>
+              ) : null}
+            </div>
+            <div className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => setShowReactivateModal(false)}
+                disabled={isUpdatingStatus}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`btn btn--primary btn--sm${isUpdatingStatus ? ' btn--loading' : ''}`}
+                onClick={handleReactivateConfirm}
+                disabled={isUpdatingStatus}
+                aria-busy={isUpdatingStatus}
+              >
+                {isUpdatingStatus ? 'Saving...' : 'Reactivate'}
               </button>
             </div>
           </div>

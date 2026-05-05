@@ -533,6 +533,14 @@ async def apply_to_job(
         )
     if bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
         bg_tasks.add_task(process_application_sync_event, sync_event.id)
+        if job.auto_shortlist:
+            from app.modules.shortlisting.service import score_application_ml_bouncer
+
+            bg_tasks.add_task(
+                score_application_ml_bouncer,
+                application.id,
+                _background_database_url(db),
+            )
 
     # Re-fetch with resume + children eagerly loaded
     result = await db.execute(
