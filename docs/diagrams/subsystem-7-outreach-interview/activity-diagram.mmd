@@ -1,0 +1,30 @@
+graph TD
+    A([Start]) --> B{User Action}
+
+    B -->|Shortlist finalize| C[Generate email drafts]
+    B -->|Send all| D[Dispatch approved emails]
+    B -->|Interview booking| E[Webhook trigger]
+
+    C --> F{Application status?}
+    F -->|Shortlisted| G[Draft warm invite<br/>+ booking link]
+    F -->|Rejected| H[Draft rejection<br/>+ AI feedback]
+
+    G --> I[Save draft<br/>status: pending]
+    H --> I
+
+    D --> J[Email service send<br/>approved drafts only]
+    J --> K[Mark sent]
+
+    K --> L{Email type?}
+    L -->|Shortlist| M[Candidate clicks<br/>booking link]
+    L -->|Rejection| N[No scheduling]
+
+    M --> O[Interview booking]
+
+    E --> P{Booking created?}
+    P -->|Yes| Q[Match to application]
+    P -->|No| R[Ignore]
+
+    Q --> S[Create interview record]
+    S --> T[Status: interview_booked]
+    T --> U[Notify candidate<br/>+ recruiter]

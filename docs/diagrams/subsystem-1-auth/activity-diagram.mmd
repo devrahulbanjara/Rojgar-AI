@@ -1,0 +1,37 @@
+graph TD
+    A([Start]) --> B{User Action}
+
+    B -->|Local Signup| C{Role?}
+    B -->|Google OAuth| D[Redirect to Google]
+    B -->|Login| E[Enter credentials]
+    B -->|Forgot Password| F[Send reset email]
+
+    C -->|Candidate| G[Send verification email]
+    C -->|Recruiter/Admin| H[Complete company step first]
+
+    G --> I[User verifies email]
+    I --> J[Account ready]
+
+    H --> K{Company Action}
+    K -->|Register Company| L[Enter company details]
+    K -->|Join Company| M[Request to join]
+    L --> N[Send verification email]
+    M --> N
+    N --> O[User verifies email]
+    O --> P[Account created<br/>Membership: pending/active]
+
+    D --> Q{Account exists?}
+    Q -->|Yes| R[Login + link OAuth]
+    Q -->|No| S{Role?}
+    S -->|Candidate| T[Create account + login]
+    S -->|Recruiter/Admin| H
+
+    E --> U[Validate credentials]
+    U --> V[Create JWT tokens<br/>Set httpOnly cookie]
+    V --> W[Return access token]
+
+    F --> X[User clicks reset link]
+    X --> Y[Update password]
+
+    P --> Z[Admin approves/rejects<br/>recruiter requests]
+

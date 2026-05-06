@@ -1,0 +1,40 @@
+classDiagram
+    class InterviewRecording {
+        +UUID id
+        +UUID application_id
+        +String s3_audio_url
+        +String s3_audio_key
+        +String transcript
+        +String evaluation
+        +RecordingStatus status
+        +Integer duration_seconds
+        +DateTime created_at
+    }
+
+    class JobEvaluationSchema {
+        +UUID id
+        +UUID job_id
+        +Integer version
+        +Array criteria
+        +Float human_weight
+        +Float llm_weight
+        +DateTime created_at
+    }
+
+    class CandidateEvaluationScore {
+        +UUID id
+        +UUID application_id
+        +UUID job_id
+        +UUID schema_id
+        +String evaluator_type
+        +Dict scores
+        +Array criteria_snapshot
+        +String notes
+        +Float weighted_total
+        +UUID submitted_by_user_id
+        +String evaluator_label
+        +DateTime created_at
+    }
+
+    InterviewRecording --> JobEvaluationSchema : uses
+    CandidateEvaluationScore --> JobEvaluationSchema : references
