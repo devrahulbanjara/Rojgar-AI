@@ -4,6 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from loguru import logger
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity as sklearn_cosine
@@ -12,6 +13,14 @@ from app.modules.applications.models import Application
 from app.modules.jobs.models import Job
 
 _MODEL_PATH = Path(__file__).resolve().parents[3] / "ml_bouncer_model.pkl"
+_FEATURE_NAMES = [
+    "tfidf_sim",
+    "semantic_sim",
+    "yoe",
+    "num_companies",
+    "num_educations",
+    "num_skills",
+]
 
 
 @lru_cache(maxsize=1)
@@ -116,6 +125,14 @@ def score_applications(job: Job, applications: list[Application]) -> list[float]
         return []
 
     features = [extract_features(job, app) for app in applications]
-    X = np.array(features)
+    X = pd.DataFrame(features, columns=_FEATURE_NAMES)
     probabilities = model.predict_proba(X)[:, 1]
+    for app, row, prob in zip(applications, features, probabilities, strict=True):
+        logger.debug(
+            "ML bouncer features app={} job={} {} -> {:.3f}",
+            app.id,
+            job.id,
+            dict(zip(_FEATURE_NAMES, row, strict=True)),
+            float(prob),
+        )
     return [float(p) for p in probabilities]

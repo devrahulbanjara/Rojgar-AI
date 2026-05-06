@@ -426,7 +426,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
               : `Score ≥ ${threshold} → Shortlisted · Score < ${threshold} → Rejected · Manual moves left alone`
           }
         >
-          <span className={styles.evaluationBarEyebrow}>AI evaluation</span>
+          <span className={styles.evaluationBarEyebrow}>Initial AI screening</span>
           {showOutreachCta ? (
             <span className={styles.evaluationBarText}>Recommendations applied</span>
           ) : (
@@ -483,6 +483,13 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
             </button>
           )}
         </div>
+      ) : null}
+
+      {isAppliedStage && threshold !== null && screeningStats.pending > 0 ? (
+        <p className={styles.evaluationNote}>
+          <span className={styles.evaluationNoteDot} aria-hidden="true" />
+          Top 20% will be re-evaluated by an agentic AI for the final shortlist.
+        </p>
       ) : null}
 
       {isPostShortlistStage && outreachStats.cohort > 0 ? (

@@ -75,6 +75,7 @@ export interface UpdateResumeRequest {
 
 export interface CreateResumeRequest {
   resume_name: string
+  fork_from_profile: boolean
 }
 
 type ResumeApiResponse = ApiResponse<ApiResumeData>

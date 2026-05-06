@@ -42,6 +42,19 @@ const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   hybrid: 'Hybrid',
 }
 
+function defaultReactivationDate(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 30)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function nowDatetimeLocal(): string {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 type JobFilter = JobStatus | 'all' | 'completed'
 
 const FILTER_OPTIONS: { label: string; value: JobFilter }[] = [
@@ -458,6 +471,9 @@ export default function CompanyJobsPage() {
   )
   const [deletingJob, setDeletingJob] = useState<JobListItem | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
+  const [reactivatingJob, setReactivatingJob] = useState<JobListItem | null>(null)
+  const [reactivateDate, setReactivateDate] = useState('')
+  const [reactivateError, setReactivateError] = useState<string | null>(null)
 
   const {
     data: jobsResp,
@@ -513,12 +529,49 @@ export default function CompanyJobsPage() {
 
   async function handleStatusChange(job: JobListItem, nextStatus: JobStatus) {
     if (job.status === nextStatus) return
+    if (nextStatus === 'active' && job.status === 'expired') {
+      setReactivatingJob(job)
+      setReactivateDate(defaultReactivationDate())
+      setReactivateError(null)
+      return
+    }
     try {
       setUpdatingStatusId(job.id)
       await updateJob({ id: job.id, status: nextStatus }).unwrap()
       notify.success(`${job.title} marked as ${getJobStatusLabel(nextStatus).toLowerCase()}.`)
     } catch {
       notify.error('Failed to update job status.')
+    } finally {
+      setUpdatingStatusId(null)
+    }
+  }
+
+  async function handleReactivateConfirm() {
+    if (!reactivatingJob) return
+    if (!reactivateDate) {
+      setReactivateError('Pick a new expiry date.')
+      return
+    }
+    const next = new Date(reactivateDate)
+    if (Number.isNaN(next.getTime())) {
+      setReactivateError('Invalid date.')
+      return
+    }
+    if (next.getTime() <= Date.now()) {
+      setReactivateError('Expiry must be in the future.')
+      return
+    }
+    try {
+      setUpdatingStatusId(reactivatingJob.id)
+      await updateJob({
+        id: reactivatingJob.id,
+        status: 'active',
+        expires_at: next.toISOString(),
+      }).unwrap()
+      notify.success('Job reactivated.')
+      setReactivatingJob(null)
+    } catch {
+      setReactivateError('Failed to reactivate job.')
     } finally {
       setUpdatingStatusId(null)
     }
@@ -640,6 +693,88 @@ export default function CompanyJobsPage() {
           onCancel={() => setDeletingJob(null)}
           isLoading={isDeleting}
         />
+      ) : null}
+
+      {reactivatingJob ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal__header">
+              <span className="modal__title">Reactivate job</span>
+              <button
+                type="button"
+                className="btn btn--icon btn--sm"
+                onClick={() => setReactivatingJob(null)}
+                aria-label="Close"
+                disabled={updatingStatusId === reactivatingJob.id}
+              >
+                <X />
+              </button>
+            </div>
+            <div className="modal__body">
+              <p
+                style={{
+                  fontSize: '0.9375rem',
+                  color: 'var(--color-gray-700,#374151)',
+                  lineHeight: 1.6,
+                  marginBottom: 12,
+                }}
+              >
+                Set a new expiry date and time for{' '}
+                <strong>&ldquo;{reactivatingJob.title}&rdquo;</strong>. The job becomes visible to
+                candidates again until then.
+              </p>
+              <label
+                className="job-ai-label"
+                htmlFor="reactivate-expires-at"
+                style={{ display: 'block', marginBottom: 6 }}
+              >
+                New Expiry Date & Time
+              </label>
+              <input
+                id="reactivate-expires-at"
+                type="datetime-local"
+                className="job-ai-input"
+                value={reactivateDate}
+                min={nowDatetimeLocal()}
+                onChange={(event) => {
+                  setReactivateDate(event.target.value)
+                  if (reactivateError) setReactivateError(null)
+                }}
+                disabled={updatingStatusId === reactivatingJob.id}
+              />
+              {reactivateError ? (
+                <p
+                  style={{
+                    color: 'var(--color-danger-600,#dc2626)',
+                    fontSize: '0.8125rem',
+                    marginTop: 8,
+                  }}
+                >
+                  {reactivateError}
+                </p>
+              ) : null}
+            </div>
+            <div className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => setReactivatingJob(null)}
+                disabled={updatingStatusId === reactivatingJob.id}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`btn btn--primary btn--sm${updatingStatusId === reactivatingJob.id ? ' btn--loading' : ''}`}
+                onClick={handleReactivateConfirm}
+                disabled={updatingStatusId === reactivatingJob.id}
+                aria-busy={updatingStatusId === reactivatingJob.id}
+              >
+                {updatingStatusId === reactivatingJob.id ? 'Saving...' : 'Reactivate'}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </>
   )

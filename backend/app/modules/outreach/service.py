@@ -8,6 +8,7 @@ from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.core.cache import (
     invalidate_candidate_read_caches,
@@ -842,7 +843,7 @@ async def _send_all_for_job(
     if database_url is None:
         database_url = str(AsyncSessionLocal.kw["bind"].url)
 
-    engine = create_async_engine(database_url)
+    engine = create_async_engine(database_url, poolclass=NullPool)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as db:
