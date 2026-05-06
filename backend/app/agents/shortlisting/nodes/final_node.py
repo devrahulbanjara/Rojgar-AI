@@ -1,5 +1,7 @@
 from typing import cast
 
+from loguru import logger
+
 from app.agents.shortlisting.prompts import FINAL_PROMPT
 from app.agents.shortlisting.schemas import FinalResponse, ShortlistState
 from app.infrastructures.aws.bedrock import get_bedrock_llm
@@ -14,9 +16,14 @@ async def final_node(state: ShortlistState) -> dict:
         hr_eval=state["hr_evals"][-1].model_dump_json(),
     )
     response = cast(FinalResponse, await summary_llm.ainvoke(prompt))
+    name = state["applicant_name"]
+    logger.info(
+        "[{}] Final said: strengths={} | weaknesses={}",
+        name,
+        response.strengths,
+        response.weaknesses,
+    )
     return {
-        "final_score": response.score,
-        "final_reason": response.reason,
         "final_strengths": response.strengths,
         "final_weaknesses": response.weaknesses,
     }

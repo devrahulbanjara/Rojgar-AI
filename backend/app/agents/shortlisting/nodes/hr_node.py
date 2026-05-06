@@ -2,6 +2,7 @@ from typing import Any, cast
 
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
+from loguru import logger
 
 from app.agents.shortlisting.prompts import HR_PROMPT
 from app.agents.shortlisting.schemas import PersonaEvaluation, ShortlistState
@@ -29,4 +30,13 @@ async def hr_node(state: ShortlistState) -> dict:
     response = await agent.ainvoke(
         cast(Any, {"messages": [HumanMessage(content=prompt)]})
     )  # type: ignore[arg-type]
-    return {"hr_evals": [response["structured_response"]]}
+    evaluation: PersonaEvaluation = response["structured_response"]
+    name = state["applicant_name"]
+    logger.info(
+        "[{}] HR said: {} | strengths={} | concerns={}",
+        name,
+        evaluation.reason,
+        evaluation.strengths,
+        evaluation.concerns,
+    )
+    return {"hr_evals": [evaluation]}

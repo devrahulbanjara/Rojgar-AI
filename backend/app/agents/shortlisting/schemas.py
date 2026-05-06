@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 
 
 class PersonaEvaluation(BaseModel):
-    score: int = Field(ge=0, le=100)
     reason: str = Field(min_length=1)
     strengths: list[str] = Field(default_factory=list)
     concerns: list[str] = Field(default_factory=list)
@@ -21,13 +20,12 @@ class JudgeResponse(BaseModel):
 
 
 class FinalResponse(BaseModel):
-    score: int = Field(ge=0, le=100)
-    reason: str = Field(min_length=1)
     strengths: list[str] | None = Field(default=None)
     weaknesses: list[str] | None = Field(default=None)
 
 
 class ShortlistState(TypedDict):
+    applicant_name: str
     job_title: str
     jd: str
     resume: str
@@ -37,7 +35,5 @@ class ShortlistState(TypedDict):
     hr_evals: Annotated[list[PersonaEvaluation], operator.add]
     critiques: Annotated[list[str], operator.add]
     is_satisfied: bool
-    final_score: int
-    final_reason: str
     final_strengths: list[str] | None
     final_weaknesses: list[str] | None
