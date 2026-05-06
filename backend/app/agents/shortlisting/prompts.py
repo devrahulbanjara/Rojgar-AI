@@ -2,11 +2,14 @@ CTO_PROMPT = """You are acting as the CTO in ConvexHire's candidate evaluation w
 
 You are evaluating one candidate for a software role.
 
+Numeric scoring is handled separately by an ML bouncer upstream. Your job is
+qualitative review only — produce strengths, concerns, evidence, and a brief
+rationale. Do NOT produce a numeric score.
+
 BIAS POLICY (mandatory):
 Evaluate the candidate strictly on the skills, experience, and evidence provided.
 Do NOT make assumptions or inferences based on age, gender, race, nationality, name,
 employment gaps, or the prestige of past employers or universities.
-Base your score ONLY on the rubric and the evidence in the resume and job description.
 
 JOB TITLE:
 {job_title}
@@ -30,18 +33,21 @@ Instructions:
 2. If you see unfamiliar frameworks, libraries, vendors, or company/product claims that affect the candidate's technical credibility, use the web search tool before finalizing your answer.
 3. Ground every conclusion in evidence from the job description, resume, or tool results.
 4. For every strength or weakness identified, cite the exact phrase from the resume or job description that proves it. If you cannot cite it, omit it.
-5. Return a fair score from 0 to 100 and concise structured reasoning.
+5. Return concise structured reasoning. No numeric score.
 """
 
 HR_PROMPT = """You are acting as the HR lead in ConvexHire's candidate evaluation workflow.
 
 You are evaluating one candidate for a software role.
 
+Numeric scoring is handled separately by an ML bouncer upstream. Your job is
+qualitative review only — produce strengths, concerns, evidence, and a brief
+rationale. Do NOT produce a numeric score.
+
 BIAS POLICY (mandatory):
 Evaluate the candidate strictly on the skills, experience, and evidence provided.
 Do NOT make assumptions or inferences based on age, gender, race, nationality, name,
 employment gaps, or the prestige of past employers or universities.
-Base your score ONLY on the rubric and the evidence in the resume and job description.
 
 JOB TITLE:
 {job_title}
@@ -65,7 +71,7 @@ Instructions:
 2. If you are unsure about an employer, role title, education reference, or market context that changes the hiring interpretation, use the web search tool before finalizing your answer.
 3. Ground every conclusion in evidence from the job description, resume, or tool results.
 4. For every strength or weakness identified, cite the exact phrase from the resume or job description that proves it. If you cannot cite it, omit it.
-5. Return a fair score from 0 to 100 and concise structured reasoning.
+5. Return concise structured reasoning. No numeric score.
 """
 
 CRITIQUE_PROMPT = """You are the critique node in ConvexHire's reflection loop.
@@ -87,6 +93,10 @@ Instructions:
 
 FINAL_PROMPT = """You are producing the final recruiter-facing evaluation output for ConvexHire.
 
+Numeric scoring is handled by an ML bouncer upstream. Your only job here is to
+merge the CTO and HR qualitative reviews into a concise list of strengths and
+weaknesses. Do NOT produce a numeric score and do NOT produce a summary reason.
+
 JOB TITLE:
 {job_title}
 
@@ -97,10 +107,8 @@ HR FINAL EVALUATION:
 {hr_eval}
 
 Instructions:
-1. Produce a final consensus score from 0 to 100.
-2. Produce one concise final reason.
-3. List concise strengths (e.g. "10+ years product experience"). Each item under 12 words. Omit if none.
-4. List concise weaknesses (e.g. "No B2B SaaS experience"). Each item under 12 words. Omit if none.
-5. Optimize for brevity — no verbose sentences, no filler words.
-6. Only include strengths and weaknesses that are directly supported by evidence cited in the evaluations above. Do not invent or infer items.
+1. List concise strengths (e.g. "10+ years product experience"). Each item under 12 words. Omit if none.
+2. List concise weaknesses (e.g. "No B2B SaaS experience"). Each item under 12 words. Omit if none.
+3. Optimize for brevity — no verbose sentences, no filler words.
+4. Only include strengths and weaknesses that are directly supported by evidence cited in the evaluations above. Do not invent or infer items.
 """

@@ -14,10 +14,12 @@ from app.modules.jobs.models import Job
 
 @dataclass
 class ShortlistingAgentResult:
-    """Plain result container returned after the workflow completes."""
+    """Plain result container returned after the workflow completes.
 
-    score: int
-    reason: str
+    The LLM agent is responsible for qualitative review only; numeric scoring
+    is owned by the ML bouncer upstream.
+    """
+
     strengths: list[str] | None
     weaknesses: list[str] | None
 
@@ -113,9 +115,12 @@ def stringify_resume(application: Application) -> str:
     return "\n".join(sections)
 
 
-def build_shortlisting_inputs(job: Job, application: Application) -> dict:
+def build_shortlisting_inputs(
+    job: Job, application: Application, applicant_name: str
+) -> dict:
     """Construct the initial workflow state for one job/application pair."""
     return {
+        "applicant_name": applicant_name,
         "job_title": job.title,
         "jd": stringify_job(job),
         "resume": stringify_resume(application),
@@ -139,8 +144,6 @@ def get_compiled_shortlisting_workflow():
 def build_shortlisting_result(result: dict) -> ShortlistingAgentResult:
     """Extract the final workflow fields into a stable return type."""
     return ShortlistingAgentResult(
-        score=result["final_score"],
-        reason=result["final_reason"],
         strengths=result.get("final_strengths"),
         weaknesses=result.get("final_weaknesses"),
     )
@@ -151,12 +154,12 @@ async def evaluate_application_with_shortlisting_agent(
 ) -> ShortlistingAgentResult:
     """Run the full shortlisting workflow for a single application."""
     workflow = get_compiled_shortlisting_workflow()
-    inputs = build_shortlisting_inputs(job, application)
     applicant_name = getattr(
         getattr(application, "user", None), "full_name", None
     ) or str(application.id)
+    inputs = build_shortlisting_inputs(job, application, applicant_name)
     logger.info(
-        "Running shortlisting agent workflow for '{}' on '{}' ({})",
+        "[{}] Shortlisting workflow START on '{}' ({})",
         applicant_name,
         job.title,
         job.id,

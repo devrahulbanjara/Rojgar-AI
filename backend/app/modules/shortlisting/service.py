@@ -381,7 +381,6 @@ async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
                 agent_result = await evaluate_application_with_shortlisting_agent(
                     job=job, application=application
                 )
-                application.score = agent_result.score
                 application.strengths = agent_result.strengths
                 application.weaknesses = agent_result.weaknesses
                 enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
@@ -545,21 +544,33 @@ async def evaluate_single_application(
 
     job = await _get_job_for_company(db, application.job_id, company_id)
 
+    from app.modules.shortlisting.ml_bouncer import score_applications
+
+    try:
+        ml_score = score_applications(job, [application])[0]
+        application.ml_bouncer_score = ml_score
+        application.score = max(0, min(100, round(ml_score * 100)))
+    except Exception:
+        logger.warning(
+            "ML bouncer scoring failed for application {}, falling back to heuristic",
+            application_id,
+        )
+        score, _, _ = _score_application(application)
+        application.score = score
+
     try:
         result = await evaluate_application_with_shortlisting_agent(
             job=job,
             application=application,
         )
-        application.score = result.score
         application.strengths = result.strengths
         application.weaknesses = result.weaknesses
     except Exception:
-        score, strengths, weaknesses = _score_application(application)
-        application.score = score
+        _, strengths, weaknesses = _score_application(application)
         application.strengths = strengths
         application.weaknesses = weaknesses
         logger.warning(
-            "AI evaluation failed for application {}, used fallback scoring",
+            "AI evaluation failed for application {}, used fallback strengths/weaknesses",
             application_id,
         )
 
