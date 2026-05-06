@@ -42,8 +42,9 @@ dependencies = [
     "fastapi-limiter>=0.2.0",
     "fastapi[standard]>=0.136.1",
     "numpy>=2.4.4",
-    "pandas>=3.0.2",
+    "pandas>=2.2.0,<3.0.0",
     "scikit-learn>=1.8.0",
+    "nemoguardrails>=0.21.0",
 ]
 
 [tool.fastapi]

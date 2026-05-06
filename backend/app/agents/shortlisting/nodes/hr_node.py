@@ -1,6 +1,8 @@
+import re
 from typing import Any, cast
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import PIIMiddleware
 from langchain_aws.middleware.prompt_caching import BedrockPromptCachingMiddleware
 from langchain_core.messages import HumanMessage
 from loguru import logger
@@ -10,6 +12,18 @@ from app.agents.shortlisting.schemas import PersonaEvaluation, ShortlistState
 from app.agents.shortlisting.tools import make_web_search_tool
 from app.core.config import settings
 from app.infrastructures.aws.bedrock import get_bedrock_llm
+from app.infrastructures.guardrails import guardrails_service
+
+
+def _safety_blocked_evaluation() -> PersonaEvaluation:
+    """Stand-in evaluation returned when the prompt-injection rail blocks the resume."""
+    return PersonaEvaluation(
+        strengths=[],
+        concerns=[
+            "Resume rejected by safety policy: prompt-injection pattern detected."
+        ],
+        evidence=["Input rail blocked the resume content before evaluation."],
+    )
 
 
 async def hr_node(state: ShortlistState) -> dict:
@@ -17,6 +31,20 @@ async def hr_node(state: ShortlistState) -> dict:
     last_critique = (
         state["critiques"][-1] if state["critiques"] else "None (initial review)."
     )
+
+    # Pre-flight prompt-injection check on the candidate-controlled resume.
+    # Skip the agent call entirely if blocked so a malicious resume cannot
+    # hijack the HR evaluator.
+    verdict = await guardrails_service.check_input(
+        state["resume"], source="shortlisting.hr"
+    )
+    if not verdict.safe:
+        logger.warning(
+            "[{}] HR node skipped — resume blocked by guardrails.",
+            state["applicant_name"],
+        )
+        return {"hr_evals": [_safety_blocked_evaluation()]}
+
     prompt = HR_PROMPT.format(
         bias_policy=SHARED_BIAS_POLICY,
         job_title=state["job_title"],
@@ -30,10 +58,19 @@ async def hr_node(state: ShortlistState) -> dict:
         response_format=PersonaEvaluation,
         system_prompt="HR evaluator in a structured hiring workflow.",
         middleware=[
+            # Defense-in-depth: redact any PII that may leak into the prompt
+            PIIMiddleware("email", strategy="redact", apply_to_input=True),
+            PIIMiddleware("url", strategy="redact", apply_to_input=True),
+            PIIMiddleware(
+                "phone_number",
+                detector=re.compile(r"\+?\d{1,3}[\s.-]?\d{3,4}[\s.-]?\d{4}"),
+                strategy="redact",
+                apply_to_input=True,
+            ),
             BedrockPromptCachingMiddleware(
                 ttl=cast(Any, settings.shortlisting_prompt_cache_ttl),
                 unsupported_model_behavior="ignore",
-            )
+            ),
         ],
     )
     response = await agent.ainvoke(

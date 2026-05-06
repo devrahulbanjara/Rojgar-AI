@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.infrastructures.guardrails import guardrails_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.auth.models import User
 from app.modules.jobs.models import Job
@@ -61,6 +62,23 @@ async def discard_pending_patch(
 ) -> None:
     """Discard a pending resume patch (e.g., user abandoned the apply flow)."""
     await redis_service.delete(_pending_patch_key(user.id, resume_id, job_id))
+
+
+def _resume_text_for_guardrails(resume: Resume) -> str:
+    """Flatten the resume's free-text fields into a single string for the input rail."""
+    parts: list[str] = []
+    if resume.headline:
+        parts.append(str(resume.headline))
+    if resume.summary:
+        parts.append(str(resume.summary))
+    for experience in resume.experiences:
+        if experience.title:
+            parts.append(str(experience.title))
+        if experience.company_name:
+            parts.append(str(experience.company_name))
+        for bullet in experience.description or []:
+            parts.append(str(bullet))
+    return "\n".join(parts)
 
 
 def _serialize_resume(resume: Resume) -> dict:
@@ -151,6 +169,13 @@ async def analyze_gaps(
     resume = await _load_resume(db, payload.resume_id, user.id)
     job = await _load_job(db, payload.job_id)
 
+    # Pre-flight prompt-injection check on candidate-controlled resume text.
+    # Block before the gap-analysis LLM ever sees it.
+    await guardrails_service.assert_input_safe(
+        _resume_text_for_guardrails(resume),
+        source="resume_gap.analyze",
+    )
+
     result = await _provider.analyze_gaps(
         resume_data=_serialize_resume(resume),
         job_data=_serialize_job(job),
@@ -170,6 +195,13 @@ async def auto_patch_resume(
 ) -> AutoPatchResponse:
     """Apply provider-generated resume improvements and invalidate caches."""
     resume = await _load_resume(db, payload.resume_id, user.id)
+
+    # Same input rail as analyze_gaps — patch-build also feeds resume text to LLM.
+    await guardrails_service.assert_input_safe(
+        _resume_text_for_guardrails(resume),
+        source="resume_gap.auto_patch",
+    )
+
     patch = await _provider.build_patch(
         resume_data=_serialize_resume(resume),
         gap_result=payload.gap_result,

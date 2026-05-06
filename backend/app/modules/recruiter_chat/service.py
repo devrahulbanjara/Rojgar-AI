@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.infrastructures.ai.service import ai_service
+from app.infrastructures.guardrails import guardrails_service
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.auth.models import User
@@ -2203,6 +2204,34 @@ async def _send_message_inner(
             detail="Message cannot be empty.",
         )
 
+    # Pre-flight prompt-injection check on the recruiter's message before any
+    # downstream LLM hops (intent classifier, web search, job edit synthesis).
+    verdict = await guardrails_service.check_input(
+        user_message, source="recruiter_chat.send"
+    )
+    if not verdict.safe:
+        reply = _serialize_response(
+            ChatResponseType.clarification,
+            "I can't help with that — your message looked unsafe and was blocked by our safety policy.",
+        )
+        _append_history(
+            state,
+            "user",
+            user_message,
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply.message,
+            response_type=reply.response_type,
+        )
+        await _save_session_state(db, session, state, title_hint=user_message)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=_pending_action_from_state(state),
+        )
+
     _append_history(state, "user", user_message)
     await _maybe_summarize(state)
 
@@ -2910,6 +2939,30 @@ async def _stream_message_inner(
         user_message = payload.message.strip()
         if not user_message:
             yield _sse("error", {"message": "Message cannot be empty."})
+            return
+
+        # Pre-flight prompt-injection check on the recruiter message before any
+        # LLM hop in the streaming pipeline.
+        verdict = await guardrails_service.check_input(
+            user_message, source="recruiter_chat.stream"
+        )
+        if not verdict.safe:
+            reply = _serialize_response(
+                ChatResponseType.clarification,
+                "I can't help with that — your message looked unsafe and was blocked by our safety policy.",
+            )
+            _append_history(state, "user", user_message)
+            _append_history(
+                state,
+                "assistant",
+                reply.message,
+                response_type=reply.response_type,
+            )
+            await _save_session_state(db, session, state, title_hint=user_message)
+            yield _sse(
+                "final",
+                _final_exchange_payload(reply=reply, state=state),
+            )
             return
 
         _append_history(state, "user", user_message)
