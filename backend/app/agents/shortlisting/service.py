@@ -130,6 +130,7 @@ def build_shortlisting_inputs(
         "hr_evals": [],
         "critiques": [],
         "is_satisfied": False,
+        "confidence": 0.0,
         "final_strengths": None,
         "final_weaknesses": None,
     }

@@ -17,14 +17,16 @@ async def critique_node(state: ShortlistState) -> dict:
     response = cast(JudgeResponse, await judge_llm.ainvoke(prompt))
     name = state["applicant_name"]
     logger.info(
-        "[{}] Critique said (iter={}, satisfied={}): {}",
+        "[{}] Critique said (iter={}, satisfied={}, conf={:.2f}): {}",
         name,
         state["iteration"] + 1,
         response.is_satisfied,
+        response.confidence,
         response.critique,
     )
     return {
         "critiques": [response.critique],
         "is_satisfied": response.is_satisfied,
+        "confidence": response.confidence,
         "iteration": state["iteration"] + 1,
     }

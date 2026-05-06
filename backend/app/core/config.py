@@ -69,8 +69,14 @@ class Settings(BaseSettings):
     aws_access_key_id_shortlisting: str | None = None
     aws_secret_access_key_shortlisting: str | None = None
     aws_bedrock_shortlisting_model_id: str = "us.anthropic.claude-sonnet-4-6"
+    aws_bedrock_shortlisting_merge_model_id: str = (
+        "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    )
     aws_bedrock_shortlisting_temperature: float = 0.0
     aws_bedrock_shortlisting_max_tokens: int = 1200
+    aws_bedrock_shortlisting_merge_max_tokens: int = 600
+    shortlisting_prompt_cache_ttl: str = "5m"
+    shortlisting_web_search_budget_per_persona: int = 1
     s3_bucket_name: str | None = None
     s3_upload_acl: str | None = "public-read"
     s3_max_upload_bytes: int = 5 * 1024 * 1024
@@ -88,7 +94,7 @@ class Settings(BaseSettings):
     redis_url: str | None = None  # i am using upstash from convexhire gmail
     redis_enabled: bool = True
 
-    shortlisting_reflection_max_iterations: int = 2
+    shortlisting_reflection_max_iterations: int = 1
     shortlisting_web_search_max_results: int = 3
 
     ml_bouncer_top_percent: int = 20
