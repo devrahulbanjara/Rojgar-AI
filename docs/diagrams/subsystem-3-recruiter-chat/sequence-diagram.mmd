@@ -1,0 +1,38 @@
+sequenceDiagram
+    participant Recruiter
+    participant API
+    participant Cache
+    participant AI
+    participant DB
+    participant Search
+
+    Recruiter->>API: POST /chat
+    API->>API: Auth check
+    API->>API: Rate limit check
+    API->>Cache: Check duplicate
+    Cache-->>API: Not found
+
+    API->>AI: Prompt injection guardrail
+    AI-->>API: Safe
+
+    API->>DB: Load chat history
+    DB-->>API: History loaded
+
+    API->>AI: Classify intent
+    AI-->>API: Intent type
+
+    alt Candidate search
+        API->>Search: Hybrid search
+        Search-->>API: Candidates
+    else Salary research
+        API->>Search: Web search
+        Search-->>API: Salary data
+    end
+
+    API->>AI: Generate response
+    AI-->>API: Response
+
+    API->>DB: Save state
+    API->>Cache: Cache response
+
+    API-->>Recruiter: Stream response

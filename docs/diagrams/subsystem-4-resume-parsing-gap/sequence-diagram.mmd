@@ -1,0 +1,37 @@
+sequenceDiagram
+    participant Candidate
+    participant API
+    participant Cache
+    participant AI
+    participant DB
+
+    Candidate->>API: POST /import-pdf
+    API->>AI: Extract structured data
+    AI-->>API: Extracted data
+    API->>AI: Normalize fields
+    AI-->>API: Normalized data
+    API->>DB: Save resume
+    DB-->>API: Resume saved
+
+    Candidate->>API: POST /gap-analysis
+    API->>Cache: Check cache
+    Cache-->>API: Not found
+    API->>AI: PII redaction guardrail
+    AI-->>API: Safe
+    API->>AI: Analyze gaps
+    AI-->>API: Score + gaps
+    API->>Cache: Cache result
+    API-->>Candidate: Analysis result
+
+    Candidate->>API: POST /auto-patch
+    API->>AI: PII redaction guardrail
+    AI-->>API: Safe
+    API->>AI: Generate patch
+    AI-->>API: Suggested changes
+    API->>API: Validate fields
+    API->>DB: Save pending patch
+    DB-->>API: Saved
+
+    Candidate->>API: POST /confirm-patch
+    API->>DB: Apply changes
+    DB-->>API: Resume updated
