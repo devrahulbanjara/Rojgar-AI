@@ -838,15 +838,16 @@ class QdrantService:
         """Dense + BM25 prefetch fused server-side via Reciprocal Rank Fusion.
 
         Tags each hit with `relevance: "high" | "low"` based on a two-pass
-        threshold instead of dropping the long tail outright:
-          1. Absolute floor (`recruiter_chat_hybrid_min_score`) — anything below
-             is treated as low-relevance.
-          2. Relative floor (`top_score * recruiter_chat_hybrid_relative_floor`)
+        threshold:
+          1. Hard cut-off (`recruiter_chat_hard_min_score`) — anything below
+             is dropped entirely and never sent to the frontend.
+          2. Absolute floor (`recruiter_chat_hybrid_min_score`) — anything
+             below (but above the hard cut-off) is treated as low-relevance.
+          3. Relative floor (`top_score * recruiter_chat_hybrid_relative_floor`)
              — keeps the front-of-list cluster as "high", everything past the
              gap as "low".
         Frontend renders `high` by default and reveals `low` behind a
-        "Show more" toggle, so the recruiter never silently misses a
-        candidate the model thought was a weak match.
+        "Show more" toggle.
         """
         dense_vector = await ai_service.get_embeddings(query)
         sparse_vector = self._build_sparse_vector(query)
@@ -879,6 +880,13 @@ class QdrantService:
             {"application_id": uuid.UUID(str(hit.id)), "score": hit.score}
             for hit in response.points
         ]
+        if not all_hits:
+            return []
+
+        # Hard cut-off: drop anything below the absolute floor so the frontend
+        # never has to render completely irrelevant matches.
+        hard_floor = settings.recruiter_chat_hard_min_score
+        all_hits = [h for h in all_hits if h["score"] >= hard_floor]
         if not all_hits:
             return []
 

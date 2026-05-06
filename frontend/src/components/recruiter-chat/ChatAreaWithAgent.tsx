@@ -343,6 +343,7 @@ function asCandidateSearchResult(
     applied_for_job: (c.applied_for_job ?? c.job_title ?? '') as string,
     application_status: (c.application_status ?? c.status ?? '') as string,
     match_score: (c.match_score ?? 0) as number,
+    relevance: (c.relevance ?? 'high') as 'high' | 'low',
   }))
   const total = typeof raw.total === 'number' ? raw.total : candidates.length
   return { candidates, total }

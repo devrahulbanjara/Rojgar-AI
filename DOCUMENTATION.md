@@ -1,380 +1,222 @@
 # ConvexHire
 
-ConvexHire is an AI-assisted recruitment platform that connects companies with candidates through an end-to-end hiring pipeline - from job creation to final offer. The platform has two distinct sides: a **recruiter experience** for companies managing their hiring, and a **candidate experience** for job seekers managing their applications.
+AI-assisted recruitment platform running the full hiring funnel end-to-end. Single source of truth for product behaviour, AI internals, security guardrails, and data flow.
 
 ---
 
-## Table of Contents
+## 1. Users & Access
 
-1. Who Uses ConvexHire
-2. Getting Started — Signup & Onboarding
-3. The Candidate Experience
-   - Profile & Open to Work
-   - Resume Builder
-   - Finding Jobs
-   - The Apply Flow & Resume Gap Analysis
-   - Tracking Applications
-4. The Recruiter Experience
-   - Dashboard
-   - Creating Jobs
-   - Applications Page
-   - Candidates Page
-   - Evaluation
-   - Shortlisting
-   - Outreach & Emails
-   - Interviews
-   - Final Decision
-   - Recruiter AI Chat
-5. Company & Team Management
-6. Access Levels by Role
-7. The Full Hiring Pipeline
-8. Key Product Principles
+| Role | Description | Approval | Capabilities |
+|------|-------------|----------|--------------|
+| **Candidate** | Job seekers | Instant | Browse, apply, track, chat with AI gap analyzer |
+| **Recruiter** | Company hiring team | Admin approval (pending → active) | Jobs, applications, evaluation, shortlisting, outreach, interviews, AI chat |
+| **Recruiter Admin** | Founder / lead | Instant | All recruiter capabilities + company registration, team management, settings, logo |
+
+**Auth.** Email + password with 6-digit OTP verification, or Google SSO (instant verified). Forgot-password via one-time reset link emailed to user. Argon2 password hashing. JWT access tokens (15 min) + httpOnly refresh cookies (7 days). `DELETE /auth/me` soft-deletes (`is_deleted`, `deleted_at`) and revokes all refresh tokens; deleted users blocked at login.
+
+**Endpoints (auth).** `signup`, `verify-email`, `resend-otp`, `login`, `refresh`, `logout`, `forgot-password`, `reset-password`, `me`, `update-me`, `change-password`, `delete-account`, `google/login`, `google/callback`.
 
 ---
 
-## 1. Who Uses ConvexHire
+## 2. Candidate Experience
 
-There are three types of users on the platform:
+**Profile** — full name, location, phone, headline, summary, work experience (company, role, dates, description), education (institution, degree, dates), skills, years of experience, LinkedIn / GitHub / portfolio links, avatar (S3 upload). Profile-completion indicator nudges fill. **Open to Work** toggle.
 
-**Candidates** — job seekers who build a profile, create resumes, browse jobs, apply, and track their application pipeline from submission to offer.
+**Onboarding.** Candidate picks **target roles** that shape job feed relevance. Recruiter searches company + submits join request — sits in `pending` until admin approves.
 
-**Recruiters** — hiring team members who create jobs, review applicants, run AI evaluation, manage interviews, and send outreach emails. They belong to a company and must be approved by an admin before gaining access.
+**AI Resume Import.** Upload any PDF; LlamaCloud structured-extractor + Groq normaliser fill every profile field. Candidate reviews + confirms before save. The same parse creates a reusable resume object.
 
-**Recruiter Admins** — company founders or leads who have all recruiter capabilities plus the ability to register the company, invite and approve team members, and manage company settings.
+**Resume Builder.** Multiple named resumes (e.g. "Backend focused", "Full stack general"). Edit summary, work, education, skills, links. Live preview matches recruiter view. Download as PDF (WeasyPrint + Jinja2 template). Delete unused resumes.
 
----
+**Find Jobs.** `/jobs` lists active jobs. Search by keyword, filter by location type (remote/onsite/hybrid) + salary range. **Hybrid semantic search** combines Qdrant dense vectors (Gemini 3072-d embeddings) with BM25 sparse retrieval — natural-language queries like "Python backend" match by meaning, not keyword. Side-panel preview (full JD, responsibilities, requirements, benefits, salary, expiry) without leaving the list.
 
-## 2. Getting Started — Signup & Onboarding
+**Apply Flow (5 steps).**
+1. Select a saved resume (or create / import one)
+2. **Resume Gap Analysis** (optional) — Groq compares chosen resume against JD; returns score 0–100, critical / preferred / bonus gaps, "already strong" items, "add to summary" / "de-emphasize" suggestions, 2-sentence verdict; result cached in Redis 10 min
+3. **Auto-Patch** (optional) — Groq rewrites headline (≤120 chars) + summary (≤400 chars) + skills (≤30, ≤5 new) + experience bullets to address gaps. **Frozen Facts** (company, title, dates, institution, certs) are immutable. Server guardrail caps skill additions. Candidate approves every change before save (pending-patch workflow with confirm / discard).
+4. Confirm profile share with company
+5. Submit — auto-evaluation kicks off if enabled on job
 
-### Signing Up
+Constraints: one application per job; cannot apply to draft or expired jobs.
 
-Anyone can create an account with an email and password, or sign in with Google. During signup, the user picks their role — candidate, recruiter, or recruiter admin. Email accounts require verifying a 6-digit code sent to their inbox before the account is activated. Google accounts skip this step and are verified instantly. Forgot password works via a secure one-time reset link sent to email.
-
-### Candidate Onboarding
-
-After signup, candidates go through a short onboarding flow: they specify what job roles they are looking for — these become their **target roles** and shape how the platform surfaces relevant jobs. From there they build out their full profile (covered below).
-
-### Recruiter Onboarding
-
-Recruiters must join a company before they can access anything. They search for their company on the platform and submit a join request. Their account sits in a **pending** state — they cannot create jobs, view applications, or use any recruiter features until the admin approves the request.
-
-### Recruiter Admin Onboarding
-
-Admins register their company immediately after signup, providing a name, website, and industry. They are approved instantly with no waiting period and gain full access right away.
+**Dashboard.** Totals applied / shortlisted / interview booked / interview completed / offer / rejected.
+**Applications page.** Pipeline progress bar, AI score (visible after evaluation), AI feedback, full timeline (applied → shortlist → interview → offer transitions with timestamps), latest status update message. Updates real-time.
+**Offer respond.** `POST /applications/{id}/offer/respond` lets candidate accept or decline. Terminal states: `offer_accepted`, `offer_declined`.
 
 ---
 
-## 3. The Candidate Experience
+## 3. Recruiter Experience
 
-### Profile & Open to Work
+**Dashboard.** Pending applications needing attention, upcoming interviews, draft outreach awaiting approval, pending team join requests (admin only). Single action centre.
 
-Candidates maintain a persistent profile that represents them across all applications. The profile includes:
+**Create Jobs (two paths).**
+- **Manual form** — title, overview, responsibilities (list), requirements (list), preferred quals, benefits, location, location type, salary range + currency, expiry date. Save as `draft` (hidden) or publish `active`.
+- **AI Job Assistant** — recruiter types a brief; LangGraph workflow runs `synthesize_salary` (Tavily web research → Groq structured synthesis) → `generate_draft` (full JobDraft schema) → `validate_draft` (server validators: salary range, location type allowlist, required-field coverage) → human `review` (interrupt) → `refine` loop (edit fields, regenerate selected fields, plain-English feedback) → approved → committed. **Lock fields** before generation so AI cannot override (e.g. salary, title). Returns `assumptions`, `warnings`, `missing_fields`, `validation_errors`.
 
-- Full name, location, phone number
-- Professional headline and summary
-- Work experience (company, role, dates, description)
-- Education (institution, degree, dates)
-- Skills list
-- Years of experience
-- LinkedIn, GitHub, and portfolio links
-- Avatar photo
+States: `draft → active → expired`. Expiry auto-set when expiry date passes; stops accepting applications and unlocks shortlisting.
 
-A **profile completion indicator** shows candidates how complete their profile is, nudging them to fill in any missing sections. A more complete profile gives the AI more to work with when scoring applications.
+**Applications page.** Cross-job view of every application; filter by job + status.
+**Candidates page.** One row per person; multi-applications nested under candidate; click to see scores, status dropdown (direct update), platform resume link.
 
-The **Open to Work** toggle marks the candidate as actively seeking opportunities. It can be turned on or off at any time.
+**Evaluation.** AI reads candidate resume vs JD; produces 0–100 score + plain-English feedback paragraph. Two modes: per-application **auto-eval** on submit (if job has auto-eval enabled), or **batch** "Run AI evaluation" for unscored applications. Recruiters can manually edit any score / feedback. Filters: above-threshold / 50–69 / below-50, reviewed / pending / missing-review, name + email search. Per-job **shortlist threshold** (0–100). **Available only after job has expired** — guarantees fair window for every applicant.
 
-**AI Resume Import** — instead of filling in the profile manually, candidates can upload any existing PDF resume. The AI reads it and automatically extracts and pre-fills all profile fields. The candidate reviews everything before confirming — nothing is saved without their explicit approval. This also creates a resume object that can immediately be used to apply to jobs.
+**Shortlisting.** Manual one-by-one, or **AI Finalize** — multi-agent LangGraph (see §6) runs across the cohort; ≥ threshold → shortlisted, rest → rejected. Crash-safe per-application idempotent commit with `ShortlistStatus` (`not_started → in_progress → completed | failed`). Shortlist drafts a **warm invite outreach email**; reject drafts a **kind rejection email with embedded AI feedback**. **No email sends without recruiter approval.**
 
-### Resume Builder
+**Outreach.** Pipeline stages: Generate Drafts → Review & Edit → Approve → Send. In-line edit subject + body; discard suppresses send without deleting record; "Send all" dispatches every approved draft via aiosmtplib. Shortlist email contains **Cal.com booking link** with instructions to use registered name + email. Rejection email embeds AI feedback so candidates know why.
 
-Candidates can create and manage multiple resumes directly on the platform. Resumes are distinct from the profile — they are formatted documents that get attached to specific job applications, allowing candidates to tailor each application to the role.
+**Interviews.** **Cal.com webhook** auto-detects bookings (matched by candidate's registered name + email); status flips `applied` → `interview_booked`; duplicate booking attempts ignored. `/interviews` page filters by job + date range (today / week / month / custom). Marking complete moves status `interview_booked → interview_completed` and unlocks final decision: `offer` or `rejected`. Offer terminal states are set by candidate response (`offer_accepted` / `offer_declined`).
 
-Each resume is fully editable with a live preview. Candidates can:
+**Interview Recording + Evaluation.** Recruiter uploads or records interview audio (.webm / .mp3 / .wav / .ogg / .m4a / .mp4). Audio stored in S3 (presigned URL). `RecordingStatus`: `uploaded → transcribing → transcribed → evaluating → evaluated | failed`. **Transcribe** sends audio to a HuggingFace Space hosting **Whisper Small fine-tuned on Nepali speech corpora** — handles English, Nepali, and code-switched candidates. Cold-start retry built in. **Evaluate** runs an LLM against a per-job evaluation schema (rubric criteria with weights) to produce structured competency scores + commentary. Recruiter can also create / edit / delete a manual human evaluation; combined endpoint returns side-by-side AI + human view. **Batch transcribe** processes multiple recordings concurrently.
 
-- Name each resume to keep versions organised (e.g. "Backend focused", "Full Stack general")
-- Edit all sections: summary, work experience, education, skills, and links
-- Preview the formatted output as it will appear to a recruiter
-- Download the resume as a PDF at any time
-- Delete resumes they no longer need
+**Notifications.** In-app feed for application updates, interview bookings, team requests; mark single / mark-all read.
+**Audit log** — company-wide trail of mutating actions per entity (entity_type + entity_id).
+**Activity feed** — `/activity/me` (per-user) + `/activity/company` (admin view) of recent significant actions.
+**Recruiter preferences** — per-recruiter UI settings (`GET / PATCH /recruiter-preferences`).
 
-Having multiple resumes lets candidates put their best, most relevant foot forward for each specific job.
-
-### Finding Jobs
-
-The **Jobs page** shows all active job listings across the platform. Candidates can search by keyword and filter by location type (remote, onsite, or hybrid) and salary range. The search understands natural language — typing "Python backend" surfaces roles that are semantically related, even if those exact words don't appear in the job title.
-
-Each job can be previewed in a side panel without leaving the list, showing the full details: title, company, location, salary range, work type, responsibilities, requirements, preferred qualifications, and expiry date.
-
-### The Apply Flow & Resume Gap Analysis
-
-Clicking Apply opens a structured multi-step application flow:
-
-**Step 1 — Select a resume.** The candidate picks which of their saved resumes to attach to this application. If they have no resumes yet, they are prompted to create or import one first.
-
-**Step 2 — Resume Gap Analysis (optional but valuable).** Before submitting, the candidate can run an AI analysis that compares their selected resume against the specific job's requirements. The AI identifies:
-
-- What skills and experience in their resume match the job well
-- What gaps exist between their resume and what the job is asking for
-- Specific suggestions for what to add or improve
-
-**Step 3 — Choose what to do with the gaps.** After seeing the results, the candidate decides:
-
-- **Apply as-is** — submit with the current resume without making any changes
-- **Patch the resume** — let the AI suggest specific additions or edits to address the identified gaps. The candidate reviews every suggested change before anything is updated. Nothing is changed without their approval.
-
-**Step 4 — Share profile.** The candidate confirms they are happy for their profile and selected resume to be shared with the company.
-
-**Step 5 — Submit.** The application is created. If the job has auto-evaluation enabled, AI scoring begins in the background immediately.
-
-A candidate cannot apply to the same job twice, and expired jobs no longer accept new applications.
-
-### Tracking Applications
-
-The candidate **Dashboard** shows a live summary — total applications, how many are shortlisted, how many have interviews scheduled, offers received, and rejections. It gives an instant read on where things stand across all active applications.
-
-The **Applications page** shows each application in detail:
-
-- Job title, company, and the date applied
-- A visual progress bar showing where they are in the pipeline
-- Current status label
-- A side detail panel showing: the full application timeline, the AI score out of 100 and written feedback (both become visible after the evaluation phase), and the latest status update message
-
-Status updates are visible in real time. After evaluation, candidates can see their score and the written AI feedback explaining what matched well and what was missing — so even rejected candidates understand the reasoning behind the decision.
-
-The full pipeline a candidate moves through:
-
-1. **Applied** — submitted successfully, under consideration
-2. **Shortlisted** — selected to move forward to interview
-3. **Interview Booked** — an interview slot has been confirmed
-4. **Interview Completed** — the interview has taken place
-5. **Offer** — a job offer has been extended
-6. **Rejected** — the application was unsuccessful (can happen after evaluation or after interview)
+**Recruiter AI Chat** — see §7.
 
 ---
 
-## 4. The Recruiter Experience
+## 4. Company & Team Management (Admin only)
 
-### Dashboard
-
-The recruiter dashboard is the daily action centre. It surfaces at a glance: pending applications needing attention, upcoming interviews, outreach email drafts waiting for approval, and (for admins) pending team join requests. Everything requiring action is visible in one place so nothing falls through the cracks.
-
-### Creating Jobs
-
-Recruiters have two ways to create a job:
-
-**Manual creation** — the recruiter fills out a structured form: title, overview, responsibilities (as a list), requirements (as a list), preferred qualifications, benefits, location, location type (remote/onsite/hybrid), salary range and currency, and an expiry date. The job can be saved as a **draft** (invisible to candidates) or published as **active** immediately.
-
-**AI Job Assistant** — the recruiter types a brief description of what they need, e.g. "Senior Python backend engineer in Kathmandu, fintech startup, 3+ years, FastAPI." The AI researches the role, benchmarks salary for the location and seniority level, and generates a complete structured job draft with all fields filled in. The recruiter can:
-
-- Approve the draft as-is and commit it into a real job
-- Request refinements in plain language ("make the tone less formal", "add Docker to requirements", "remove the benefits section")
-- Reject the draft entirely and start over
-
-The AI refines based on feedback and presents the draft again. This loop continues until the recruiter is satisfied. Specific fields like salary or title can be **locked** before generation so the AI cannot override them regardless of what it produces. Once committed, the job can still be edited manually before publishing.
-
-Jobs have three states: **draft** (not visible to candidates), **active** (live and accepting applications), and **expired** (automatically set when the expiry date passes — stops accepting applications, unlocks shortlisting).
-
-### Applications Page
-
-The Applications page gives a cross-job view of every application the company has received. Recruiters can filter by job and by application status. This is useful for getting a high-level read on pipeline volume and where candidates sit across all open roles without needing to go into each job individually.
-
-### Candidates Page
-
-The Candidates page shows one row per person, not per application. If a candidate has applied to multiple company jobs, they appear once with all their applications listed beneath them — avoiding the confusion of seeing the same person appear multiple times.
-
-Clicking into a candidate shows each of their applications. For each one, the recruiter can see the job, when they applied, their score, the current status with a dropdown to update it directly, and a link to view their full submitted resume on the platform.
-
-### Evaluation
-
-The Evaluation page focuses on one job at a time. The recruiter selects a job and sees all candidates ranked by their AI score, with their written feedback and current status.
-
-**How AI evaluation works:** When triggered, the AI reads the candidate's attached resume and compares it against the job's requirements and preferred qualifications. It produces a score from 0 to 100 and writes a plain-English paragraph explaining what aligned well, what was missing, and any concerns. Each candidate is scored independently.
-
-Evaluation can run in two ways:
-
-- **Automatically per application** — if auto-evaluation is enabled on the job, each new application is scored as soon as it comes in, with no manual action needed.
-- **Manually in batch** — the recruiter clicks "Run AI evaluation" to score all currently unscored applications at once.
-
-Recruiters can also **manually edit** any candidate's score or feedback — useful when the recruiter has additional context the AI does not.
-
-Candidates can be filtered by score range (above threshold, 50–69, below 50), by review status (reviewed, pending, missing review), and searched by name or email.
-
-A **shortlist threshold** (0–100) is configured per job. This score cutoff is used during the finalize step.
-
-Shortlisting is only available after the job has **expired** — ensuring the full application window closes before any decisions are made.
-
-### Shortlisting
-
-After reviewing screened applications, the recruiter decides who moves forward. Two approaches:
-
-**Manual shortlisting** — the recruiter reviews each candidate individually and updates their status to shortlisted or rejected one at a time. Full control over every single decision.
-
-**AI-assisted finalize** — the recruiter clicks "Finalize". Candidates at or above the threshold score are automatically shortlisted; everyone below is rejected. The threshold can be adjusted before running. The entire cohort is processed in one action.
-
-Once a candidate is shortlisted, an outreach email draft is created inviting them to book an interview. Once rejected, a draft rejection email is created including their personalized AI feedback. Neither email is sent until the recruiter reviews and approves it.
-
-### Outreach & Emails
-
-No email ever reaches a candidate automatically. Every draft must be reviewed and approved by a recruiter first — this is a deliberate product decision to keep humans in control of all candidate communication.
-
-The Outreach page shows the email pipeline for a selected job as a set of stages:
-
-- **Generate Drafts** — shows how many candidates are ready and waiting for drafts to be created
-- **Review & Edit** — drafts generated and waiting for recruiter review
-- **Approve** — drafts the recruiter has approved, queued to send
-- **Send** — emails already dispatched
-
-For each draft, the recruiter can read the full email body and subject, edit either directly in-line, then approve. Drafts can also be **discarded** to suppress sending without deleting the candidate's record. "Send all" approves and dispatches all pending drafts at once.
-
-The two email types:
-
-**Shortlist email** — warm and encouraging. Tells the candidate they have been selected and includes a link to book an interview slot via Cal.com. Candidates are told to book using the same name and email they registered with on ConvexHire — this is how the platform automatically matches the booking back to their specific application.
-
-**Rejection email** — respectful and kind. Includes the AI-generated evaluation feedback so the candidate understands the specific reasons they were not selected, rather than receiving a generic rejection.
-
-### Interviews
-
-Interview scheduling is handled through Cal.com integration. When the shortlist email lands, the candidate clicks the booking link, picks a time slot, and confirms. ConvexHire detects the booking automatically via a webhook — the application status updates to "Interview Booked" instantly, with no manual recruiter action required.
-
-The **Interviews page** shows all upcoming and past interviews for the company. Recruiters can filter by job and by date range (today, this week, this month, custom range). Each row shows the candidate's name, the role they applied for, the scheduled date and time, and the meeting location or link.
-
-After the interview takes place, the recruiter marks it as complete on this page. This unlocks the final decision step.
-
-### Final Decision
-
-Once an interview is marked complete, the recruiter sets the final outcome on the application: **offer** or **rejected**. The candidate sees the status update on their dashboard immediately. No automated email is triggered here — any post-interview communication goes through the outreach system if needed.
-
-### Recruiter AI Chat
-
-The Chat is a persistent AI assistant built exclusively for recruiters. It is not a generic chatbot — it has real tools connected to live platform data. Conversations are saved and context is preserved across sessions, so the AI remembers what was discussed in previous conversations.
-
-**What the chat AI can do:**
-
-**Search past candidates** — ask in natural language: "Find me strong Python developers who applied in the last three months with senior-level experience." The AI searches across all company applications using semantic understanding of skills, experience descriptions, and feedback — not just keyword matching.
-
-**Research salary ranges** — ask: "What is a competitive salary for a senior data engineer in Kathmandu right now?" The AI searches current market data and synthesises a relevant, contextualised answer.
-
-**List and browse jobs** — ask: "What roles do we have open?" or "Tell me about the ML role." The AI understands informal and imprecise references to jobs — "that backend opening", "the fintech role we posted last month" — and retrieves the right one without needing exact titles.
-
-**Look up a specific candidate** — ask: "Tell me about Aashish Basnet's application for the backend role." The AI returns their resume summary, AI score, written feedback, current status, and any other relevant detail.
-
-**Edit a job** — ask: "Change the salary for the backend role to 80–100k." The AI identifies which job is meant, asks for confirmation if there's any ambiguity, then prepares a side-by-side before/after preview of exactly what will change. It pauses and waits for the recruiter to confirm. The change is never saved silently.
-
-**Chat session management** — the left sidebar shows all previous conversations with timestamps. The recruiter can switch between sessions to restore full conversation history, or start a fresh chat at any time.
+Company profile (name, website, industry, location, allowed location types, default-active job status). **Logo upload** to S3; old logos cleaned automatically on replace. **Recruiters page**: approve / reject pending join requests, remove active recruiters (revokes access immediately, clears active membership). Membership roles: `recruiter` | `admin`. States: `pending` | `active` | `rejected`. Pending requests surface as dashboard action item.
 
 ---
 
-## 5. Company & Team Management
+## 5. Status State Machines
 
-### Company Profile
+**`JobStatus`** — `draft → active → expired` (auto on expiry date).
+**`ApplicationStatus`** — `applied → shortlisted → interview_booked → interview_completed → offer → offer_accepted | offer_declined`. `rejected` reachable from any non-terminal step.
+**`ShortlistStatus`** (per application during AI run) — `not_started → in_progress → completed | failed`.
+**`RecordingStatus`** — `uploaded → transcribing → transcribed → evaluating → evaluated | failed`.
+**`SyncStatus`** (Qdrant outbox) — `PENDING → COMPLETED | FAILED`.
 
-The recruiter admin manages the company's public profile — name, website, industry, and logo. These details are displayed on all job listings that candidates see when browsing.
-
-### Company Settings
-
-Admins have access to a Company Settings page where all company information can be updated and the company logo can be uploaded or replaced. Old logo files are cleaned up automatically when a new one is uploaded.
-
-### Managing the Recruiting Team
-
-The **Recruiters page** shows all current active team members with their name, email, role, status, and join date.
-
-Admins can:
-
-- **Approve** pending join requests — granting the recruiter full access
-- **Reject** join requests — denying access
-- **Remove** an active recruiter at any time — immediately revoking their access to all company data
-
-Pending join requests also surface as an action item on the admin's dashboard so they are never overlooked.
-
-Membership has two roles — **recruiter** (standard hiring access) and **admin** (full access including team and company management) — and three states: **pending**, **active**, and **rejected**.
+Transitions enforced in service layer. Frontend keeps two parallel type unions (`ApplicationStatus` in `applicationsApi.ts` + `ApplicationLifecycleStatus` in `statusMetadata.ts`); both must update together.
 
 ---
 
-## 6. Access Levels by Role
+## 6. AI Shortlisting Pipeline (multi-agent LangGraph)
 
-| Feature                                     | Candidate | Recruiter | Admin |
-| ------------------------------------------- | --------- | --------- | ----- |
-| Browse & apply to jobs                      | ✓         | —         | —     |
-| Resume gap analysis on apply                | ✓         | —         | —     |
-| Track application pipeline in real time     | ✓         | —         | —     |
-| See AI score & feedback on own applications | ✓         | —         | —     |
-| Build & manage multiple resumes             | ✓         | —         | —     |
-| Download resume as PDF                      | ✓         | —         | —     |
-| AI resume import to profile                 | ✓         | —         | —     |
-| Open to Work toggle                         | ✓         | —         | —     |
-| Create & publish jobs (manual)              | —         | ✓         | ✓     |
-| AI job draft assistant                      | —         | ✓         | ✓     |
-| View applications page (all jobs)           | —         | ✓         | ✓     |
-| View candidates page (all people)           | —         | ✓         | ✓     |
-| View candidate resumes on platform          | —         | ✓         | ✓     |
-| Run AI evaluation                           | —         | ✓         | ✓     |
-| Edit candidate scores & feedback manually   | —         | ✓         | ✓     |
-| Shortlist / reject candidates               | —         | ✓         | ✓     |
-| Generate, review & approve outreach emails  | —         | ✓         | ✓     |
-| View & filter interviews                    | —         | ✓         | ✓     |
-| Mark interviews complete                    | —         | ✓         | ✓     |
-| Give offer / final reject post-interview    | —         | ✓         | ✓     |
-| Recruiter AI chat (all capabilities)        | —         | ✓         | ✓     |
-| Register company                            | —         | —         | ✓     |
-| Approve / reject recruiter join requests    | —         | —         | ✓     |
-| Remove team members                         | —         | —         | ✓     |
-| Update company profile, logo & settings     | —         | —         | ✓     |
+Triggered when the job expires. Three steps:
+
+**Step 1 — ML pre-filter (free).** A scikit-learn RandomForest classifier, trained on historical hire / no-hire labels, scores every resume in milliseconds. Three deterministic features: years-of-experience match, skills-overlap ratio against JD requirements, and resume-vs-JD embedding cosine similarity (fastembed). Calibrated to a percentile threshold so **only the top 20%** advance to the LLM stage. The rejected 80% never spend LLM tokens; recall on strong candidates is preserved.
+
+**Step 2 — AI deep review (AWS Bedrock Claude).** For each kept resume, three personas run in a critique loop:
+- **CTO agent** — technical depth, tooling, real delivery, framework fluency. Has Tavily web search (1-call cap per resume).
+- **HR agent** — seniority, communication, hiring risk, role fit. Has Tavily web search (1-call cap per resume).
+- **Judge** — reads both persona evaluations; emits confidence 0–100; if ≥ 70%, exit; else loop with feedback (max 1–2 iterations per resume).
+- **Final merge** — cheaper Groq model combines both personas into clean `strengths` / `concerns` / `evidence` lists.
+
+Every prompt is wrapped by **NeMo `self_check_input` rail** (blocks resume-borne prompt injection) and **LangChain `PIIMiddleware`** (redacts email / URL / phone before it hits the LLM). `BedrockPromptCachingMiddleware` reuses the JD across personas — only the resume changes between calls.
+
+**Step 3 — Save.** Per-application idempotent commit; status → `shortlisted` (≥ threshold) or `rejected` with structured feedback persisted. Crash-safe — partial runs resume from where they stopped.
+
+**Cost savers stacked.** ML pre-filter 20% gating · Bedrock prompt caching middleware (JD reused) · structured-output schema caps (short answers only) · judge early-exit · cheap-AI final merge · 1-call web-search cap + result cache. Net: ~80% cheaper vs naive "every-resume-to-LLM".
 
 ---
 
-## 7. The Full Hiring Pipeline at a Glance
+## 7. Recruiter AI Chat
+
+Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context preserved across logins. Sidebar shows all sessions with timestamps; switch to restore full history; start fresh chat anytime.
+
+**Per-turn pipeline.**
+**auth → rate limit (20 msg / min, 10 sessions / 5 min) → Redis idempotency dedupe (10 min TTL on `client_message_id`) → NeMo input rail (block prompt injection) → append to history → maybe summarize → intent router → handler → SSE stream → save state (JSONB + version++) → cache reply for retry**
+
+**Memory + summarization middleware.** History capped at 40 messages; over the cap, Groq compresses older turns to a ~300-word summary while keeping the 6 most recent intact. ~60% context-token reduction with no quality loss. Stored alongside conversation in JSONB; `state_version` increments per turn.
+
+**Intent router (cost-optimised).** Rule-based classifier first (~80% of messages match keyword rules — free); only the remaining ~20% reach Groq for structured-JSON intent classification. Direct-reply shortcut handles "hi" / "what can you do" with zero API calls.
+
+**7 intent paths.**
+- `search_candidates` — semantic search across all company applications via Qdrant; natural language ("strong Python devs from last 3 months, senior") with hybrid retrieval
+- `lookup_candidate` — specific application detail (resume summary, AI score, feedback, status)
+- `salary_research` — Tavily web search + Groq synthesis; 24-h Redis cache by role + country (5× repeat = 1 call)
+- `list_jobs` — open roles across the company
+- `lookup_job` — fuzzy informal references ("the backend role", "fintech opening from last month")
+- `edit_job` — **14-field allowlist** (title, location, location_type, salary_min, salary_max, currency, overview, responsibilities, requirements, preferred_qualifications, benefits, expiry_date, status, evaluation_threshold). **Staleness check** on `updated_at`; produces before / after preview; pauses for explicit human confirm; never silent write.
+- `chat` — general conversation fallback
+
+**Resilience.** Row-level lock (`SELECT … FOR UPDATE`) serializes concurrent writes per session. `state_version` detects stale tabs. **Pronoun guard** ("edit it") refuses if `last_job_set_turn` gap > 2 → asks "which job?". **Cancel words** ("cancel" / "nevermind" / "stop") clear pending mode instantly. Provider fallbacks: Groq down → friendly retry; Tavily down → skip web search; summarize fails → hard cap (no user error).
+
+**Streaming.** SSE token-by-token; first token < 700 ms. Same total tokens as non-streaming but feels instant.
+
+---
+
+## 8. Guardrails (defense in depth)
+
+**Input rail (NeMo Guardrails `self_check_input`).** Groq-classifier inspects every user-controlled input for prompt-injection / role-hijack / system-prompt-exfil patterns before it reaches any production LLM. Wired at: shortlisting CTO + HR nodes (resume body), resume-gap analyze + auto-patch, recruiter chat send + stream, job-AI generate + refine. Fails open if rail itself errors; toggleable via `guardrails_enabled` setting.
+
+**PII redaction (LangChain `PIIMiddleware`).** Email, URL, and phone-number patterns redacted before prompts reach the shortlisting LLM. Defense in depth alongside input rail.
+
+**Hallucination prevention.** Resume auto-patch enforces **Frozen Facts** (company, title, dates, institution, certs immutable). Job-edit chat tool restricts writes to **14-field allowlist** with before / after preview + explicit human confirm. Auto-patch additionally caps skill additions (max 5 new, 30 total).
+
+**Other safety layers.** XML tag scrubber + `<user_message>` wrapping in chat. Recruiter DB strings sanitised before LLM. Idempotency keys prevent double LLM calls on retry. Rate limits stop abuse. Row-level locks stop concurrent state corruption.
+
+---
+
+## 9. Data & Infrastructure
+
+**PostgreSQL** — primary store. Alembic migrations. SQLAlchemy 2 async end-to-end.
+**Redis** — caches (gap analysis 10 min, salary research 24 h, idempotency 10 min, recruiter-chat retry cache 10 min); rate limiter (`fastapi-limiter`); session locks.
+**Qdrant** — 3072-d Gemini embeddings of jobs (for candidate semantic search) + applications (for recruiter chat candidate search). **Outbox pattern**: every job mutation writes a `JobSyncEvent` row (`PENDING`); a worker reads pending events and upserts / deletes the Qdrant point, then marks `COMPLETED`. Crash-safe — failed events retry.
+**S3** — image storage (avatars, company logos) + interview audio. Presigned URLs for private playback. Old logos cleaned on replace.
+**HuggingFace Space** — Whisper Small fine-tuned on Nepali audio for interview transcription. Cold-start aware client with retry.
+**SMTP (aiosmtplib)** — outbound email via configured provider.
+**Cal.com** — interview booking link in shortlist email; webhook handler auto-flips application status on booking.
+**APScheduler** — cron-style background jobs (job expiry sweep, sync-event retry).
+
+---
+
+## 10. Stack
+
+**Backend.** Python 3.12, FastAPI, SQLAlchemy 2 async, Pydantic v2, Alembic, PostgreSQL, Redis, Qdrant, LangChain v1.x, LangGraph, UV, APScheduler, Argon2, PyJWT, fastapi-limiter, aiosmtplib, WeasyPrint, Jinja2, pytest-asyncio, loguru.
+**Frontend.** Next.js 16 App Router, React 19, TypeScript, Redux Toolkit + RTK Query, raw fetch + SSE for chat streams, SCSS tokens (`_variables.scss`), single-source button system (`_buttons.scss`), pnpm.
+**AI / ML.**
+- **Groq** — recruiter chat, job drafting, resume gap analysis, intent classifier, summarization
+- **AWS Bedrock Claude** — shortlisting multi-agent only (heavier reasoning)
+- **Gemini** — 3072-d text embeddings
+- **Tavily** — web search (salary research, persona context)
+- **LlamaCloud** — structured resume parsing
+- **scikit-learn RandomForest** — shortlisting ML pre-filter
+- **fastembed** — fast similarity for ML pre-filter features
+- **Whisper Small fine-tuned on Nepali audio** — hosted on HF Space; transcribes English + Nepali + code-switched interviews
+- **NeMo Guardrails** — `self_check_input` rail backed by Groq
+- **LangChain PIIMiddleware** — email / URL / phone redaction in shortlisting
+
+**External services.** Cal.com (booking + webhook), SMTP provider, S3-compatible storage, HuggingFace Spaces.
+
+---
+
+## 11. Pipeline at a Glance
 
 ```
-Candidate browses jobs
-         ↓
-   Selects a resume
-         ↓
-   Runs Resume Gap Analysis (optional)
-   AI identifies gaps → candidate patches resume or applies as-is
-         ↓
-   Candidate applies, attaches resume
-         ↓
-       Applied
-         ↓
-   AI Evaluation ←── auto on apply OR manually triggered by recruiter
-         ↓
-   Recruiter reviews AI scores & written feedback on Evaluation page
-         ↓
-   Shortlisted ──────────────────────────── Rejected (post-evaluation)
-         ↓                                           ↓
-   Outreach: shortlist email drafted        Outreach: rejection email with AI feedback
-         ↓                                           ↓
-   Recruiter reviews & approves email       Recruiter reviews & approves email
-         ↓                                           ↓
-   Email sent to candidate                  Email sent to candidate → pipeline closed
-         ↓
-   Candidate books interview via Cal.com link in email
-         ↓
-   Interview Booked (auto-detected via Cal.com webhook)
-         ↓
-   Interview takes place
-         ↓
-   Recruiter marks interview complete
-         ↓
-   Interview Completed
-         ↓
-   Offer ────────────────────────────────── Rejected (post-interview)
+Apply (with optional Gap Analysis + Auto-Patch using Frozen Facts)
+   ↓
+applied  ──[ML pre-filter top 20% ➜ CTO + HR critique loop ➜ Judge ➜ Final merge]──► shortlisted | rejected
+                                                                                          ↓
+                                                                   outreach drafted ➜ recruiter approves ➜ email sent
+                                                                                          ↓
+                                                                          Cal.com booking webhook auto-detect
+                                                                                          ↓
+                                                       interview_booked ➜ recording uploaded ➜ Whisper-NP transcribe ➜ AI evaluation
+                                                                                          ↓
+                                                                              recruiter marks complete
+                                                                                          ↓
+                                                                            interview_completed
+                                                                                          ↓
+                                                                           offer | rejected
+                                                                                          ↓
+                                                                  offer_accepted | offer_declined  (terminal)
 ```
 
 ---
 
-## 8. Key Product Principles
+## 12. Product Principles
 
-**AI assists, humans decide.** The AI scores applications, drafts emails, generates job descriptions, analyses resume gaps, and suggests edits — but every shortlisting decision, every email sent, and every data change is explicitly confirmed by a human before it takes effect.
-
-**Candidates always know where they stand.** Status updates are visible in real time on the candidate dashboard. Rejection emails always include the AI feedback so candidates understand the specific reasons — not a generic response.
-
-**The pipeline only opens after expiry.** Shortlisting is only available once a job has expired. This ensures every applicant gets a fair window before any decisions are made.
-
-**No email ever sends automatically.** Every outreach email — shortlist or rejection — sits in a review queue until a recruiter reads it, optionally edits it, and approves it. The AI writes, the human sends.
-
-**One application per job.** A candidate cannot apply to the same job more than once.
-
-**One interview booking per application.** A candidate cannot book the same job interview twice. Duplicate booking attempts are silently ignored.
-
-**Job edits always show a preview.** When changes are made to a job via the AI chat, the system always shows a before/after diff and waits for explicit confirmation. Changes are never saved silently.
+- **AI assists, humans decide.** Every shortlist call, email send, and job-edit write is human-confirmed.
+- **No silent emails.** Every outreach draft sits in review queue until reviewed + approved.
+- **Pipeline opens only after expiry.** Fair window for every applicant.
+- **Candidates always know where they stand.** Real-time status; rejection includes specific AI feedback.
+- **One application per job. One booking per application.**
+- **Job edits always preview.** Before / after diff with explicit confirm; never silent writes.
+- **Defense in depth.** NeMo input rail + PIIMiddleware + Frozen Facts + 14-field allowlist + rate limits + idempotency + row-level locks.
+- **Cost-aware AI.** Rule-classifier first, ML pre-filter, prompt caching, schema caps, judge early-exit, summarization, salary cache, cheap-AI final merge.

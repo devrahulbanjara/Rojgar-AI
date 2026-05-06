@@ -194,7 +194,7 @@
   <g transform="translate(40,430)">
     <rect width="1320" height="60" rx="12" fill="#fff7ed" stroke="#f59e0b" stroke-dasharray="4 3"/>
     <text x="20" y="20" fill="#7c2d12" font-size="11" font-weight="700">Per-turn pipeline summary</text>
-    <text x="20" y="42" fill="#92400e" font-size="10">authenticate → rate limit → dedup check → append msg → maybe summarize → classify intent → route to handler → stream response → save state → cache for retry</text>
+    <text x="20" y="42" fill="#92400e" font-size="10">authenticate → rate limit → dedup check → NeMo input rail (block injection) → append msg → maybe summarize → classify intent → route to handler → stream response → save state → cache for retry</text>
   </g>
 </svg>
 </div>
@@ -792,10 +792,10 @@
     <!-- Row 1 -->
     <g transform="translate(0,0)">
       <rect width="320" height="80" rx="10" fill="#fee2e2" stroke="#dc2626"/>
-      <text x="20" y="22" font-size="10" fill="#7f1d1d" font-weight="700">🛡 Prompt Injection Defense</text>
-      <text x="20" y="40" font-size="9" fill="#991b1b">XML tag scrubber on all user input</text>
-      <text x="20" y="54" font-size="9" fill="#991b1b">&lt;user_message&gt; wrapping isolates data</text>
-      <text x="20" y="68" font-size="9" fill="#991b1b">Recruiter DB strings sanitized before LLM</text>
+      <text x="20" y="22" font-size="10" fill="#7f1d1d" font-weight="700">🛡 Prompt Injection Defense (3 layers)</text>
+      <text x="20" y="38" font-size="9" fill="#991b1b">1. NeMo self_check_input rail (Groq classifier)</text>
+      <text x="20" y="52" font-size="9" fill="#991b1b">2. XML tag scrubber + &lt;user_message&gt; wrap</text>
+      <text x="20" y="66" font-size="9" fill="#991b1b">3. Recruiter DB strings sanitized before LLM</text>
     </g>
     <g transform="translate(340,0)">
       <rect width="320" height="80" rx="10" fill="#ffedd5" stroke="#ea580c"/>

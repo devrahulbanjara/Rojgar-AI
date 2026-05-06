@@ -4,6 +4,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
 from app.infrastructures.ai.service import ai_service
+from app.infrastructures.guardrails import guardrails_service
 from app.modules.job_ai.prompts import (
     JOB_DRAFT_SYSTEM_PROMPT,
     REFINE_DRAFT_SYSTEM_PROMPT,
@@ -56,6 +57,14 @@ def build_job_ai_graph():
         return {"salary_research": salary_research.model_dump(mode="json")}
 
     async def generate_draft_node(state: JobAgentState) -> dict[str, Any]:
+        # Recruiter-controlled free-text — still scan for jailbreaks/role-hijacks
+        # before it reaches the drafting LLM.
+        rough = state.get("rough_description")
+        if rough:
+            await guardrails_service.assert_input_safe(
+                rough, source="job_ai.generate_draft"
+            )
+
         payload = {
             "mode": state["mode"],
             "title": state["title"],
@@ -122,6 +131,12 @@ def build_job_ai_graph():
         edited_fields = decision.get("edited_fields") or {}
         regenerate_fields = set(decision.get("regenerate_fields") or [])
         feedback = decision.get("feedback")
+
+        # Recruiter feedback loop — also user input that flows into the LLM.
+        if feedback:
+            await guardrails_service.assert_input_safe(
+                str(feedback), source="job_ai.refine"
+            )
 
         locked_fields = set(decision.get("locked_fields") or state["locked_fields"])
         merged = {**current_draft, **edited_fields}
