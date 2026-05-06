@@ -112,22 +112,23 @@ async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListI
 
 
 async def fork_resume_from_profile(
-    db: AsyncSession, user: User, resume_name: str
+    db: AsyncSession, user: User, resume_name: str, fork_from_profile: bool = True
 ) -> ResumeResponse:
-    """Create a new resume by copying data from the user's profile."""
-    # Load the user's profile with children
-    result = await db.execute(
-        select(Profile)
-        .where(Profile.user_id == user.id)
-        .options(
-            selectinload(Profile.experiences),
-            selectinload(Profile.educations),
-            selectinload(Profile.skills),
+    """Create a new resume, optionally pre-filled from the user's profile."""
+    profile = None
+    if fork_from_profile:
+        result = await db.execute(
+            select(Profile)
+            .where(Profile.user_id == user.id)
+            .options(
+                selectinload(Profile.experiences),
+                selectinload(Profile.educations),
+                selectinload(Profile.skills),
+            )
         )
-    )
-    profile = result.scalar_one_or_none()
+        profile = result.scalar_one_or_none()
 
-    # Create resume — copy profile fields if profile exists
+    # Create resume — copy profile fields only when forking
     resume = Resume(
         user_id=user.id,
         resume_name=resume_name,
@@ -143,7 +144,7 @@ async def fork_resume_from_profile(
     db.add(resume)
     await db.flush()
 
-    # Copy child collections from profile
+    # Copy child collections from profile only when forking
     if profile:
         for exp in profile.experiences:
             db.add(
@@ -178,7 +179,10 @@ async def fork_resume_from_profile(
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
     await invalidate_resume_caches(str(user.id), str(resume.id))
-    logger.info(f"Forked resume '{resume_name}' for user {user.id}")
+    if fork_from_profile:
+        logger.info(f"Forked resume '{resume_name}' from profile for user {user.id}")
+    else:
+        logger.info(f"Created blank resume '{resume_name}' for user {user.id}")
     return _resume_to_response(resume)
 
 

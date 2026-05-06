@@ -101,10 +101,13 @@ export default function ResumesSection() {
     [resumes, confirmDeleteId],
   )
 
-  async function handleCreateConfirm(name: string) {
+  async function handleCreateConfirm(name: string, forkFromProfile: boolean) {
     setCreateError(null)
     try {
-      const result = await createResume({ resume_name: name }).unwrap()
+      const result = await createResume({
+        resume_name: name,
+        fork_from_profile: forkFromProfile,
+      }).unwrap()
       if (result.success && result.data) {
         const uiResume = apiResumeToUi(result.data, user?.full_name ?? '', user?.email ?? '')
         dispatch(upsertResume(uiResume))

@@ -19,6 +19,7 @@ class ResumeCreate(BaseSchema):
     """Fork a new resume from the user's profile with an optional custom name."""
 
     resume_name: str = Field(default="Default", min_length=1, max_length=255)
+    fork_from_profile: bool = Field(default=True)
 
 
 class ResumeUpdate(DocumentUpdateBase):

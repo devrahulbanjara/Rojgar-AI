@@ -152,9 +152,13 @@ async def evaluate_application_with_shortlisting_agent(
     """Run the full shortlisting workflow for a single application."""
     workflow = get_compiled_shortlisting_workflow()
     inputs = build_shortlisting_inputs(job, application)
+    applicant_name = getattr(
+        getattr(application, "user", None), "full_name", None
+    ) or str(application.id)
     logger.info(
-        "Running shortlisting agent workflow for application {} on job {}",
-        application.id,
+        "Running shortlisting agent workflow for '{}' on '{}' ({})",
+        applicant_name,
+        job.title,
         job.id,
     )
     result = await workflow.ainvoke(cast(Any, inputs))

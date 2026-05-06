@@ -10,17 +10,18 @@ export default function CreateResumeModal({
   isLoading,
   error,
 }: {
-  onConfirm: (name: string) => void
+  onConfirm: (name: string, forkFromProfile: boolean) => void
   onCancel: () => void
   isLoading: boolean
   error: string | null
 }) {
   const [name, setName] = useState('')
+  const [forkFromProfile, setForkFromProfile] = useState(true)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (name.trim()) {
-      onConfirm(name.trim())
+      onConfirm(name.trim(), forkFromProfile)
     }
   }
 
@@ -45,10 +46,26 @@ export default function CreateResumeModal({
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
               />
-              <p className="resume-field__hint">
-                Your profile data will be used to pre-fill the resume.
-              </p>
             </div>
+
+            <div className="resume-field" style={{ marginTop: 12 }}>
+              <label
+                className="resume-field__toggle-row"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={forkFromProfile}
+                  onChange={(e) => setForkFromProfile(e.target.checked)}
+                  disabled={isLoading}
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <span className="resume-field__hint" style={{ margin: 0 }}>
+                  Pre-fill from my profile
+                </span>
+              </label>
+            </div>
+
             {error && <p className="resume-field__error">{error}</p>}
           </div>
           <div className="modal__footer">
