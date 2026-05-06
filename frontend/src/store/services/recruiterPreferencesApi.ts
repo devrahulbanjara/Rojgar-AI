@@ -16,8 +16,6 @@ export interface RecruiterPreference {
 
 export interface UpdateRecruiterPreferenceRequest {
   timezone?: string | null
-  notification_email_enabled?: boolean
-  notification_in_app_enabled?: boolean
   default_interview_duration_minutes?: number
   default_interview_buffer_minutes?: number
   outreach_signature?: string | null
