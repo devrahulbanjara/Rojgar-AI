@@ -3,31 +3,30 @@ from __future__ import annotations
 import operator
 from typing import Annotated, TypedDict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
+
+ShortItem = Annotated[str, StringConstraints(min_length=1, max_length=120)]
 
 
 class PersonaEvaluation(BaseModel):
-    score: int = Field(ge=0, le=100)
-    reason: str = Field(min_length=1)
-    strengths: list[str] = Field(default_factory=list)
-    concerns: list[str] = Field(default_factory=list)
-    evidence: list[str] = Field(default_factory=list)
-    search_notes: list[str] = Field(default_factory=list)
+    strengths: list[ShortItem] = Field(default_factory=list, max_length=4)
+    concerns: list[ShortItem] = Field(default_factory=list, max_length=4)
+    evidence: list[ShortItem] = Field(default_factory=list, max_length=4)
 
 
 class JudgeResponse(BaseModel):
     is_satisfied: bool
-    critique: str = Field(min_length=1)
+    confidence: float = Field(ge=0.0, le=1.0)
+    critique: Annotated[str, StringConstraints(min_length=1, max_length=400)]
 
 
 class FinalResponse(BaseModel):
-    score: int = Field(ge=0, le=100)
-    reason: str = Field(min_length=1)
-    strengths: list[str] | None = Field(default=None)
-    weaknesses: list[str] | None = Field(default=None)
+    strengths: list[ShortItem] | None = Field(default=None, max_length=6)
+    weaknesses: list[ShortItem] | None = Field(default=None, max_length=6)
 
 
 class ShortlistState(TypedDict):
+    applicant_name: str
     job_title: str
     jd: str
     resume: str
@@ -37,7 +36,6 @@ class ShortlistState(TypedDict):
     hr_evals: Annotated[list[PersonaEvaluation], operator.add]
     critiques: Annotated[list[str], operator.add]
     is_satisfied: bool
-    final_score: int
-    final_reason: str
+    confidence: float
     final_strengths: list[str] | None
     final_weaknesses: list[str] | None

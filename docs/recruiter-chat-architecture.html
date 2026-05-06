@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ConvexHire — Recruiter Chat Architecture</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:32px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:#f7f8fc;color:#1a2240;
+  }
+  h1{font-size:24px;margin:0 0 4px;font-weight:800}
+  h2{font-size:18px;margin:40px 0 12px;font-weight:700;color:#1a2240;border-bottom:2px solid #e5e8f0;padding-bottom:8px}
+  .sub{color:#5b6788;font-size:13px;margin:0 0 24px}
+  .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:14px}
+  button{
+    background:#fff;color:#1a2240;border:1px solid #d6dbe8;
+    padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+  }
+  button:hover{border-color:#4f8cff;color:#4f8cff}
+  .frame{
+    background:#fff;border:1px solid #e5e8f0;border-radius:14px;padding:12px;
+    box-shadow:0 2px 8px rgba(20,30,60,0.04);margin-bottom:32px;
+    overflow-x:auto;
+  }
+  svg{display:block;width:100%;height:auto;min-width:1200px}
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:12px;color:#5b6788;
+  }
+  .legend .chip{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+    background:#fff;border:1px solid #e5e8f0;
+  }
+  .dot{width:10px;height:10px;border-radius:3px}
+  .section-label{
+    font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+    color:#5b6788;margin-bottom:6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>ConvexHire — Recruiter Chat Architecture</h1>
+<p class="sub">Complete system architecture: message flow, intent routing, hybrid search, short-term memory, streaming, and guardrails.</p>
+
+<div class="toolbar">
+  <button onclick="window.print()">Save as PDF</button>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 1: HIGH-LEVEL END-TO-END FLOW -->
+<!-- ============================================================== -->
+<h2>1. End-to-End Message Flow</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 520" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6788"/>
+    </marker>
+    <marker id="ah-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="ah-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/>
+    </marker>
+    <marker id="ah-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- Step boxes -->
+  <g transform="translate(40,40)">
+    <!-- 1. Frontend -->
+    <rect width="160" height="80" rx="14" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="80" y="30" text-anchor="middle" font-size="20">💬</text>
+    <text x="80" y="52" text-anchor="middle" fill="#1e1b4b" font-size="11" font-weight="700">Frontend</text>
+    <text x="80" y="66" text-anchor="middle" fill="#4338ca" font-size="9">Next.js + SSE</text>
+  </g>
+  <path d="M200 80 H250" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- 2. Rate Limiter -->
+  <g transform="translate(260,40)">
+    <rect width="120" height="80" rx="14" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="60" y="30" text-anchor="middle" font-size="18">🚦</text>
+    <text x="60" y="50" text-anchor="middle" fill="#7c2d12" font-size="10" font-weight="700">Rate Limit</text>
+    <text x="60" y="64" text-anchor="middle" fill="#92400e" font-size="9">20 msg/min</text>
+  </g>
+  <path d="M380 80 H430" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- 3. Idempotency -->
+  <g transform="translate(440,40)">
+    <rect width="140" height="80" rx="14" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+    <text x="70" y="30" text-anchor="middle" font-size="18">🔁</text>
+    <text x="70" y="50" text-anchor="middle" fill="#831843" font-size="10" font-weight="700">Idempotency</text>
+    <text x="70" y="64" text-anchor="middle" fill="#9d174d" font-size="9">Redis 10min TTL</text>
+  </g>
+  <path d="M580 80 H630" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- 4. Memory Layer -->
+  <g transform="translate(640,40)">
+    <rect width="150" height="80" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="75" y="30" text-anchor="middle" font-size="18">🧠</text>
+    <text x="75" y="50" text-anchor="middle" fill="#3b0764" font-size="10" font-weight="700">Memory Layer</text>
+    <text x="75" y="64" text-anchor="middle" fill="#5b21b6" font-size="9">summarize if &gt;40 msgs</text>
+  </g>
+  <path d="M790 80 H840" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- 5. Intent Router -->
+  <g transform="translate(850,40)">
+    <rect width="150" height="80" rx="14" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+    <text x="75" y="30" text-anchor="middle" font-size="18">🧭</text>
+    <text x="75" y="50" text-anchor="middle" fill="#713f12" font-size="10" font-weight="700">Intent Router</text>
+    <text x="75" y="64" text-anchor="middle" fill="#854d0e" font-size="9">Groq structured JSON</text>
+  </g>
+  <path d="M1000 80 H1050" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- 6. Handler -->
+  <g transform="translate(1060,40)">
+    <rect width="130" height="80" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="65" y="30" text-anchor="middle" font-size="18">⚡</text>
+    <text x="65" y="50" text-anchor="middle" fill="#14532d" font-size="10" font-weight="700">Handler</text>
+    <text x="65" y="64" text-anchor="middle" fill="#166534" font-size="9">7 intent paths</text>
+  </g>
+  <path d="M1190 80 H1240" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- 7. Stream -->
+  <g transform="translate(1250,40)">
+    <rect width="110" height="80" rx="14" fill="#cffafe" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="55" y="30" text-anchor="middle" font-size="18">📡</text>
+    <text x="55" y="50" text-anchor="middle" fill="#0e4f5b" font-size="10" font-weight="700">SSE Stream</text>
+    <text x="55" y="64" text-anchor="middle" fill="#155e75" font-size="9">token by token</text>
+  </g>
+
+  <!-- Return arrow -->
+  <path d="M1305 120 V160 H120 V120" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6 3" fill="none" marker-end="url(#ah-blue)"/>
+  <text x="700" y="175" text-anchor="middle" fill="#2563eb" font-size="10" font-weight="700">SSE: start → token · token · token → final</text>
+
+  <!-- Save state below -->
+  <path d="M1125 120 V220" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+  <g transform="translate(1040,230)">
+    <rect width="170" height="60" rx="12" fill="#1a2240"/>
+    <text x="85" y="26" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">💾 Save State</text>
+    <text x="85" y="42" text-anchor="middle" fill="#a8b2cc" font-size="9">JSONB + version++</text>
+  </g>
+
+  <!-- External services row -->
+  <g transform="translate(40,320)">
+    <rect width="1320" height="70" rx="14" fill="#f1f4ff" stroke="#c7cfe5"/>
+    <text x="20" y="22" fill="#1a2240" font-size="11" font-weight="700">External Services</text>
+    <g transform="translate(20,34)">
+      <rect width="160" height="28" rx="8" fill="#fff" stroke="#6366f1"/>
+      <text x="80" y="18" text-anchor="middle" font-size="10" fill="#1e1b4b" font-weight="600">PostgreSQL (state+data)</text>
+    </g>
+    <g transform="translate(200,34)">
+      <rect width="160" height="28" rx="8" fill="#fff" stroke="#dc2626"/>
+      <text x="80" y="18" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="600">Redis (cache+dedup)</text>
+    </g>
+    <g transform="translate(380,34)">
+      <rect width="180" height="28" rx="8" fill="#fff" stroke="#16a34a"/>
+      <text x="90" y="18" text-anchor="middle" font-size="10" fill="#14532d" font-weight="600">Qdrant (vectors 3072d)</text>
+    </g>
+    <g transform="translate(580,34)">
+      <rect width="140" height="28" rx="8" fill="#fff" stroke="#f59e0b"/>
+      <text x="70" y="18" text-anchor="middle" font-size="10" fill="#713f12" font-weight="600">Groq (LLM stream)</text>
+    </g>
+    <g transform="translate(740,34)">
+      <rect width="140" height="28" rx="8" fill="#fff" stroke="#06b6d4"/>
+      <text x="70" y="18" text-anchor="middle" font-size="10" fill="#0e4f5b" font-weight="600">Tavily (web search)</text>
+    </g>
+    <g transform="translate(900,34)">
+      <rect width="180" height="28" rx="8" fill="#fff" stroke="#7c3aed"/>
+      <text x="90" y="18" text-anchor="middle" font-size="10" fill="#3b0764" font-weight="600">Gemini (embeddings)</text>
+    </g>
+    <g transform="translate(1100,34)">
+      <rect width="180" height="28" rx="8" fill="#fff" stroke="#db2777"/>
+      <text x="90" y="18" text-anchor="middle" font-size="10" fill="#831843" font-weight="600">Google (sparse BM25)</text>
+    </g>
+  </g>
+
+  <!-- Step labels -->
+  <g font-size="9" fill="#5b6788" font-weight="600">
+    <text x="120" y="32">1</text>
+    <text x="320" y="32">2</text>
+    <text x="510" y="32">3</text>
+    <text x="715" y="32">4</text>
+    <text x="925" y="32">5</text>
+    <text x="1125" y="32">6</text>
+    <text x="1305" y="32">7</text>
+  </g>
+
+  <!-- Annotations -->
+  <g transform="translate(40,430)">
+    <rect width="1320" height="60" rx="12" fill="#fff7ed" stroke="#f59e0b" stroke-dasharray="4 3"/>
+    <text x="20" y="20" fill="#7c2d12" font-size="11" font-weight="700">Per-turn pipeline summary</text>
+    <text x="20" y="42" fill="#92400e" font-size="10">authenticate → rate limit → dedup check → append msg → maybe summarize → classify intent → route to handler → stream response → save state → cache for retry</text>
+  </g>
+</svg>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 2: INTENT ROUTING -->
+<!-- ============================================================== -->
+<h2>2. Intent Router &amp; Handler Paths</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 700" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <!-- Router diamond -->
+  <g transform="translate(550,20)">
+    <rect width="300" height="60" rx="14" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+    <text x="150" y="26" text-anchor="middle" fill="#713f12" font-size="13" font-weight="700">🧭 Intent Classification</text>
+    <text x="150" y="44" text-anchor="middle" fill="#854d0e" font-size="10">Groq structured JSON classification (9 intents)</text>
+  </g>
+
+  <!-- Fan-out line -->
+  <path d="M700 80 V110" stroke="#5b6788" stroke-width="1.8" fill="none"/>
+  <path d="M100 110 H1300" stroke="#5b6788" stroke-width="1.2" fill="none"/>
+
+  <!-- 7 vertical drops -->
+  <path d="M100 110 V140" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+  <path d="M300 110 V140" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+  <path d="M500 110 V140" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+  <path d="M700 110 V140" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+  <path d="M900 110 V140" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+  <path d="M1100 110 V140" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+  <path d="M1300 110 V140" stroke="#5b6788" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Lane 1: Salary Research -->
+  <g transform="translate(20,150)">
+    <rect width="160" height="200" rx="12" fill="#fce7f3" stroke="#db2777"/>
+    <text x="80" y="24" text-anchor="middle" font-size="16">💰</text>
+    <text x="80" y="42" text-anchor="middle" fill="#831843" font-size="10" font-weight="700">Salary Research</text>
+    <line x1="15" y1="52" x2="145" y2="52" stroke="#f9a8d4" stroke-width="1"/>
+    <!-- mini pipeline -->
+    <rect x="15" y="62" width="130" height="22" rx="6" fill="#fff" stroke="#db2777"/>
+    <text x="80" y="77" text-anchor="middle" font-size="9" fill="#831843">slot extraction (Groq)</text>
+    <rect x="15" y="90" width="130" height="22" rx="6" fill="#fff" stroke="#db2777"/>
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#831843">Redis cache check</text>
+    <rect x="15" y="118" width="130" height="22" rx="6" fill="#fff" stroke="#db2777"/>
+    <text x="80" y="133" text-anchor="middle" font-size="9" fill="#831843">Tavily web search</text>
+    <rect x="15" y="146" width="130" height="22" rx="6" fill="#fff" stroke="#db2777"/>
+    <text x="80" y="161" text-anchor="middle" font-size="9" fill="#831843">Groq synthesis stream</text>
+    <text x="80" y="188" text-anchor="middle" fill="#9d174d" font-size="8" font-style="italic">"SDE salary Nepal 2026"</text>
+  </g>
+
+  <!-- Lane 2: Job Query -->
+  <g transform="translate(210,150)">
+    <rect width="160" height="200" rx="12" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="80" y="24" text-anchor="middle" font-size="16">📋</text>
+    <text x="80" y="42" text-anchor="middle" fill="#1e3a8a" font-size="10" font-weight="700">Job Query / List</text>
+    <line x1="15" y1="52" x2="145" y2="52" stroke="#93c5fd" stroke-width="1"/>
+    <rect x="15" y="62" width="130" height="22" rx="6" fill="#fff" stroke="#2563eb"/>
+    <text x="80" y="77" text-anchor="middle" font-size="9" fill="#1e3a8a">SELECT jobs</text>
+    <rect x="15" y="90" width="130" height="22" rx="6" fill="#fff" stroke="#2563eb"/>
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#1e3a8a">filter status/order</text>
+    <rect x="15" y="118" width="130" height="22" rx="6" fill="#fff" stroke="#2563eb"/>
+    <text x="80" y="133" text-anchor="middle" font-size="9" fill="#1e3a8a">format card grid</text>
+    <text x="80" y="168" text-anchor="middle" fill="#1e40af" font-size="8">No LLM call needed</text>
+    <text x="80" y="188" text-anchor="middle" fill="#1e40af" font-size="8" font-style="italic">"list my active jobs"</text>
+  </g>
+
+  <!-- Lane 3: Job Description -->
+  <g transform="translate(400,150)">
+    <rect width="160" height="200" rx="12" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="80" y="24" text-anchor="middle" font-size="16">📄</text>
+    <text x="80" y="42" text-anchor="middle" fill="#1e3a8a" font-size="10" font-weight="700">Job Description</text>
+    <line x1="15" y1="52" x2="145" y2="52" stroke="#93c5fd" stroke-width="1"/>
+    <rect x="15" y="62" width="130" height="22" rx="6" fill="#fff" stroke="#2563eb"/>
+    <text x="80" y="77" text-anchor="middle" font-size="9" fill="#1e3a8a">fuzzy title match</text>
+    <rect x="15" y="90" width="130" height="22" rx="6" fill="#fff" stroke="#7c3aed"/>
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#3b0764">ambiguous? → pause</text>
+    <rect x="15" y="118" width="130" height="22" rx="6" fill="#fff" stroke="#2563eb"/>
+    <text x="80" y="133" text-anchor="middle" font-size="9" fill="#1e3a8a">confirm selection</text>
+    <rect x="15" y="146" width="130" height="22" rx="6" fill="#fff" stroke="#2563eb"/>
+    <text x="80" y="161" text-anchor="middle" font-size="9" fill="#1e3a8a">render full JD</text>
+    <text x="80" y="188" text-anchor="middle" fill="#1e40af" font-size="8" font-style="italic">"show SDE intern details"</text>
+  </g>
+
+  <!-- Lane 4: Job Edit -->
+  <g transform="translate(590,150)">
+    <rect width="160" height="200" rx="12" fill="#ffedd5" stroke="#ea580c"/>
+    <text x="80" y="24" text-anchor="middle" font-size="16">✏️</text>
+    <text x="80" y="42" text-anchor="middle" fill="#7c2d12" font-size="10" font-weight="700">Job Edit</text>
+    <line x1="15" y1="52" x2="145" y2="52" stroke="#fdba74" stroke-width="1"/>
+    <rect x="15" y="62" width="130" height="22" rx="6" fill="#fff" stroke="#ea580c"/>
+    <text x="80" y="77" text-anchor="middle" font-size="9" fill="#7c2d12">Groq → JSON patch</text>
+    <rect x="15" y="90" width="130" height="22" rx="6" fill="#fff" stroke="#7c3aed"/>
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#3b0764">⏸ preview diff</text>
+    <rect x="15" y="118" width="130" height="22" rx="6" fill="#fff" stroke="#16a34a"/>
+    <text x="80" y="133" text-anchor="middle" font-size="9" fill="#14532d">human approve</text>
+    <rect x="15" y="146" width="130" height="22" rx="6" fill="#fff" stroke="#ea580c"/>
+    <text x="80" y="161" text-anchor="middle" font-size="9" fill="#7c2d12">UPDATE (14 fields)</text>
+    <text x="80" y="188" text-anchor="middle" fill="#9a3412" font-size="8" font-style="italic">"make SDE remote"</text>
+  </g>
+
+  <!-- Lane 5: Candidate Search -->
+  <g transform="translate(780,150)">
+    <rect width="160" height="200" rx="12" fill="#dcfce7" stroke="#16a34a"/>
+    <text x="80" y="24" text-anchor="middle" font-size="16">👥</text>
+    <text x="80" y="42" text-anchor="middle" fill="#14532d" font-size="10" font-weight="700">Candidate Search</text>
+    <line x1="15" y1="52" x2="145" y2="52" stroke="#86efac" stroke-width="1"/>
+    <rect x="15" y="62" width="130" height="22" rx="6" fill="#fff" stroke="#16a34a"/>
+    <text x="80" y="77" text-anchor="middle" font-size="9" fill="#14532d">embed query</text>
+    <rect x="15" y="90" width="130" height="22" rx="6" fill="#fff" stroke="#16a34a"/>
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#14532d">Qdrant hybrid RRF</text>
+    <rect x="15" y="118" width="130" height="22" rx="6" fill="#fff" stroke="#16a34a"/>
+    <text x="80" y="133" text-anchor="middle" font-size="9" fill="#14532d">relevance tagging</text>
+    <rect x="15" y="146" width="130" height="22" rx="6" fill="#fff" stroke="#16a34a"/>
+    <text x="80" y="161" text-anchor="middle" font-size="9" fill="#14532d">DB enrich + format</text>
+    <text x="80" y="188" text-anchor="middle" fill="#166534" font-size="8" font-style="italic">"find Python ETL devs"</text>
+  </g>
+
+  <!-- Lane 6: Recruiter Writing -->
+  <g transform="translate(970,150)">
+    <rect width="160" height="200" rx="12" fill="#fef9c3" stroke="#ca8a04"/>
+    <text x="80" y="24" text-anchor="middle" font-size="16">📝</text>
+    <text x="80" y="42" text-anchor="middle" fill="#713f12" font-size="10" font-weight="700">Recruiter Writing</text>
+    <line x1="15" y1="52" x2="145" y2="52" stroke="#fde047" stroke-width="1"/>
+    <rect x="15" y="62" width="130" height="22" rx="6" fill="#fff" stroke="#ca8a04"/>
+    <text x="80" y="77" text-anchor="middle" font-size="9" fill="#713f12">inject context</text>
+    <rect x="15" y="90" width="130" height="22" rx="6" fill="#fff" stroke="#ca8a04"/>
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#713f12">Groq stream draft</text>
+    <rect x="15" y="118" width="130" height="22" rx="6" fill="#fff" stroke="#ca8a04"/>
+    <text x="80" y="133" text-anchor="middle" font-size="9" fill="#713f12">token-by-token SSE</text>
+    <text x="80" y="168" text-anchor="middle" fill="#854d0e" font-size="8">emails, rubrics, Qs</text>
+    <text x="80" y="188" text-anchor="middle" fill="#854d0e" font-size="8" font-style="italic">"draft rejection email"</text>
+  </g>
+
+  <!-- Lane 7: Recruiting Q&A -->
+  <g transform="translate(1160,150)">
+    <rect width="160" height="200" rx="12" fill="#cffafe" stroke="#06b6d4"/>
+    <text x="80" y="24" text-anchor="middle" font-size="16">🌐</text>
+    <text x="80" y="42" text-anchor="middle" fill="#0e4f5b" font-size="10" font-weight="700">Recruiting Q&amp;A</text>
+    <line x1="15" y1="52" x2="145" y2="52" stroke="#67e8f9" stroke-width="1"/>
+    <rect x="15" y="62" width="130" height="22" rx="6" fill="#fff" stroke="#06b6d4"/>
+    <text x="80" y="77" text-anchor="middle" font-size="9" fill="#0e4f5b">generic? → canned</text>
+    <rect x="15" y="90" width="130" height="22" rx="6" fill="#fff" stroke="#06b6d4"/>
+    <text x="80" y="105" text-anchor="middle" font-size="9" fill="#0e4f5b">topical? → direct LLM</text>
+    <rect x="15" y="118" width="130" height="22" rx="6" fill="#fff" stroke="#06b6d4"/>
+    <text x="80" y="133" text-anchor="middle" font-size="9" fill="#0e4f5b">current? → web search</text>
+    <rect x="15" y="146" width="130" height="22" rx="6" fill="#fff" stroke="#06b6d4"/>
+    <text x="80" y="161" text-anchor="middle" font-size="9" fill="#0e4f5b">Groq synthesis</text>
+    <text x="80" y="188" text-anchor="middle" fill="#155e75" font-size="8" font-style="italic">"best ATS in 2026?"</text>
+  </g>
+
+  <!-- Out of scope label -->
+  <g transform="translate(590,380)">
+    <rect width="220" height="36" rx="10" fill="#fee2e2" stroke="#dc2626"/>
+    <text x="110" y="22" text-anchor="middle" fill="#7f1d1d" font-size="10" font-weight="700">🚫 Out of Scope → polite rejection (no AI cost)</text>
+  </g>
+
+  <!-- State modes -->
+  <g transform="translate(40,440)">
+    <rect width="1320" height="80" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="20" y="22" fill="#1a2240" font-size="11" font-weight="700">State Machine Modes</text>
+    <g transform="translate(20,34)">
+      <rect width="100" height="28" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="50" y="18" text-anchor="middle" font-size="9" fill="#14532d" font-weight="700">idle</text>
+    </g>
+    <path d="M130 48 H160" stroke="#5b6788" stroke-width="1.2" fill="none" marker-end="url(#ah)"/>
+    <g transform="translate(170,34)">
+      <rect width="160" height="28" rx="8" fill="#fef9c3" stroke="#ca8a04"/>
+      <text x="80" y="18" text-anchor="middle" font-size="9" fill="#713f12" font-weight="700">collecting_salary_slots</text>
+    </g>
+    <path d="M340 48 H370" stroke="#5b6788" stroke-width="1.2" fill="none" marker-end="url(#ah)"/>
+    <g transform="translate(380,34)">
+      <rect width="210" height="28" rx="8" fill="#ffedd5" stroke="#ea580c"/>
+      <text x="105" y="18" text-anchor="middle" font-size="9" fill="#7c2d12" font-weight="700">awaiting_job_match_confirmation</text>
+    </g>
+    <path d="M600 48 H630" stroke="#5b6788" stroke-width="1.2" fill="none" marker-end="url(#ah)"/>
+    <g transform="translate(640,34)">
+      <rect width="200" height="28" rx="8" fill="#ffedd5" stroke="#ea580c"/>
+      <text x="100" y="18" text-anchor="middle" font-size="9" fill="#7c2d12" font-weight="700">awaiting_edit_confirmation</text>
+    </g>
+    <path d="M850 48 H880" stroke="#5b6788" stroke-width="1.2" fill="none"/>
+    <text x="900" y="52" fill="#5b6788" font-size="9">cancel keyword → back to idle</text>
+  </g>
+
+  <!-- SSE events -->
+  <g transform="translate(40,550)">
+    <rect width="1320" height="110" rx="12" fill="#ede9fe" stroke="#7c3aed"/>
+    <text x="20" y="24" fill="#3b0764" font-size="11" font-weight="700">SSE Event Protocol</text>
+    <g transform="translate(20,40)">
+      <rect width="200" height="50" rx="8" fill="#fff" stroke="#7c3aed"/>
+      <text x="100" y="20" text-anchor="middle" font-size="10" fill="#3b0764" font-weight="700">event: start</text>
+      <text x="100" y="38" text-anchor="middle" font-size="9" fill="#5b21b6">{type: "text"}</text>
+    </g>
+    <path d="M230 65 H270" stroke="#7c3aed" stroke-width="1.4" fill="none" marker-end="url(#ah-purple)"/>
+    <g transform="translate(280,40)">
+      <rect width="320" height="50" rx="8" fill="#fff" stroke="#7c3aed"/>
+      <text x="160" y="20" text-anchor="middle" font-size="10" fill="#3b0764" font-weight="700">event: token (repeats)</text>
+      <text x="160" y="38" text-anchor="middle" font-size="9" fill="#5b21b6">{content: "chunk..."} — renders incrementally</text>
+    </g>
+    <path d="M610 65 H650" stroke="#7c3aed" stroke-width="1.4" fill="none" marker-end="url(#ah-purple)"/>
+    <g transform="translate(660,40)">
+      <rect width="340" height="50" rx="8" fill="#fff" stroke="#7c3aed"/>
+      <text x="170" y="20" text-anchor="middle" font-size="10" fill="#3b0764" font-weight="700">event: final</text>
+      <text x="170" y="38" text-anchor="middle" font-size="9" fill="#5b21b6">{reply, history[], pending_action} — full payload</text>
+    </g>
+    <path d="M1010 65 H1050" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="4 2" fill="none"/>
+    <g transform="translate(1060,40)">
+      <rect width="200" height="50" rx="8" fill="#fff" stroke="#dc2626"/>
+      <text x="100" y="20" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">event: error</text>
+      <text x="100" y="38" text-anchor="middle" font-size="9" fill="#991b1b">{message} — graceful fallback</text>
+    </g>
+  </g>
+</svg>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 3: SHORT-TERM MEMORY -->
+<!-- ============================================================== -->
+<h2>3. Short-Term Memory &amp; Summarization</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 480" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <!-- Timeline showing messages accumulating -->
+  <text x="40" y="30" font-size="12" fill="#1a2240" font-weight="700">Conversation grows over time</text>
+
+  <!-- Before summarization -->
+  <g transform="translate(40,50)">
+    <rect width="600" height="160" rx="12" fill="#fef2f2" stroke="#fca5a5"/>
+    <text x="300" y="22" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">BEFORE: Messages 1–40 accumulate in history[]</text>
+    <!-- Message blocks -->
+    <g transform="translate(15,35)">
+      <rect width="22" height="100" rx="4" fill="#93c5fd"/><text x="11" y="55" text-anchor="middle" font-size="7" fill="#1e3a8a">1</text>
+      <rect x="26" width="22" height="100" rx="4" fill="#c4b5fd"/><text x="37" y="55" text-anchor="middle" font-size="7" fill="#3b0764">2</text>
+      <rect x="52" width="22" height="100" rx="4" fill="#93c5fd"/><text x="63" y="55" text-anchor="middle" font-size="7" fill="#1e3a8a">3</text>
+      <rect x="78" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="104" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="130" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="156" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="182" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="208" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="234" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <text x="270" y="55" font-size="14" fill="#5b6788">···</text>
+      <rect x="290" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="316" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="342" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="368" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="394" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="420" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="446" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="472" width="22" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="498" width="22" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="524" width="22" height="100" rx="4" fill="#c4b5fd"/><text x="535" y="55" text-anchor="middle" font-size="7" fill="#3b0764">40</text>
+    </g>
+    <text x="300" y="152" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">Old context lost when cap reached — no memory of early conversation</text>
+  </g>
+
+  <!-- Arrow -->
+  <g transform="translate(660,100)">
+    <rect width="80" height="60" rx="30" fill="#7c3aed"/>
+    <text x="40" y="26" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">trigger</text>
+    <text x="40" y="42" text-anchor="middle" fill="#ddd6fe" font-size="9">&gt;40 msgs</text>
+  </g>
+
+  <!-- After summarization -->
+  <g transform="translate(760,50)">
+    <rect width="600" height="160" rx="12" fill="#f0fdf4" stroke="#86efac"/>
+    <text x="300" y="22" text-anchor="middle" font-size="10" fill="#14532d" font-weight="700">AFTER: Summary + 6 recent messages kept</text>
+    <!-- Summary block -->
+    <g transform="translate(15,35)">
+      <rect width="180" height="100" rx="8" fill="#7c3aed" stroke="#5b21b6"/>
+      <text x="90" y="20" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">conversation_summary</text>
+      <text x="90" y="38" text-anchor="middle" fill="#ddd6fe" font-size="8">- Discussed Python roles</text>
+      <text x="90" y="52" text-anchor="middle" fill="#ddd6fe" font-size="8">- Salary: NPR 80k/mo</text>
+      <text x="90" y="66" text-anchor="middle" fill="#ddd6fe" font-size="8">- Searched 3 candidates</text>
+      <text x="90" y="80" text-anchor="middle" fill="#ddd6fe" font-size="8">- Edited SDE → remote</text>
+      <text x="90" y="94" text-anchor="middle" fill="#e9d5ff" font-size="7" font-style="italic">~300 words max</text>
+    </g>
+    <!-- Kept messages (6) -->
+    <g transform="translate(210,35)">
+      <rect width="30" height="100" rx="4" fill="#93c5fd"/><text x="15" y="55" text-anchor="middle" font-size="7" fill="#1e3a8a">35</text>
+      <rect x="36" width="30" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="72" width="30" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="108" width="30" height="100" rx="4" fill="#c4b5fd"/>
+      <rect x="144" width="30" height="100" rx="4" fill="#93c5fd"/>
+      <rect x="180" width="30" height="100" rx="4" fill="#c4b5fd"/><text x="195" y="55" text-anchor="middle" font-size="7" fill="#3b0764">40</text>
+    </g>
+    <text x="300" y="152" text-anchor="middle" font-size="9" fill="#16a34a" font-weight="600">Context preserved in summary — recent messages intact for precision</text>
+  </g>
+
+  <!-- How context is used -->
+  <text x="40" y="250" font-size="12" fill="#1a2240" font-weight="700">How context flows into handlers</text>
+
+  <g transform="translate(40,270)">
+    <!-- _build_handler_context box -->
+    <rect width="400" height="140" rx="12" fill="#ede9fe" stroke="#7c3aed"/>
+    <text x="200" y="24" text-anchor="middle" font-size="11" fill="#3b0764" font-weight="700">_build_handler_context(state)</text>
+    <line x1="15" y1="34" x2="385" y2="34" stroke="#c4b5fd" stroke-width="1"/>
+    <!-- Summary section -->
+    <rect x="15" y="44" width="370" height="36" rx="6" fill="#fff" stroke="#7c3aed"/>
+    <text x="200" y="58" text-anchor="middle" font-size="9" fill="#3b0764" font-weight="600">[Conversation context so far]</text>
+    <text x="200" y="72" text-anchor="middle" font-size="8" fill="#5b21b6">conversation_summary (compressed older context)</text>
+    <!-- Recent section -->
+    <rect x="15" y="88" width="370" height="36" rx="6" fill="#fff" stroke="#7c3aed"/>
+    <text x="200" y="102" text-anchor="middle" font-size="9" fill="#3b0764" font-weight="600">[Recent messages]</text>
+    <text x="200" y="116" text-anchor="middle" font-size="8" fill="#5b21b6">last 8 messages (full fidelity, assistant truncated to 200 chars)</text>
+  </g>
+
+  <!-- Arrows to handlers -->
+  <path d="M440 340 H520" stroke="#7c3aed" stroke-width="1.8" fill="none" marker-end="url(#ah-purple)"/>
+
+  <!-- Handlers that receive context -->
+  <g transform="translate(530,270)">
+    <rect width="380" height="140" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="190" y="24" text-anchor="middle" font-size="11" fill="#1a2240" font-weight="700">Handlers receiving conversation_context</text>
+    <line x1="15" y1="34" x2="365" y2="34" stroke="#e2e8f0" stroke-width="1"/>
+    <g transform="translate(15,44)">
+      <rect width="170" height="26" rx="6" fill="#fef9c3" stroke="#ca8a04"/>
+      <text x="85" y="17" text-anchor="middle" font-size="9" fill="#713f12" font-weight="600">📝 Recruiter Writing</text>
+    </g>
+    <g transform="translate(195,44)">
+      <rect width="170" height="26" rx="6" fill="#cffafe" stroke="#06b6d4"/>
+      <text x="85" y="17" text-anchor="middle" font-size="9" fill="#0e4f5b" font-weight="600">🌐 Recruiting Q&amp;A</text>
+    </g>
+    <g transform="translate(15,78)">
+      <rect width="170" height="26" rx="6" fill="#cffafe" stroke="#06b6d4"/>
+      <text x="85" y="17" text-anchor="middle" font-size="9" fill="#0e4f5b" font-weight="600">🌐 Direct Recruiting</text>
+    </g>
+    <g transform="translate(195,78)">
+      <rect width="170" height="26" rx="6" fill="#fef9c3" stroke="#ca8a04"/>
+      <text x="85" y="17" text-anchor="middle" font-size="9" fill="#713f12" font-weight="600">🧭 Intent Classifier</text>
+    </g>
+    <text x="190" y="128" text-anchor="middle" font-size="9" fill="#5b6788">LLM sees prior discussion without full history in prompt</text>
+  </g>
+
+  <!-- Config box -->
+  <g transform="translate(940,270)">
+    <rect width="420" height="140" rx="12" fill="#fff7ed" stroke="#f59e0b"/>
+    <text x="210" y="24" text-anchor="middle" font-size="11" fill="#7c2d12" font-weight="700">Configuration</text>
+    <line x1="15" y1="34" x2="405" y2="34" stroke="#fde68a" stroke-width="1"/>
+    <text x="20" y="56" font-size="10" fill="#92400e" font-weight="600">summarize_trigger_messages</text>
+    <text x="350" y="56" font-size="10" fill="#7c2d12" font-weight="700">40</text>
+    <text x="20" y="76" font-size="10" fill="#92400e" font-weight="600">summarize_keep_messages</text>
+    <text x="350" y="76" font-size="10" fill="#7c2d12" font-weight="700">6</text>
+    <text x="20" y="96" font-size="10" fill="#92400e" font-weight="600">handler_context_messages</text>
+    <text x="350" y="96" font-size="10" fill="#7c2d12" font-weight="700">8</text>
+    <text x="20" y="116" font-size="10" fill="#92400e" font-weight="600">hard_cap (fallback)</text>
+    <text x="350" y="116" font-size="10" fill="#7c2d12" font-weight="700">80</text>
+    <text x="20" y="134" font-size="9" fill="#5b6788" font-style="italic">Groq failure → falls back to hard cap, no user error</text>
+  </g>
+</svg>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 4: HYBRID SEARCH -->
+<!-- ============================================================== -->
+<h2>4. Hybrid Candidate Search (Dense + Sparse RRF)</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 560" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <!-- Input -->
+  <g transform="translate(40,30)">
+    <rect width="260" height="50" rx="12" fill="#e0e7ff" stroke="#6366f1"/>
+    <text x="130" y="22" text-anchor="middle" font-size="11" fill="#1e1b4b" font-weight="700">User query</text>
+    <text x="130" y="38" text-anchor="middle" font-size="9" fill="#4338ca">"find Python ETL developers with 3+ years"</text>
+  </g>
+
+  <!-- Split into two paths -->
+  <path d="M170 80 V110 H170" stroke="#5b6788" stroke-width="1.4" fill="none"/>
+  <path d="M170 110 H90" stroke="#2563eb" stroke-width="1.8" fill="none"/>
+  <path d="M170 110 H260" stroke="#16a34a" stroke-width="1.8" fill="none"/>
+  <path d="M90 110 V140" stroke="#2563eb" stroke-width="1.8" fill="none" marker-end="url(#ah-blue)"/>
+  <path d="M260 110 V140" stroke="#16a34a" stroke-width="1.8" fill="none" marker-end="url(#ah-green)"/>
+
+  <!-- Dense path -->
+  <g transform="translate(20,150)">
+    <rect width="140" height="60" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="70" y="22" text-anchor="middle" font-size="10" fill="#1e3a8a" font-weight="700">Dense Embedding</text>
+    <text x="70" y="38" text-anchor="middle" font-size="9" fill="#1e40af">Gemini-001</text>
+    <text x="70" y="50" text-anchor="middle" font-size="8" fill="#3b82f6">3072 dimensions</text>
+  </g>
+
+  <!-- Sparse path -->
+  <g transform="translate(190,150)">
+    <rect width="140" height="60" rx="10" fill="#dcfce7" stroke="#16a34a"/>
+    <text x="70" y="22" text-anchor="middle" font-size="10" fill="#14532d" font-weight="700">Sparse Embedding</text>
+    <text x="70" y="38" text-anchor="middle" font-size="9" fill="#166534">Qdrant/BM25</text>
+    <text x="70" y="50" text-anchor="middle" font-size="8" fill="#22c55e">term frequencies</text>
+  </g>
+
+  <!-- Both into Qdrant -->
+  <path d="M90 210 V240 H170" stroke="#2563eb" stroke-width="1.4" fill="none"/>
+  <path d="M260 210 V240 H170" stroke="#16a34a" stroke-width="1.4" fill="none"/>
+  <path d="M170 240 V260" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Qdrant Prefetch -->
+  <g transform="translate(40,270)">
+    <rect width="280" height="120" rx="12" fill="#1a2240"/>
+    <text x="140" y="22" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">Qdrant Server</text>
+    <line x1="15" y1="32" x2="265" y2="32" stroke="#3b4a78" stroke-width="1"/>
+    <!-- Two prefetch boxes -->
+    <rect x="15" y="40" width="120" height="30" rx="6" fill="#2563eb"/>
+    <text x="75" y="59" text-anchor="middle" fill="#fff" font-size="8" font-weight="600">Dense prefetch (50)</text>
+    <rect x="145" y="40" width="120" height="30" rx="6" fill="#16a34a"/>
+    <text x="205" y="59" text-anchor="middle" fill="#fff" font-size="8" font-weight="600">Sparse prefetch (50)</text>
+    <!-- RRF box -->
+    <rect x="15" y="78" width="250" height="30" rx="6" fill="#f59e0b"/>
+    <text x="140" y="97" text-anchor="middle" fill="#7c2d12" font-size="9" font-weight="700">Reciprocal Rank Fusion (RRF)</text>
+  </g>
+
+  <!-- Filter -->
+  <path d="M320 330 H400" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+  <g transform="translate(410,295)">
+    <rect width="180" height="70" rx="10" fill="#fff" stroke="#5b6788"/>
+    <text x="90" y="22" text-anchor="middle" font-size="10" fill="#1a2240" font-weight="700">Query Filters</text>
+    <text x="90" y="40" text-anchor="middle" font-size="9" fill="#5b6788">must: company_id = X</text>
+    <text x="90" y="54" text-anchor="middle" font-size="9" fill="#dc2626">must_not: rejected, declined</text>
+  </g>
+
+  <!-- Relevance Scoring -->
+  <path d="M590 330 H650" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+  <g transform="translate(660,280)">
+    <rect width="300" height="100" rx="12" fill="#fff7ed" stroke="#f59e0b"/>
+    <text x="150" y="22" text-anchor="middle" font-size="10" fill="#7c2d12" font-weight="700">Two-Pass Relevance Tagging</text>
+    <line x1="15" y1="32" x2="285" y2="32" stroke="#fde68a" stroke-width="1"/>
+    <text x="20" y="50" font-size="9" fill="#92400e" font-weight="600">Absolute floor:</text>
+    <text x="150" y="50" font-size="9" fill="#7c2d12">score &lt; 0.45 → "low"</text>
+    <text x="20" y="68" font-size="9" fill="#92400e" font-weight="600">Relative floor:</text>
+    <text x="150" y="68" font-size="9" fill="#7c2d12">score &lt; top_score × 0.5 → "low"</text>
+    <text x="20" y="88" font-size="9" fill="#92400e" font-weight="600">Use whichever is higher (stricter)</text>
+  </g>
+
+  <!-- Enrich -->
+  <path d="M960 330 H1020" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+  <g transform="translate(1030,290)">
+    <rect width="180" height="80" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="90" y="22" text-anchor="middle" font-size="10" fill="#1e3a8a" font-weight="700">DB Enrichment</text>
+    <text x="90" y="40" text-anchor="middle" font-size="9" fill="#1e40af">JOIN applications</text>
+    <text x="90" y="54" text-anchor="middle" font-size="9" fill="#1e40af">+ users + jobs</text>
+    <text x="90" y="68" text-anchor="middle" font-size="9" fill="#1e40af">preserve Qdrant order</text>
+  </g>
+
+  <!-- Output -->
+  <path d="M1210 330 H1260" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+  <g transform="translate(1270,295)">
+    <rect width="100" height="70" rx="10" fill="#dcfce7" stroke="#16a34a"/>
+    <text x="50" y="22" text-anchor="middle" font-size="10" fill="#14532d" font-weight="700">Result</text>
+    <text x="50" y="40" text-anchor="middle" font-size="9" fill="#166534">top-10</text>
+    <text x="50" y="54" text-anchor="middle" font-size="9" fill="#166534">high/low</text>
+  </g>
+
+  <!-- Candidate card example -->
+  <g transform="translate(40,420)">
+    <rect width="1320" height="110" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="20" y="22" fill="#1a2240" font-size="11" font-weight="700">Result Candidate Card (per result)</text>
+    <g transform="translate(20,35)">
+      <rect width="160" height="60" rx="8" fill="#fff" stroke="#e2e8f0"/>
+      <text x="80" y="18" text-anchor="middle" font-size="9" fill="#1a2240" font-weight="700">full_name</text>
+      <text x="80" y="34" text-anchor="middle" font-size="8" fill="#5b6788">applied_for_job</text>
+      <text x="80" y="50" text-anchor="middle" font-size="8" fill="#5b6788">application_status</text>
+    </g>
+    <g transform="translate(200,35)">
+      <rect width="140" height="60" rx="8" fill="#fff" stroke="#e2e8f0"/>
+      <text x="70" y="18" text-anchor="middle" font-size="9" fill="#1a2240" font-weight="700">score</text>
+      <text x="70" y="34" text-anchor="middle" font-size="8" fill="#5b6788">shortlist score /100</text>
+      <text x="70" y="50" text-anchor="middle" font-size="8" fill="#5b6788">match_score (RRF)</text>
+    </g>
+    <g transform="translate(360,35)">
+      <rect width="140" height="60" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="70" y="18" text-anchor="middle" font-size="9" fill="#14532d" font-weight="700">relevance: high</text>
+      <text x="70" y="38" text-anchor="middle" font-size="8" fill="#166534">shown prominently</text>
+    </g>
+    <g transform="translate(520,35)">
+      <rect width="140" height="60" rx="8" fill="#fee2e2" stroke="#dc2626"/>
+      <text x="70" y="18" text-anchor="middle" font-size="9" fill="#7f1d1d" font-weight="700">relevance: low</text>
+      <text x="70" y="38" text-anchor="middle" font-size="8" fill="#991b1b">behind "show more"</text>
+    </g>
+    <g transform="translate(700,35)">
+      <rect width="580" height="60" rx="8" fill="#fff" stroke="#e2e8f0"/>
+      <text x="290" y="16" text-anchor="middle" font-size="9" fill="#1a2240" font-weight="700">Why Hybrid &gt; Dense-Only</text>
+      <text x="290" y="32" text-anchor="middle" font-size="8" fill="#5b6788">Dense (semantic): "Python ETL" matches "data pipeline engineer" (meaning)</text>
+      <text x="290" y="46" text-anchor="middle" font-size="8" fill="#5b6788">Sparse (BM25): "Python ETL" matches exact keyword mentions in resumes</text>
+      <text x="290" y="58" text-anchor="middle" font-size="8" fill="#16a34a" font-weight="600">RRF: candidates found by either path, ranked by combined evidence</text>
+    </g>
+  </g>
+</svg>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 5: STATE MANAGEMENT -->
+<!-- ============================================================== -->
+<h2>5. State Management (JSONB)</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 340" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <!-- DB model -->
+  <g transform="translate(40,20)">
+    <rect width="400" height="290" rx="12" fill="#1a2240"/>
+    <text x="200" y="24" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">RecruiterChatSession (PostgreSQL)</text>
+    <line x1="15" y1="34" x2="385" y2="34" stroke="#3b4a78" stroke-width="1"/>
+    <g font-size="10" fill="#a8b2cc">
+      <text x="20" y="56"><tspan fill="#93c5fd" font-weight="600">id</tspan>  UUID PK</text>
+      <text x="20" y="76"><tspan fill="#93c5fd" font-weight="600">recruiter_id</tspan>  UUID FK → users</text>
+      <text x="20" y="96"><tspan fill="#93c5fd" font-weight="600">company_id</tspan>  UUID FK → companies</text>
+      <text x="20" y="116"><tspan fill="#93c5fd" font-weight="600">thread_id</tspan>  String UNIQUE</text>
+      <text x="20" y="136"><tspan fill="#93c5fd" font-weight="600">title</tspan>  Text (auto-generated)</text>
+      <text x="20" y="156"><tspan fill="#fde68a" font-weight="600">state_json</tspan>  JSONB ← full state</text>
+      <text x="20" y="176"><tspan fill="#93c5fd" font-weight="600">last_interaction_at</tspan>  DateTime</text>
+      <text x="20" y="196"><tspan fill="#93c5fd" font-weight="600">created_at</tspan>  DateTime</text>
+    </g>
+    <line x1="15" y1="210" x2="385" y2="210" stroke="#3b4a78" stroke-width="1"/>
+    <text x="20" y="230" fill="#fde68a" font-size="9" font-weight="700">Concurrency: SELECT ... FOR UPDATE</text>
+    <text x="20" y="248" fill="#a8b2cc" font-size="9">Row-level lock prevents race conditions</text>
+    <text x="20" y="266" fill="#a8b2cc" font-size="9">state_version incremented on every save</text>
+    <text x="20" y="284" fill="#a8b2cc" font-size="9">Multi-tab detection via version mismatch</text>
+  </g>
+
+  <!-- state_json contents -->
+  <path d="M440 165 H500" stroke="#fde68a" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <g transform="translate(510,20)">
+    <rect width="850" height="290" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="425" y="24" text-anchor="middle" fill="#1a2240" font-size="12" font-weight="700">state_json contents</text>
+    <line x1="15" y1="34" x2="835" y2="34" stroke="#e2e8f0" stroke-width="1"/>
+
+    <!-- Left column -->
+    <g transform="translate(15,44)">
+      <rect width="250" height="30" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#14532d" font-weight="700">mode: "idle" | "collecting_*" | "awaiting_*"</text>
+    </g>
+    <g transform="translate(15,82)">
+      <rect width="250" height="30" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#3b0764" font-weight="700">conversation_summary: string | null</text>
+    </g>
+    <g transform="translate(15,120)">
+      <rect width="250" height="30" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#3b0764" font-weight="700">summary_through_turn: int</text>
+    </g>
+    <g transform="translate(15,158)">
+      <rect width="250" height="30" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#1e3a8a" font-weight="700">history[]: {role, content, created_at, ...}</text>
+    </g>
+    <g transform="translate(15,196)">
+      <rect width="250" height="30" rx="6" fill="#fce7f3" stroke="#db2777"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#831843" font-weight="700">salary_slots: {role, country, period, year}</text>
+    </g>
+    <g transform="translate(15,234)">
+      <rect width="250" height="30" rx="6" fill="#fef9c3" stroke="#ca8a04"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#713f12" font-weight="700">turn: int | state_version: int</text>
+    </g>
+
+    <!-- Right column -->
+    <g transform="translate(285,44)">
+      <rect width="250" height="30" rx="6" fill="#ffedd5" stroke="#ea580c"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#7c2d12" font-weight="700">pending_job_match: {kind, options[]}</text>
+    </g>
+    <g transform="translate(285,82)">
+      <rect width="250" height="30" rx="6" fill="#ffedd5" stroke="#ea580c"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#7c2d12" font-weight="700">pending_edit: {job_id, patch, diffs}</text>
+    </g>
+    <g transform="translate(285,120)">
+      <rect width="250" height="30" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#14532d" font-weight="700">last_job_id + last_job_set_turn</text>
+    </g>
+    <g transform="translate(285,158)">
+      <rect width="250" height="30" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#14532d" font-weight="700">last_candidate_search_turn</text>
+    </g>
+    <g transform="translate(285,196)">
+      <rect width="250" height="30" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="125" y="19" text-anchor="middle" font-size="9" fill="#14532d" font-weight="700">last_candidate_search_data[]</text>
+    </g>
+
+    <!-- Annotations -->
+    <g transform="translate(560,44)">
+      <rect width="270" height="220" rx="8" fill="#fff" stroke="#e2e8f0"/>
+      <text x="135" y="20" text-anchor="middle" font-size="9" fill="#1a2240" font-weight="700">Key Invariants</text>
+      <line x1="10" y1="28" x2="260" y2="28" stroke="#e2e8f0"/>
+      <text x="15" y="46" font-size="8" fill="#5b6788">- history capped at 80 messages (hard)</text>
+      <text x="15" y="62" font-size="8" fill="#5b6788">- summarize fires at 40 → keeps 6</text>
+      <text x="15" y="78" font-size="8" fill="#5b6788">- state_version++ on every save</text>
+      <text x="15" y="94" font-size="8" fill="#5b6788">- turn++ on every user message</text>
+      <text x="15" y="110" font-size="8" fill="#5b6788">- pending_* cleared on "cancel"</text>
+      <text x="15" y="126" font-size="8" fill="#5b6788">- pronoun ref stale after 2 turns</text>
+      <text x="15" y="142" font-size="8" fill="#5b6788">- no migration needed for new fields</text>
+      <text x="15" y="158" font-size="8" fill="#5b6788">  (_copy_state merges defaults)</text>
+      <text x="15" y="180" font-size="8" fill="#7c3aed" font-weight="600">NEW: conversation_summary</text>
+      <text x="15" y="196" font-size="8" fill="#7c3aed" font-weight="600">NEW: summary_through_turn</text>
+      <text x="15" y="212" font-size="8" fill="#7c3aed">Added for short-term memory layer</text>
+    </g>
+  </g>
+</svg>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 6: SECURITY & GUARDRAILS -->
+<!-- ============================================================== -->
+<h2>6. Security &amp; Guardrails</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 280" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <g transform="translate(40,20)">
+    <!-- Row 1 -->
+    <g transform="translate(0,0)">
+      <rect width="320" height="80" rx="10" fill="#fee2e2" stroke="#dc2626"/>
+      <text x="20" y="22" font-size="10" fill="#7f1d1d" font-weight="700">🛡 Prompt Injection Defense</text>
+      <text x="20" y="40" font-size="9" fill="#991b1b">XML tag scrubber on all user input</text>
+      <text x="20" y="54" font-size="9" fill="#991b1b">&lt;user_message&gt; wrapping isolates data</text>
+      <text x="20" y="68" font-size="9" fill="#991b1b">Recruiter DB strings sanitized before LLM</text>
+    </g>
+    <g transform="translate(340,0)">
+      <rect width="320" height="80" rx="10" fill="#ffedd5" stroke="#ea580c"/>
+      <text x="20" y="22" font-size="10" fill="#7c2d12" font-weight="700">✏️ Job Edit Allowlist</text>
+      <text x="20" y="40" font-size="9" fill="#9a3412">14 fields only (title, location, salary...)</text>
+      <text x="20" y="54" font-size="9" fill="#9a3412">Staleness check: updated_at must match</text>
+      <text x="20" y="68" font-size="9" fill="#9a3412">Human must approve before DB write</text>
+    </g>
+    <g transform="translate(680,0)">
+      <rect width="320" height="80" rx="10" fill="#fef9c3" stroke="#ca8a04"/>
+      <text x="20" y="22" font-size="10" fill="#713f12" font-weight="700">🚦 Rate Limiting</text>
+      <text x="20" y="40" font-size="9" fill="#854d0e">20 messages/min per session</text>
+      <text x="20" y="54" font-size="9" fill="#854d0e">10 session creates/5min</text>
+      <text x="20" y="68" font-size="9" fill="#854d0e">429 + Retry-After header → toast in UI</text>
+    </g>
+    <g transform="translate(1020,0)">
+      <rect width="320" height="80" rx="10" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="20" y="22" font-size="10" fill="#14532d" font-weight="700">🔒 Row-Level Locking</text>
+      <text x="20" y="40" font-size="9" fill="#166534">SELECT ... FOR UPDATE on session</text>
+      <text x="20" y="54" font-size="9" fill="#166534">Serializes concurrent writes</text>
+      <text x="20" y="68" font-size="9" fill="#166534">state_version detects stale tabs</text>
+    </g>
+
+    <!-- Row 2 -->
+    <g transform="translate(0,100)">
+      <rect width="320" height="80" rx="10" fill="#ede9fe" stroke="#7c3aed"/>
+      <text x="20" y="22" font-size="10" fill="#3b0764" font-weight="700">👆 Pronoun Guard</text>
+      <text x="20" y="40" font-size="9" fill="#5b21b6">"edit it" checked against last_job_set_turn</text>
+      <text x="20" y="54" font-size="9" fill="#5b21b6">Gap &gt; 2 turns → asks "which job?"</text>
+      <text x="20" y="68" font-size="9" fill="#5b21b6">Same for candidate followup references</text>
+    </g>
+    <g transform="translate(340,100)">
+      <rect width="320" height="80" rx="10" fill="#cffafe" stroke="#06b6d4"/>
+      <text x="20" y="22" font-size="10" fill="#0e4f5b" font-weight="700">🔁 Idempotent Retry</text>
+      <text x="20" y="40" font-size="9" fill="#155e75">client_message_id deduplicates</text>
+      <text x="20" y="54" font-size="9" fill="#155e75">Redis cache (600s TTL) replays response</text>
+      <text x="20" y="68" font-size="9" fill="#155e75">Network blip = free retry, no double LLM</text>
+    </g>
+    <g transform="translate(680,100)">
+      <rect width="320" height="80" rx="10" fill="#fce7f3" stroke="#db2777"/>
+      <text x="20" y="22" font-size="10" fill="#831843" font-weight="700">🚫 Cancel Escape Hatch</text>
+      <text x="20" y="40" font-size="9" fill="#9d174d">"cancel" / "nevermind" / "stop"</text>
+      <text x="20" y="54" font-size="9" fill="#9d174d">Clears any pending mode instantly</text>
+      <text x="20" y="68" font-size="9" fill="#9d174d">Returns to idle, no leftover state</text>
+    </g>
+    <g transform="translate(1020,100)">
+      <rect width="320" height="80" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="20" y="22" font-size="10" fill="#1e3a8a" font-weight="700">💪 Provider Fallback</text>
+      <text x="20" y="40" font-size="9" fill="#1e40af">Groq down → friendly "try again" message</text>
+      <text x="20" y="54" font-size="9" fill="#1e40af">Tavily down → skip web search gracefully</text>
+      <text x="20" y="68" font-size="9" fill="#1e40af">Summarize fails → hard cap, no user error</text>
+    </g>
+  </g>
+
+  <!-- Bottom note -->
+  <g transform="translate(40,220)">
+    <rect width="1320" height="40" rx="10" fill="#f1f4ff" stroke="#c7cfe5"/>
+    <text x="660" y="25" text-anchor="middle" font-size="10" fill="#1a2240" font-weight="600">Every guardrail fires automatically on every turn — no recruiter action needed. Defense in depth.</text>
+  </g>
+</svg>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 7: COST OPTIMIZATION -->
+<!-- ============================================================== -->
+<h2>7. Cost Optimization Techniques</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 300" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <!-- Cost comparison -->
+  <g transform="translate(40,20)">
+    <g transform="translate(0,0)">
+      <rect width="200" height="120" rx="10" fill="#fef9c3" stroke="#ca8a04"/>
+      <text x="100" y="22" text-anchor="middle" font-size="10" fill="#713f12" font-weight="700">Rule Classifier First</text>
+      <line x1="10" y1="30" x2="190" y2="30" stroke="#fde047"/>
+      <text x="100" y="48" text-anchor="middle" font-size="9" fill="#854d0e">~80% of messages match</text>
+      <text x="100" y="62" text-anchor="middle" font-size="9" fill="#854d0e">keyword rules (free)</text>
+      <text x="100" y="80" text-anchor="middle" font-size="9" fill="#854d0e">Only ~20% need Groq</text>
+      <rect x="40" y="90" width="120" height="20" rx="10" fill="#16a34a"/>
+      <text x="100" y="104" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">80% classify savings</text>
+    </g>
+    <g transform="translate(220,0)">
+      <rect width="200" height="120" rx="10" fill="#fce7f3" stroke="#db2777"/>
+      <text x="100" y="22" text-anchor="middle" font-size="10" fill="#831843" font-weight="700">Redis Salary Cache</text>
+      <line x1="10" y1="30" x2="190" y2="30" stroke="#f9a8d4"/>
+      <text x="100" y="48" text-anchor="middle" font-size="9" fill="#9d174d">24h TTL on role/country</text>
+      <text x="100" y="62" text-anchor="middle" font-size="9" fill="#9d174d">Same query = instant replay</text>
+      <text x="100" y="80" text-anchor="middle" font-size="9" fill="#9d174d">Skip Tavily + Groq synth</text>
+      <rect x="40" y="90" width="120" height="20" rx="10" fill="#16a34a"/>
+      <text x="100" y="104" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">5x repeat = 1 call</text>
+    </g>
+    <g transform="translate(440,0)">
+      <rect width="200" height="120" rx="10" fill="#cffafe" stroke="#06b6d4"/>
+      <text x="100" y="22" text-anchor="middle" font-size="10" fill="#0e4f5b" font-weight="700">Direct Reply Shortcut</text>
+      <line x1="10" y1="30" x2="190" y2="30" stroke="#67e8f9"/>
+      <text x="100" y="48" text-anchor="middle" font-size="9" fill="#155e75">"hi" / "what can you do"</text>
+      <text x="100" y="62" text-anchor="middle" font-size="9" fill="#155e75">→ canned response</text>
+      <text x="100" y="80" text-anchor="middle" font-size="9" fill="#155e75">Zero API calls</text>
+      <rect x="40" y="90" width="120" height="20" rx="10" fill="#16a34a"/>
+      <text x="100" y="104" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">0 tokens, &lt;50ms</text>
+    </g>
+    <g transform="translate(660,0)">
+      <rect width="200" height="120" rx="10" fill="#ede9fe" stroke="#7c3aed"/>
+      <text x="100" y="22" text-anchor="middle" font-size="10" fill="#3b0764" font-weight="700">Memory Summarization</text>
+      <line x1="10" y1="30" x2="190" y2="30" stroke="#c4b5fd"/>
+      <text x="100" y="48" text-anchor="middle" font-size="9" fill="#5b21b6">40 msgs → summarize to ~300w</text>
+      <text x="100" y="62" text-anchor="middle" font-size="9" fill="#5b21b6">Keep 6 recent intact</text>
+      <text x="100" y="80" text-anchor="middle" font-size="9" fill="#5b21b6">Smaller prompt = fewer tokens</text>
+      <rect x="40" y="90" width="120" height="20" rx="10" fill="#16a34a"/>
+      <text x="100" y="104" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">~60% context reduction</text>
+    </g>
+    <g transform="translate(880,0)">
+      <rect width="200" height="120" rx="10" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="100" y="22" text-anchor="middle" font-size="10" fill="#14532d" font-weight="700">SSE Streaming</text>
+      <line x1="10" y1="30" x2="190" y2="30" stroke="#86efac"/>
+      <text x="100" y="48" text-anchor="middle" font-size="9" fill="#166534">Same token count</text>
+      <text x="100" y="62" text-anchor="middle" font-size="9" fill="#166534">First token &lt;700ms</text>
+      <text x="100" y="80" text-anchor="middle" font-size="9" fill="#166534">Perceived latency ↓↓↓</text>
+      <rect x="40" y="90" width="120" height="20" rx="10" fill="#16a34a"/>
+      <text x="100" y="104" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">feels instant</text>
+    </g>
+    <g transform="translate(1100,0)">
+      <rect width="200" height="120" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="100" y="22" text-anchor="middle" font-size="10" fill="#1e3a8a" font-weight="700">Idempotent Retry</text>
+      <line x1="10" y1="30" x2="190" y2="30" stroke="#93c5fd"/>
+      <text x="100" y="48" text-anchor="middle" font-size="9" fill="#1e40af">10-min Redis dedupe</text>
+      <text x="100" y="62" text-anchor="middle" font-size="9" fill="#1e40af">Network retry = free</text>
+      <text x="100" y="80" text-anchor="middle" font-size="9" fill="#1e40af">No double LLM calls</text>
+      <rect x="40" y="90" width="120" height="20" rx="10" fill="#16a34a"/>
+      <text x="100" y="104" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">0 extra cost on retry</text>
+    </g>
+  </g>
+
+  <!-- Bottom summary -->
+  <g transform="translate(40,170)">
+    <rect width="1320" height="100" rx="14" fill="#0d1834" stroke="#1e3a8a"/>
+    <text x="660" y="28" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">Combined Effect: Typical Recruiter Day (50 chat turns)</text>
+    <g transform="translate(100,45)">
+      <rect width="400" height="40" rx="8" fill="#1a2447" stroke="#7f1d1d"/>
+      <text x="200" y="16" text-anchor="middle" fill="#fca5a5" font-size="10" font-weight="700">Naive Build</text>
+      <text x="200" y="32" text-anchor="middle" fill="#a8b2cc" font-size="9">Every msg → classify + search + LLM + unbounded state</text>
+    </g>
+    <text x="560" y="70" fill="#94a3c4" font-size="16" font-weight="700">→</text>
+    <g transform="translate(600,45)">
+      <rect width="400" height="40" rx="8" fill="#1a2447" stroke="#14532d"/>
+      <text x="200" y="16" text-anchor="middle" fill="#86efac" font-size="10" font-weight="700">ConvexHire Build</text>
+      <text x="200" y="32" text-anchor="middle" fill="#a8b2cc" font-size="9">Rules + cache + direct reply + summarize + stream + dedup</text>
+    </g>
+    <text x="250" y="98" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="700">~$1.20 / recruiter / day</text>
+    <text x="760" y="98" text-anchor="middle" fill="#86efac" font-size="11" font-weight="700">~$0.15 / recruiter / day (87% reduction)</text>
+  </g>
+</svg>
+</div>
+
+<!-- ============================================================== -->
+<!-- SECTION 8: TECH STACK -->
+<!-- ============================================================== -->
+<h2>8. Technology Stack</h2>
+<div class="frame">
+<svg viewBox="0 0 1400 200" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <!-- Backend -->
+  <g transform="translate(40,20)">
+    <rect width="380" height="160" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="190" y="22" text-anchor="middle" font-size="11" fill="#1a2240" font-weight="700">Backend</text>
+    <line x1="10" y1="30" x2="370" y2="30" stroke="#e2e8f0"/>
+    <g transform="translate(15,40)">
+      <rect width="80" height="24" rx="6" fill="#059669"/><text x="40" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Python 3.12</text>
+      <rect x="90" width="70" height="24" rx="6" fill="#059669"/><text x="125" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">FastAPI</text>
+      <rect x="170" width="90" height="24" rx="6" fill="#059669"/><text x="215" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">SQLAlchemy 2</text>
+      <rect x="270" width="80" height="24" rx="6" fill="#059669"/><text x="310" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Pydantic v2</text>
+    </g>
+    <g transform="translate(15,74)">
+      <rect width="60" height="24" rx="6" fill="#7c3aed"/><text x="30" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Groq</text>
+      <rect x="70" width="70" height="24" rx="6" fill="#7c3aed"/><text x="105" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">LangChain</text>
+      <rect x="150" width="60" height="24" rx="6" fill="#7c3aed"/><text x="180" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Qdrant</text>
+      <rect x="220" width="60" height="24" rx="6" fill="#7c3aed"/><text x="250" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Redis</text>
+      <rect x="290" width="60" height="24" rx="6" fill="#7c3aed"/><text x="320" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Tavily</text>
+    </g>
+    <g transform="translate(15,108)">
+      <rect width="80" height="24" rx="6" fill="#1a2240"/><text x="40" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">PostgreSQL</text>
+      <rect x="90" width="80" height="24" rx="6" fill="#1a2240"/><text x="130" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">async/await</text>
+      <rect x="180" width="60" height="24" rx="6" fill="#1a2240"/><text x="210" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Alembic</text>
+      <rect x="250" width="100" height="24" rx="6" fill="#1a2240"/><text x="300" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Gemini Embed</text>
+    </g>
+  </g>
+
+  <!-- Frontend -->
+  <g transform="translate(450,20)">
+    <rect width="380" height="160" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="190" y="22" text-anchor="middle" font-size="11" fill="#1a2240" font-weight="700">Frontend</text>
+    <line x1="10" y1="30" x2="370" y2="30" stroke="#e2e8f0"/>
+    <g transform="translate(15,40)">
+      <rect width="80" height="24" rx="6" fill="#2563eb"/><text x="40" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Next.js 16</text>
+      <rect x="90" width="70" height="24" rx="6" fill="#2563eb"/><text x="125" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">React 19</text>
+      <rect x="170" width="90" height="24" rx="6" fill="#2563eb"/><text x="215" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">TypeScript</text>
+      <rect x="270" width="80" height="24" rx="6" fill="#2563eb"/><text x="310" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">RTK Query</text>
+    </g>
+    <g transform="translate(15,74)">
+      <rect width="100" height="24" rx="6" fill="#dc2626"/><text x="50" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">SSE (raw fetch)</text>
+      <rect x="110" width="60" height="24" rx="6" fill="#dc2626"/><text x="140" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">SCSS</text>
+      <rect x="180" width="80" height="24" rx="6" fill="#dc2626"/><text x="220" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">App Router</text>
+    </g>
+    <g transform="translate(15,108)">
+      <rect width="120" height="24" rx="6" fill="#1a2240"/><text x="60" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">AbortController</text>
+      <rect x="130" width="100" height="24" rx="6" fill="#1a2240"/><text x="180" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Token refresh</text>
+      <rect x="240" width="110" height="24" rx="6" fill="#1a2240"/><text x="295" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Optimistic UI</text>
+    </g>
+  </g>
+
+  <!-- AI Models -->
+  <g transform="translate(860,20)">
+    <rect width="500" height="160" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="250" y="22" text-anchor="middle" font-size="11" fill="#1a2240" font-weight="700">AI &amp; Search Models</text>
+    <line x1="10" y1="30" x2="490" y2="30" stroke="#e2e8f0"/>
+    <g transform="translate(15,40)">
+      <rect width="140" height="40" rx="6" fill="#f59e0b"/><text x="70" y="16" text-anchor="middle" fill="#7c2d12" font-size="8" font-weight="700">Groq</text><text x="70" y="30" text-anchor="middle" fill="#92400e" font-size="7">openai/gpt-oss-120b</text>
+      <rect x="150" width="140" height="40" rx="6" fill="#7c3aed"/><text x="220" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Gemini</text><text x="220" y="30" text-anchor="middle" fill="#ddd6fe" font-size="7">embedding-001 (3072d)</text>
+      <rect x="300" width="140" height="40" rx="6" fill="#16a34a"/><text x="370" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">BM25</text><text x="370" y="30" text-anchor="middle" fill="#dcfce7" font-size="7">Qdrant/bm25 (sparse)</text>
+    </g>
+    <g transform="translate(15,90)">
+      <rect width="140" height="40" rx="6" fill="#06b6d4"/><text x="70" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Tavily</text><text x="70" y="30" text-anchor="middle" fill="#cffafe" font-size="7">web search API</text>
+      <rect x="150" width="140" height="40" rx="6" fill="#1a2240"/><text x="220" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Qdrant</text><text x="220" y="30" text-anchor="middle" fill="#a8b2cc" font-size="7">hybrid vector DB</text>
+      <rect x="300" width="140" height="40" rx="6" fill="#dc2626"/><text x="370" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Redis</text><text x="370" y="30" text-anchor="middle" fill="#fecaca" font-size="7">Upstash (cache+dedup)</text>
+    </g>
+  </g>
+</svg>
+</div>
+
+<div class="legend">
+  <span class="chip"><span class="dot" style="background:#c7d2fe"></span>User / Frontend</span>
+  <span class="chip"><span class="dot" style="background:#fde68a"></span>Router / Rules</span>
+  <span class="chip"><span class="dot" style="background:#c4b5fd"></span>Memory / Summary</span>
+  <span class="chip"><span class="dot" style="background:#bbf7d0"></span>Candidate Search</span>
+  <span class="chip"><span class="dot" style="background:#fed7aa"></span>Job Edit</span>
+  <span class="chip"><span class="dot" style="background:#fbcfe8"></span>Salary Research</span>
+  <span class="chip"><span class="dot" style="background:#a5f3fc"></span>Q&amp;A / Web</span>
+  <span class="chip"><span class="dot" style="background:#fecaca"></span>Security</span>
+  <span class="chip"><span class="dot" style="background:#1a2240"></span>Storage</span>
+</div>
+
+<script>
+function dl(id, name){
+  const svg = document.getElementById(id);
+  const c = svg.cloneNode(true);
+  c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const xml = new XMLSerializer().serializeToString(c);
+  const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+xml], {type:'image/svg+xml'});
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = u; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(u); a.remove();}, 100);
+}
+</script>
+</body>
+</html>

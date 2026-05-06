@@ -8,7 +8,8 @@ from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.pool import NullPool
 
 from app.agents.shortlisting import evaluate_application_with_shortlisting_agent
 from app.core.cache import (
@@ -128,17 +129,19 @@ def _score_application(
 
 
 async def queue_auto_shortlist_backfill(job_id: uuid.UUID, database_url: str) -> None:
-    """Queue a full shortlisting run for a job."""
-    await _run_two_stage_shortlisting_task(job_id, database_url)
+    """Backfill ML bouncer scores for all applications of a job (no LLM).
+
+    Runs when auto-shortlist is freshly enabled on a job that already has
+    applications. LLM evaluation is deferred until the job expires.
+    """
+    await _run_ml_bouncer_backfill_task(job_id, database_url)
 
 
-async def _run_two_stage_shortlisting_task(
-    job_id: uuid.UUID, database_url: str
-) -> None:
-    """Two-stage shortlisting: ML bouncer filters, then LLM evaluates top candidates."""
+async def _run_ml_bouncer_backfill_task(job_id: uuid.UUID, database_url: str) -> None:
+    """ML bouncer-only scoring for every application on the job. No LLM."""
     from app.modules.shortlisting.ml_bouncer import score_applications
 
-    engine = create_async_engine(database_url)
+    engine = create_async_engine(database_url, poolclass=NullPool)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     try:
         async with session_factory() as db:
@@ -185,57 +188,10 @@ async def _run_two_stage_shortlisting_task(
                     await db.commit()
                     return
 
-                # --- Stage 1: ML Bouncer — score ALL applications ---
                 ml_scores = score_applications(job, applications)
                 for app, ml_score in zip(applications, ml_scores):
                     app.ml_bouncer_score = ml_score
                     app.score = max(0, min(100, round(ml_score * 100)))
-                await db.commit()
-                logger.info(
-                    "ML bouncer scored {} applications for job {}",
-                    len(applications),
-                    job_id,
-                )
-
-                # --- Stage 2: LLM for top candidates (overwrites score, adds strengths/weaknesses) ---
-                scored_apps = sorted(
-                    applications, key=lambda a: a.ml_bouncer_score or 0, reverse=True
-                )
-                min_score = settings.ml_bouncer_min_score
-                eligible = [
-                    a for a in scored_apps if (a.ml_bouncer_score or 0) >= min_score
-                ]
-                top_n = max(
-                    1,
-                    len(applications) * settings.ml_bouncer_top_percent // 100,
-                )
-                candidates_for_llm = eligible[:top_n]
-
-                logger.info(
-                    "Sending {}/{} applications to LLM agent for job {}",
-                    len(candidates_for_llm),
-                    len(applications),
-                    job_id,
-                )
-
-                for application in candidates_for_llm:
-                    if _application_has_complete_review(application):
-                        continue
-                    try:
-                        agent_result = (
-                            await evaluate_application_with_shortlisting_agent(
-                                job=job, application=application
-                            )
-                        )
-                        application.score = agent_result.score
-                        application.strengths = agent_result.strengths
-                        application.weaknesses = agent_result.weaknesses
-                    except Exception as exc:
-                        logger.warning(
-                            "LLM evaluation failed for application {}: {}",
-                            application.id,
-                            exc,
-                        )
 
                 enqueue_application_sync_events(
                     db, [a.id for a in applications], SyncAction.UPSERT
@@ -246,7 +202,11 @@ async def _run_two_stage_shortlisting_task(
                 await invalidate_company_dashboard_caches(db, str(job.company_id))
                 await invalidate_company_application_caches(str(job.company_id))
                 await redis_service.delete(f"shortlist:summary:{job_id}")
-                logger.info("Two-stage shortlisting completed for job {}", job_id)
+                logger.info(
+                    "ML bouncer backfill scored {} applications for job {}",
+                    len(applications),
+                    job_id,
+                )
             except Exception as exc:
                 await db.rollback()
                 refresh_result = await db.execute(select(Job).where(Job.id == job_id))
@@ -255,15 +215,87 @@ async def _run_two_stage_shortlisting_task(
                     refresh_job.shortlist_status = ShortlistStatus.failed
                     await db.commit()
                 logger.exception(
-                    "Two-stage shortlisting failed for job {}: {}", job_id, exc
+                    "ML bouncer backfill failed for job {}: {}", job_id, exc
                 )
     finally:
         await engine.dispose()
 
 
-async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
-    """Run the two-stage pipeline inline for a single expired job, then finalize."""
+async def score_application_ml_bouncer(
+    application_id: uuid.UUID, database_url: str
+) -> None:
+    """Run ML bouncer on a single application (called on apply when auto_shortlist=True).
+
+    No LLM. LLM evaluation is run only on the top 20% when the job expires.
+    """
     from app.modules.shortlisting.ml_bouncer import score_applications
+
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as db:
+            application = await db.scalar(
+                select(Application)
+                .where(Application.id == application_id)
+                .options(
+                    selectinload(Application.resume).selectinload(Resume.experiences),
+                    selectinload(Application.resume).selectinload(Resume.educations),
+                    selectinload(Application.resume).selectinload(Resume.skills),
+                )
+            )
+            if application is None:
+                return
+            job = await db.scalar(select(Job).where(Job.id == application.job_id))
+            if job is None or not job.auto_shortlist:
+                return
+
+            ml_score = score_applications(job, [application])[0]
+            application.ml_bouncer_score = ml_score
+            application.score = max(0, min(100, round(ml_score * 100)))
+            enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
+            await db.commit()
+
+            await invalidate_candidate_read_caches_for_users([str(application.user_id)])
+            await invalidate_company_dashboard_caches(db, str(job.company_id))
+            await invalidate_company_application_caches(str(job.company_id))
+            await redis_service.delete(f"shortlist:summary:{job.id}")
+            logger.info(
+                "ML bouncer scored application {} for job {} (score={:.3f})",
+                application_id,
+                job.id,
+                ml_score,
+            )
+    except Exception as exc:
+        logger.exception(
+            "ML bouncer scoring failed for application {}: {}", application_id, exc
+        )
+    finally:
+        await engine.dispose()
+
+
+async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
+    """Run the two-stage pipeline inline for a single expired job, then finalize.
+
+    Crash-safe and idempotent: per-application commits, status tracked on the
+    Job row, work already done is skipped on retry.
+    """
+    from app.modules.shortlisting.ml_bouncer import score_applications
+
+    if job.final_shortlist_completed:
+        logger.info(
+            "Two-stage skipped for job '{}' ({}): already finalized.",
+            job.title,
+            job.id,
+        )
+        return
+
+    job.shortlist_status = ShortlistStatus.in_progress
+    await db.commit()
+    logger.info(
+        "Two-stage START for expired job '{}' ({}). status=in_progress",
+        job.title,
+        job.id,
+    )
 
     try:
         applications = list(
@@ -279,6 +311,7 @@ async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
                             Resume.educations
                         ),
                         selectinload(Application.resume).selectinload(Resume.skills),
+                        joinedload(Application.user),
                     )
                 )
             )
@@ -287,22 +320,40 @@ async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
         )
 
         if not applications:
+            job.shortlist_status = ShortlistStatus.completed
+            await db.commit()
             await auto_finalize_expired_job(db, job)
+            logger.info(
+                "Two-stage DONE (no applications) for job '{}' ({}).",
+                job.title,
+                job.id,
+            )
             return
 
-        # --- Stage 1: ML Bouncer — score ALL applications ---
-        ml_scores = score_applications(job, applications)
-        for app, ml_score in zip(applications, ml_scores):
-            app.ml_bouncer_score = ml_score
-            app.score = max(0, min(100, round(ml_score * 100)))
-        await db.commit()
-        logger.info(
-            "ML bouncer scored {} applications for expired job {}",
-            len(applications),
-            job.id,
-        )
+        # --- Stage 1: ML Bouncer — score applications missing a bouncer score ---
+        unscored = [a for a in applications if a.ml_bouncer_score is None]
+        if unscored:
+            ml_scores = score_applications(job, unscored)
+            for app, ml_score in zip(unscored, ml_scores, strict=True):
+                app.ml_bouncer_score = ml_score
+                app.score = max(0, min(100, round(ml_score * 100)))
+            await db.commit()
+            logger.info(
+                "Stage1 ML bouncer scored {}/{} application(s) for job '{}' ({})",
+                len(unscored),
+                len(applications),
+                job.title,
+                job.id,
+            )
+        else:
+            logger.info(
+                "Stage1 ML bouncer skipped for job '{}' ({}): all {} app(s) already scored.",
+                job.title,
+                job.id,
+                len(applications),
+            )
 
-        # --- Stage 2: LLM for top candidates (overwrites score, adds strengths/weaknesses) ---
+        # --- Stage 2: LLM for top candidates (per-app commit so partial work survives crash) ---
         scored_apps = sorted(
             applications, key=lambda a: a.ml_bouncer_score or 0, reverse=True
         )
@@ -311,11 +362,16 @@ async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
         top_n = max(1, len(applications) * settings.ml_bouncer_top_percent // 100)
         candidates_for_llm = eligible[:top_n]
 
+        already_done = sum(
+            1 for a in candidates_for_llm if _application_has_complete_review(a)
+        )
         logger.info(
-            "Sending {}/{} applications to LLM for expired job {}",
+            "Stage2 LLM cohort {}/{} for job '{}' ({}). already_reviewed={}",
             len(candidates_for_llm),
             len(applications),
+            job.title,
             job.id,
+            already_done,
         )
 
         for application in candidates_for_llm:
@@ -325,31 +381,142 @@ async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
                 agent_result = await evaluate_application_with_shortlisting_agent(
                     job=job, application=application
                 )
-                application.score = agent_result.score
                 application.strengths = agent_result.strengths
                 application.weaknesses = agent_result.weaknesses
-            except Exception as exc:
-                logger.warning(
-                    "LLM eval failed for application {} on expired job {}: {}",
+                enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
+                await db.commit()
+                logger.info(
+                    "Stage2 LLM scored app {} for job '{}' ({})",
                     application.id,
+                    job.title,
+                    job.id,
+                )
+            except Exception as exc:
+                await db.rollback()
+                applicant_name = getattr(
+                    getattr(application, "user", None), "full_name", None
+                ) or str(application.id)
+                logger.warning(
+                    "Stage2 LLM failed for applicant '{}' on job '{}' ({}): {}",
+                    applicant_name,
+                    job.title,
                     job.id,
                     exc,
                 )
 
-        enqueue_application_sync_events(
-            db, [a.id for a in applications], SyncAction.UPSERT
-        )
-        await db.commit()
-
         # --- Stage 3: Threshold finalization ---
+        job.shortlist_status = ShortlistStatus.completed
+        await db.commit()
         await auto_finalize_expired_job(db, job)
-        logger.info("Two-stage pipeline + finalize done for expired job {}", job.id)
+        logger.info(
+            "Two-stage DONE + finalized for job '{}' ({}). status=completed",
+            job.title,
+            job.id,
+        )
     except Exception as exc:
         await db.rollback()
+        try:
+            refreshed = await db.scalar(select(Job).where(Job.id == job.id))
+            if refreshed is not None:
+                refreshed.shortlist_status = ShortlistStatus.failed
+                await db.commit()
+        except Exception:
+            await db.rollback()
         logger.exception(
-            "Two-stage pipeline failed for expired job {}: {}", job.id, exc
+            "Two-stage FAILED for expired job '{}' ({}). status=failed: {}",
+            job.title,
+            job.id,
+            exc,
         )
-        await auto_finalize_expired_job(db, job)
+
+
+async def recover_unfinished_shortlisting() -> None:
+    """Resume any expired auto-shortlist jobs left unfinished from a prior crash.
+
+    Runs at app startup. Any expired job that has `auto_shortlist=True` and
+    `final_shortlist_completed=False` is re-entered through the two-stage
+    pipeline. The pipeline itself is idempotent: applications already scored
+    by the bouncer are skipped, applications already reviewed by the LLM are
+    skipped, and finalization is a no-op when already done.
+    """
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(Job).where(
+                Job.status == JobStatus.expired,
+                Job.auto_shortlist.is_(True),
+                Job.final_shortlist_completed.is_(False),
+            )
+        )
+        jobs = list(result.scalars().all())
+        if not jobs:
+            logger.info("Shortlisting recovery: no unfinished expired jobs.")
+            return
+
+        logger.info(
+            "Shortlisting recovery: found {} unfinished expired job(s) to resume.",
+            len(jobs),
+        )
+        for job in jobs:
+            logger.info(
+                "Shortlisting recovery: resuming job '{}' ({}). prior_status={}",
+                job.title,
+                job.id,
+                job.shortlist_status,
+            )
+            try:
+                await run_two_stage_for_expired_job(db, job)
+            except Exception as exc:
+                logger.exception(
+                    "Shortlisting recovery failed for job '{}' ({}): {}",
+                    job.title,
+                    job.id,
+                    exc,
+                )
+
+
+async def process_job_expiry_shortlisting(job_id: uuid.UUID, database_url: str) -> None:
+    """Run two-stage shortlisting + finalize for a manually-expired job.
+
+    Mirrors the per-job logic of `expire_due_jobs` so manual expiry from the
+    recruiter UI matches the behavior of the daily cron.
+    """
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as db:
+            job = await db.scalar(select(Job).where(Job.id == job_id))
+            if job is None or job.status != JobStatus.expired:
+                return
+
+            logger.info(
+                "Manual expiry shortlisting for job '{}' ({}) (auto_shortlist={}, final_completed={})",
+                job.title,
+                job_id,
+                job.auto_shortlist,
+                job.final_shortlist_completed,
+            )
+
+            if job.auto_shortlist and not job.final_shortlist_completed:
+                await run_two_stage_for_expired_job(db, job)
+            else:
+                await auto_finalize_expired_job(db, job)
+
+            applicant_rows = (
+                await db.execute(
+                    select(Application.user_id)
+                    .where(Application.job_id == job_id)
+                    .distinct()
+                )
+            ).all()
+            applicant_user_ids = [str(row[0]) for row in applicant_rows]
+            if applicant_user_ids:
+                await invalidate_candidate_read_caches_for_users(applicant_user_ids)
+    except Exception as exc:
+        logger.exception(
+            "process_job_expiry_shortlisting failed for job {}: {}", job_id, exc
+        )
+    finally:
+        await engine.dispose()
 
 
 async def evaluate_single_application(
@@ -377,21 +544,33 @@ async def evaluate_single_application(
 
     job = await _get_job_for_company(db, application.job_id, company_id)
 
+    from app.modules.shortlisting.ml_bouncer import score_applications
+
+    try:
+        ml_score = score_applications(job, [application])[0]
+        application.ml_bouncer_score = ml_score
+        application.score = max(0, min(100, round(ml_score * 100)))
+    except Exception:
+        logger.warning(
+            "ML bouncer scoring failed for application {}, falling back to heuristic",
+            application_id,
+        )
+        score, _, _ = _score_application(application)
+        application.score = score
+
     try:
         result = await evaluate_application_with_shortlisting_agent(
             job=job,
             application=application,
         )
-        application.score = result.score
         application.strengths = result.strengths
         application.weaknesses = result.weaknesses
     except Exception:
-        score, strengths, weaknesses = _score_application(application)
-        application.score = score
+        _, strengths, weaknesses = _score_application(application)
         application.strengths = strengths
         application.weaknesses = weaknesses
         logger.warning(
-            "AI evaluation failed for application {}, used fallback scoring",
+            "AI evaluation failed for application {}, used fallback strengths/weaknesses",
             application_id,
         )
 
@@ -542,9 +721,7 @@ async def trigger_shortlisting(
             if bind is not None and hasattr(bind, "engine")
             else AsyncSessionLocal.kw["bind"].url.render_as_string(hide_password=False)
         )
-        background_tasks.add_task(
-            _run_two_stage_shortlisting_task, job_id, database_url
-        )
+        background_tasks.add_task(_run_ml_bouncer_backfill_task, job_id, database_url)
 
     return TriggerShortlistResponse(
         job_id=job_id,
@@ -615,7 +792,8 @@ async def auto_finalize_expired_job(db: AsyncSession, job: Job) -> int:
     await invalidate_company_dashboard_caches(db, str(job.company_id))
     await redis_service.delete(f"shortlist:summary:{job.id}")
     logger.info(
-        "Auto-finalize on expiry for job {} updated {} application(s).",
+        "Auto-finalize on expiry for job '{}' ({}) updated {} application(s).",
+        job.title,
         job.id,
         updated,
     )

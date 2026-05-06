@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { EducationEntry, ExperienceEntry, Resume } from '@/lib/types/resume'
 import { ArrowLeft } from 'lucide-react'
@@ -28,12 +28,22 @@ export default function ResumeEditor({
   const [activeSection, setActiveSection] = useState<Section>('Personal')
   const [draft, setDraft] = useState<Resume>({ ...resume })
 
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  }, [onChange])
+
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    onChangeRef.current(draft)
+  }, [draft])
+
   function update<K extends keyof Resume>(key: K, value: Resume[K]) {
-    setDraft((prev) => {
-      const next = { ...prev, [key]: value }
-      onChange(next)
-      return next
-    })
+    setDraft((prev) => ({ ...prev, [key]: value }))
   }
 
   function updateExp(id: string, field: keyof ExperienceEntry, value: string | boolean) {

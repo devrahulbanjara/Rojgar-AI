@@ -42,6 +42,7 @@ from app.modules.recruiter_preferences.router import (
 from app.modules.resume_gap.router import router as resume_gap_router
 from app.modules.resumes.router import router as resumes_router
 from app.modules.shortlisting.router import router as shortlisting_router
+from app.modules.shortlisting.service import recover_unfinished_shortlisting
 
 setup_logging()
 
@@ -57,6 +58,8 @@ async def lifespan(app: FastAPI):
     await redis_service.connect()
     # marks any overdue active jobs as expired on boot
     await run_job_expiry_startup_check()
+    # resumes two-stage shortlisting for expired jobs left unfinished by a prior crash
+    await recover_unfinished_shortlisting()
 
     # background loop — retries failed qdrant sync events every 60s
     daemon_task = asyncio.create_task(sync_daemon_loop())

@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import Image from 'next/image'
 
 import { LIVE_DATA_UNAVAILABLE_MESSAGE, isBackendConnectionStatus } from '@/lib/backendConnection'
+import { notify } from '@/lib/notify'
 import type {
   CandidateSearchResult,
   ChatExchangeApiResponse,
@@ -24,7 +25,7 @@ import type {
 } from '@/lib/types/recruiterChat'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '@/store/slices/uiSlice'
-import { ArrowUp, Check, Copy, RotateCcw, Square } from 'lucide-react'
+import { ArrowUp, Check, Copy, Pencil, RotateCcw, Square } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
 
 import { CandidateCardGrid } from './CandidateCardGrid'
@@ -35,6 +36,25 @@ import { RecruiterChatPanelSkeleton } from './skeletons'
 interface ChatAreaWithAgentProps {
   session: ChatSessionResponse
   onMessageSent: () => void
+}
+
+function generateClientMessageId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `cm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+function handleRateLimitedResponse(response: Response): boolean {
+  if (response.status !== 429) return false
+  const retryAfterRaw = response.headers.get('Retry-After')
+  const retryAfter = retryAfterRaw ? Number.parseInt(retryAfterRaw, 10) : NaN
+  const wait =
+    Number.isFinite(retryAfter) && retryAfter > 0
+      ? `Try again in ${retryAfter}s.`
+      : 'Try again in a moment.'
+  notify.warning('Slow down', wait)
+  return true
 }
 
 function ChatBotBadge() {
@@ -544,7 +564,11 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
     throw new Error(event.data.message || 'Recruiter chat request failed.')
   }
 
-  const startStreamingMessage = async (message: string, appendOptimisticUser: boolean) => {
+  const startStreamingMessage = async (
+    message: string,
+    appendOptimisticUser: boolean,
+    options: { clientMessageId?: string; replaceFromIndex?: number } = {},
+  ) => {
     const optimisticUserMessage: ChatHistoryMessage = {
       role: 'user',
       content: message,
@@ -553,6 +577,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       data: null,
     }
 
+    const clientMessageId = options.clientMessageId ?? generateClientMessageId()
     historyBeforeSendRef.current = history
     abortControllerRef.current = new AbortController()
     setIsSending(true)
@@ -562,6 +587,11 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
     setStreamingAssistantText('')
     setStreamError(null)
     setLastSubmittedMessage(message)
+
+    if (typeof options.replaceFromIndex === 'number') {
+      const truncateAt = options.replaceFromIndex
+      setHistory((currentHistory) => currentHistory.slice(0, truncateAt))
+    }
 
     if (appendOptimisticUser) {
       setHistory((currentHistory) => [...currentHistory, optimisticUserMessage])
@@ -575,11 +605,15 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, client_message_id: clientMessageId }),
         signal: abortControllerRef.current.signal,
       })
 
       if (!response.ok || !response.body) {
+        if (handleRateLimitedResponse(response)) {
+          setHistory(historyBeforeSendRef.current)
+          throw new Error('rate-limited')
+        }
         if (isBackendConnectionStatus(response.status)) {
           dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
           throw new Error(LIVE_DATA_UNAVAILABLE_MESSAGE)
@@ -676,9 +710,13 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
         }
       } else {
         setHistory(historyBeforeSendRef.current)
-        setStreamError(
-          error instanceof Error ? error.message : 'The response stream failed. Please try again.',
-        )
+        if (!(error instanceof Error) || error.message !== 'rate-limited') {
+          setStreamError(
+            error instanceof Error
+              ? error.message
+              : 'The response stream failed. Please try again.',
+          )
+        }
       }
 
       setIsThinking(false)
@@ -700,6 +738,33 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
   const handleRetry = async () => {
     if (!lastSubmittedMessage || isSending) return
     await startStreamingMessage(lastSubmittedMessage, true)
+  }
+
+  const findLastUserIndex = (): number => {
+    for (let index = history.length - 1; index >= 0; index -= 1) {
+      if (history[index].role === 'user') return index
+    }
+    return -1
+  }
+
+  const handleRegenerate = async () => {
+    if (isSending) return
+    const lastUserIndex = findLastUserIndex()
+    if (lastUserIndex < 0) return
+    const message = history[lastUserIndex].content
+    await startStreamingMessage(message, true, {
+      clientMessageId: generateClientMessageId(),
+      replaceFromIndex: lastUserIndex,
+    })
+  }
+
+  const handleEditLastUserMessage = () => {
+    if (isSending) return
+    const lastUserIndex = findLastUserIndex()
+    if (lastUserIndex < 0) return
+    setDraftMessage(history[lastUserIndex].content)
+    setHistory((current) => current.slice(0, lastUserIndex))
+    setStreamError(null)
   }
 
   const handleStopGeneration = () => {
@@ -763,6 +828,13 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
           body: JSON.stringify({ job_id: jobId }),
         },
       )
+      if (handleRateLimitedResponse(response)) {
+        setHistory(historyBeforeSendRef.current)
+        setPendingAction(previousPendingAction)
+        setSelectedJobId(null)
+        selectedJobEchoRef.current = null
+        return
+      }
       const payload = (await response.json()) as ChatExchangeApiResponse
       if (!response.ok || !payload.success) {
         if (isBackendConnectionStatus(response.status)) {
@@ -776,6 +848,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       applyExchange(payload)
     } catch (error) {
       console.warn('Failed to confirm recruiter chat job selection:', error)
+      notify.error('Job selection failed', 'Please try again in a moment.')
       setHistory(historyBeforeSendRef.current)
       setPendingAction(previousPendingAction)
       setSelectedJobId(null)
@@ -799,6 +872,9 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
         },
         body: JSON.stringify({ approve }),
       })
+      if (handleRateLimitedResponse(response)) {
+        return
+      }
       const payload = (await response.json()) as ChatExchangeApiResponse
       if (!response.ok || !payload.success) {
         if (isBackendConnectionStatus(response.status)) {
@@ -812,6 +888,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       applyExchange(payload)
     } catch (error) {
       console.warn('Failed to record recruiter chat job edit decision:', error)
+      notify.error('Edit confirmation failed', 'Please try again in a moment.')
     } finally {
       setIsSending(false)
     }
@@ -830,6 +907,17 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
           onScroll={handleThreadScroll}
           onWheel={handleThreadWheel}
         >
+          {pendingAction ? (
+            <div className="recruiter-chat-pending-banner" role="status" aria-live="polite">
+              <span className="recruiter-chat-pending-banner__dot" aria-hidden="true" />
+              <span className="recruiter-chat-pending-banner__text">
+                {pendingAction.type === 'job_edit'
+                  ? 'Pending job edit — review and approve below.'
+                  : 'Pending job selection — pick one below.'}
+              </span>
+            </div>
+          ) : null}
+
           <div className="recruiter-chat-message-view">
             {!history.length ? (
               <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
@@ -845,9 +933,41 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
               const key = `${session.id}-${message.role}-${index}`
 
               if (message.role === 'user') {
+                const lastUserIndex = (() => {
+                  for (let i = history.length - 1; i >= 0; i -= 1) {
+                    if (history[i].role === 'user') return i
+                  }
+                  return -1
+                })()
+                const isLastUser = index === lastUserIndex
+                const showActions = isLastUser && !isSending && !pendingAction
                 return (
                   <div key={key} className="recruiter-chat-user-row recruiter-chat-message-row">
                     <div className="recruiter-chat-user-bubble">{message.content}</div>
+                    {showActions ? (
+                      <div className="recruiter-chat-user-actions">
+                        <button
+                          type="button"
+                          className="btn btn--icon btn--sm"
+                          onClick={handleEditLastUserMessage}
+                          aria-label="Edit message"
+                          title="Edit message"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--icon btn--sm"
+                          onClick={() => {
+                            void handleRegenerate()
+                          }}
+                          aria-label="Regenerate response"
+                          title="Regenerate response"
+                        >
+                          <RotateCcw size={12} />
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 )
               }

@@ -644,6 +644,7 @@ async def update_job(
         )
     else:
         changed_fields = list(update_data.keys())
+        json_safe_update = payload.model_dump(mode="json", exclude_unset=True)
         await create_custom_audit_log(
             db,
             entity_type="job",
@@ -652,7 +653,7 @@ async def update_job(
             message=f"Job '{job.title}' edited by {user.full_name}",
             entity_id=job.id,
             company_id=company_id,
-            diff_json={f: {"after": update_data[f]} for f in changed_fields},
+            diff_json={f: {"after": json_safe_update.get(f)} for f in changed_fields},
             metadata={"job_title": job.title, "changed_fields": changed_fields},
         )
     await db.commit()
@@ -665,6 +666,13 @@ async def update_job(
 
         bg_tasks.add_task(
             queue_auto_shortlist_backfill, job.id, _background_database_url(db)
+        )
+
+    if old_status != JobStatus.expired and job.status == JobStatus.expired:
+        from app.modules.shortlisting.service import process_job_expiry_shortlisting
+
+        bg_tasks.add_task(
+            process_job_expiry_shortlisting, job.id, _background_database_url(db)
         )
 
     # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)

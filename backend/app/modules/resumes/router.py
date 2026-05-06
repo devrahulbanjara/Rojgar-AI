@@ -29,18 +29,20 @@ async def list_my_resumes(
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    summary="Fork a new resume from the candidate's current profile",
+    summary="Create a new resume (optionally forked from the candidate's current profile)",
 )
 async def create_resume(
     payload: ResumeCreate,
     user: CandidateUser,
     db: DbSession,
 ) -> UnifiedResponse[ResumeResponse]:
-    """Create a new resume by forking the candidate profile."""
-    data = await service.fork_resume_from_profile(db, user, payload.resume_name)
+    """Create a new resume, optionally pre-filled from the candidate profile."""
+    data = await service.fork_resume_from_profile(
+        db, user, payload.resume_name, payload.fork_from_profile
+    )
     return ResponseBuilder.success(
         data=data,
-        message="Resume created from profile.",
+        message="Resume created.",
         status_code=status.HTTP_201_CREATED,
     )
 

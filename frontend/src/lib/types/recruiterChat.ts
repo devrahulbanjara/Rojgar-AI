@@ -78,6 +78,8 @@ export interface CompanyJobListResult {
 
 export interface CandidateSearchResult {
   total: number
+  high_relevance_count?: number
+  low_relevance_count?: number
   candidates: Array<{
     user_id: string
     application_id: string
@@ -86,6 +88,7 @@ export interface CandidateSearchResult {
     applied_for_job: string
     application_status: string
     match_score: number
+    relevance?: 'high' | 'low'
   }>
 }
 

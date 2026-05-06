@@ -3,6 +3,7 @@ import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
@@ -21,6 +22,7 @@ async def _expire_due_jobs_once_in_scheduler_thread() -> int:
         settings.database_url,
         echo=settings.debug,
         pool_pre_ping=True,
+        poolclass=NullPool,
     )
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 

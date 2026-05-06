@@ -6,16 +6,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     # App
     app_name: str = "ConvexHire API"
+    app_version: str = "1.0.0"
     debug: bool = False
     environment: Literal["dev", "prod", "test"] = "dev"
     allowed_origins: list[str] = ["http://localhost:3000"]
-    app_version: str = "1.0.0"
-
-    smtp_host: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    smtp_user: str
-    smtp_password: str
-    mail_from: str
+    frontend_url: str = "http://localhost:3000"
 
     # Auth
     secret_key: str
@@ -27,27 +22,14 @@ class Settings(BaseSettings):
     google_client_id: str
     google_client_secret: str
     google_redirect_uri: str = "http://localhost:8000/auth/google/callback"
-    frontend_url: str = "http://localhost:3000"
 
     # Email
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str
+    smtp_password: str
+    mail_from: str
     send_emails: bool = True
-
-    embedding_output_dimensionality: int = 3072
-    embedding_model: str = "models/gemini-embedding-001"
-    qdrant_url: str
-    qdrant_api_key: str
-    qdrant_collection_name: str
-    qdrant_candidate_collection_name: str = "candidate_applications"
-    google_api_key: str
-    groq_api_key: str
-    llama_cloud_api_key: str | None = None
-    llama_cloud_base_url: str | None = None
-    tavily_api_key: str
-    groq_model_job_drafting: str = "openai/gpt-oss-120b"
-    groq_model_recruiter_chat: str = "openai/gpt-oss-120b"
-    llama_extract_mode: str = "PREMIUM"
-    llama_extract_parse_model: str = "gemini-2.5-pro"
-    llama_extract_model: str = "openai-gpt-5-mini"
 
     # Database
     db_user: str
@@ -56,21 +38,52 @@ class Settings(BaseSettings):
     db_port: int = 5432
     db_name: str
 
+    # Test Database
     test_db_user: str
     test_db_password: str
     test_db_host: str
     test_db_port: int = 5432
     test_db_name: str
 
-    # AWS S3
+    # Redis
+    redis_url: str | None = None  # using upstash from convexhire gmail
+    redis_enabled: bool = True
+
+    # Embeddings
+    embedding_model: str = "models/gemini-embedding-001"
+    embedding_output_dimensionality: int = 3072
+
+    # Qdrant
+    qdrant_url: str
+    qdrant_api_key: str
+    qdrant_collection_name: str
+    qdrant_candidate_collection_name: str = "candidate_applications"
+
+    # Qdrant (local test, docker-compose qdrant-test)
+    test_qdrant_url: str = "http://localhost:6335"
+    test_qdrant_api_key: str | None = None
+    test_qdrant_collection_name: str = "eval_jobs_test"
+
+    # LLM APIs
+    google_api_key: str
+    groq_api_key: str
+    tavily_api_key: str
+    llama_cloud_api_key: str | None = None
+    llama_cloud_base_url: str | None = None
+
+    groq_model_job_drafting: str = "openai/gpt-oss-120b"
+    groq_model_recruiter_chat: str = "openai/gpt-oss-120b"
+
+    llama_extract_mode: str = "PREMIUM"
+    llama_extract_parse_model: str = "gemini-2.5-pro"
+    llama_extract_model: str = "openai-gpt-5-mini"
+
+    # AWS
     aws_access_key_id: str | None = None
     aws_secret_access_key: str | None = None
     aws_region: str = "us-east-1"
-    aws_access_key_id_shortlisting: str | None = None
-    aws_secret_access_key_shortlisting: str | None = None
-    aws_bedrock_shortlisting_model_id: str = "us.anthropic.claude-sonnet-4-6"
-    aws_bedrock_shortlisting_temperature: float = 0.0
-    aws_bedrock_shortlisting_max_tokens: int = 1200
+
+    # S3
     s3_bucket_name: str | None = None
     s3_upload_acl: str | None = "public-read"
     s3_max_upload_bytes: int = 5 * 1024 * 1024
@@ -81,20 +94,54 @@ class Settings(BaseSettings):
         "webp",
         "gif",
     )
+
+    # AWS Bedrock (shortlisting)
+    aws_access_key_id_shortlisting: str | None = None
+    aws_secret_access_key_shortlisting: str | None = None
+    aws_bedrock_shortlisting_model_id: str = "us.anthropic.claude-sonnet-4-6"
+    aws_bedrock_shortlisting_merge_model_id: str = (
+        "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    )
+    aws_bedrock_shortlisting_temperature: float = 0.0
+    aws_bedrock_shortlisting_max_tokens: int = 1200
+    aws_bedrock_shortlisting_merge_max_tokens: int = 600
+    shortlisting_prompt_cache_ttl: str = "5m"
+    shortlisting_web_search_budget_per_persona: int = 1
+    shortlisting_reflection_max_iterations: int = 1
+    shortlisting_web_search_max_results: int = 3
+
+    # Resume import
     resume_import_max_upload_bytes: int = 10 * 1024 * 1024
     resume_import_allowed_extensions: tuple[str, ...] = ("pdf",)
 
-    # Redis
-    redis_url: str | None = None  # i am using upstash from convexhire gmail
-    redis_enabled: bool = True
-
-    shortlisting_reflection_max_iterations: int = 2
-    shortlisting_web_search_max_results: int = 3
-
+    # ML bouncer
     ml_bouncer_top_percent: int = 20
     ml_bouncer_min_score: float = 0.4
 
-    # HF Space Whisper (transcription)
+    # Recruiter chat
+    recruiter_chat_candidate_min_score: float = 0.55
+    recruiter_chat_pronoun_max_turn_gap: int = 2
+    recruiter_chat_title_min_chars: int = 4
+    recruiter_chat_title_fallback_after_turns: int = 3
+    recruiter_chat_summarize_trigger_messages: int = 40
+    recruiter_chat_summarize_keep_messages: int = 6
+    recruiter_chat_handler_context_messages: int = 8
+
+    # Recruiter chat hybrid search
+    recruiter_chat_hybrid_search_enabled: bool = True
+    candidate_sparse_model: str = "Qdrant/bm25"
+    candidate_hybrid_prefetch_limit: int = 50
+    # Floor on absolute RRF score. Below this, the candidate hit is treated as low-relevance.
+    recruiter_chat_hybrid_min_score: float = 0.45
+    # Tag results as low-relevance when RRF score is below `top_score * relative_floor`.
+    # Catches the gap from "actually relevant" to "barely related" within one query.
+    recruiter_chat_hybrid_relative_floor: float = 0.5
+
+    # Public jobs hybrid search
+    jobs_hybrid_search_enabled: bool = True
+    jobs_hybrid_prefetch_limit: int = 50
+
+    # HF Whisper transcription
     hf_whisper_url: str = (
         "https://devrahulbanjara-nepali-whisper-small.hf.space/transcribe"
     )
@@ -103,30 +150,34 @@ class Settings(BaseSettings):
     hf_whisper_retry_delays: tuple[int, ...] = (5, 15, 30, 60)
     hf_whisper_token: str | None = None
 
+    # Derived URLs
     @property
     def database_url(self) -> str:
-        """Return the async SQLAlchemy database URL for the primary database."""
+        """Async SQLAlchemy URL for the primary database."""
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
     def test_database_url(self) -> str:
-        """Return the async SQLAlchemy database URL for the test database."""
+        """Async SQLAlchemy URL for the test database."""
         return f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
 
     @property
+    def langgraph_postgres_dsn(self) -> str:
+        """Sync PostgreSQL DSN used by LangGraph runtime components."""
+        return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+
+    @property
     def s3_base_url(self) -> str:
-        """Return the public base URL for the configured S3 bucket."""
+        """Public base URL for the configured S3 bucket."""
         if not self.s3_bucket_name:
             return ""
         return f"https://{self.s3_bucket_name}.s3.{self.aws_region}.amazonaws.com"
 
-    @property
-    def langgraph_postgres_dsn(self) -> str:
-        """Return the sync PostgreSQL DSN used by LangGraph runtime components."""
-        return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
-
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
     )
 
 
