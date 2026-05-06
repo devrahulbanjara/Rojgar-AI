@@ -59,10 +59,11 @@ const rawBaseQuery = fetchBaseQuery({
 
 // ---------------------------------------------------------------------------
 // Re-auth wrapper — on 401, silently call /auth/refresh and retry once.
-// A boolean lock prevents concurrent refresh races.
+// A shared promise queues all concurrent 401 requests so they all retry
+// after the single refresh completes instead of surfacing 401 errors.
 // ---------------------------------------------------------------------------
 
-let isRefreshing = false
+let refreshPromise: Promise<string | null> | null = null
 
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
@@ -71,36 +72,40 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 ) => {
   let result = await rawBaseQuery(args, api, extraOptions)
 
-  if (result.error?.status === 401 && !isRefreshing) {
-    isRefreshing = true
+  if (result.error?.status === 401) {
+    if (!refreshPromise) {
+      refreshPromise = (async () => {
+        const refreshResult = await rawBaseQuery(
+          {
+            url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
+            method: 'POST',
+            body: {},
+          },
+          api,
+          extraOptions,
+        )
 
-    // refresh_token is in the HttpOnly cookie — just POST with no body
-    const refreshResult = await rawBaseQuery(
-      {
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
-        method: 'POST',
-        body: {},
-      },
-      api,
-      extraOptions,
-    )
+        const refreshData = refreshResult.data as
+          | ApiResponse<{ access_token: string; token_type: string }>
+          | undefined
 
-    isRefreshing = false
+        if (refreshData?.success && refreshData.data?.access_token) {
+          api.dispatch(updateAccessToken(refreshData.data.access_token))
+          return refreshData.data.access_token
+        } else if (isBackendConnectionStatus(refreshResult.error?.status)) {
+          api.dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+        } else {
+          api.dispatch(clearCredentials())
+        }
+        return null
+      })()
+    }
 
-    const refreshData = refreshResult.data as
-      | ApiResponse<{ access_token: string; token_type: string }>
-      | undefined
+    const newToken = await refreshPromise
+    refreshPromise = null
 
-    if (refreshData?.success && refreshData.data?.access_token) {
-      api.dispatch(updateAccessToken(refreshData.data.access_token))
-      // Retry original request with the new token
+    if (newToken) {
       result = await rawBaseQuery(args, api, extraOptions)
-    } else if (isBackendConnectionStatus(refreshResult.error?.status)) {
-      api.dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
-      result = refreshResult
-    } else {
-      // Refresh failed — wipe session, UI handles redirect
-      api.dispatch(clearCredentials())
     }
   }
 
