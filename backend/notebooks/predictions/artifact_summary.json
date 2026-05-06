@@ -1,0 +1,13 @@
+{
+  "root_dir": "/content/drive/MyDrive/convexhire_whisper_finetune",
+  "final_model_dir": "/content/drive/MyDrive/convexhire_whisper_finetune/run/final_model",
+  "best_model_dir": "/content/drive/MyDrive/convexhire_whisper_finetune/run/best_model",
+  "checkpoint_dir": "/content/drive/MyDrive/convexhire_whisper_finetune/run/whisper-small-np",
+  "training_curves_png": "/content/drive/MyDrive/convexhire_whisper_finetune/artifacts/training_curves_v3.png",
+  "config_snapshot_json": "/content/drive/MyDrive/convexhire_whisper_finetune/artifacts/config_snapshot.json",
+  "train_metrics_json": "/content/drive/MyDrive/convexhire_whisper_finetune/artifacts/train_metrics.json",
+  "eval_metrics_json": "/content/drive/MyDrive/convexhire_whisper_finetune/artifacts/eval_metrics.json",
+  "log_history_csv": "/content/drive/MyDrive/convexhire_whisper_finetune/artifacts/log_history.csv",
+  "sample_predictions_csv": "/content/drive/MyDrive/convexhire_whisper_finetune/artifacts/sample_predictions_v3.csv",
+  "best_model_eval_csv": "/content/drive/MyDrive/convexhire_whisper_finetune/artifacts/best_model_eval_samples.csv"
+}

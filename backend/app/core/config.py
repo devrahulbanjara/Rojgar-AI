@@ -118,6 +118,9 @@ class Settings(BaseSettings):
     ml_bouncer_top_percent: int = 20
     ml_bouncer_min_score: float = 0.4
 
+    # Guardrails
+    guardrails_enabled: bool = True
+
     # Recruiter chat
     recruiter_chat_candidate_min_score: float = 0.55
     recruiter_chat_pronoun_max_turn_gap: int = 2
@@ -131,7 +134,7 @@ class Settings(BaseSettings):
     recruiter_chat_hybrid_search_enabled: bool = True
     candidate_sparse_model: str = "Qdrant/bm25"
     candidate_hybrid_prefetch_limit: int = 50
-    # Floor on absolute RRF score. Below this, the candidate hit is treated as low-relevance.
+    recruiter_chat_hard_min_score: float = 0.20
     recruiter_chat_hybrid_min_score: float = 0.45
     # Tag results as low-relevance when RRF score is below `top_score * relative_floor`.
     # Catches the gap from "actually relevant" to "barely related" within one query.

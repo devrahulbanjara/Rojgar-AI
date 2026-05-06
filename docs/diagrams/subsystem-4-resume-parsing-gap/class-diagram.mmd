@@ -1,0 +1,45 @@
+classDiagram
+    class Resume {
+        +UUID id
+        +UUID user_id
+        +String resume_name
+        +String headline
+        +String summary
+        +String phone
+        +String location
+        +String linkedin_url
+        +String github_url
+        +String portfolio_url
+        +Integer years_of_experience
+        +DateTime created_at
+    }
+
+    class ResumeExperience {
+        +UUID id
+        +UUID resume_id
+        +String company_name
+        +String title
+        +DateTime start_date
+        +DateTime end_date
+        +Array description
+    }
+
+    class ResumeEducation {
+        +UUID id
+        +UUID resume_id
+        +String institution
+        +String degree
+        +String field_of_study
+        +DateTime start_date
+        +DateTime end_date
+    }
+
+    class ResumeSkill {
+        +UUID id
+        +UUID resume_id
+        +String skill_name
+    }
+
+    Resume --> ResumeExperience : has
+    Resume --> ResumeEducation : has
+    Resume --> ResumeSkill : has

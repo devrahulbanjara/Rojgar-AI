@@ -1,0 +1,39 @@
+graph TD
+    A([Start]) --> B{Job Trigger}
+
+    B -->|Apply with auto-shortlist| C[ML Pre-filter scores resume]
+    B -->|Job expires| D[Two-stage pipeline]
+    B -->|Manual trigger| E[Batch evaluation]
+
+    C --> F{Score in top 20%?}
+    F -->|No| G[Status: applied<br/>No LLM cost]
+    F -->|Yes| H[Queue for LLM<br/>when job expires]
+
+    D --> I[Stage 1: ML Pre-filter<br/>Score all applications]
+    I --> J[Stage 2: Top 20% to LLM]
+
+    J --> K[Technical Agent<br/>Technical evaluation]
+    J --> L[HR Agent<br/>Fit evaluation]
+
+    K --> M[Critique Node<br/>Judge confidence]
+    L --> M
+
+    M --> N{Confidence >= 70%?}
+    N -->|Yes| O[Final Node<br/>Merge results]
+    N -->|No| P[Feedback loop<br/>Retry agents]
+
+    P --> K
+    P --> L
+
+    O --> Q[Save strengths/concerns<br/>to application]
+
+    E --> R[ML Pre-filter + LLM<br/>for selected apps]
+    R --> Q
+
+    Q --> S[Threshold finalize]
+    S --> T{Score >= threshold?}
+    T -->|Yes| U[Status: shortlisted]
+    T -->|No| V[Status: rejected]
+
+    U --> W[Draft outreach email]
+    V --> X[Draft rejection email<br/>with AI feedback]
