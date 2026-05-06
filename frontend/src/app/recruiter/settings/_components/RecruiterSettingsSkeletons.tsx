@@ -48,7 +48,7 @@ export function RecruiterSettingsPageSkeleton() {
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Recruiter Settings</h2>
           <p className="dash-page-header__subtitle">
-            Personal workspace defaults for notifications, outreach, and interviews.
+            Personal workspace defaults for outreach and interviews.
           </p>
         </div>
       </div>

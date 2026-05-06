@@ -41,8 +41,6 @@ export default function RecruiterSettingsPage() {
     try {
       await updatePreferences({
         timezone: form.timezone || null,
-        notification_email_enabled: form.notification_email_enabled,
-        notification_in_app_enabled: form.notification_in_app_enabled,
         default_interview_duration_minutes: form.default_interview_duration_minutes,
         default_interview_buffer_minutes: form.default_interview_buffer_minutes,
         outreach_signature: form.outreach_signature || null,
@@ -72,7 +70,7 @@ export default function RecruiterSettingsPage() {
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Recruiter Settings</h2>
           <p className="dash-page-header__subtitle">
-            Personal workspace defaults for notifications, outreach, and interviews.
+            Personal workspace defaults for outreach and interviews.
           </p>
         </div>
         {!isLoading && !isError && (

@@ -27,46 +27,6 @@ export default function CommunicationCard({ form, isAdmin, onChange }: Props) {
         </div>
       </div>
 
-      <div className={styles.toggleStack}>
-        <button
-          type="button"
-          className={styles.toggleRow}
-          aria-pressed={form.notification_in_app_enabled}
-          onClick={() => update('notification_in_app_enabled', !form.notification_in_app_enabled)}
-        >
-          <span className={styles.toggleCopy}>
-            <span className={styles.toggleLabel}>In-app notifications</span>
-            <span className={styles.toggleHint}>
-              Pings inside ConvexHire when something needs your attention.
-            </span>
-          </span>
-          <span
-            className={styles.toggle}
-            aria-pressed={form.notification_in_app_enabled}
-            aria-hidden="true"
-          />
-        </button>
-
-        <button
-          type="button"
-          className={styles.toggleRow}
-          aria-pressed={form.notification_email_enabled}
-          onClick={() => update('notification_email_enabled', !form.notification_email_enabled)}
-        >
-          <span className={styles.toggleCopy}>
-            <span className={styles.toggleLabel}>Email notifications</span>
-            <span className={styles.toggleHint}>
-              Emails for important updates like new applicants and interview replies.
-            </span>
-          </span>
-          <span
-            className={styles.toggle}
-            aria-pressed={form.notification_email_enabled}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
-
       <div className={styles.field}>
         <label className={styles.fieldLabel} htmlFor="recruiter-signature">
           Outreach signature
