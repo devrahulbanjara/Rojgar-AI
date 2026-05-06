@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import type { CandidateSearchResult } from '@/lib/types/recruiterChat'
-import { ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 
@@ -51,6 +53,8 @@ function CandidateRow({ candidate }: { candidate: CandidateSearchResult['candida
 }
 
 export function CandidateCardGrid({ data }: { data: CandidateSearchResult }) {
+  const [showLow, setShowLow] = useState(false)
+
   if (!data.candidates?.length) {
     return (
       <section className="recruiter-chat-card recruiter-chat-card--empty-state">
@@ -59,20 +63,47 @@ export function CandidateCardGrid({ data }: { data: CandidateSearchResult }) {
     )
   }
 
+  // Older payloads may not carry the `relevance` flag — treat them all as "high"
+  // so the UI keeps working without a server upgrade.
+  const high = data.candidates.filter((c) => (c.relevance ?? 'high') === 'high')
+  const low = data.candidates.filter((c) => c.relevance === 'low')
+  const visible = showLow ? [...high, ...low] : high
+
   return (
     <section className="recruiter-chat-card-shell">
       <div className="recruiter-chat-card-count">
-        {data.total} candidate{data.total === 1 ? '' : 's'} found
+        {high.length} strong match{high.length === 1 ? '' : 'es'}
+        {low.length ? ` · ${low.length} weaker` : ''}
       </div>
 
       <div className="recruiter-chat-job-mini-list">
-        {data.candidates.map((candidate) => (
+        {visible.map((candidate) => (
           <CandidateRow
             key={`${candidate.user_id}-${candidate.application_id}`}
             candidate={candidate}
           />
         ))}
       </div>
+
+      {low.length ? (
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm recruiter-chat-show-more"
+          onClick={() => setShowLow((current) => !current)}
+        >
+          {showLow ? (
+            <>
+              <ChevronUp size={13} />
+              Hide {low.length} weaker match{low.length === 1 ? '' : 'es'}
+            </>
+          ) : (
+            <>
+              <ChevronDown size={13} />
+              Show {low.length} weaker match{low.length === 1 ? '' : 'es'}
+            </>
+          )}
+        </button>
+      ) : null}
     </section>
   )
 }

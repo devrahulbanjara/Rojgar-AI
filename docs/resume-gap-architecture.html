@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ConvexHire — Resume Gap Analysis</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:#f7f8fc;color:#1a2240;}
+h1{font-size:22px;margin:0 0 4px;font-weight:700}
+.sub{color:#5b6788;font-size:13px;margin:0 0 18px}
+.toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px}
+button{background:#fff;color:#1a2240;border:1px solid #d6dbe8;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;}
+button:hover{border-color:#4f8cff;color:#4f8cff}
+.frame{background:#fff;border:1px solid #e5e8f0;border-radius:14px;padding:8px;box-shadow:0 1px 2px rgba(20,30,60,0.04);}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:12px;color:#5b6788;}
+.legend .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid #e5e8f0;}
+.dot{width:10px;height:10px;border-radius:3px}
+
+.ex-section{margin-top:32px}
+.ex-section h2{font-size:18px;margin:0 0 18px;color:#1a2240}
+.ex-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:800px){.ex-row{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid #e5e8f0;border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(20,30,60,0.05);}
+.card h3{margin:0 0 6px;font-size:14px;font-weight:700;color:#1a2240;display:flex;align-items:center;gap:8px}
+.card .desc{color:#5b6788;font-size:12px;margin:0 0 14px}
+
+.score-row{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.score-num{font-size:40px;font-weight:800;line-height:1}
+.score-num.low{color:#ef4444}.score-num.mid{color:#f59e0b}.score-num.high{color:#22c55e}
+.score-bar-wrap{flex:1;height:10px;background:#e5e8f0;border-radius:999px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:999px}
+.score-label{font-size:11px;color:#5b6788}
+
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.critical{background:#fef2f2;color:#991b1b;border:1px solid #ef4444}
+.pill.preferred{background:#fff7ed;color:#92400e;border:1px solid #f59e0b}
+.pill.bonus{background:#f9fafb;color:#4b5563;border:1px solid #9ca3af}
+.pill.strong{background:#f0fdf4;color:#14532d;border:1px solid #22c55e}
+.pill.neutral{background:#eff6ff;color:#1e3a8a;border:1px solid #93c5fd}
+.pill.frozen{background:#fef2f2;color:#991b1b;border:1px dashed #ef4444}
+
+.verdict{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 12px;font-size:13px;color:#14532d;font-style:italic;line-height:1.5}
+
+.diff-block{border-radius:10px;overflow:hidden;font-size:12px;margin-bottom:6px}
+.diff-block .lb{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:5px 12px}
+.diff-block .bd{padding:10px 12px;line-height:1.6}
+.d-old{background:#fef2f2;border:1px solid #fca5a5}
+.d-old .lb{background:#fca5a5;color:#7f1d1d}
+.d-old .bd{color:#7f1d1d}
+.d-new{background:#f0fdf4;border:1px solid #86efac}
+.d-new .lb{background:#86efac;color:#14532d}
+.d-new .bd{color:#14532d}
+del{background:#fecaca;text-decoration:none;border-radius:3px;padding:0 2px}
+ins{background:#bbf7d0;text-decoration:none;border-radius:3px;padding:0 2px}
+.frozen-note{display:flex;align-items:center;gap:6px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:6px 10px;font-size:11px;color:#991b1b;margin-top:8px}
+.sk-row{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 10px}
+.sk-row span{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#f3f4f6;color:#4b5563;border:1px solid #d1d5db}
+</style>
+</head>
+<body>
+
+<h1>ConvexHire — Resume Gap Analysis flow</h1>
+<p class="sub">Two AI calls. Phase 1: score + gaps cached. Phase 2: rewrite → diff preview → confirm.</p>
+
+<div class="toolbar">
+  <button onclick="dl('flow','convexhire-gap-flow.svg')">Download SVG</button>
+  <button onclick="window.print()">Save as PDF</button>
+</div>
+
+<div class="frame">
+<svg id="flow" viewBox="0 0 1400 1440" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5b6788"/></marker>
+<marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#22c55e"/></marker>
+<marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+<linearGradient id="cG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fef3c7"/><stop offset="1" stop-color="#fde68a"/></linearGradient>
+<linearGradient id="dG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0e7ff"/><stop offset="1" stop-color="#c7d2fe"/></linearGradient>
+<linearGradient id="gG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ede9fe"/><stop offset="1" stop-color="#ddd6fe"/></linearGradient>
+<linearGradient id="rG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cffafe"/><stop offset="1" stop-color="#a5f3fc"/></linearGradient>
+<linearGradient id="pG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcfce7"/><stop offset="1" stop-color="#bbf7d0"/></linearGradient>
+<linearGradient id="wG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dbeafe"/><stop offset="1" stop-color="#bfdbfe"/></linearGradient>
+</defs>
+
+<rect x="80" y="10" width="130" height="22" rx="6" fill="#1a2240"/>
+<text x="145" y="26" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">Phase 1 — Analyze</text>
+
+<g transform="translate(490,40)">
+<rect width="420" height="60" rx="14" fill="#1a2240"/>
+<text x="210" y="22" text-anchor="middle" fill="#94a3b8" font-size="11">candidate authenticated</text>
+<text x="210" y="42" text-anchor="middle" fill="#fff" font-size="17" font-weight="700">Resume + Job → Analyze</text>
+<text x="210" y="54" text-anchor="middle" fill="#a8b2cc" font-size="11">POST /resume-gap/analyze</text>
+</g>
+<path d="M700 100 V128" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+<g transform="translate(570,128)">
+<rect width="260" height="58" rx="12" fill="url(#cG)" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="130" y="24" text-anchor="middle" fill="#7c2d12" font-size="20" font-weight="700">Redis Cache?</text>
+<rect x="75" y="34" width="110" height="16" rx="8" fill="#fff" stroke="#f59e0b"/>
+<text x="130" y="46" text-anchor="middle" fill="#92400e" font-size="11" font-weight="600">TTL 10 min</text>
+</g>
+<path d="M830 157 L910 157" stroke="#22c55e" stroke-width="2" fill="none" marker-end="url(#ahg)"/>
+<text x="868" y="150" text-anchor="middle" fill="#16a34a" font-size="12" font-weight="700">hit</text>
+<g transform="translate(910,128)">
+<rect width="296" height="58" rx="12" fill="url(#rG)" stroke="#06b6d4"/>
+<text x="24" y="28" fill="#0e4f5b" font-size="22">⚡</text>
+<text x="60" y="24" fill="#0e4f5b" font-size="14" font-weight="700">Instant Return</text>
+<text x="60" y="40" fill="#0e7490" font-size="11">no DB · no AI · from cache</text>
+<text x="60" y="54" fill="#0e7490" font-size="11">saves 100% of AI cost</text>
+</g>
+<path d="M700 186 V220" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="6 4" fill="none" marker-end="url(#ahr)"/>
+<text x="716" y="208" fill="#dc2626" font-size="11" font-weight="700">miss</text>
+
+<g transform="translate(80,220)">
+<rect width="1240" height="100" rx="14" fill="url(#dG)" stroke="#6366f1" stroke-width="1.5"/>
+<text x="20" y="26" fill="#1e1b4b" font-size="15" font-weight="700">Load from PostgreSQL</text>
+<g transform="translate(16,34)">
+<rect width="596" height="54" rx="10" fill="#fff" stroke="#818cf8"/>
+<text x="12" y="20" fill="#1e1b4b" font-size="13" font-weight="700">Resume</text>
+<text x="12" y="38" fill="#6366f1" font-size="10.5">headline · summary · skills · experiences · educations</text>
+</g>
+<g transform="translate(628,34)">
+<rect width="596" height="54" rx="10" fill="#fff" stroke="#818cf8"/>
+<text x="12" y="20" fill="#1e1b4b" font-size="13" font-weight="700">Job</text>
+<text x="12" y="38" fill="#6366f1" font-size="10.5">title · requirements · preferred · responsibilities</text>
+</g>
+</g>
+<path d="M700 320 V352" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+<g transform="translate(80,352)">
+<rect width="1240" height="230" rx="18" fill="#f1f4ff" stroke="#c7cfe5" stroke-dasharray="4 4"/>
+<text x="20" y="28" fill="#1a2240" font-size="17" font-weight="700">Step 1 — AI Gap Analysis</text>
+
+<g transform="translate(24,42)">
+<rect width="260" height="170" rx="14" fill="url(#gG)" stroke="#7c5cff" stroke-width="1.5"/>
+<text x="130" y="44" text-anchor="middle" font-size="38">🤖</text>
+<text x="130" y="70" text-anchor="middle" fill="#3b1d6f" font-size="14" font-weight="700">Groq LLM</text>
+<text x="130" y="90" text-anchor="middle" fill="#3b1d6f" font-size="11">Career Assistant</text>
+<rect x="18" y="106" width="224" height="44" rx="8" fill="#fff" stroke="#7c5cff"/>
+<text x="130" y="124" text-anchor="middle" fill="#3b1d6f" font-size="12" font-weight="700">Guardrails</text>
+<text x="130" y="142" text-anchor="middle" fill="#4c1d95" font-size="10">No invented facts</text>
+</g>
+<path d="M284 127 L352 127" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+<g transform="translate(352,42)">
+<rect width="868" height="170" rx="14" fill="url(#rG)" stroke="#06b6d4" stroke-width="1.5"/>
+<text x="434" y="22" text-anchor="middle" fill="#0e4f5b" font-size="14" font-weight="700">GapAnalysisResult</text>
+<g transform="translate(12,32)">
+<rect width="200" height="32" rx="8" fill="#fef2f2" stroke="#ef4444"/><text x="100" y="21" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="700">missing skills</text>
+<rect x="208" width="200" height="32" rx="8" fill="#fff7ed" stroke="#f59e0b"/><text x="308" y="21" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">experience gaps</text>
+<rect x="416" width="200" height="32" rx="8" fill="#eff6ff" stroke="#93c5fd"/><text x="516" y="21" text-anchor="middle" fill="#1e3a8a" font-size="11" font-weight="700">add to summary</text>
+<rect x="624" width="220" height="32" rx="8" fill="#f9fafb" stroke="#9ca3af"/><text x="734" y="21" text-anchor="middle" fill="#374151" font-size="11" font-weight="700">de-emphasize</text>
+</g>
+<g transform="translate(12,72)">
+<rect width="266" height="32" rx="8" fill="#f0fdf4" stroke="#22c55e"/><text x="133" y="21" text-anchor="middle" fill="#14532d" font-size="11" font-weight="700">already strong</text>
+<rect x="274" width="266" height="32" rx="8" fill="#faf5ff" stroke="#a855f7"/><text x="407" y="21" text-anchor="middle" fill="#581c87" font-size="11" font-weight="700">score 0–100</text>
+<rect x="548" width="296" height="32" rx="8" fill="url(#rG)" stroke="#06b6d4"/><text x="696" y="21" text-anchor="middle" fill="#0e4f5b" font-size="11" font-weight="700">2-sentence verdict</text>
+</g>
+<g transform="translate(12,116)">
+<rect width="844" height="46" rx="10" fill="#fff" stroke="#06b6d4"/>
+<text x="16" y="16" fill="#0e4f5b" font-size="11" font-weight="700">Severity →</text>
+<rect x="96" y="6" width="58" height="18" rx="9" fill="#fef2f2" stroke="#ef4444"/><text x="125" y="18" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="700">critical</text>
+<text x="162" y="18" fill="#6b7280" font-size="10">required + absent</text>
+<rect x="96" y="26" width="66" height="18" rx="9" fill="#fff7ed" stroke="#f59e0b"/><text x="129" y="38" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">preferred</text>
+<text x="170" y="38" fill="#6b7280" font-size="10">nice-to-have</text>
+<text x="460" y="18" fill="#6b7280" font-size="10">bonus  =  mentioned once, optional</text>
+<text x="16" y="40" fill="#0e4f5b" font-size="10">All items speak to candidate as "you"</text>
+</g>
+</g>
+</g>
+<path d="M700 582 V614" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+<g transform="translate(80,614)">
+<rect width="1240" height="60" rx="12" fill="#1a2240"/>
+<text x="20" y="26" fill="#fff" font-size="15" font-weight="700">Cache result + return to candidate</text>
+<text x="20" y="46" fill="#a8b2cc" font-size="12">redis set 10 min · GapAnalysisResult returned · candidate sees score + gaps</text>
+<ellipse cx="1160" cy="22" rx="40" ry="10" fill="#0e1832" stroke="#3b4a78"/>
+<rect x="1120" y="22" width="80" height="24" fill="#0e1832" stroke="#3b4a78"/>
+<ellipse cx="1160" cy="46" rx="40" ry="10" fill="#0e1832" stroke="#3b4a78"/>
+<text x="1160" y="38" text-anchor="middle" fill="#a8b2cc" font-size="10">redis</text>
+</g>
+
+<line x1="80" y1="700" x2="1320" y2="700" stroke="#e5e8f0" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="80" y="688" width="144" height="22" rx="6" fill="#0f766e"/>
+<text x="152" y="704" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">Phase 2 — Auto-Patch</text>
+
+<g transform="translate(490,718)">
+<rect width="420" height="60" rx="14" fill="#1a2240"/>
+<text x="210" y="22" text-anchor="middle" fill="#94a3b8" font-size="11">passes back GapAnalysisResult</text>
+<text x="210" y="42" text-anchor="middle" fill="#fff" font-size="17" font-weight="700">Auto-Patch Request</text>
+<text x="210" y="54" text-anchor="middle" fill="#a8b2cc" font-size="11">POST /resume-gap/auto-patch</text>
+</g>
+<path d="M700 778 V806" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+<g transform="translate(80,806)">
+<rect width="1240" height="316" rx="18" fill="#f0fdf4" stroke="#86efac" stroke-dasharray="4 4"/>
+<text x="20" y="28" fill="#14532d" font-size="17" font-weight="700">Step 2 — AI Resume Patch</text>
+
+<g transform="translate(24,40)">
+<rect width="260" height="170" rx="14" fill="url(#pG)" stroke="#22c55e" stroke-width="1.5"/>
+<text x="130" y="44" text-anchor="middle" font-size="38">🤖</text>
+<text x="130" y="70" text-anchor="middle" fill="#14532d" font-size="14" font-weight="700">Groq LLM</text>
+<text x="130" y="90" text-anchor="middle" fill="#14532d" font-size="11">Resume Writer</text>
+<rect x="18" y="106" width="224" height="44" rx="8" fill="#fff" stroke="#22c55e"/>
+<text x="130" y="124" text-anchor="middle" fill="#14532d" font-size="12" font-weight="700">Frozen Facts</text>
+<text x="130" y="142" text-anchor="middle" fill="#14532d" font-size="10">Never modified</text>
+</g>
+<path d="M284 125 L352 125" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+<g transform="translate(352,40)">
+<rect width="500" height="170" rx="14" fill="#fff" stroke="#22c55e" stroke-width="1.5"/>
+<text x="250" y="22" text-anchor="middle" fill="#14532d" font-size="14" font-weight="700">AutoPatchResult</text>
+<g transform="translate(12,32)">
+<rect width="230" height="30" rx="8" fill="#dbeafe" stroke="#93c5fd"/><text x="115" y="20" text-anchor="middle" fill="#1e3a8a" font-size="11" font-weight="700">headline (max 120)</text>
+<rect x="246" width="230" height="30" rx="8" fill="#dbeafe" stroke="#93c5fd"/><text x="361" y="20" text-anchor="middle" fill="#1e3a8a" font-size="11" font-weight="700">summary (max 400)</text>
+</g>
+<g transform="translate(12,70)">
+<rect width="230" height="30" rx="8" fill="#dbeafe" stroke="#93c5fd"/><text x="115" y="20" text-anchor="middle" fill="#1e3a8a" font-size="11" font-weight="700">skills (up to 30)</text>
+<rect x="246" width="230" height="30" rx="8" fill="#dbeafe" stroke="#93c5fd"/><text x="361" y="20" text-anchor="middle" fill="#1e3a8a" font-size="11" font-weight="700">experience bullets</text>
+</g>
+<rect x="12" y="114" width="476" height="40" rx="8" fill="#fef2f2" stroke="#ef4444"/>
+<text x="250" y="130" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="700">Frozen Facts never modified</text>
+<text x="250" y="146" text-anchor="middle" fill="#991b1b" font-size="10">company · title · dates · institution · certs</text>
+</g>
+
+<g transform="translate(868,40)">
+<rect width="344" height="170" rx="14" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="172" y="22" text-anchor="middle" fill="#7c2d12" font-size="13" font-weight="700">Server Guardrails</text>
+<g font-size="11" fill="#7c2d12">
+<text x="14" y="44">max 5 new skills</text>
+<text x="180" y="44">max 30 total</text>
+<text x="14" y="62">headline ≤ 120 chars</text>
+<text x="180" y="62">summary ≤ 400 chars</text>
+<text x="14" y="80">bullets ≤ 220 chars</text>
+<text x="180" y="80">max 6 per exp</text>
+<text x="14" y="98">dedup case-insensitive</text>
+<text x="180" y="98">skip unchanged</text>
+<text x="14" y="120" fill="#92400e" font-size="10" font-style="italic">existing skills always preserved</text>
+</g>
+</g>
+
+<g transform="translate(24,228)">
+<rect width="1192" height="68" rx="10" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+<text x="14" y="22" fill="#831843" font-size="13" font-weight="700">Diff generation → Pending Patch staged in Redis (30 min)</text>
+<text x="14" y="42" fill="#831843" font-size="11">PatchedFieldDiff per changed field · candidate reviews old vs new</text>
+<text x="14" y="58" fill="#be185d" font-size="10">AutoPatchResponse returned · updated_fields · diffs · message</text>
+</g>
+</g>
+
+<path d="M700 1122 V1152" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+<text x="700" y="1170" text-anchor="middle" fill="#1a2240" font-size="12" font-weight="600">Candidate reviews diffs (old vs new per field)</text>
+
+<g transform="translate(620,1178)">
+<polygon points="0,40 80,0 160,40 80,80" fill="#fff" stroke="#7c5cff" stroke-width="1.8"/>
+<text x="80" y="36" text-anchor="middle" fill="#3b1d6f" font-size="12" font-weight="700">confirm?</text>
+<text x="80" y="52" text-anchor="middle" fill="#3b1d6f" font-size="10">accept / discard</text>
+</g>
+
+<path d="M780 1218 L900 1218" stroke="#22c55e" stroke-width="2" fill="none" marker-end="url(#ahg)"/>
+<text x="835" y="1212" text-anchor="middle" fill="#16a34a" font-size="12" font-weight="700">accept</text>
+<g transform="translate(900,1186)">
+<rect width="380" height="68" rx="12" fill="url(#wG)" stroke="#4f8cff" stroke-width="1.5"/>
+<text x="190" y="22" text-anchor="middle" fill="#1e3a8a" font-size="14" font-weight="700">Apply patch → PostgreSQL</text>
+<text x="16" y="40" fill="#1e3a8a" font-size="11">resume updated · pending key deleted · gap cache invalidated</text>
+</g>
+
+<path d="M620 1218 L500 1218" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#ahr)"/>
+<text x="556" y="1212" text-anchor="middle" fill="#dc2626" font-size="12" font-weight="700">discard</text>
+<g transform="translate(174,1186)">
+<rect width="326" height="68" rx="12" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5"/>
+<text x="163" y="22" text-anchor="middle" fill="#991b1b" font-size="14" font-weight="700">Discard pending patch</text>
+<text x="16" y="40" fill="#991b1b" font-size="11">pending key deleted from Redis · gap cache kept · resume unchanged</text>
+</g>
+
+<g transform="translate(80,1296)">
+<rect width="1240" height="54" rx="12" fill="#fff7ed" stroke="#f59e0b" stroke-dasharray="4 3"/>
+<text x="20" y="20" fill="#7c2d12" font-size="13" font-weight="700">Six design decisions</text>
+<g font-size="11" fill="#92400e">
+<text x="20" y="40">1. Gap result cached 10 min</text>
+<text x="220" y="40">2. Pending patch staged 30 min</text>
+<text x="460" y="40">3. Frozen facts never touched</text>
+<text x="700" y="40">4. Diffs shown before apply</text>
+<text x="900" y="40">5. Server caps (skills / chars)</text>
+<text x="1120" y="40">6. temp=0.4 → consistent JSON</text>
+</g>
+</g>
+</svg>
+</div>
+
+<div class="legend">
+<span class="chip"><span class="dot" style="background:#fde68a"></span>Redis cache</span>
+<span class="chip"><span class="dot" style="background:#c7d2fe"></span>PostgreSQL load</span>
+<span class="chip"><span class="dot" style="background:#ddd6fe"></span>AI Gap Analysis</span>
+<span class="chip"><span class="dot" style="background:#a5f3fc"></span>GapAnalysisResult</span>
+<span class="chip"><span class="dot" style="background:#bbf7d0"></span>AI Patch</span>
+<span class="chip"><span class="dot" style="background:#fbcfe8"></span>Pending patch / Diffs</span>
+<span class="chip"><span class="dot" style="background:#bfdbfe"></span>Apply to DB</span>
+<span class="chip"><span class="dot" style="background:#1a2240"></span>Trigger / Cache + Return</span>
+</div>
+
+<div class="ex-section">
+<h2>How each step works — visual examples</h2>
+
+<div class="ex-row">
+<div class="card">
+<h3>GapAnalysisResult — score + severity</h3>
+<p class="desc">Groq returns structured JSON. Every field is a chip. AI speaks to candidate as "you".</p>
+<div class="score-row">
+<div class="score-num low">38</div>
+<div class="score-bar-wrap"><div class="score-bar-fill" style="width:38%;background:#ef4444"></div></div>
+</div>
+<div class="score-label">overall_score_estimate — likelihood of shortlisting as-is</div>
+<div class="pills">
+<span class="pill critical">missing skills: AWS Lambda</span>
+<span class="pill critical">missing skills: Kubernetes</span>
+<span class="pill preferred">missing skills: Terraform</span>
+<span class="pill preferred">experience gap: cloud infra</span>
+<span class="pill bonus">bonus: GraphQL</span>
+<span class="pill strong">strong: Python</span>
+<span class="pill strong">strong: Django</span>
+<span class="pill strong">strong: PostgreSQL</span>
+</div>
+<div class="verdict">You have solid backend depth but are missing all three cloud-native tools this role requires. Consider highlighting any Docker or CI/CD experience that touches deployment pipelines.</div>
+</div>
+
+<div class="card">
+<h3>Severity levels explained</h3>
+<p class="desc">Three levels tell the candidate exactly what to prioritise.</p>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="display:inline-block;padding:4px 12px;border-radius:999px;background:#fef2f2;color:#991b1b;border:1px solid #ef4444;font-weight:700;font-size:12px">critical</span>
+<span>Required by JD + clearly absent from resume. Likely auto-filtered.</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<span style="display:inline-block;padding:4px 12px;border-radius:999px;background:#fff7ed;color:#92400e;border:1px solid #f59e0b;font-weight:700;font-size:12px">preferred</span>
+<span>Nice-to-have. Adds points but not a blocker for shortlisting.</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<span style="display:inline-block;padding:4px 12px;border-radius:999px;background:#f9fafb;color:#4b5563;border:1px solid #9ca3af;font-weight:700;font-size:12px">bonus</span>
+<span>Optional mention. Safe to skip if time-pressed.</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="ex-row">
+<div class="card">
+<h3>Auto-patch — headline & summary rewrite</h3>
+<p class="desc">LLM rewrites using JD vocabulary. Verbatim echo of original = failure mode.</p>
+<div class="diff-block d-old">
+<div class="lb">before</div>
+<div class="bd">
+<strong>Headline:</strong> Backend Developer with 3 years experience<br>
+<strong>Summary:</strong> I build web apps using Python and Django. I enjoy working on APIs and databases.
+</div>
+</div>
+<div class="diff-block d-new">
+<div class="lb">after AI patch</div>
+<div class="bd">
+<strong>Headline:</strong> <ins>Cloud-Native Backend Engineer · Python · AWS · Distributed Systems</ins><br>
+<strong>Summary:</strong> <ins>Backend engineer with 3 years delivering high-throughput Python APIs on AWS.</ins> Experienced in PostgreSQL, Docker, and building scalable REST services—ready to move into cloud-native environments with Kubernetes.
+</div>
+</div>
+<div class="frozen-note">🔒 Frozen facts never modified: company name · job title · dates · institution · certifications</div>
+</div>
+
+<div class="card">
+<h3>Auto-patch — experience bullets</h3>
+<p class="desc">Bullets reordered and sharpened with JD vocabulary. Facts preserved, no invented metrics.</p>
+<div class="diff-block d-old">
+<div class="lb">original bullets</div>
+<div class="bd">
+• Built REST APIs<br>
+• Worked with PostgreSQL database<br>
+• Deployed apps on servers
+</div>
+</div>
+<div class="diff-block d-new">
+<div class="lb">patched bullets</div>
+<div class="bd">
+• <ins>Designed and shipped production REST APIs in Python/Django serving internal tooling</ins><br>
+• <ins>Managed PostgreSQL schemas and query optimisation for transactional workloads</ins><br>
+• <ins>Containerised services with Docker and deployed to Linux servers via CI pipelines</ins>
+</div>
+</div>
+<div class="frozen-note">🔒 Frozen facts: company name · job title · start / end dates never changed</div>
+</div>
+</div>
+
+<div class="ex-row">
+<div class="card">
+<h3>Server guardrails — skills capping</h3>
+<p class="desc">Even if LLM suggests 10 new skills, server enforces max 5 new, max 30 total. Existing skills always preserved.</p>
+<div style="font-size:12px;color:#5b6788;margin-bottom:6px">LLM proposes:</div>
+<div class="sk-row">
+<span>Python</span><span>Django</span><span>PostgreSQL</span><span>Docker</span><span>Git</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">AWS Lambda</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Kubernetes</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Terraform</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Redis</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Kafka</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Elasticsearch</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Datadog</span>
+</div>
+<div style="font-size:12px;color:#5b6788;margin-bottom:6px">After guardrails (max 5 new, 30 total):</div>
+<div class="sk-row">
+<span>Python</span><span>Django</span><span>PostgreSQL</span><span>Docker</span><span>Git</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">AWS Lambda</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Kubernetes</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Terraform</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Redis</span>
+<span style="background:#fef3c7;color:#92400e;border-color:#f59e0b">Kafka</span>
+<span style="text-decoration:line-through;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">Elasticsearch</span>
+<span style="text-decoration:line-through;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">Datadog</span>
+</div>
+<div class="frozen-note">MAX_NEW_SKILLS = 5 · MAX_TOTAL_SKILLS = 30 · case-insensitive dedup</div>
+</div>
+
+<div class="card">
+<h3>Pending patch — confirm vs discard</h3>
+<p class="desc">Patch is never written to DB immediately. Staged in Redis for 30 min. Candidate reviews, then decides.</p>
+<div class="diff-block d-old">
+<div class="lb">candidate reviews diffs</div>
+<div class="bd">
+<strong>Headline</strong> changed: Backend Developer → Cloud-Native Backend Engineer<br>
+<strong>Skills</strong> added: AWS Lambda, Kubernetes, Terraform<br>
+<strong>Experience</strong> at Acme Corp: 3 bullets rewritten with Docker/CI vocabulary
+</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:10px">
+<div style="flex:1;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 12px;font-size:13px;color:#14532d;font-weight:700;text-align:center">✅ Accept<br><span style="font-size:11px;font-weight:400">patch applied to DB · caches cleared</span></div>
+<div style="flex:1;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 12px;font-size:13px;color:#991b1b;font-weight:700;text-align:center">❌ Discard<br><span style="font-size:11px;font-weight:400">patch deleted · resume unchanged</span></div>
+</div>
+</div>
+</div>
+
+<div class="ex-row">
+<div class="card" style="grid-column:1 / -1">
+<h3>Two phases end-to-end</h3>
+<p class="desc">What happens when a candidate applies to a job and wants their resume tailored.</p>
+<div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:16px;align-items:center">
+<div style="background:#1a2447;border:1px solid #2a3358;border-radius:12px;padding:14px 16px;color:#a8b2cc;font-size:13px">
+<div style="color:#94a3c4;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">without gap analysis</div>
+Candidate manually compares resume to JD. Rewrites headline by hand. Guesses what to emphasise. Submits and hopes.
+<div style="margin-top:8px;display:inline-block;background:#1a2447;color:#fca5a5;border:1px solid #7f1d1d;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:600">30–60 min manual work per job</div>
+</div>
+<div style="text-align:center;font-size:28px;color:#94a3b8">→</div>
+<div style="background:#1a2447;border:1px solid #2a3358;border-radius:12px;padding:14px 16px;color:#a8b2cc;font-size:13px">
+<div style="color:#94a3c4;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">with gap analysis + auto-patch</div>
+Phase 1: 1 AI call → score, missing skills, verdict in seconds.<br>
+Phase 2: 1 AI call → headline, summary, bullets rewritten + diff preview.<br>
+Candidate reviews → confirms → DB updated.
+<div style="margin-top:8px;display:inline-block;background:#1a2447;color:#86efac;border:1px solid #14532d;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:600">2 AI calls · under 10 s · no invented facts</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+function dl(id,name){
+  var svg=document.getElementById(id);
+  var c=svg.cloneNode(true);
+  c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  var xml=new XMLSerializer().serializeToString(c);
+  var blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>
+'+xml],{type:'image/svg+xml'});
+  var u=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(u);a.remove();},100);
+}
+</script>
+</body>
+</html>
