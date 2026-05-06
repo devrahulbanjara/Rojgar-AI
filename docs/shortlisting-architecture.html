@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ConvexHire — Shortlisting flow</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  body{
+    margin:0;padding:24px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:#f7f8fc;color:#1a2240;
+  }
+  h1{font-size:22px;margin:0 0 4px;font-weight:700}
+  .sub{color:#5b6788;font-size:13px;margin:0 0 18px}
+  .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px}
+  button{
+    background:#fff;color:#1a2240;border:1px solid #d6dbe8;
+    padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;
+  }
+  button:hover{border-color:#4f8cff;color:#4f8cff}
+  .frame{
+    background:#fff;border:1px solid #e5e8f0;border-radius:14px;padding:8px;
+    box-shadow:0 1px 2px rgba(20,30,60,0.04);
+  }
+  svg{display:block;width:100%;height:auto}
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:12px;color:#5b6788;
+  }
+  .legend .chip{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+    background:#fff;border:1px solid #e5e8f0;
+  }
+  .dot{width:10px;height:10px;border-radius:3px}
+</style>
+</head>
+<body>
+
+<h1>ConvexHire — Shortlisting flow</h1>
+<p class="sub">One picture. Job expires → fast filter → AI review → save.</p>
+
+<div class="toolbar">
+  <button onclick="dl('flow','convexhire-flow.svg')">Download SVG</button>
+  <button onclick="window.print()">Save as PDF</button>
+</div>
+
+<div class="frame">
+<svg id="flow" viewBox="0 0 1400 1500" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6788"/>
+    </marker>
+    <marker id="ah-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#22c55e"/>
+    </marker>
+    <marker id="ah-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/>
+    </marker>
+    <linearGradient id="bouncerG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fef3c7"/><stop offset="1" stop-color="#fde68a"/>
+    </linearGradient>
+    <linearGradient id="ctoG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dbeafe"/><stop offset="1" stop-color="#bfdbfe"/>
+    </linearGradient>
+    <linearGradient id="hrG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dcfce7"/><stop offset="1" stop-color="#bbf7d0"/>
+    </linearGradient>
+    <linearGradient id="judgeG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ede9fe"/><stop offset="1" stop-color="#ddd6fe"/>
+    </linearGradient>
+    <linearGradient id="finalG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cffafe"/><stop offset="1" stop-color="#a5f3fc"/>
+    </linearGradient>
+
+    <!-- resume icon -->
+    <symbol id="resume" viewBox="0 0 40 50">
+      <rect x="2" y="2" width="36" height="46" rx="3" fill="#fff" stroke="#94a3c4"/>
+      <line x1="8" y1="14" x2="32" y2="14" stroke="#94a3c4" stroke-width="1.4"/>
+      <line x1="8" y1="22" x2="32" y2="22" stroke="#94a3c4" stroke-width="1.4"/>
+      <line x1="8" y1="30" x2="26" y2="30" stroke="#94a3c4" stroke-width="1.4"/>
+      <line x1="8" y1="38" x2="22" y2="38" stroke="#94a3c4" stroke-width="1.4"/>
+    </symbol>
+    <!-- check / x icons -->
+    <symbol id="check" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="9" fill="#22c55e"/>
+      <path d="M5 10 L9 14 L15 7" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="cross" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="9" fill="#ef4444"/>
+      <path d="M6 6 L14 14 M14 6 L6 14" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+
+  <!-- ============================== STEP 1: TRIGGER ============================== -->
+  <g transform="translate(540,30)">
+    <rect width="320" height="56" rx="14" fill="#1a2240"/>
+    <text x="160" y="34" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">Job expires</text>
+    <text x="160" y="50" text-anchor="middle" fill="#a8b2cc" font-size="11">automatic or recruiter clicks "expire"</text>
+  </g>
+  <path d="M700 86 V120" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- ============================== STEP 2: APPLICATIONS ============================== -->
+  <text x="700" y="140" text-anchor="middle" fill="#1a2240" font-size="13" font-weight="600">All people who applied</text>
+  <g transform="translate(420,160)">
+    <use href="#resume" x="0" y="0" width="40" height="50"/>
+    <use href="#resume" x="80" y="0" width="40" height="50"/>
+    <use href="#resume" x="160" y="0" width="40" height="50"/>
+    <use href="#resume" x="240" y="0" width="40" height="50"/>
+    <use href="#resume" x="320" y="0" width="40" height="50"/>
+    <use href="#resume" x="400" y="0" width="40" height="50"/>
+    <use href="#resume" x="480" y="0" width="40" height="50"/>
+  </g>
+  <path d="M700 220 V260" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- ============================== STEP 3: ML BOUNCER ============================== -->
+  <g transform="translate(420,270)">
+    <rect width="560" height="110" rx="16" fill="url(#bouncerG)" stroke="#f59e0b"/>
+    <text x="20" y="32" fill="#7c2d12" font-size="16" font-weight="700">Step 1 — Fast filter</text>
+    <text x="20" y="52" fill="#92400e" font-size="12">A small ML model gives every resume a score 0–100</text>
+    <text x="20" y="72" fill="#92400e" font-size="12">Looks at: years of experience · skills match · resume vs job similarity</text>
+    <text x="20" y="92" fill="#92400e" font-size="12">Cheap. No AI calls yet.</text>
+    <!-- saver badge -->
+    <g transform="translate(380,18)">
+      <rect width="160" height="28" rx="8" fill="#fff" stroke="#f59e0b"/>
+      <text x="80" y="18" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">★ saves money</text>
+    </g>
+    <text x="540" y="68" text-anchor="end" fill="#7c2d12" font-size="11" font-style="italic">drops 80% of resumes here</text>
+  </g>
+  <path d="M700 380 V420" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- ============================== STEP 4: KEEP TOP 20% ============================== -->
+  <text x="700" y="438" text-anchor="middle" fill="#1a2240" font-size="13" font-weight="600">Keep top 20%</text>
+  <g transform="translate(420,450)">
+    <use href="#resume" x="0" y="0" width="40" height="50"/>
+    <use href="#check" x="22" y="-8" width="16" height="16"/>
+    <use href="#resume" x="80" y="0" width="40" height="50"/>
+    <use href="#cross" x="102" y="-8" width="16" height="16"/>
+    <use href="#resume" x="160" y="0" width="40" height="50"/>
+    <use href="#cross" x="182" y="-8" width="16" height="16"/>
+    <use href="#resume" x="240" y="0" width="40" height="50"/>
+    <use href="#cross" x="262" y="-8" width="16" height="16"/>
+    <use href="#resume" x="320" y="0" width="40" height="50"/>
+    <use href="#cross" x="342" y="-8" width="16" height="16"/>
+    <use href="#resume" x="400" y="0" width="40" height="50"/>
+    <use href="#cross" x="422" y="-8" width="16" height="16"/>
+    <use href="#resume" x="480" y="0" width="40" height="50"/>
+    <use href="#cross" x="502" y="-8" width="16" height="16"/>
+  </g>
+  <path d="M440 510 L700 555" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- ============================== STEP 5: AI REVIEW BOX ============================== -->
+  <g transform="translate(80,560)">
+    <rect width="1240" height="700" rx="20" fill="#f1f4ff" stroke="#c7cfe5" stroke-dasharray="4 4"/>
+    <text x="20" y="32" fill="#1a2240" font-size="18" font-weight="700">Step 2 — AI deep review</text>
+    <text x="20" y="52" fill="#5b6788" font-size="12">For each kept resume, run this loop:</text>
+
+    <!-- Resume in -->
+    <g transform="translate(40,90)">
+      <use href="#resume" width="48" height="60"/>
+      <use href="#check" x="28" y="-6" width="16" height="16"/>
+      <text x="24" y="78" text-anchor="middle" fill="#1a2240" font-size="11" font-weight="600">one resume</text>
+    </g>
+
+    <!-- arrow split -->
+    <path d="M120 120 L240 120" stroke="#5b6788" stroke-width="1.8" fill="none"/>
+    <path d="M240 120 L240 220 L300 220" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+    <path d="M240 120 L240 380 L300 380" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+    <text x="180" y="112" text-anchor="middle" fill="#5b6788" font-size="11">at the same time</text>
+
+    <!-- CTO reviewer -->
+    <g transform="translate(300,170)">
+      <rect width="320" height="120" rx="14" fill="url(#ctoG)" stroke="#4f8cff"/>
+      <circle cx="40" cy="60" r="22" fill="#fff" stroke="#4f8cff"/>
+      <text x="40" y="65" text-anchor="middle" font-size="20">👨‍💻</text>
+      <text x="80" y="38" fill="#1e3a8a" font-size="15" font-weight="700">Tech reviewer (CTO)</text>
+      <text x="80" y="58" fill="#1e3a8a" font-size="11">Looks at coding skills, depth,</text>
+      <text x="80" y="74" fill="#1e3a8a" font-size="11">tools used, real delivery.</text>
+      <text x="80" y="96" fill="#1e3a8a" font-size="11">Output: short list of pluses + minuses</text>
+      <!-- web search bubble -->
+      <g transform="translate(245,86)">
+        <rect width="68" height="22" rx="8" fill="#fff" stroke="#4f8cff"/>
+        <text x="34" y="15" text-anchor="middle" font-size="11" fill="#1e3a8a">🌐 search</text>
+      </g>
+    </g>
+
+    <!-- HR reviewer -->
+    <g transform="translate(300,330)">
+      <rect width="320" height="120" rx="14" fill="url(#hrG)" stroke="#22c55e"/>
+      <circle cx="40" cy="60" r="22" fill="#fff" stroke="#22c55e"/>
+      <text x="40" y="65" text-anchor="middle" font-size="20">🧑‍💼</text>
+      <text x="80" y="38" fill="#14532d" font-size="15" font-weight="700">People reviewer (HR)</text>
+      <text x="80" y="58" fill="#14532d" font-size="11">Looks at level, fit for role,</text>
+      <text x="80" y="74" fill="#14532d" font-size="11">communication, hiring risk.</text>
+      <text x="80" y="96" fill="#14532d" font-size="11">Output: short list of pluses + minuses</text>
+      <g transform="translate(245,86)">
+        <rect width="68" height="22" rx="8" fill="#fff" stroke="#22c55e"/>
+        <text x="34" y="15" text-anchor="middle" font-size="11" fill="#14532d">🌐 search</text>
+      </g>
+    </g>
+
+    <!-- arrows to judge -->
+    <path d="M620 230 L720 290" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+    <path d="M620 390 L720 320" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+    <!-- Judge -->
+    <g transform="translate(720,240)">
+      <rect width="240" height="120" rx="14" fill="url(#judgeG)" stroke="#7c5cff"/>
+      <text x="120" y="36" text-anchor="middle" font-size="22">⚖️</text>
+      <text x="120" y="60" text-anchor="middle" fill="#3b1d6f" font-size="14" font-weight="700">Judge</text>
+      <text x="120" y="80" text-anchor="middle" fill="#3b1d6f" font-size="11">Are both reviews good enough?</text>
+      <text x="120" y="98" text-anchor="middle" fill="#3b1d6f" font-size="11">How sure (0–100%)?</text>
+    </g>
+
+    <!-- decision diamond -->
+    <g transform="translate(1010,260)">
+      <polygon points="0,40 80,0 160,40 80,80" fill="#fff" stroke="#7c5cff" stroke-width="1.6"/>
+      <text x="80" y="36" text-anchor="middle" fill="#3b1d6f" font-size="12" font-weight="700">sure?</text>
+      <text x="80" y="52" text-anchor="middle" fill="#3b1d6f" font-size="10">≥ 70%</text>
+    </g>
+    <path d="M960 300 L1010 300" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+    <!-- yes → final -->
+    <path d="M1170 300 L1210 300 L1210 510 L 740 510" stroke="#22c55e" stroke-width="2" fill="none" marker-end="url(#ah-g)"/>
+    <text x="1185" y="295" fill="#16a34a" font-size="12" font-weight="700">yes</text>
+
+    <!-- no → loop back -->
+    <path d="M1090 260 L1090 180 L 460 180 L 460 170" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#ah-r)"/>
+    <text x="1090" y="172" text-anchor="middle" fill="#dc2626" font-size="12" font-weight="700">no</text>
+    <text x="780" y="172" text-anchor="middle" fill="#dc2626" font-size="11">try again with feedback</text>
+
+    <!-- Final box -->
+    <g transform="translate(420,470)">
+      <rect width="320" height="120" rx="14" fill="url(#finalG)" stroke="#06b6d4"/>
+      <text x="40" y="48" font-size="22">⭐</text>
+      <text x="80" y="40" fill="#0e4f5b" font-size="14" font-weight="700">Final summary</text>
+      <text x="80" y="60" fill="#0e4f5b" font-size="11">Combines both reviews into one</text>
+      <text x="80" y="76" fill="#0e4f5b" font-size="11">clean list of pluses + minuses.</text>
+      <text x="80" y="98" fill="#0e4f5b" font-size="11">Uses a smaller, cheaper AI.</text>
+      <g transform="translate(225,84)">
+        <rect width="80" height="22" rx="8" fill="#fff" stroke="#06b6d4"/>
+        <text x="40" y="15" text-anchor="middle" font-size="11" fill="#0e4f5b">cheap AI</text>
+      </g>
+    </g>
+
+    <!-- Loop count -->
+    <text x="620" y="635" text-anchor="middle" fill="#5b6788" font-size="11" font-style="italic">whole loop runs at most 1–2 times per resume</text>
+  </g>
+
+  <!-- arrow out of step 5 -->
+  <path d="M700 1260 V1300" stroke="#5b6788" stroke-width="1.8" fill="none" marker-end="url(#ah)"/>
+
+  <!-- ============================== STEP 6: SAVE ============================== -->
+  <g transform="translate(440,1310)">
+    <rect width="520" height="100" rx="16" fill="#1a2240"/>
+    <text x="20" y="34" fill="#fff" font-size="16" font-weight="700">Step 3 — Save</text>
+    <text x="20" y="56" fill="#a8b2cc" font-size="12">Top 20% → status "shortlisted" + pluses/minuses saved</text>
+    <text x="20" y="74" fill="#a8b2cc" font-size="12">Rest → "rejected"</text>
+    <text x="20" y="92" fill="#a8b2cc" font-size="12">Recruiter sees it on the dashboard</text>
+    <g transform="translate(420,30)">
+      <ellipse cx="40" cy="14" rx="40" ry="10" fill="#0e1832" stroke="#3b4a78"/>
+      <rect x="0" y="14" width="80" height="36" fill="#0e1832" stroke="#3b4a78"/>
+      <ellipse cx="40" cy="50" rx="40" ry="10" fill="#0e1832" stroke="#3b4a78"/>
+      <text x="40" y="36" text-anchor="middle" fill="#a8b2cc" font-size="10">database</text>
+    </g>
+  </g>
+
+  <!-- ============================== COST SAVERS PANEL ============================== -->
+  <g transform="translate(80,1430)">
+    <rect width="1240" height="60" rx="14" fill="#fff7ed" stroke="#f59e0b" stroke-dasharray="4 3"/>
+    <text x="20" y="26" fill="#7c2d12" font-size="13" font-weight="700">★ Five things that cut cost</text>
+    <g font-size="11" fill="#92400e">
+      <text x="20" y="48">1. Filter first with cheap ML</text>
+      <text x="220" y="48">2. Reuse the job text (cache)</text>
+      <text x="430" y="48">3. Short answers only (caps)</text>
+      <text x="640" y="48">4. Stop early if judge is sure</text>
+      <text x="860" y="48">5. Use cheap AI for final merge</text>
+      <text x="1090" y="48">+ web search has a 1-call limit</text>
+    </g>
+  </g>
+
+</svg>
+</div>
+
+<div class="legend">
+  <span class="chip"><span class="dot" style="background:#fde68a"></span>Fast ML filter</span>
+  <span class="chip"><span class="dot" style="background:#bfdbfe"></span>Tech reviewer</span>
+  <span class="chip"><span class="dot" style="background:#bbf7d0"></span>People reviewer</span>
+  <span class="chip"><span class="dot" style="background:#ddd6fe"></span>Judge</span>
+  <span class="chip"><span class="dot" style="background:#a5f3fc"></span>Final merge (cheap AI)</span>
+  <span class="chip"><span class="dot" style="background:#1a2240"></span>Save to DB</span>
+</div>
+
+<style>
+  .savers{margin-top:28px}
+  .savers h2{font-size:18px;margin:0 0 14px;color:#1a2240}
+  .saver{
+    background:#fff;border:1px solid #e5e8f0;border-radius:14px;
+    padding:18px 20px;margin-bottom:12px;
+    box-shadow:0 1px 2px rgba(20,30,60,0.04);
+  }
+  .saver h3{margin:0 0 6px;font-size:15px;color:#1a2240;display:flex;align-items:center;gap:8px}
+  .saver .num{
+    display:inline-block;width:24px;height:24px;border-radius:50%;
+    background:#fde68a;color:#7c2d12;text-align:center;line-height:24px;
+    font-weight:700;font-size:12px;
+  }
+  .saver .what{color:#5b6788;font-size:13px;margin:0 0 10px}
+  .saver .ex{
+    display:grid;grid-template-columns:1fr 24px 1fr;gap:10px;align-items:stretch;
+    font-size:12px;
+  }
+  @media(max-width:720px){.saver .ex{grid-template-columns:1fr}}
+  .ex .box{
+    background:#f7f8fc;border:1px solid #e5e8f0;border-radius:10px;
+    padding:10px 12px;
+  }
+  .ex .box.before{border-left:3px solid #ef4444}
+  .ex .box.after{border-left:3px solid #22c55e}
+  .ex .arrow{
+    display:flex;align-items:center;justify-content:center;
+    color:#5b6788;font-size:18px;font-weight:700;
+  }
+  .ex .label{display:block;color:#5b6788;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;font-weight:600}
+  .ex .num-pill{display:inline-block;background:#fff;border:1px solid #d6dbe8;border-radius:999px;padding:2px 8px;font-size:11px;color:#1a2240;margin-top:6px;font-weight:600}
+  code{background:#eef1f8;padding:1px 5px;border-radius:4px;font-size:11px}
+</style>
+
+<div class="savers">
+  <h2>How each cost saver works — with example</h2>
+
+  <div class="saver">
+    <h3><span class="num">1</span> Filter first with cheap ML</h3>
+    <p class="what">Tiny RandomForest model scores every resume in milliseconds. Only top 20% reach the AI.</p>
+    <div class="ex">
+      <div class="box before">
+        <span class="label">without filter</span>
+        Job has 100 applicants. AI reviews all 100.
+        <span class="num-pill">100 AI calls</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box after">
+        <span class="label">with ML filter</span>
+        ML scores all 100 (free). Only top 20 go to AI.
+        <span class="num-pill">20 AI calls · 80% saved</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="saver">
+    <h3><span class="num">2</span> Reuse the job text (prompt caching)</h3>
+    <p class="what">Job description + system rules are the same on every call. Bedrock caches them. Cached part bills at ~10% of normal.</p>
+    <div class="ex">
+      <div class="box before">
+        <span class="label">without cache</span>
+        Tech + People + Judge + retry. Each call sends full 4000-token job text.
+        <span class="num-pill">~16,000 tokens billed</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box after">
+        <span class="label">with cache</span>
+        First call: 4000 tokens. Next 3 calls: 400 each (cache hit).
+        <span class="num-pill">~5,200 tokens · 67% saved</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="saver">
+    <h3><span class="num">3</span> Short answers only (schema caps)</h3>
+    <p class="what">Pydantic limits force the AI to be brief: max 4 strengths, 4 concerns, 120 chars each. No prose paragraphs.</p>
+    <div class="ex">
+      <div class="box before">
+        <span class="label">without caps</span>
+        "This candidate is a highly experienced Senior Software Engineer with 7 years of professional experience applying for…" (1500-token paragraph)
+        <span class="num-pill">~1500 output tokens</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box after">
+        <span class="label">with caps</span>
+        <code>strengths: ["Strong Python ETL pipelines (resume)", "AWS skills match JD"]</code>
+        <span class="num-pill">~150 output tokens · 90% saved</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="saver">
+    <h3><span class="num">4</span> Stop early when judge is sure</h3>
+    <p class="what">Judge returns confidence 0–1. If ≥0.7, skip the retry loop. Same quality, half the work.</p>
+    <div class="ex">
+      <div class="box before">
+        <span class="label">without confidence gate</span>
+        Always loops twice. Two rounds of Tech + People + Judge.
+        <span class="num-pill">6 AI calls per resume</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box after">
+        <span class="label">with confidence gate</span>
+        Judge says "satisfied=true, conf=0.85" on round 1 → skip retry.
+        <span class="num-pill">3 AI calls · 50% saved</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="saver">
+    <h3><span class="num">5</span> Use cheap AI for the final merge</h3>
+    <p class="what">Final step just dedupes two lists. No reasoning needed. Switch from Sonnet to Haiku — 12× cheaper.</p>
+    <div class="ex">
+      <div class="box before">
+        <span class="label">without routing</span>
+        Sonnet does merge. Costs $0.003/1K input, $0.015/1K output.
+        <span class="num-pill">$0.018 per merge</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box after">
+        <span class="label">with routing to Haiku</span>
+        Haiku does merge. Same output quality for dedupe.
+        <span class="num-pill">$0.0015 per merge · 92% saved</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="saver">
+    <h3><span class="num">+</span> Web search has a 1-call limit + cache</h3>
+    <p class="what">Each reviewer can search the web at most once. Result cached and shared. Big HTML stripped down to 300 chars.</p>
+    <div class="ex">
+      <div class="box before">
+        <span class="label">without limit</span>
+        Tech reviewer searches 3 times. People reviewer searches 3 times. Each result is full HTML page in the conversation.
+        <span class="num-pill">6 searches · ~12,000 tokens of HTML</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box after">
+        <span class="label">with budget + cache</span>
+        Tech searches once. People reuses cached result. 300-char summary only.
+        <span class="num-pill">1 search · ~600 tokens · 95% saved</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="saver" style="background:#0d1834;border-color:#1e3a8a">
+    <h3 style="color:#cfe0ff"><span class="num" style="background:#4f8cff;color:#fff">=</span> Combined effect</h3>
+    <p class="what" style="color:#a8b2cc">All five together on one applicant pipeline:</p>
+    <div class="ex">
+      <div class="box before" style="background:#1a2447;border-color:#2a3358;color:#cfe0ff">
+        <span class="label" style="color:#94a3c4">before optimization</span>
+        100 applicants × full AI review × verbose paragraphs × 2 loops × Sonnet everywhere
+        <span class="num-pill" style="background:#1a2447;color:#fca5a5;border-color:#7f1d1d">~$8.00 per job</span>
+      </div>
+      <div class="arrow" style="color:#94a3c4">→</div>
+      <div class="box after" style="background:#1a2447;border-color:#2a3358;color:#cfe0ff">
+        <span class="label" style="color:#94a3c4">after optimization</span>
+        20 applicants × cached prompts × short JSON × 1 loop × Haiku merge
+        <span class="num-pill" style="background:#1a2447;color:#86efac;border-color:#14532d">~$0.80 per job · 90% saved</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function dl(id, name){
+  const svg = document.getElementById(id);
+  const c = svg.cloneNode(true);
+  c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const xml = new XMLSerializer().serializeToString(c);
+  const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+xml], {type:'image/svg+xml'});
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = u; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(u); a.remove();}, 100);
+}
+</script>
+</body>
+</html>
