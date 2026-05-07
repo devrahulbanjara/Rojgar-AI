@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Copyright Notice — ConvexHire',
+  title: 'Copyright Notice - ConvexHire',
   description:
     'ConvexHire copyright notice: all original content on this platform is protected under the Copyright Act 2059 (2002) of Nepal.',
 }
@@ -97,17 +97,17 @@ export default function CopyrightPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>Copyright Act 2059 (2002) of Nepal</strong> — which provides copyright
+                <strong>Copyright Act 2059 (2002) of Nepal</strong>, which provides copyright
                 protection for literary, artistic, and computer program works
               </li>
               <li>
-                <strong>Electronic Transactions Act 2063 (2006) of Nepal</strong> — which recognises
+                <strong>Electronic Transactions Act 2063 (2006) of Nepal</strong>, which recognises
                 the legal status of digital works and electronic records
               </li>
               <li>
                 The{' '}
                 <strong>Berne Convention for the Protection of Literary and Artistic Works</strong>{' '}
-                — Nepal acceded in 1967, providing automatic protection in all 181 member countries
+                . Nepal acceded in 1967, providing automatic protection in all 181 member countries
                 without registration
               </li>
               <li>

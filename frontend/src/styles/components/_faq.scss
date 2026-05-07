@@ -83,7 +83,7 @@
     width: 100%;
   }
 
-  // ── Accordion item — local reveal (avoids React className conflict) ──────
+  // ── Accordion item - local reveal (avoids React className conflict) ──────
   [data-faq-item] {
     opacity: 0;
     transform: translateY(24px);
@@ -183,7 +183,7 @@
     }
   }
 
-  // ── Answer panel — grid-template-rows animation ───────────
+  // ── Answer panel - grid-template-rows animation ───────────
   // Smoothly transitions from 0fr → 1fr without JS height calc
   &__panel {
     display: grid;
