@@ -12,7 +12,7 @@
   overflow: hidden;
   background-color: $color-white;
 
-  // ── Background SVG — bottom right ────────────────────────
+  // ── Background SVG - bottom right ────────────────────────
   &__bg {
     position: absolute;
     bottom: 5%;
@@ -106,7 +106,7 @@
       background-color: rgba($color-primary, 0.7);
     }
 
-    // Featured (middle) card — real border, lift, scale bump
+    // Featured (middle) card - real border, lift, scale bump
     &--featured {
       padding: 0;
       background-color: transparent;
@@ -129,7 +129,7 @@
       }
     }
 
-    // Credits card — dashed border, lighter appearance
+    // Credits card - dashed border, lighter appearance
     &--credits {
       padding: 0;
       background-color: transparent;

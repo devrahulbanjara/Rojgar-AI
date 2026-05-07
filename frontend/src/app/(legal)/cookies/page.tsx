@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy — ConvexHire',
+  title: 'Cookie Policy - ConvexHire',
   description:
     'Understand how ConvexHire uses cookies and similar technologies on its platform, in compliance with the Electronic Transactions Act 2063 of Nepal.',
 }
@@ -111,21 +111,21 @@ export default function CookiePolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>ch_session</strong> — Maintains your authenticated session while you are
+                <strong>ch_session</strong>: Maintains your authenticated session while you are
                 logged in. Expires on browser close.
               </li>
               <li>
-                <strong>ch_csrf</strong> — Cross-site request forgery protection token. Expires on
+                <strong>ch_csrf</strong>: Cross-site request forgery protection token. Expires on
                 browser close.
               </li>
               <li>
-                <strong>cookie-consent</strong> — Stores your cookie consent preference. Persists
-                for 12 months.
+                <strong>cookie-consent</strong>: Stores your cookie consent preference. Persists for
+                12 months.
               </li>
             </ul>
 
             <h3 className="legal__section-subtitle">
-              2.2 Analytics Cookies (optional — consent required)
+              2.2 Analytics Cookies (optional, consent required)
             </h3>
             <p className="legal__text">
               These cookies help us understand how visitors interact with the Service so we can
@@ -134,21 +134,21 @@ export default function CookiePolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>_ga / _ga_*</strong> — Google Analytics 4. Used to distinguish unique users
+                <strong>_ga / _ga_*</strong>: Google Analytics 4. Used to distinguish unique users
                 and sessions. Expires after 2 years.
               </li>
               <li>
-                <strong>_gid</strong> — Google Analytics. Distinguishes users. Expires after 24
+                <strong>_gid</strong>: Google Analytics. Distinguishes users. Expires after 24
                 hours.
               </li>
               <li>
-                <strong>ch_ab</strong> — Internal A/B testing identifier to measure which UI variant
+                <strong>ch_ab</strong>: Internal A/B testing identifier to measure which UI variant
                 you see. Expires after 30 days.
               </li>
             </ul>
 
             <h3 className="legal__section-subtitle">
-              2.3 Functional Cookies (optional — consent required)
+              2.3 Functional Cookies (optional, consent required)
             </h3>
             <p className="legal__text">
               These cookies enable enhanced functionality and personalisation, such as remembering
@@ -156,11 +156,11 @@ export default function CookiePolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>ch_prefs</strong> — Stores your job search preferences (location, salary
+                <strong>ch_prefs</strong>: Stores your job search preferences (location, salary
                 range). Expires after 90 days.
               </li>
               <li>
-                <strong>ch_locale</strong> — Remembers your language preference. Expires after 1
+                <strong>ch_locale</strong>: Remembers your language preference. Expires after 1
                 year.
               </li>
             </ul>
@@ -180,7 +180,7 @@ export default function CookiePolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>Google Analytics</strong> — Analytics (if consent given). Privacy:{' '}
+                <strong>Google Analytics</strong>: Analytics (if consent given). Privacy:{' '}
                 <Link
                   href="https://policies.google.com/privacy"
                   target="_blank"
@@ -192,7 +192,7 @@ export default function CookiePolicyPage() {
                 .
               </li>
               <li>
-                <strong>Stripe</strong> — Payment processing for Employer subscriptions. Only loaded
+                <strong>Stripe</strong>: Payment processing for Employer subscriptions. Only loaded
                 on checkout pages. Privacy:{' '}
                 <Link
                   href="https://stripe.com/en-np/privacy"
@@ -205,7 +205,7 @@ export default function CookiePolicyPage() {
                 .
               </li>
               <li>
-                <strong>LinkedIn / Google OAuth</strong> — Only active if you choose to sign in with
+                <strong>LinkedIn / Google OAuth</strong>: Only active if you choose to sign in with
                 those services.
               </li>
             </ul>
@@ -225,7 +225,7 @@ export default function CookiePolicyPage() {
             <ul className="legal__list">
               <li>
                 <strong>Strictly necessary cookies</strong> are deployed on the basis of{' '}
-                <em>contractual necessity</em> — they are required to deliver the electronic service
+                <em>contractual necessity</em>. They are required to deliver the electronic service
                 you have requested.
               </li>
               <li>
@@ -326,10 +326,10 @@ export default function CookiePolicyPage() {
             <p className="legal__text">For questions about our use of cookies, please contact:</p>
             <ul className="legal__list">
               <li>
-                <strong>Company:</strong> Convex Technologies Pvt. Ltd., Kathmandu, Nepal
+                <strong>Company:</strong> ConvexHire Private Limited (Yet to Register)
               </li>
               <li>
-                <strong>Email:</strong> privacy@convexhire.com
+                <strong>Email:</strong> contact@convexhire.rahuldevbanjara.com.np
               </li>
             </ul>
           </section>

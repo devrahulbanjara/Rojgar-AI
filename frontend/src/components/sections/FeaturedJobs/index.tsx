@@ -75,7 +75,7 @@ export default function FeaturedJobs() {
           </Link>
         </div>
 
-        {/* Empty state — only if loaded but no jobs */}
+        {/* Empty state - only if loaded but no jobs */}
         {!isLoading && jobs.length === 0 && (
           <div className="featured-jobs__empty">
             <Briefcase style={{ width: 40, height: 40, opacity: 0.3 }} />

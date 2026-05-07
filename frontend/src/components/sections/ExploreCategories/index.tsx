@@ -59,7 +59,7 @@ export default function ExploreCategories() {
         aria-hidden="true"
       />
 
-      {/* Logos marquee — fades in as section enters viewport */}
+      {/* Logos marquee - fades in as section enters viewport */}
       <div className="explore__logos" data-reveal>
         <div className="explore__marquee-track">
           {/* Duplicate for seamless loop */}
@@ -96,7 +96,7 @@ export default function ExploreCategories() {
           </Link>
         </div>
 
-        {/* Right — Swiper */}
+        {/* Right - Swiper */}
         <div
           className="explore__carousel"
           data-reveal
@@ -144,7 +144,7 @@ export default function ExploreCategories() {
         </div>
       </div>
 
-      {/* Stats strip — staggered reveal */}
+      {/* Stats strip - staggered reveal */}
       <div className="container explore__stats">
         {STATS.map((stat, i) => (
           <div

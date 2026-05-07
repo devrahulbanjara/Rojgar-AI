@@ -46,11 +46,12 @@ const CANDIDATE_TIERS: PricingTier[] = [
     cta: 'Get Started',
     ctaHref: '/signup',
     features: [
-      { text: 'Create profile + AI resume import (1 time)', included: true },
-      { text: 'Up to 2 resumes, PDF download', included: true },
-      { text: 'Browse all jobs', included: true },
+      { text: 'Create profile + AI resume import (1 use)', included: true },
+      { text: 'Up to 2 resumes with PDF download', included: true },
+      { text: 'Browse and search all jobs (semantic + keyword)', included: true },
       { text: 'Up to 5 active applications', included: true },
-      { text: 'Basic application tracking + see AI score & feedback', included: true },
+      { text: 'Full pipeline tracking with AI score and feedback visibility', included: true },
+      { text: 'Real-time notifications on status changes', included: true },
     ],
   },
   {
@@ -68,9 +69,10 @@ const CANDIDATE_TIERS: PricingTier[] = [
       { text: 'Everything in Free', included: true },
       { text: 'Unlimited applications', included: true },
       { text: 'AI resume import (3 uses)', included: true },
-      { text: 'Up to 5 resumes', included: true },
-      { text: 'Resume Gap Analysis (5 uses)', included: true },
-      { text: 'Resume AI patch suggestions (3 uses)', included: true },
+      { text: 'Up to 5 named resumes (e.g. "Backend focused")', included: true },
+      { text: 'Resume Gap Analysis before applying (5 uses)', included: true },
+      { text: 'AI Auto-Patch with Frozen Facts protection (3 uses)', included: true },
+      { text: 'Accept or decline offers directly from dashboard', included: true },
     ],
   },
   {
@@ -86,9 +88,9 @@ const CANDIDATE_TIERS: PricingTier[] = [
     ctaHref: '/signup',
     isCredits: true,
     features: [
-      { text: 'Gap Analysis — NPR 49/use', included: true },
-      { text: 'Resume AI Patch — NPR 69/use', included: true },
-      { text: 'AI Resume Import — NPR 49/use', included: true },
+      { text: 'Gap Analysis: NPR 49/use', included: true },
+      { text: 'Resume AI Auto-Patch: NPR 69/use', included: true },
+      { text: 'AI Resume Import: NPR 49/use', included: true },
     ],
   },
 ]
@@ -107,10 +109,11 @@ const COMPANY_TIERS: PricingTier[] = [
     ctaHref: '/signup',
     features: [
       { text: '1 admin, up to 2 recruiters', included: true },
-      { text: '2 active jobs', included: true },
-      { text: 'Manual pipeline management', included: true },
-      { text: 'AI job draft assistant (3/month)', included: true },
+      { text: '2 active jobs at a time', included: true },
+      { text: 'Manual pipeline management and status tracking', included: true },
+      { text: 'AI Job Draft Assistant (3/month)', included: true },
       { text: 'Outreach email drafting (10/month)', included: true },
+      { text: 'Company-wide audit log and activity feed', included: true },
     ],
   },
   {
@@ -127,14 +130,17 @@ const COMPANY_TIERS: PricingTier[] = [
     features: [
       { text: 'Up to 5 recruiters', included: true },
       { text: 'Up to 8 active jobs', included: true },
-      { text: 'AI evaluation on all applications (auto-score)', included: true },
-      { text: 'Unlimited job draft assistant', included: true },
-      { text: 'Unlimited outreach email drafting', included: true },
+      { text: 'AI evaluation on all applications (auto-score on submit)', included: true },
       {
-        text: 'Recruiter AI Chat (candidate search, salary research, job lookup, job edits)',
+        text: 'AI shortlisting (ML scoring + multi-perspective evaluation)',
         included: true,
       },
-      { text: 'Full team management', included: true },
+      { text: 'Unlimited AI Job Draft Assistant with salary research', included: true },
+      { text: 'Unlimited outreach drafting with approve-before-send', included: true },
+      { text: 'Recruiter AI Chat (candidate search, salary research, job edits)', included: true },
+      { text: 'Integrated interview booking with auto-status sync', included: true },
+      { text: 'Interview recording transcription + AI evaluation', included: true },
+      { text: 'Full team management with join request approval', included: true },
     ],
   },
   {
@@ -154,8 +160,8 @@ const COMPANY_TIERS: PricingTier[] = [
       { text: 'Unlimited active jobs', included: true },
       { text: 'Everything in Growth', included: true },
       { text: 'Semantic search across all historical applicants', included: true },
-      { text: 'Bulk shortlisting suggestions', included: true },
-      { text: 'Custom branding on candidate emails', included: true },
+      { text: 'Prompt injection guardrails + PII redaction on all AI pipelines', included: true },
+      { text: 'Custom branding on candidate outreach emails', included: true },
       { text: 'Priority support', included: true },
     ],
   },
@@ -179,7 +185,7 @@ export default function Pricing() {
 
   return (
     <section className="pricing" id="pricing">
-      {/* Background SVG — bottom right */}
+      {/* Background SVG - bottom right */}
       <Image
         src="/bg/bg-ui-v5.svg"
         alt=""
@@ -202,7 +208,7 @@ export default function Pricing() {
             style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
           >
             Free for candidates and companies to get started. Company plans unlock AI hiring tools
-            for your entire team — one subscription, every recruiter covered.
+            for your entire team. One subscription, every recruiter covered.
           </p>
 
           {/* View toggle */}
@@ -230,7 +236,7 @@ export default function Pricing() {
           </div>
         </header>
 
-        {/* Cards — staggered scale-fade */}
+        {/* Cards - staggered scale-fade */}
         <div className="pricing__grid">
           {activeTiers.map((tier) => (
             <div
