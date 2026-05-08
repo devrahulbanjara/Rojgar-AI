@@ -274,10 +274,14 @@
 }
 
 .media-badge {
+  position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .media-badge__image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   border-radius: inherit;
 }
