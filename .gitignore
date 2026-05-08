@@ -33,7 +33,6 @@ instance/
 *.db
 
 .ipynb_checkpoints/
-**/*.ipynb
 **/trial.ipynb
 
 .env
