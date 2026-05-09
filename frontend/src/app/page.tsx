@@ -58,13 +58,14 @@ export default function Home() {
         <div className="container homepage__inner">
           {/* Heading */}
           <h1 className="homepage__heading">
-            Track Every Application, <span className="homepage__heading-primary">Land Faster</span>{' '}
-            With AI
+            Hire Smarter. Apply Smarter.{' '}
+            <span className="homepage__heading-primary">AI-Powered</span> Recruitment.
           </h1>
           {/* Subtitle */}
           <p className="homepage__subtitle">
-            ConvexHire uses AI to organise your job search and keep every application moving — so
-            you spend less time tracking and more time interviewing.
+            ConvexHire runs your entire hiring process end-to-end. Candidates get AI resume coaching
+            and live pipeline visibility. Recruiters get automated evaluation, smart shortlisting,
+            and a built-in AI assistant.
           </p>
           {/* Search bar */}
           <form className="homepage__search" onSubmit={handleHeroSearch}>
@@ -106,7 +107,7 @@ export default function Home() {
               alt="Testimonials Image"
             />
             <p className="homepage__proof">
-              Trusted by <strong>12,000+</strong> job seekers &mdash; 3,400 hired last month
+              Trusted by <strong>12,000+</strong> job seekers. 3,400 hired last month.
             </p>
           </div>
         </div>
@@ -128,9 +129,10 @@ export default function Home() {
       {/* Mid-page CTA */}
       <section className="mid-cta" data-reveal>
         <div className="container mid-cta__inner">
-          <h2 className="mid-cta__heading">Ready to take the next step?</h2>
+          <h2 className="mid-cta__heading">Ready to transform your hiring?</h2>
           <p className="mid-cta__sub">
-            Whether you&apos;re hiring or job hunting, ConvexHire gets you there faster.
+            Candidates apply smarter with AI coaching. Recruiters hire faster with multi-agent
+            evaluation. Both sides get full pipeline visibility.
           </p>
           <div className="mid-cta__actions">
             <Link href="/signup" className="btn btn--primary">

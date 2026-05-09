@@ -8,20 +8,20 @@ const BLOCKS = [
   {
     id: 'resume-ai',
     color: 'secondary',
-    image: '/homepage/whyPreferUs/image1.svg',
-    imageAlt: 'Candidate comparing resume to job requirements',
-    title: 'AI Closes Your Resume Gaps Before You Apply',
-    body: "Run a gap analysis against any job. See exactly what's missing — then let AI patch your resume. You approve every edit before anything saves.",
+    image: 'https://stories.freepiklabs.com/storage/36733/Online-Resume_Artboard-1.svg',
+    imageAlt: 'AI analyzing and improving a digital resume',
+    title: 'AI Resume Coaching That Lands Interviews',
+    body: 'Upload any PDF and AI extracts your entire profile. Before you apply, run a gap analysis against the job description, then let AI patch your resume to close those gaps. You approve every edit individually before anything saves.',
     features: [
       {
         icon: 'brain',
-        heading: 'Resume Gap Analysis',
-        desc: "Compare your resume to any job's requirements. Get a precise gap report before you hit Apply.",
+        heading: 'Gap Analysis + AI Auto-Patch',
+        desc: 'Get a score, critical gaps, and concrete suggestions. AI rewrites your headline, summary, skills, and bullet points to match the role. Frozen Facts like company names, dates, and certifications are never altered.',
       },
       {
         icon: 'target',
-        heading: 'AI Resume Patching',
-        desc: 'Accept or reject every AI suggestion individually. Nothing changes without your explicit approval.',
+        heading: 'Multiple Resumes, One Profile',
+        desc: 'Build targeted resumes for different roles. Live preview, PDF download, and seamless selection during the apply flow.',
       },
     ],
     reverse: false,
@@ -29,20 +29,20 @@ const BLOCKS = [
   {
     id: 'pipeline-clarity',
     color: 'warning',
-    image: '/homepage/whyPreferUs/image2.svg',
-    imageAlt: 'Application pipeline status dashboard',
-    title: 'Know Exactly Where You Stand — Every Step',
-    body: 'Live pipeline tracking from Applied to Offer. See your AI score out of 100 and written feedback — even after a rejection.',
+    image: 'https://stories.freepiklabs.com/storage/2013/179-People-search_Artboard-1.svg',
+    imageAlt: 'Matching candidates to the right job opportunities',
+    title: 'Smart Job Matching + Full Pipeline Visibility',
+    body: 'Semantic search understands what you mean, not just what you type. Search "Python backend" and find roles that match by meaning. Track every application from Applied through Interview to Offer, with your AI score and written feedback visible at each step.',
     features: [
       {
-        icon: 'bell',
-        heading: 'Live Application Pipeline',
-        desc: 'Track every stage in real time: Applied → Evaluated → Shortlisted → Interview → Offer.',
+        icon: 'target',
+        heading: 'Jobs Matched to Your Profile',
+        desc: 'Our search understands natural language. Describe what you want in plain words and find roles that actually fit your skills, experience, and goals.',
       },
       {
         icon: 'chart',
-        heading: 'Your AI Score & Feedback Visible',
-        desc: "After evaluation, see your 0–100 score and the AI's written reasoning — not a generic rejection.",
+        heading: 'Transparent AI Scoring + Feedback',
+        desc: 'After evaluation, your 0 to 100 score and the reasoning behind it are visible in your dashboard. Even rejections include specific, actionable feedback so you know exactly what to improve.',
       },
     ],
     reverse: true,
@@ -50,23 +50,44 @@ const BLOCKS = [
   {
     id: 'ai-hiring',
     color: 'accent',
-    image: '/homepage/whyPreferUs/image3.svg',
-    imageAlt: 'Recruiter AI dashboard showing candidate pipeline',
-    title: 'One Platform Runs Your Entire Hiring Pipeline',
-    body: 'AI creates jobs, scores applicants, drafts outreach, and syncs interview bookings — with human approval at every decision point.',
+    image: 'https://stories.freepiklabs.com/storage/40608/Profiling-(1)_Artboard-1-copy.svg',
+    imageAlt: 'AI evaluating and scoring candidate profiles',
+    title: 'AI Evaluates, Shortlists, and Drafts Outreach for You',
+    body: 'A machine learning model scores every resume in milliseconds to filter weak fits. The top candidates then go through a multi-perspective AI review where technical and cultural fit are assessed independently before a final score is produced.',
     features: [
       {
         icon: 'brain',
-        heading: 'AI Evaluation + Smart Shortlisting',
-        desc: 'Auto-score every applicant on arrival. Set a threshold and shortlist your entire cohort in one action.',
+        heading: 'AI Evaluation + Cohort Shortlisting',
+        desc: 'Auto-score every applicant on arrival or run batch evaluation. Set a threshold and shortlist your entire cohort in one action. AI drafts personalized outreach for every shortlisted candidate.',
       },
       {
         icon: 'zap',
-        heading: 'AI Outreach + Cal.com Interviews',
-        desc: 'AI drafts personalized emails. Candidates book via Cal.com. Status updates automatically.',
+        heading: 'Recruiter AI Chat Assistant',
+        desc: 'A persistent chat assistant that can search candidates semantically, research salaries from the web, look up and edit jobs with a preview-and-confirm flow, and remember your full conversation history.',
       },
     ],
     reverse: false,
+  },
+  {
+    id: 'security',
+    color: 'secondary',
+    image: 'https://stories.freepiklabs.com/storage/1520/34-Security-on_Artboard-1.svg',
+    imageAlt: 'Security shield protecting data and AI interactions',
+    title: 'Enterprise-Grade Security at Every Layer',
+    body: 'Defense-in-depth guardrails protect every AI interaction. Input rails block prompt injection and role-hijack attempts before they reach any AI model. PII redaction strips personal data from prompts. Human confirmation gates every consequential action.',
+    features: [
+      {
+        icon: 'target',
+        heading: 'Guardrails Against Misuse',
+        desc: 'Prompt injection detection on all user-controlled inputs. PII redaction removes sensitive data before it reaches AI. Frozen Facts prevent hallucination. Rate limits and duplicate-request protection prevent abuse.',
+      },
+      {
+        icon: 'bell',
+        heading: 'Human-in-the-Loop by Design',
+        desc: 'No emails send without recruiter approval. No job edits save without a before/after preview and explicit confirm. No shortlist decision is final until a human signs off.',
+      },
+    ],
+    reverse: true,
   },
 ]
 
@@ -120,6 +141,7 @@ export default function WhyPreferUs() {
                 fill
                 className="why-prefer__img"
                 sizes="(max-width: 768px) 100vw, 475px"
+                unoptimized
               />
             </div>
           )

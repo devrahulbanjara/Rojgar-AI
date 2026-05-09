@@ -562,7 +562,11 @@ function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
               </li>
             ))}
           </ul>
-          <button type="button" className="btn btn--ghost btn--sm" onClick={addStrength}>
+          <button
+            type="button"
+            className={`btn btn--ghost btn--sm ${styles.reviewAddButton}`}
+            onClick={addStrength}
+          >
             Add strength
           </button>
         </div>
@@ -590,7 +594,11 @@ function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
               </li>
             ))}
           </ul>
-          <button type="button" className="btn btn--ghost btn--sm" onClick={addGap}>
+          <button
+            type="button"
+            className={`btn btn--ghost btn--sm ${styles.reviewAddButton}`}
+            onClick={addGap}
+          >
             Add gap
           </button>
         </div>

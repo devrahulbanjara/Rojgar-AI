@@ -8,7 +8,7 @@
 
 .homepage {
   overflow: hidden;
-  margin-top: -$space-24; // cancel out .page padding-top — hero fills viewport from the top
+  margin-top: -$space-24; // cancel out .page padding-top - hero fills viewport from the top
 
   .heroSection {
     height: 100vh;
@@ -178,7 +178,7 @@
       flex-shrink: 0;
     }
 
-    // Fill layer — darker gradient, slides up on hover
+    // Fill layer - darker gradient, slides up on hover
     &::before {
       content: '';
       position: absolute;

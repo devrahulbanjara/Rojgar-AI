@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions — ConvexHire',
+  title: 'Terms & Conditions - ConvexHire',
   description:
     'Read the Terms and Conditions governing your use of ConvexHire, drafted in accordance with the Nepal Contract Act 2056, Consumer Protection Act 2075, and Electronic Transactions Act 2063.',
 }
@@ -163,16 +163,21 @@ export default function TermsPage() {
             </p>
             <ul className="legal__list">
               <li>
-                A searchable job listing database with filtering and saved-search functionality
+                A searchable job listing database with keyword and semantic search functionality
               </li>
-              <li>Candidate profile creation and résumé/CV storage</li>
-              <li>Online job application submission and tracking</li>
-              <li>Salary benchmarking and career-path data</li>
+              <li>Candidate profile creation, resume building, and PDF export</li>
+              <li>AI-powered resume gap analysis and auto-patching during the application flow</li>
+              <li>Online job application submission and real-time pipeline tracking</li>
+              <li>AI evaluation scoring and written feedback on applications</li>
               <li>
-                Employer dashboard for posting jobs, reviewing applications, and contacting
-                candidates (paid subscription)
+                Recruiter dashboard for posting jobs, reviewing applications, AI-assisted
+                shortlisting, outreach email drafting, and interview management (paid subscription)
               </li>
-              <li>AI-assisted candidate matching and ranking tools for Employers</li>
+              <li>
+                AI chat assistant for recruiters to search candidates, research salaries, and manage
+                jobs
+              </li>
+              <li>Interview recording transcription and AI-powered evaluation</li>
             </ul>
             <p className="legal__text">
               We act as an intermediary platform. We do not guarantee employment, a specific number

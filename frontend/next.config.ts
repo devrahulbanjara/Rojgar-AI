@@ -45,6 +45,13 @@ const remotePatterns: NonNullable<NextConfig['images']>['remotePatterns'] = [
     pathname: '/9.x/**',
     search: '',
   },
+  {
+    protocol: 'https',
+    hostname: 'stories.freepiklabs.com',
+    port: '',
+    pathname: '/storage/**',
+    search: '',
+  },
 ]
 
 if (s3BucketName) {
