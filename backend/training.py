@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import seaborn as sns
 import joblib
 import os
 
@@ -79,8 +83,60 @@ model = RandomForestClassifier(
 )
 model.fit(X_train, y_train)
 
+y_pred = model.predict(X_test)
+
 print("\n--- Model Evaluation on Test Set ---")
-print(classification_report(y_test, model.predict(X_test)))
+report_str = classification_report(y_test, y_pred)
+print(report_str)
+
+output_dir = os.path.join(os.path.dirname(__file__), "..", "docs", "ml_outputs")
+os.makedirs(output_dir, exist_ok=True)
+print(f"\nSaving outputs to: {output_dir}")
+
+# --- Save classification report as text ---
+report_path = os.path.join(output_dir, "classification_report.txt")
+with open(report_path, "w") as f:
+    f.write("Classification Report for RandomForest Bouncer\n")
+    f.write("=" * 60 + "\n\n")
+    f.write(report_str)
+print(f"  classification_report.txt")
+
+# --- Confusion matrix plot ---
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(6, 5))
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    xticklabels=["Not Shortlisted (0)", "Shortlisted (1)"],
+    yticklabels=["Not Shortlisted (0)", "Shortlisted (1)"],
+)
+plt.title("Confusion Matrix - RandomForest Bouncer")
+plt.ylabel("True Label")
+plt.xlabel("Predicted Label")
+plt.tight_layout()
+cm_path = os.path.join(output_dir, "confusion_matrix.png")
+plt.savefig(cm_path, dpi=150)
+plt.close()
+print(f"  confusion_matrix.png")
+
+# --- Global Feature Importance Chart ---
+importances = model.feature_importances_
+feature_names = X.columns.tolist()
+sorted_idx = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(8, 5))
+plt.bar(range(len(importances)), importances[sorted_idx], align="center")
+plt.xticks(range(len(importances)), [feature_names[i] for i in sorted_idx], rotation=45, ha="right")
+plt.title("Global Feature Importance - RandomForest Bouncer")
+plt.ylabel("Importance")
+plt.xlabel("Feature")
+plt.tight_layout()
+fi_path = os.path.join(output_dir, "feature_importance.png")
+plt.savefig(fi_path, dpi=150)
+plt.close()
+print(f"  feature_importance.png")
 
 # Save the model to current working directory
 joblib.dump(model, "ml_bouncer_model.pkl")

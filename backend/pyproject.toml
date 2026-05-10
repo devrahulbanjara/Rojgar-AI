@@ -45,6 +45,8 @@ dependencies = [
     "pandas>=2.2.0,<3.0.0",
     "scikit-learn>=1.8.0",
     "nemoguardrails>=0.21.0",
+    "matplotlib>=3.10.9",
+    "seaborn>=0.13.2",
 ]
 
 [tool.fastapi]
@@ -58,6 +60,12 @@ asyncio_default_test_loop_scope = "session"
 addopts = "--tb=long -v --html=tests/report.html --self-contained-html"
 filterwarnings = [
     "ignore::DeprecationWarning:google.genai",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+    "ignore::DeprecationWarning:nemoguardrails",
+    "ignore::DeprecationWarning:langchain_community",
+    "ignore::DeprecationWarning:langgraph",
+    "ignore::PendingDeprecationWarning:langgraph",
+    "ignore::langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
 ]
 markers = [
     "hybrid_eval: opt-in ranking-quality eval against real Qdrant + Gemini (set RUN_HYBRID_EVAL=1 to run)",
