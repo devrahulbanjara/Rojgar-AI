@@ -147,49 +147,27 @@ ConvexHire is an AI-powered recruitment platform that streamlines end-to-end hir
 
 == Project Briefing
 
+ConvexHire is an AI-augmented recruitment platform that automates and enhances the full hiring lifecycle for both job seekers and recruiters. The system integrates AI-driven tools to draft job descriptions, existing resume imports, job matching according to skills, and preferences, and assistant recruiter to shortlist. ConvexHire is built on a Human-in-the-Loop (HITL) architecture which means every decision made by AI has to be approved by a human before finally it takes place. The system has three user roles: candidates, recruiters, and company administrators. For candidates, the system makes easier to find the appropraite job they want to apply to, along with maximizing their chance of shortlist (if they are a good fit), by allowing them to find any gaps in their selected resume by comparing against the job description.
 
-- End-to-end AI-augmented recruitment platform that automates and streamlines the full hiring lifecycle for recruiters and candidates.
-- Integrates AI-driven tools for job description drafting, multimodal resume parsing, semantic job matching, and candidate screening.
-- Built on a Human-in-the-Loop (HITL) architecture where all AI-generated insights and actions are subject to human review and final approval.
-- Three user roles: candidates, recruiters, and company administrators.
-- Candidates use AI resume import, profile building, resume gap analysis, and hybrid semantic job search.
-- Recruiters use automated job drafting, multi-agent candidate shortlisting, a conversational AI assistant with live platform access, and interview transcription with AI evaluation.
-- Company administrators govern team membership, company settings, and approval workflows.
-- Every AI action, including shortlisting, outreach emails, and resume patches, requires explicit human confirmation before execution.
-- Full-stack architecture: Next.js frontend, Python FastAPI backend, PostgreSQL primary store, Redis caching layer, Qdrant vector database, and LangChain/LangGraph AI orchestration.
-- Role-based access control on every endpoint.
-- Defence-in-depth guardrails: NVIDIA NeMo input rails, LangChain PII redaction, frozen-fact hallucination prevention, and structured-output schema validation.
+Recruiters use automated job drafting, agentic ai based candidate screening, contacting candidates, a conversational AI assistant with live platform access, and automated interview evaluation. Their employers/admins of the company can manage team membership, company settings, and all administrative actions like audit log access. Every AI action, including shortlisting, outreach emails, and resume patches, requires human approval before finally applying. The system uses a full stack architecture where Next.js for frontend, Python FastAPI backend, PostgreSQL primary as primary database, Redis for caching layer, Qdrant for vector database, and LangChain/LangGraph AI orchestration. For a secure system, there is Role-based access control on every endpoint. For a secure AI usage, Prompt injection guardrails, PII redaction for unbiased dealing, hallucination prevention measures have been taken.
 
 === AI Aspect
 
+Within of the deep subset of AI, ConvexHire uses Natural Language Processing, Automatic Speech Regognition, Generative AI, and Agentic AI.
 
-- ConvexHire employs a multi-modal AI stack spanning natural language processing, automatic speech recognition, generative AI, and agentic orchestration.
+*NLP*:
+Google's Gemini Embeddings encodes each job description's text into a 3072 dimensions vector. This vector represents the semantic meaning of the job description. For a keyword based matching along with the semantic, a hybrid matching has been used wherever needed, where the semantic similarity score and the BM25's score has been combined using Reciprocal Rank Fusion (RRF).
 
-*NLP*
-- Dense vector embeddings (Google Gemini, 3072 dimensions) encode job descriptions and resumes into a shared semantic space.
-- Enables meaning-based retrieval instead of brittle keyword matching.
-- Hybrid dense-plus-sparse pipeline combines embeddings with BM25 lexical scores via Reciprocal Rank Fusion.
-- Queries like "Python backend" match by conceptual similarity while exact technical terms retain precision.
-- Powers structured resume parsing via LlamaCloud extractor plus Groq normaliser.
-- PII redaction via pattern-based detection of emails, URLs, and phone numbers.
-- Prompt-injection defence via NeMo Guardrails input classifier.
+*ASR*:
+The audio captured during interview is transcribed using a finetuned version of OpenAI's Whisper Small. The finetuning was successful enough to yield a usable version of the model in a low resource language like Nepali. Fine-tuning objective is supervised cross-entropy minimisation on character-level transcripts.
 
-*ASR*
-- Interview audio transcribed by a Whisper Small model fine-tuned on Nepali speech corpora.
-- Extends base multilingual Whisper to low-resource, code-switched English-Nepali dialogue.
-- Fine-tuning objective is supervised cross-entropy minimisation on character-level transcripts.
-- Achieves measurable Word Error Rate reductions compared with zero-shot Whisper on Nepali-accented and mixed-language interview speech.
+*Generative AI*:
+Large Language Models (LLMs) falling under Gen AI, have been heavily used in the system, as the traiditional machine learing models can be used only upto an extend, and for reasoning they are useless. LLMs hosted in Groq's TPUs provide a super fast inference within miliseconds are used widely thoroughout resume gap anslysis, recruiter's chatbot, job draft creation, email drafting, etc. For a complicated multi turn workflow where tokens are comsumed heavily and Groq's free tier starts giving rate limits, Anthropic's Claude Sonnet 4.6 has been used from Amazon Bedrock. Also, to classify the intent of the recruiter in the chatbot, a separate intent classifier has been employed, using an LLM.
 
-*Generative AI*
-- Groq-hosted LLaMA family models drive text generation: resume gap analysis, auto-patch rewriting, recruiter chat streaming, job-draft synthesis, and outreach email drafting.
-- AWS Bedrock Claude handles heavier reasoning in the shortlisting multi-agent pipeline.
-- All outputs constrained by Pydantic schemas, frozen-fact guardrails, and token-length caps to suppress hallucination.
-
-*Agentic AI*
-- LangGraph state machines orchestrate two principal workflows.
-- AI Job Draft Assistant: Tavily web research, structured salary synthesis, schema-validated draft generation, human-review interrupt node, and refine cycles until recruiter approval.
-- Shortlisting pipeline: multi-agent critique loop with CTO agent (technical depth), HR agent (fit and risk), Judge agent (confidence 0 to 100), and cheap final-merge agent (strengths, concerns, evidence).
-- Recruiter chatbot: intent router dispatches to seven tool-equipped handlers (candidate search, job lookup, salary research, job edit, and others).
+*Agentic AI*:
+LangGraph's orchestration serves two primary features of this system.
+- AI Job Draft Assistant: Web search, schema-validated draft generation, human-review interrupt node, and imporve generation until recruiter is satisfied.
+- Shortlisting pipeline: multi-agent critique loop with CTO agent (technical depth), HR agent (fit and risk), Critique agent and a final-merge agent (strengths, concerns).
 
 ==== Learning Justification
 
