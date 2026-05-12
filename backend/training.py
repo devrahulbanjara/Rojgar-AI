@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -14,33 +15,23 @@ print("Generating 10,000 Hybrid AI candidate-job pairs...")
 np.random.seed(42)
 n_samples = 10000
 
-# 1. TF-IDF Similarity (Lexical keyword overlap) [0.0 to 1.0]
 tfidf_sim = np.random.beta(a=2, b=5, size=n_samples)
 
-# 2. Semantic Embedding Similarity (Gemini Vectors) [0.0 to 1.0]
 semantic_sim = np.random.beta(a=6, b=2, size=n_samples)
 
-# 3. Years of Experience (Explicit integer from profile)
-# FIXED: changed 'mean' to 'lam'
 yoe = np.random.poisson(lam=4.0, size=n_samples)
 yoe = np.clip(yoe, 0, 20).astype(int)
 
-# 4. Number of past work switches (Experiences)
-# FIXED: changed 'mean' to 'lam'
 num_companies = np.random.poisson(lam=3.0, size=n_samples)
 num_companies = np.clip(num_companies, 1, 10).astype(int)
 
-# 5. Number of Educations
 num_educations = np.random.choice(
     [0, 1, 2, 3], p=[0.05, 0.60, 0.30, 0.05], size=n_samples
 )
 
-# 6. Number of Skills/Certificates
-# FIXED: changed 'mean' to 'lam'
 num_skills = np.random.poisson(lam=8.0, size=n_samples)
 num_skills = np.clip(num_skills, 0, 30).astype(int)
 
-# --- THE TEACHER LOGIC (Simulating the LLM) ---
 target = []
 for i in range(n_samples):
     if num_educations[i] == 0 and yoe[i] < 2:
@@ -93,15 +84,13 @@ output_dir = os.path.join(os.path.dirname(__file__), "..", "docs", "ml_outputs")
 os.makedirs(output_dir, exist_ok=True)
 print(f"\nSaving outputs to: {output_dir}")
 
-# --- Save classification report as text ---
 report_path = os.path.join(output_dir, "classification_report.txt")
 with open(report_path, "w") as f:
     f.write("Classification Report for RandomForest Bouncer\n")
     f.write("=" * 60 + "\n\n")
     f.write(report_str)
-print(f"  classification_report.txt")
+print("  classification_report.txt")
 
-# --- Confusion matrix plot ---
 cm = confusion_matrix(y_test, y_pred)
 plt.figure(figsize=(6, 5))
 sns.heatmap(
@@ -119,16 +108,20 @@ plt.tight_layout()
 cm_path = os.path.join(output_dir, "confusion_matrix.png")
 plt.savefig(cm_path, dpi=150)
 plt.close()
-print(f"  confusion_matrix.png")
+print("  confusion_matrix.png")
 
-# --- Global Feature Importance Chart ---
 importances = model.feature_importances_
 feature_names = X.columns.tolist()
 sorted_idx = np.argsort(importances)[::-1]
 
 plt.figure(figsize=(8, 5))
 plt.bar(range(len(importances)), importances[sorted_idx], align="center")
-plt.xticks(range(len(importances)), [feature_names[i] for i in sorted_idx], rotation=45, ha="right")
+plt.xticks(
+    range(len(importances)),
+    [feature_names[i] for i in sorted_idx],
+    rotation=45,
+    ha="right",
+)
 plt.title("Global Feature Importance - RandomForest Bouncer")
 plt.ylabel("Importance")
 plt.xlabel("Feature")
@@ -136,8 +129,7 @@ plt.tight_layout()
 fi_path = os.path.join(output_dir, "feature_importance.png")
 plt.savefig(fi_path, dpi=150)
 plt.close()
-print(f"  feature_importance.png")
+print("  feature_importance.png")
 
-# Save the model to current working directory
 joblib.dump(model, "ml_bouncer_model.pkl")
 print(f"\nModel saved to: {os.path.abspath('ml_bouncer_model.pkl')}")
