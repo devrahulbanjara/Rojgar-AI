@@ -158,7 +158,7 @@ Within of the deep subset of AI, ConvexHire uses Natural Language Processing, Au
 *NLP*:
 Google's Gemini Embeddings encodes each job description's text into a 3072 dimensions vector. This vector represents the semantic meaning of the job description. For a keyword based matching along with the semantic, a hybrid matching has been used wherever needed, where the semantic similarity score and the BM25's score has been combined using Reciprocal Rank Fusion (RRF).
 
-*ASR*:
+*Automatic Speech Recognition*:
 The audio captured during interview is transcribed using a finetuned version of OpenAI's Whisper Small. The finetuning was successful enough to yield a usable version of the model in a low resource language like Nepali. Fine-tuning objective is supervised cross-entropy minimisation on character-level transcripts.
 
 *Generative AI*:
@@ -174,69 +174,72 @@ Overall, the system takes a mixed approach. For straight-forward tasks that scal
 ==== Mathematics
 
 
-- Three constructs underpin core AI components: vector-space similarity, Reciprocal Rank Fusion, and Word Error Rate.
+- There are 3 formulae that power the core AI part of the application; Cosine similarity, Reciprocal Rank Fusion, Word and Character Error Rates.
 
 *Cosine Similarity*
-- Job descriptions and resumes embedded as high-dimensional vectors $A, B in RR^n$ (Gemini, $n = 3072$).
+- Job description string and Applicants details are embedded in a high domensional space. $A, B in RR^n$ (Gemini, $n = 3072$).
 - Cosine similarity measures the cosine of the angle between vectors, normalising for magnitude so document length does not dominate.
-- Formula:
+
+- Formulae:
 
 $ "CosineSimilarity" = (A dot B) / (||A|| dot ||B||) = (sum_(i=1)^n A_i B_i) / (sqrt(sum_(i=1)^n A_i^2) dot sqrt(sum_(i=1)^n B_i^2)) $
 
 - Bounded in $[-1, 1]$; in practice $[0, 1]$ because text embeddings are non-negative.
-- Used as one of three features in the RandomForest pre-filter and as the dense component in hybrid candidate search.
 
 *Reciprocal Rank Fusion (RRF)*
-- Combines dense semantic rankings with sparse lexical rankings.
-- Rank-based aggregation that requires no score calibration between modalities.
-- Formula:
+- Combines the results of keyword search (like BM25) and vector-based semantic search to provide a better, more accurate result set
+
+- Formulae:
 
 $ "RRF"(d) = sum_(k=1)^K 1 / (k + r_k(d)) $
 
 - $k$ is a constant (typically $k = 60$) that dampens influence of low ranks and prevents dominance by any single stream.
 - Documents appearing in both dense and sparse top-$K$ sets receive higher fused scores.
 
-*RandomForest Split Criterion*
-- RandomForest minimises Gini impurity at each split node.
-- For a node with class distribution $p = (p_1, dots, p_C)$ over $C$ classes.
-- Formula:
-
-$ "Gini"(p) = 1 - sum_(i=1)^C p_i^2 $
-
-- Forest averages predictions over $T$ decision trees trained on bootstrap samples with random feature subsets.
-- Formula:
-
-$ P("hire" | x) = 1/T sum_(t=1)^T p_t("hire" | x) $
-
-- $p_t$ is the leaf-node class probability from tree $t$ for input feature vector $x$.
-- Top-20% percentile threshold applied to gate progression to the LLM stage.
-
 *Word Error Rate (WER)*
-- Fine-tuned Whisper evaluated against held-out Nepali transcripts.
+- Fine-tuned ASR model Whisper evaluated against test Nepali transcripts.
+
 - Formula:
 
 $ "WER" = (S + D + I) / N $
 
-- $S$ = substitutions, $D$ = deletions, $I$ = insertions, $N$ = total reference words.
-- Standard ASR benchmarking metric.
-- Supervised fine-tuning on in-domain Nepali audio reduces WER by adapting to regional phonetics and code-switched utterances.
+- Where:
+  - $S$ - Substitutions (wrong word predicted)
+  - $D$ - Deletions (word in reference, missing in prediction)
+  - $I$ - Insertions (extra word in prediction, not in reference)
+  - $N$ - Total words in the reference transcript
 
-== Aims
+*Character Error Rate (CER)*
+- Measures transcription accuracy at the character level.
+
+- Formula:
+
+$ "CER" = (S + D + I) / N $
+
+- Where:
+  - $S$ - Character substitutions
+  - $D$ - Character deletions
+  - $I$ - Character insertions
+  - $N$ - Total characters in the reference transcript
 
 
-- Primary aim is to design, build, and evaluate an AI-augmented recruitment platform that reduces time-to-hire and administrative burden while preserving human judgment, candidate transparency, and ethical accountability at every stage of the hiring funnel.
-
-== Objectives
 
 
-- *Implement an AI screening agent* to score and rank candidates against job requirements, combining a supervised ML pre-filter with a multi-agent LLM deep-review pipeline that produces explainable strengths, concerns, and evidence for every decision.
-- *Build an AI resume importer* to extract structured profile data from uploaded PDF resumes using a LlamaCloud structured extractor and Groq normaliser, enabling candidates to populate complete profiles from a single document upload.
-- *Develop a resume gap analysis module* to compare a candidate's resume against a specific job description, returning a 0 to 100 shortlisting likelihood score, severity-annotated gaps, and actionable improvement suggestions; and provide an auto-patch feature that rewrites headline, summary, and experience bullets subject to frozen-fact immutability and explicit candidate confirmation.
-- *Create a recruiter AI chat assistant* with persistent sessions, multi-turn memory, and live tool access to platform data, enabling semantic candidate search, job lookup, salary research, and field-level job editing with before/after previews and human confirmation.
-- *Enable an AI job draft assistant* with real-time market salary research (Tavily web search plus Groq synthesis), schema-validated generation, and an iterative human-review loop that allows recruiters to lock fields, regenerate selected sections, and approve the final draft before publication.
-- *Ensure AI outputs are explainable and no action executes without human confirmation* by surfacing structured rationale for every shortlisting decision, requiring recruiter approval for all outreach emails and job edits, and staging resume patches in a pending state until the candidate explicitly accepts.
-- *Engineer a full-stack system with proper role-based access control* separating candidates, recruiters, and company administrators; enforce JWT authentication with httpOnly refresh tokens, email verification, and soft-delete account management.
-- *Fine-tune an ASR model* on Nepali speech corpora to transcribe English-Nepali code-switched interview audio with reduced Word Error Rate compared with zero-shot Whisper, supporting inclusive assessment of candidates from low-resource linguistic backgrounds.
+== Aims (humanized)
+
+
+ConvexHire primarily aims to engineer an end to end secure, transparent and bias-free solution to overcome the long hiring lifecycle. Typically a hiring pipeline takes around 1-2 months on an  average from starting to ending, and the aim of the system is to minize and make the overall process efficient using combining modern technologies along with human judgement. The system also aims to make the job hunting process of talents a lot smoother and less frustrating through the use of Software engineering with Generative + Agentic AI.
+
+== Objectives (humanized)
+
+- Use a screening agent to assess and rank candidates to the job requirements, using a supervised machine learning pre-filter and a multi-agent LLM deep review process, which creates explainable strengths, concerns, and evidence for each candidate decision.
+- Create an AI resume importer that allows candidates to upload a resume and have it automatically fill out a comprehensive profile that makes their oboading process quick.
+- Design a Resume Gap Analysis module that takes a candidate's resume and a job description, outputs a score on how well the resume has informations displayed when comapared to what is asked in the JD, outputs a list of gaps, and outputs a set of suggestions on how to improve the resume, while accounting for the fact that the information in the resume is frozen and can't be altered until the candidate himself asks, as well as the candidate's explicit confirmation that the information is accurate.
+- Build an AI chatbot that provides the persistent conversations, multi-turn memory, and access to platform data, offering semantic candidate searches, job lookups, market salary research, and real-time editing of jobs with before/after previews and human confirmation.
+- Enable an AI job draft assistant that provides real-time market salary research, schema-validated job generation, and an iterative human-review loop for recruiters to lock selected fields, re-generate selected parts of the job, and publish it for a final review.
+- Make sure that AI outputs are explainable and that no action is taken without a human confirmation by providing structured explanation of each and every short listing, requiring a recruiter to approve any major decision.
+- Engineer a full stack system with secure authentication and authorization, that is intuitive to use, and uses guardrails to prevent attacks like Prompt Injection, also bias free decisions from AI.
+- Perform fine-tuning on an ASR model with Nepali speech corpora to transcribe audio from the Nepali language for the English language, resulting in lower Word Error Rate (WER) than the base model.
 
 == Artefact
 
@@ -273,11 +276,20 @@ graph TD
 
 *How can AI improve recruitment efficiency while maintaining transparency and human oversight?*
 
-- Frames the central tension between the capacity of LLMs, dense retrieval, and multi-agent systems to accelerate screening, drafting, and evaluation, and the documented risks of opacity, bias, and automation bias in algorithmic hiring.
-- Answered architecturally by embedding Human-in-the-Loop checkpoints at every AI action boundary: shortlisting drafts await recruiter approval, outreach emails sit in a review queue, job edits display a before/after diff, and resume patches are staged for candidate confirmation.
-- Explainability enforced through structured output schemas: every shortlisting produces explicit strengths, concerns, and cited evidence; every gap analysis labels missing skills by severity; and every rejection email embeds specific AI feedback.
-- Result is measurable improvement in screening speed and candidate transparency, with all AI decisions auditable, explainable, and human-confirmed before execution.
-- HITL design ensures the platform is trustworthy, not merely efficient.
+== Scope and Limitations (humanized)
+=== Scope
+
+The system covers the entire hiring process, ranging from a candidate's job search and application, through to the shortlisting, interviewing and final decision made by a recruiter. All of these big steps are covered: resumes parsing, gap analysis, AI screening, outreach, interview transcription and evaluation. There are dedicated, functional processes on both sides of the process – candidate and recruiter.
+
+Howver, the system stops here and doesnt deal with post-hire matters. No paperwork, no signing of contracts, no monitoring of performance. Once a candidate accepts a job at ConvexHire, that's the end of the job. All activities after the hiring are out of scope.
+
+=== Limitations
+- A very expected limitation is the Cold Start Deadlock. Companies will not purchase the system if candidates are not present, and candidates will not purchase if there are no companies offering jobs. 
+- The dependency on frontier LLM companies like Anthropic, Google, and Infernece Optimizer (Groq), is heavy for core features, and due to this, the token consumption is a real issue. This might not be an issue for enterprises, but for small to medium businesses', if they are on a freemium, then the cost comes over the ConvexHire accounts.
+- Small to medium businesses' willingness to pay for a SaaS that that offers the features that they can for free of cost, eventhough efficiency and the process is completely streamlined, is very less in Nepal, as they are very cost-sensitive.
+- The Machine Learning Model used to pre-filter the talents before the shortlisting agent even sees is trained on synthetic data, as it works, but can cause some problems if false positives increasing.
+- The Whisper model finetuned regardless of performing good on a short normal nepali audio, struggles on a real conversation of interview.
+
 
 // 3. LITERATURE REVIEW
 = Literature Review
