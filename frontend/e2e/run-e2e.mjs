@@ -43,15 +43,13 @@ async function waitUntil(label, check, timeoutMs = READY_TIMEOUT_MS) {
 }
 
 function checkPostgres() {
-  return spawnSync('docker', [
-    'exec',
-    'convexhire-postgres-test',
-    'pg_isready',
-    '-U',
-    'testuser',
-    '-d',
-    'convexhire_test',
-  ], { stdio: 'ignore' }).status === 0
+  return (
+    spawnSync(
+      'docker',
+      ['exec', 'convexhire-postgres-test', 'pg_isready', '-U', 'testuser', '-d', 'convexhire_test'],
+      { stdio: 'ignore' },
+    ).status === 0
+  )
 }
 
 function checkRedis() {

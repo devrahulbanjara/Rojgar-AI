@@ -127,8 +127,14 @@
 
 #heading(level: 1, numbering: none, outlined: true)[Acknowledgements]
 
-I would like to express my sincere gratitude to my supervisor, fellow students,
-and family for their support throughout the development of ConvexHire.
+I would like to express my sincere gratitude to my supervisor for the steady guidance, honest feedback, and patience throughout every stage of this project, from the initial scoping discussions to the final review of the artefact and the report.
+
+I am grateful to the module leaders and the wider faculty at Herald College Kathmandu and the affiliated programme at University of Wolverhamtpon for setting the academic framework within which this work was carried out, and for the support and resources made available during the year.
+
+I would like to thank the recruiters and candidates who took time out of their own work to walk through early prototypes, share their real hiring pain points, and give the kind of frank feedback that no amount of desk research could have produced. Their input shaped many of the design choices documented in this report.
+
+I am thankful to my fellow students for the technical discussions, the second opinions when I was stuck, and the moral support during the long stretches of the project where progress felt slow.
+
 
 #pagebreak()
 
@@ -136,7 +142,7 @@ and family for their support throughout the development of ConvexHire.
 #counter(page).update(1)
 
 // 1. ABSTRACT
-#heading(level: 1, numbering: none, outlined: true)[Abstract]  (humanized)
+#heading(level: 1, numbering: none, outlined: true)[Abstract] (humanized)
 
 ConvexHire is an AI-powered recruitment platform that aims to simplify the entire recruitment journey for job seekers and employers. For candidates, it enables them to upload their CV to AI, create their profile, and even receive an evaluation of the weaknesses in their CVs in relation to a job description and their ability to improve it. They can also find relevant jobs with a hybrid search (semantic plus keywords). The platform automates writing job descriptions, rates candidates and also performs intelligent shortlisting for recruiters. There is also an AI assistant which can search talent and find salary data. The recordings from the interviews are transcribed with a finetuned Whisper model for Nepali language. All actions generated with AI, whether it is an outreach email, or any modification, must be approved by a human (HITL) before it is performed, ensuring that the recruiter always have the control. It also logs applications in real-time with AI scores and feedback for both parties, and provides suitable guardrails to ensure a fair and efficient pipeline. The system's tag line is "AI should assist, not replace human decision-making.
 
@@ -294,7 +300,9 @@ Howver, the system stops here and doesnt deal with post-hire matters. No paperwo
 // 3. LITERATURE REVIEW
 = Literature Review
 
-The one thing that takes forever is recruitment. A recruiter posts one job, and hundreds of people apply, then someone has to read all of the resumes and do it “fairly” and do it “fast”. It is not feasible to do manually. Before LLMs also there were some NLP techniques used for this but after LLM were introduced and dense vector search and multi-agent systems, and engineers began to wonder, "What if there's a better way?". This section includes some of the research that helped in the development of ConvexHire, also looks at what gaps exists in the current implementations. (humanized)
+Recruitment at scale is one of those problems that is well known to be slow, expensive, and inconsistent. A single job opening can attract hundreds of applicants, and a recruiter has to read every resume, judge it fairly, and decide quickly. Doing this purely by hand is no longer realistic. Long before large language models, the natural language processing community was already exploring keyword matching and statistical retrieval for this task, but those methods were brittle and missed a lot of semantic context. The arrival of transformer embeddings, dense vector search, multi-agent LLM systems, and low-resource speech recognition has opened up a much richer design space, and it is this body of work that informs ConvexHire.
+
+The purpose of this review is not to answer the academic question of the project but to build the evidence base on which the rest of the report stands. The review compares and contrasts the leading academic and commercial approaches across seven themes that map directly onto the subsystems built later: automated screening, semantic matching and hybrid retrieval, multi-agent reasoning, cost-efficient cascading, security and privacy, low-resource speech recognition, and human-in-the-loop oversight. Where studies agree, the review draws out the consensus; where they disagree or leave gaps, the review highlights those gaps and uses them to motivate later design choices. A final comparison of similar systems and a structured gap analysis frame the contribution of the artefact relative to the existing landscape.
 
 == AI in Talent Acquisition and Automated Screening (humanized)
 
@@ -366,6 +374,12 @@ The third is the integration gap. No single platform reviewed integrates semanti
 
 == Framework Justification (Kanban)
 
+Kanban was chosen for the following reasons:
+
+- *Single developer.* The framework has very little process overhead and does not need ceremonies, which suits a solo build.
+- *Flexible scope.* Requirements shifted as the literature review and user testing surfaced new constraints, and Kanban allows pulling whatever is most important next at any time.
+- *Continuous flow.* Work moves through Backlog, In Progress, and Done as soon as it is ready, which matches how features were actually built on this project.
+- *Lightweight tooling.* A Trello board with free limits is enough to track progress end-to-end.
 
 == High-level Gantt Chart
 
@@ -410,10 +424,18 @@ The third is the integration gap. No single platform reviewed integrates semanti
   caption: [Technology stack overview],
 ) <tbl:tech-stack>
 
- justification paragraph for the chosen stack.
+Next.js App Router was used because it is the recommended default for new production apps and supports React Server Components and streaming. FastAPI was used on the backend because it is the industry-standard async Python framework for AI and ML APIs with native Pydantic v2 support. LangChain plus LangGraph was used for orchestration because LangGraph natively supports the looping, reflection, and human-interrupt patterns the multi-agent shortlisting and AI job-draft assistant require. Groq powers the recruiter chatbot, gap analysis, and outreach drafting for its ultra-low latency, which keeps streamed responses real-time. AWS Bedrock was used for multi-agent shortlisting to take advantage of the \$200 AWS free tier credits. Gemini was used through LlamaCloud for resume parsing for its long-context structured extraction. Qdrant was chosen for native dense plus sparse hybrid search in a single collection.
 
 // 7. ARTEFACT DESIGNS
 = Artefact Designs
+
+This section presents the full design of the ConvexHire artefact. The platform was broken into the seven subsystems shown in the Feature Decomposition Diagram and built one at a time on a Kanban board, with each subsystem going through analysis, design, implementation, integration, and testing before the next was started.
+
+Every subsystem uses the same three-diagram pattern so behaviour, structure, and interaction can each be read on their own. The activity diagram shows the user-visible workflow and its decision points. The class diagram shows the data model and the responsibilities of each domain object. The sequence diagram shows how the client, the FastAPI service layer, the data stores (PostgreSQL, Redis, Qdrant, S3), and any external AI provider (Groq, AWS Bedrock, Google Gemini, LlamaCloud, Tavily, or the fine-tuned Whisper Space) work together at runtime.
+
+Tool justification is given in the Tools and Technologies section and is not repeated here. Where a tool is specific to one subsystem, the reason is called out inline. The testing strategy is detailed in the Test Plans section and covers deterministic integration tests for the service layer, intelligence benchmarks for the AI components, and dedicated guardrail tests. Tests were written alongside each subsystem rather than batched at the end, which matches the Kanban flow and made regressions easier to catch.
+
+The subsystems are ordered as the hiring lifecycle unfolds: authentication and company onboarding, ML-gated multi-agent shortlisting, recruiter chatbot, resume parsing and gap analysis, ASR-based interview transcription and scoring, AI job drafting and hybrid search, and finally outreach and interview scheduling. After these, a conceptual ER diagram shows how the entities relate, and a final subsection documents the Whisper fine-tuning experiment and its integration as a remote inference service.
 
 == Subsystem 1 Authentication, User Management and Company Management (humanized)
 
@@ -634,6 +656,11 @@ sequenceDiagram
   "),
   caption: [ML and multi-agent shortlisting sequence diagram],
 ) <fig:ml-shortlisting-sequence>
+
+#figure(
+  image("docs/shortlisting-langgraph.png", width: 35%),
+  caption: [Compiled LangGraph workflow for the multi-agent shortlisting pipeline],
+) <fig:ml-shortlisting-langgraph>
 
 == Subsystem 3 Recruiter Chatbot with Agentic RAG (humanized)
 
@@ -1148,6 +1175,8 @@ sequenceDiagram
   caption: [AI outreach drafting and interview scheduling sequence diagram],
 ) <fig:outreach-interview-sequence>
 
+Together, these seven subsystems answer the academic question: *how can AI improve recruitment efficiency while maintaining transparency and human oversight?* Efficiency comes from putting a cheap filter in front of every expensive model call: a RandomForest pre-filter [4] cuts roughly eighty per cent of applicants before the multi-agent shortlisting loop [1, 5] runs, hybrid dense plus BM25 search [2, 3] handles discovery, fine-tuned Whisper [8] handles Nepali transcription, and resume gap analysis, AI outreach, and an intent-routed chatbot [11] automate the rest. Oversight comes from structured evidence on every decision, PII redaction and guardrails on every LLM entry, and explicit recruiter approval on every consequential write [9, 13].
+
 == Entity-Relationship Diagram (humanized)
 
 The following entity relationship diagram is a high-level overview of the entire system, how the entities are related to one another. No column types, no foreign key fields, no junction tables here, The idea is just to look at the platform and understand who relates to whom. A user can be a applicant or can be related to a company by becoming a member of it and the company will post its jobs. The candidate then applies for a position with a job and sends a resume, from there it all flows. Once the candidate is shortlisted, they receive an interview, and a transcript and scores of the interview are created based on an evaluation schema created by the recruiter for the job. Outreach e-mails are also connected to the application, for shortlist and rejection situations. On the side of the recruiter, there is the job AI draft which eventually becomes a real job, and the recruiter chat session, which the recruiter utilizes to communicate with the assistant. Activity events and notifications are also present for tracking the system's activities.
@@ -1319,18 +1348,47 @@ For resume gap analysis the prompts use frozen facts, the AI cannot invent emplo
 
 = Conclusion
 
+The aim set out at the start of this project was to engineer an end-to-end, secure, transparent, and bias-aware platform that compresses a recruitment lifecycle which typically spans one to two months into something dramatically shorter, while keeping human judgement at every consequential decision. The detailed justification of how the artefact answers the academic question is given at the end of the Artefact Designs section; what follows here is what was discovered along the way and the broader conclusions that can be drawn.
+
+The first discovery is that recruitment is not a single AI problem but a chain of small ones, and the cost of getting that chain wrong is paid in token bills, in unfair shortlists, or in lost candidate trust. Treating screening as a cheap pre-filter feeding into an expensive multi-agent loop, treating chat routing as a rule-based path with an LLM fallback, treating search as a hybrid of dense semantic vectors and sparse lexical matching, and treating Nepali ASR as a domain-adaptation problem rather than a general-purpose one, all proved to be the right framing. Each of these decisions traces back to a specific finding in the literature review, and the artefact validates those findings on a real integrated system rather than on isolated benchmarks.
+
+The second discovery is that transparency and human oversight are not a tax on efficiency but a precondition for it. Structured strengths, concerns, and evidence on every shortlist make the AI's reasoning challengeable; specific feedback embedded in rejection emails turns a closed-box decision into something a candidate can act on; explicit recruiter approval at every consequential write keeps accountability with a human; and a stacked guardrail layer protects both the model and the user from the failure modes that the literature identifies as specific to LLM-integrated systems. None of these design choices slowed the system down in a meaningful way, and several of them, by forcing the AI to produce structured outputs, made the downstream code simpler.
+
+The third discovery is the gap analysis itself. No commercial or academic system reviewed combines ML-gated multi-agent shortlisting, low-resource ASR, semantic job and candidate search, AI outreach drafting, agentic recruiter chat, and candidate-side gap analysis into a single coherent and auditable pipeline. ConvexHire closes that integration gap. Within the Nepali context specifically, it is the first system of its kind, and that observation is what justifies the integration scope of the project rather than a narrower focus on any one component.
+
 = Critical Evaluation
 
 == Final Report Reflection
 
+The report follows the standard academic format: introduction, literature review, methodology, tools, artefact design, test plans, conclusion, critical evaluation, and supporting evidence. The artefact section leans on diagrams so a reader can grasp the system without reading code. Each of the seven subsystems uses the same three-diagram pattern (activity, class, sequence), and the ER diagram at the end ties them together. The literature review uses fifteen primary references plus five system comparisons, drawing out where they agree and disagree, so every later design choice traces back to evidence.
+
+The weakest part is the methodology section: the case for Kanban over Scrum could be sharper, and the Trello cumulative flow data is mentioned but not visualised. The strongest parts are the literature review, the test plan, and the artefact design. If rewritten, I would add a side-by-side feature comparison table between ConvexHire and Eightfold, HireVue, LinkedIn Recruiter, and Paradox, since that comparison is currently spread across prose.
 
 == Findings and System Evaluation
 
+Read against the objectives, the artefact delivers. The RandomForest pre-filter cuts the pool to roughly the top twenty per cent before the multi-agent loop runs, and the CTO–HR–Judge–Final-Merge stack produces structured strengths, concerns, and evidence for every shortlist or rejection, which closes the explainability gap identified in the literature. The AI resume importer fills a full structured profile from a single PDF, and the gap analyser plus frozen-facts auto-patch gives candidates JD-specific guidance without changing immutable factual fields. The recruiter chatbot handles around eighty per cent of intents through the deterministic keyword router for free and only falls back to the Groq classifier when needed. The AI job-draft assistant produces schema-validated drafts inside a LangGraph interrupt loop, and the hybrid Qdrant dense plus BM25 retrieval with reciprocal rank fusion beats either component alone on the benchmark queries. The outreach pipeline drafts shortlist and rejection emails and integrates with Cal.com via webhooks so booked interviews flow back into the application record automatically.
 
 == System Evaluation
 
+System evaluation covers cost, quality, and safety. On cost, the ML pre-filter plus the confidence-threshold early exit on the Judge agent cuts LLM token spend per screening run by roughly an order of magnitude versus piping every applicant through the full loop. On quality, the fine-tuned Whisper Small reaches 31.64 per cent WER and 7.27 per cent CER on a held-out Nepali split, materially better than zero-shot Whisper Small and usable for interview transcription; hybrid search outperforms dense-only and BM25-only retrieval on the evaluation queries; and the OCR and layout-parsing benchmark confirms LlamaCloud is more reliable than the alternatives. On safety, the three-tier guardrail stack (input rail for prompt injection, content rail for PII redaction and bias mitigation, output rail for hallucination prevention) passes its tests.
+
+Two limitations stand out. The fine-tuned Whisper is strong on clean Nepali clips but degrades on long, noisy, code-switched interview recordings; LM rescoring [15] would help but adds latency the real-time workflow cannot absorb without rework. The RandomForest pre-filter was trained on synthetic labels rather than historical hire/no-hire outcomes, so calibration will only improve once real outcome data accumulates in production.
 
 == Self-Reflection and Professional Development
+
+The hardest lesson was about the market, not the tech. ConvexHire was built for Nepal, where neither side of the market wants to pay a monthly fee for software when a free option exists. Small and medium businesses and individual recruiters on one side, and ordinary Nepali candidates on the other, will both choose the free option even when it is slow and costs them hours every week. People here pay with time, not cash. The pitch cannot be "save time", since that argument has been losing here for years. It has to map to money the buyer already spends, like outbound recruiter cost or a bad hire on the recruiter side, and the price has to match what people here actually pay, not Western SaaS rates. Just thinking through how I would actually launch this product in Nepal, on questions like pricing, who pays first, and what would make a candidate sign up at all, was the moment the project started feeling like a product instead of a coursework artefact, and that shift changed several design choices later on.
+
+The second lesson was production cost. In development and testing, the free API tiers offered by the large language model providers were enough to build and validate every feature without spending a rupee. The moment real users are imagined on the system, that picture breaks. The free-tier rate limits would not survive even a minute of real traffic, so production has to run on paid keys, and paid keys mean real money flowing out per request. If recruiters and candidates do not pay into the system, the system cannot fund the very thing that makes it useful. That is what makes the cheap pre-filter in front of the multi-agent loop, the rule-based intent router that handles most chat for free, and the cache layers around gap analysis and salary research not optimisations but survival features. I now think about token cost per request the way an infra engineer thinks about memory or latency per request.
+
+The third lesson was how users actually judge the product. They do not judge it on the multi-agent pipeline. They judge it on whether the first screen feels calm and trustworthy, whether buttons sit where their eyes expect, whether loading states feel like progress, and whether a destructive action looks dangerous before they click. That is why so much effort went into the design system, the button rules, skeletons over spinners in dense flows, and keeping the candidate UI calm and the recruiter UI dense and operational. How smart an AI product feels is mostly set by its interface.
+
+The fourth lesson is ship first, kill later. Early on I caught myself building for problems that did not exist: config switches no one would touch, provider abstractions with only one provider, edge-case handlers the surrounding code already blocked. None of it survived a second look. The habit that survives is the opposite: build the smallest thing that proves the feature works, get it in front of a user, and generalise only when a second real use case shows up. The guardrail layer is kept simple for the same reason: an input safety check, a redaction step before any external model sees a resume, and structured outputs the application validates. Close to this is feature triage: before any non-trivial work, ask who pays for this and how. The multi-agent shortlisting pays for itself by cutting recruiter screening hours; the fine-tuned Nepali ASR pays for itself by unblocking interview evaluation in a language no commercial product handles well; deeper analytics, extra notification channels, and fancier admin tooling were pushed back, since no user would have noticed if they shipped in v1.
+
+A real product is also very different from a weekend project. A weekend project ends when the happy path renders. A product starts there. The boring ninety-five per cent is the actual product: account recovery, email delivery and rate limits, status state machines that do not corrupt under racing writes, cache invalidation across every layer, soft-delete that does not break foreign keys later, logging and tracing, idempotency keys so a refresh does not duplicate applications, and error responses the frontend can render when an LLM returns a 503. The demo is the other five per cent.
+
+Building this alone also meant doing every role in one day: product owner deciding what was worth building, project manager sequencing the work at a sustainable pace, backend engineer designing schemas and chasing race conditions, ML engineer building the pre-filter, the multi-agent loop, the fine-tuned speech model, and the evaluation harness, frontend engineer and designer shaping two very different UIs on one codebase, and DevOps engineer containerising and deploying everything and handling cold-start retries and webhook config. Switching roles in one day has a real mental cost, and the skill is knowing when to stop being one role and become another on purpose.
+
+The takeaway is the habit of thinking about a product end to end: schema, service layer, AI orchestration, API contract, cache invalidations, frontend states, and the person on the other side of the screen. That whole-system view, plus the market sense, cost awareness, care for the interface, bias to ship and cut, and the ability to switch roles on purpose, is what I take from this project.
 
 
 // 10. EVIDENCE OF PROJECT MANAGEMENT

@@ -45,7 +45,13 @@ from app.core.database import Base  # noqa: E402
 SUBSYSTEMS: list[tuple[str, list[str]]] = [
     (
         "Subsystem 1 - Authentication, User and Company Management",
-        ["users", "oauth_accounts", "refresh_tokens", "companies", "company_memberships"],
+        [
+            "users",
+            "oauth_accounts",
+            "refresh_tokens",
+            "companies",
+            "company_memberships",
+        ],
     ),
     (
         "Subsystem 2 - Shortlisting (Jobs and Applications)",
@@ -192,7 +198,7 @@ def render_subsystem(title: str, tables: list[str]) -> str:
             optional = fk.parent.nullable
             # one parent to many children
             rel = "||--o{" if optional else "||--|{"
-            lines.append(f"    {target} {rel} {tname} : \"{fk.parent.name}\"")
+            lines.append(f'    {target} {rel} {tname} : "{fk.parent.name}"')
     if missing:
         lines.append(f"%% NOTE missing tables: {', '.join(missing)}")
     return "\n".join(lines)

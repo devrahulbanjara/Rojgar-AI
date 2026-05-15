@@ -81,7 +81,9 @@ async def main() -> None:
             )
             created += 1
         await db.commit()
-        print(f"[seed] {created} new users created, {len(SEED_USERS) - created} already existed")
+        print(
+            f"[seed] {created} new users created, {len(SEED_USERS) - created} already existed"
+        )
 
 
 if __name__ == "__main__":

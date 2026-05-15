@@ -6,9 +6,14 @@ test.describe('Form validation guards', () => {
   test('login: malformed email blocked client-side', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel(/email/i).fill('not-an-email')
-    await page.getByLabel(/password/i).first().fill('Password123')
+    await page
+      .getByLabel(/password/i)
+      .first()
+      .fill('Password123')
     await page.getByRole('button', { name: /sign in|log in/i }).click()
-    await expect(page.locator('text=/valid email|invalid/i').first()).toBeVisible({ timeout: 3_000 })
+    await expect(page.locator('text=/valid email|invalid/i').first()).toBeVisible({
+      timeout: 3_000,
+    })
   })
 
   test('signup: weak password blocked client-side', async ({ page }) => {
