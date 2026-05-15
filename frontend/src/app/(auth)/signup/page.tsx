@@ -396,8 +396,8 @@ function SignupContent() {
         }
       } else {
         const result = await signup({
-          full_name: creds.fullName,
-          email: creds.email,
+          full_name: creds.fullName.trim(),
+          email: creds.email.trim().toLowerCase(),
           password: creds.password,
           primary_role: 'candidate',
         }).unwrap()
@@ -463,8 +463,8 @@ function SignupContent() {
         }
       } else {
         const signupResult = await signup({
-          full_name: creds.fullName,
-          email: creds.email,
+          full_name: creds.fullName.trim(),
+          email: creds.email.trim().toLowerCase(),
           password: creds.password,
           primary_role: 'recruiter_admin',
         }).unwrap()
@@ -478,12 +478,12 @@ function SignupContent() {
 
       await registerCompany({
         setup_token: finalSetupToken,
-        company_name: companyDetails.companyName,
+        company_name: companyDetails.companyName.trim(),
         industry: companyDetails.industry,
         company_size: companyDetails.companySize,
-        website: companyDetails.website || undefined,
-        location: companyDetails.location || undefined,
-        description: companyDetails.description || undefined,
+        website: companyDetails.website?.trim() || undefined,
+        location: companyDetails.location?.trim() || undefined,
+        description: companyDetails.description?.trim() || undefined,
       }).unwrap()
 
       notify.success('Almost there! Please check your email to verify and activate your company.')
@@ -528,8 +528,8 @@ function SignupContent() {
         finalSetupToken = (data as { setup_token: string }).setup_token
       } else {
         const signupResult = await signup({
-          full_name: creds.fullName,
-          email: creds.email,
+          full_name: creds.fullName.trim(),
+          email: creds.email.trim().toLowerCase(),
           password: creds.password,
           primary_role: 'recruiter',
         }).unwrap()

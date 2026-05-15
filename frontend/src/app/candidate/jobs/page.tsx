@@ -6,6 +6,8 @@ import Link from 'next/link'
 
 import { getCompanyAccent } from '@/lib/companyAccent'
 import { LOCATION_TYPE_LABELS, formatDate, formatSalary } from '@/lib/jobHelpers'
+import { notify } from '@/lib/notify'
+import { LIMITS, isSalaryRangeValid } from '@/lib/validation'
 import {
   type JobListItem,
   type LocationType,
@@ -170,6 +172,18 @@ export default function UserJobsPage() {
   const { items: jobs = [], pagination } = jobsResp?.data ?? {}
 
   function handleSearch() {
+    if (salaryMinInput && Number(salaryMinInput) < 0) {
+      notify.error('Minimum salary cannot be negative.')
+      return
+    }
+    if (salaryMaxInput && Number(salaryMaxInput) < 0) {
+      notify.error('Maximum salary cannot be negative.')
+      return
+    }
+    if (!isSalaryRangeValid(salaryMinInput, salaryMaxInput)) {
+      notify.error('Maximum salary must be greater than or equal to minimum.')
+      return
+    }
     setAppliedParams({
       q: searchInput || undefined,
       location: locationInput || undefined,
@@ -231,6 +245,8 @@ export default function UserJobsPage() {
             <div className={styles.salaryWrap}>
               <input
                 type="number"
+                min={0}
+                max={LIMITS.salaryMax}
                 className={styles.salaryInput}
                 placeholder="Min"
                 value={salaryMinInput}
@@ -245,6 +261,8 @@ export default function UserJobsPage() {
               <span className={styles.salarySep}>–</span>
               <input
                 type="number"
+                min={0}
+                max={LIMITS.salaryMax}
                 className={styles.salaryInput}
                 placeholder="Max"
                 value={salaryMaxInput}

@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+import { notify } from '@/lib/notify'
 import type { EducationEntry, ExperienceEntry, Resume } from '@/lib/types/resume'
+import {
+  LIMITS,
+  isDateOrderValid,
+  isValidEmail,
+  isValidPhone,
+  isValidUrl,
+  todayMonthInput,
+} from '@/lib/validation'
 import { ArrowLeft } from 'lucide-react'
 
 import SkillsSection from './SkillsSection'
@@ -98,9 +107,48 @@ export default function ResumeEditor({
   }
 
   function addSkill(sk: string) {
-    if (sk.trim() && !draft.skills.includes(sk.trim())) {
-      update('skills', [...draft.skills, sk.trim()])
+    const t = sk.trim()
+    if (!t || t.length > LIMITS.skill) return
+    if (draft.skills.some((s) => s.toLowerCase() === t.toLowerCase())) return
+    update('skills', [...draft.skills, t])
+  }
+
+  function validateDraft(): string | null {
+    if (draft.email && !isValidEmail(draft.email)) return 'Enter a valid email address.'
+    if (draft.phone && !isValidPhone(draft.phone)) return 'Enter a valid phone number.'
+    for (const key of ['website', 'linkedin_url', 'github_url'] as const) {
+      const v = draft[key] as string | undefined
+      if (v && !isValidUrl(v))
+        return `${key.replace('_url', '').replace('website', 'Portfolio')} URL must start with http(s)://.`
     }
+    const today = todayMonthInput()
+    for (const exp of draft.experience) {
+      if (exp.startDate && exp.startDate > today)
+        return `Experience "${exp.title || 'Untitled'}" start date cannot be in the future.`
+      if (!exp.current && exp.endDate && exp.endDate > today)
+        return `Experience "${exp.title || 'Untitled'}" end date cannot be in the future.`
+      if (!exp.current && !isDateOrderValid(exp.startDate, exp.endDate))
+        return `Experience "${exp.title || 'Untitled'}" end date must be on or after start date.`
+    }
+    for (const edu of draft.education) {
+      if (!isDateOrderValid(edu.startDate, edu.endDate))
+        return `Education "${edu.degree || 'Untitled'}" end date must be on or after start date.`
+      if (edu.gpa && edu.gpa.trim()) {
+        const n = Number(edu.gpa)
+        if (Number.isNaN(n) || n < 0 || n > 10)
+          return `Education "${edu.degree || 'Untitled'}" GPA must be a number 0–10.`
+      }
+    }
+    return null
+  }
+
+  function handleSave() {
+    const err = validateDraft()
+    if (err) {
+      notify.error(err)
+      return
+    }
+    onSave?.(draft)
   }
 
   function removeSkill(sk: string) {
@@ -125,7 +173,7 @@ export default function ResumeEditor({
           </button>
           <button
             className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
-            onClick={() => onSave?.(draft)}
+            onClick={handleSave}
             disabled={isSaving}
           >
             {isSaving ? 'Saving...' : 'Save'}
@@ -164,18 +212,29 @@ export default function ResumeEditor({
                     ['linkedin_url', 'LinkedIn URL', 'url'],
                     ['github_url', 'GitHub URL', 'url'],
                   ] as [keyof Resume, string, string][]
-                ).map(([field, label, type]) => (
-                  <div className="resume-field" key={field}>
-                    <label className="resume-field__label">{label}</label>
-                    <input
-                      className="resume-field__input"
-                      type={type}
-                      value={draft[field] as string}
-                      onChange={(e) => update(field, e.target.value)}
-                      placeholder={label}
-                    />
-                  </div>
-                ))}
+                ).map(([field, label, type]) => {
+                  const maxByType =
+                    type === 'email'
+                      ? LIMITS.email
+                      : type === 'tel'
+                        ? LIMITS.phone
+                        : type === 'url'
+                          ? LIMITS.url
+                          : LIMITS.shortText
+                  return (
+                    <div className="resume-field" key={field}>
+                      <label className="resume-field__label">{label}</label>
+                      <input
+                        className="resume-field__input"
+                        type={type}
+                        value={draft[field] as string}
+                        maxLength={maxByType}
+                        onChange={(e) => update(field, e.target.value)}
+                        placeholder={label}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -189,6 +248,7 @@ export default function ResumeEditor({
                   className="resume-field__textarea"
                   rows={6}
                   value={draft.summary}
+                  maxLength={LIMITS.summary}
                   onChange={(e) => update('summary', e.target.value)}
                   placeholder="Write a compelling summary of your professional background..."
                 />
@@ -222,6 +282,7 @@ export default function ResumeEditor({
                       <input
                         className="resume-field__input"
                         value={exp.title}
+                        maxLength={LIMITS.title}
                         onChange={(e) => updateExp(exp.id, 'title', e.target.value)}
                         placeholder="Job Title"
                       />
@@ -231,6 +292,7 @@ export default function ResumeEditor({
                       <input
                         className="resume-field__input"
                         value={exp.company}
+                        maxLength={LIMITS.companyName}
                         onChange={(e) => updateExp(exp.id, 'company', e.target.value)}
                         placeholder="Company"
                       />
@@ -240,6 +302,7 @@ export default function ResumeEditor({
                       <input
                         className="resume-field__input"
                         value={exp.location}
+                        maxLength={LIMITS.location}
                         onChange={(e) => updateExp(exp.id, 'location', e.target.value)}
                         placeholder="Location"
                       />
@@ -250,6 +313,7 @@ export default function ResumeEditor({
                         className="resume-field__input"
                         type="month"
                         value={exp.startDate}
+                        max={todayMonthInput()}
                         onChange={(e) => updateExp(exp.id, 'startDate', e.target.value)}
                       />
                     </div>
@@ -259,6 +323,8 @@ export default function ResumeEditor({
                         className="resume-field__input"
                         type="month"
                         value={exp.endDate}
+                        min={exp.startDate || undefined}
+                        max={todayMonthInput()}
                         disabled={exp.current}
                         onChange={(e) => updateExp(exp.id, 'endDate', e.target.value)}
                         placeholder="Present"
@@ -281,6 +347,7 @@ export default function ResumeEditor({
                       className="resume-field__textarea"
                       rows={4}
                       value={exp.description}
+                      maxLength={LIMITS.description}
                       onChange={(e) => updateExp(exp.id, 'description', e.target.value)}
                       placeholder="Describe your responsibilities and achievements..."
                     />
@@ -316,6 +383,7 @@ export default function ResumeEditor({
                       <input
                         className="resume-field__input"
                         value={edu.degree}
+                        maxLength={LIMITS.title}
                         onChange={(e) => updateEdu(edu.id, 'degree', e.target.value)}
                         placeholder="B.S. in Computer Science"
                       />
@@ -325,6 +393,7 @@ export default function ResumeEditor({
                       <input
                         className="resume-field__input"
                         value={edu.institution}
+                        maxLength={LIMITS.companyName}
                         onChange={(e) => updateEdu(edu.id, 'institution', e.target.value)}
                         placeholder="University Name"
                       />
@@ -334,6 +403,7 @@ export default function ResumeEditor({
                       <input
                         className="resume-field__input"
                         value={edu.location}
+                        maxLength={LIMITS.location}
                         onChange={(e) => updateEdu(edu.id, 'location', e.target.value)}
                         placeholder="City, State"
                       />
@@ -353,6 +423,7 @@ export default function ResumeEditor({
                         className="resume-field__input"
                         type="month"
                         value={edu.endDate}
+                        min={edu.startDate || undefined}
                         onChange={(e) => updateEdu(edu.id, 'endDate', e.target.value)}
                       />
                     </div>
@@ -360,6 +431,10 @@ export default function ResumeEditor({
                       <label className="resume-field__label">GPA (optional)</label>
                       <input
                         className="resume-field__input"
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        max={10}
                         value={edu.gpa}
                         onChange={(e) => updateEdu(edu.id, 'gpa', e.target.value)}
                         placeholder="3.8"

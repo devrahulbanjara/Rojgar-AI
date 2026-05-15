@@ -1,5 +1,7 @@
 'use client'
 
+import { LIMITS, isValidPassword } from '@/lib/validation'
+
 import styles from '../page.module.scss'
 
 export interface PasswordForm {
@@ -29,6 +31,20 @@ export default function SecurityCard({
     onChange({ ...form, [key]: value })
   }
 
+  const newPasswordError =
+    form.new_password && !isValidPassword(form.new_password)
+      ? 'Password must be 8+ chars with uppercase, lowercase, and a number.'
+      : null
+  const confirmError =
+    form.confirm_password && form.new_password !== form.confirm_password
+      ? 'Passwords do not match.'
+      : null
+  const canSubmit =
+    Boolean(form.new_password) &&
+    Boolean(form.confirm_password) &&
+    !newPasswordError &&
+    !confirmError
+
   return (
     <section className={styles.card} aria-label="Password">
       <div className={styles.cardHeader}>
@@ -39,7 +55,7 @@ export default function SecurityCard({
         <button
           type="button"
           className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
-          disabled={isSaving}
+          disabled={isSaving || !canSubmit}
           onClick={onSubmit}
         >
           Update password
@@ -60,6 +76,7 @@ export default function SecurityCard({
             id="current-password"
             className={styles.fieldInput}
             value={form.current_password}
+            maxLength={LIMITS.password}
             onChange={(e) => update('current_password', e.target.value)}
             placeholder="Current password"
             type="password"
@@ -74,11 +91,18 @@ export default function SecurityCard({
             id="new-password"
             className={styles.fieldInput}
             value={form.new_password}
+            maxLength={LIMITS.password}
             onChange={(e) => update('new_password', e.target.value)}
             placeholder="New password"
             type="password"
             autoComplete="new-password"
+            aria-invalid={Boolean(newPasswordError)}
           />
+          {newPasswordError ? (
+            <span className="auth__error-msg" role="alert">
+              {newPasswordError}
+            </span>
+          ) : null}
         </div>
         <div className={`${styles.field} ${styles.fieldsSingle}`}>
           <label className={styles.fieldLabel} htmlFor="confirm-password">
@@ -88,11 +112,18 @@ export default function SecurityCard({
             id="confirm-password"
             className={styles.fieldInput}
             value={form.confirm_password}
+            maxLength={LIMITS.password}
             onChange={(e) => update('confirm_password', e.target.value)}
             placeholder="Confirm new password"
             type="password"
             autoComplete="new-password"
+            aria-invalid={Boolean(confirmError)}
           />
+          {confirmError ? (
+            <span className="auth__error-msg" role="alert">
+              {confirmError}
+            </span>
+          ) : null}
         </div>
       </div>
 

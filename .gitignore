@@ -104,4 +104,8 @@ qdrant_data/
 postgres_data/
 backend/tests/report.html
 
+playwright-report/
+test-results/
+.playwright/
+
 .claude

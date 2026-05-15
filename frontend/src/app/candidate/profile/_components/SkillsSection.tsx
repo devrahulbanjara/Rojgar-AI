@@ -1,5 +1,6 @@
 'use client'
 
+import { LIMITS, hasDuplicate } from '@/lib/validation'
 import { X } from 'lucide-react'
 
 import styles from '../page.module.scss'
@@ -21,6 +22,15 @@ export default function SkillsSection({
   onAdd,
   onRemove,
 }: SkillsSectionProps) {
+  const trimmed = skillInput.trim()
+  const duplicate = hasDuplicate(skills, trimmed)
+  const tooLong = trimmed.length > LIMITS.skill
+  const error = duplicate
+    ? 'Skill already added.'
+    : tooLong
+      ? `Skill too long (max ${LIMITS.skill}).`
+      : null
+  const canAdd = Boolean(trimmed) && !duplicate && !tooLong
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
@@ -35,11 +45,12 @@ export default function SkillsSection({
           className={styles.fieldInput}
           placeholder="Add a skill (e.g. React) and press Enter"
           value={skillInput}
+          maxLength={LIMITS.skill}
           onChange={(e) => onInputChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault()
-              onAdd()
+              if (canAdd) onAdd()
             }
           }}
         />
@@ -47,11 +58,16 @@ export default function SkillsSection({
           type="button"
           className="btn btn--primary btn--sm"
           onClick={onAdd}
-          disabled={isSaving || !skillInput.trim()}
+          disabled={isSaving || !canAdd}
         >
           Add
         </button>
       </div>
+      {error ? (
+        <span className="auth__error-msg" role="alert">
+          {error}
+        </span>
+      ) : null}
 
       {skills.length === 0 ? (
         <div className={styles.empty}>No skills added yet.</div>

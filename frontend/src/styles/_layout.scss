@@ -5,6 +5,33 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
+// Accessibility: skip-to-content link (visible only when focused via keyboard)
+.skip-to-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 8px;
+  transform: translateY(-100%);
+  z-index: 9999;
+  transition: transform 0.15s ease;
+
+  &:focus,
+  &:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+#main-content:focus {
+  outline: none;
+}
+
 // ============================================================
 // Container
 // Usage:

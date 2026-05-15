@@ -136,9 +136,9 @@ and family for their support throughout the development of ConvexHire.
 #counter(page).update(1)
 
 // 1. ABSTRACT
-#heading(level: 1, numbering: none, outlined: true)[Abstract]
+#heading(level: 1, numbering: none, outlined: true)[Abstract]  (humanized)
 
-ConvexHire is an AI-powered recruitment platform that aims to simplify the entire recruitment journey for job seekers and employers. For candidates, it enables them to upload their CV to AI, create their profile, and even receive an evaluation of the weaknesses in their CVs in relation to a job description and their ability to improve it. They can also find relevant jobs with a hybrid search (semantic plus keywords). The platform automates writing job descriptions, rates candidates and also performs intelligent shortlisting for recruiters. There is also an AI assistant which can search talent and find salary data. The recordings from the interviews are transcribed with a finetuned Whisper model for Nepali language. All actions generated with AI, whether it is an outreach email, or any modification, must be approved by a human (HITL) before it is performed, ensuring that the recruiter always have the control. It also logs applications in real-time with AI scores and feedback for both parties, and provides suitable guardrails to ensure a fair and efficient pipeline. The system's tag line is "AI should assist, not replace human decision-making. (humanized)
+ConvexHire is an AI-powered recruitment platform that aims to simplify the entire recruitment journey for job seekers and employers. For candidates, it enables them to upload their CV to AI, create their profile, and even receive an evaluation of the weaknesses in their CVs in relation to a job description and their ability to improve it. They can also find relevant jobs with a hybrid search (semantic plus keywords). The platform automates writing job descriptions, rates candidates and also performs intelligent shortlisting for recruiters. There is also an AI assistant which can search talent and find salary data. The recordings from the interviews are transcribed with a finetuned Whisper model for Nepali language. All actions generated with AI, whether it is an outreach email, or any modification, must be approved by a human (HITL) before it is performed, ensuring that the recruiter always have the control. It also logs applications in real-time with AI scores and feedback for both parties, and provides suitable guardrails to ensure a fair and efficient pipeline. The system's tag line is "AI should assist, not replace human decision-making.
 
 #pagebreak()
 
@@ -422,43 +422,37 @@ The below activity diagram is the one for the authentication and user management
 #figure(
   mermaid("
 graph TD
-    A([Start]) --> B{User Action}
+    A([Visitor arrives]) --> B{Intent}
 
-    B -->|Local Signup| C{Role?}
-    B -->|Google OAuth| D[Redirect to Google]
-    B -->|Login| E[Enter credentials]
-    B -->|Forgot Password| F[Send reset email]
+    B -->|Sign up| C{Role chosen}
+    B -->|Sign in| L[Submit credentials]
+    B -->|Forgot password| R[Request password reset]
 
-    C -->|Candidate| G[Send verification email]
-    C -->|Recruiter/Admin| H[Complete company step first]
+    C -->|Candidate| D[Receive verification email]
+    C -->|Recruiter or company admin| E[Choose company step]
 
-    G --> I[User verifies email]
-    I --> J[Account ready]
+    E --> F{Company step}
+    F -->|Register new company| G[Provide company details]
+    F -->|Join existing company| H[Send join request]
 
-    H --> K{Company Action}
-    K -->|Register Company| L[Enter company details]
-    K -->|Join Company| M[Request to join]
-    L --> N[Send verification email]
-    M --> N
-    N --> O[User verifies email]
-    O --> P[Account created<br/>Membership: pending/active]
+    D --> V[Verify email]
+    G --> V
+    H --> V
 
-    D --> Q{Account exists?}
-    Q -->|Yes| R[Login + link OAuth]
-    Q -->|No| S{Role?}
-    S -->|Candidate| T[Create account + login]
-    S -->|Recruiter/Admin| H
+    V --> X{Account type}
+    X -->|Candidate| Y[Candidate account activated]
+    X -->|Company admin| Z[Company created, admin activated]
+    X -->|Joining recruiter| AA[Recruiter awaits admin approval]
 
-    E --> U[Validate credentials]
-    U --> V[Create JWT tokens<br/>Set httpOnly cookie]
-    V --> W[Return access token]
+    L --> M[System verifies identity]
+    M --> N[User signed in]
 
-    F --> X[User clicks reset link]
-    X --> Y[Update password]
+    R --> S[User sets new password]
+    S --> T[All active sessions revoked]
 
-    P --> Z[Admin approves/rejects<br/>recruiter requests]
+    AA --> AB[Admin approves or rejects request]
   "),
-  caption: [Authentication, User Management and Company Management - activity diagram],
+  caption: [Authentication, User and Company Management activity diagram],
 ) <fig:auth-activity>
 
 #figure(
@@ -466,55 +460,50 @@ graph TD
 classDiagram
     class User {
         +UUID id
-        +String full_name
         +String email
         +String password_hash
-        +String avatar_url
-        +Boolean is_email_verified
-        +Boolean is_onboarded
         +UserRole primary_role
-        +String email_verify_token
-        +String password_reset_token
-        +DateTime created_at
+        +Boolean is_email_verified
+        +Boolean is_deleted
+        +verify_password(plain) bool
+        +soft_delete() void
+    }
+
+    class OAuthAccount {
+        +UUID id
+        +String provider
+        +String provider_account_id
     }
 
     class Company {
         +UUID id
         +String name
-        +String logo_url
-        +String website_url
-        +String cal_booking_url
-        +String cal_organizer_email
         +String domain
-        +String industry
-        +String location
-        +DateTime created_at
+        +String cal_booking_url
+        +has_active_admin() bool
     }
 
     class CompanyMembership {
         +UUID id
-        +UUID user_id
-        +UUID company_id
         +MembershipRole role
         +MembershipStatus status
-        +String job_title
-        +DateTime created_at
+        +approve() void
+        +reject() void
     }
 
     class RefreshToken {
         +UUID id
-        +UUID user_id
-        +String token
         +String jti
         +DateTime expires_at
-        +DateTime created_at
+        +is_expired() bool
     }
 
-    User --> CompanyMembership : has
-    Company --> CompanyMembership : has
-    User --> RefreshToken : has
+    User \"1\" --> \"*\" CompanyMembership
+    Company \"1\" --> \"*\" CompanyMembership
+    User \"1\" --> \"*\" RefreshToken
+    User \"1\" --> \"*\" OAuthAccount
   "),
-  caption: [Authentication, User Management and Company Management - class diagram],
+  caption: [Authentication, User and Company Management class diagram],
 ) <fig:auth-class>
 
 #figure(
@@ -526,67 +515,28 @@ sequenceDiagram
     participant EmailService
     participant OAuth
 
-    User->>API: POST /signup
-
-    alt Google OAuth
-        User->>OAuth: Google OAuth
-        OAuth-->>API: OAuth token
-        API->>DB: Create or link user
-        DB-->>API: User created
-    else Local signup
-        API->>DB: Create user
-        DB-->>API: User created
-
-        alt Candidate
-            API->>EmailService: Send verification email
-            EmailService-->>API: Sent
-        else Recruiter/Admin
-            API->>DB: Create setup token
-            DB-->>API: Token created
-            API->>EmailService: Send setup email
-            EmailService-->>API: Sent
-        end
+    User->>API: POST /signup (role, password)
+    alt Candidate
+        API->>EmailService: Send signed verification token
+    else Recruiter / Admin
+        API-->>User: setup_token
+        User->>API: POST /companies/register or /join-request
+        API->>EmailService: Send pending_company / pending_recruiter token
     end
 
-    API-->>User: Return signup data
-
-    Note over User,DB: Email verification / Company setup
-
-    User->>API: POST /verify-email
-    API->>DB: Verify token
-    DB-->>API: Token valid
-
-    alt Recruiter creating company
-        API->>DB: Create company
-        DB-->>API: Company created
-        API->>DB: Create admin membership
-        DB-->>API: Membership created
-    else Recruiter joining company
-        API->>DB: Create pending membership
-        DB-->>API: Membership created
-    else Candidate
-        API->>DB: Mark user verified
-        DB-->>API: Verified
-    end
-
-    API-->>User: Verification complete
+    User->>API: POST /verify-email (token)
+    API->>DB: Create User (+Company, +Membership)
 
     User->>API: POST /login
-    alt Google OAuth
-        User->>OAuth: Google OAuth
-        OAuth-->>API: OAuth token
-        API->>DB: Find or create user
-        DB-->>API: User found
-    else Local login
-        API->>DB: Validate credentials
-        DB-->>API: User found
-    end
-    API->>DB: Create refresh token
-    DB-->>API: Token created
-    API->>API: Generate JWT tokens
-    API-->>User: Return access token
+    API->>DB: Verify password, check is_email_verified
+    API->>DB: Persist refresh JTI
+    API-->>User: Access JWT + httpOnly refresh cookie
+
+    User->>API: POST /refresh (cookie)
+    API->>DB: Validate JTI, rotate
+    API-->>User: New access + refresh cookie
   "),
-  caption: [Authentication, User Management and Company Management - sequence diagram],
+  caption: [Authentication, User and Company Management sequence diagram],
 ) <fig:auth-sequence>
 
 == Subsystem 2 Machine Learning based and Multi Agent Shortlisting (humanized)
@@ -598,46 +548,22 @@ For a Bias free evaluation ,before the AI system scans a resume, PIIs are delete
 #figure(
   mermaid("
 graph TD
-    A([Start]) --> B{Job Trigger}
+    A([Shortlisting triggered]) --> B[Machine Learning pre-filter scores every applicant]
+    B --> C[Top candidates advance to deep evaluation]
 
-    B -->|Apply with auto-shortlist| C[ML Pre-filter scores resume]
-    B -->|Job expires| D[Two-stage pipeline]
-    B -->|Manual trigger| E[Batch evaluation]
+    C --> D[Anonymize resume to remove personal identifiers]
+    D --> E[Technical evaluation agent and culture-fit evaluation agent assess in parallel]
+    E --> F[Critique agent judges quality and confidence]
+    F --> G{Confident enough?}
+    G -->|No, reflect again| E
+    G -->|Yes| H[Merge findings into strengths and concerns]
 
-    C --> F{Score in top 20%?}
-    F -->|No| G[Status: applied<br/>No LLM cost]
-    F -->|Yes| H[Queue for LLM<br/>when job expires]
-
-    D --> I[Stage 1: ML Pre-filter<br/>Score all applications]
-    I --> J[Stage 2: Top 20% to LLM]
-
-    J --> K[Technical Agent<br/>Technical evaluation]
-    J --> L[HR Agent<br/>Fit evaluation]
-
-    K --> M[Critique Node<br/>Judge confidence]
-    L --> M
-
-    M --> N{Confidence >= 70%?}
-    N -->|Yes| O[Final Node<br/>Merge results]
-    N -->|No| P[Feedback loop<br/>Retry agents]
-
-    P --> K
-    P --> L
-
-    O --> Q[Save strengths/concerns<br/>to application]
-
-    E --> R[ML Pre-filter + LLM<br/>for selected apps]
-    R --> Q
-
-    Q --> S[Threshold finalize]
-    S --> T{Score >= threshold?}
-    T -->|Yes| U[Status: shortlisted]
-    T -->|No| V[Status: rejected]
-
-    U --> W[Draft outreach email]
-    V --> X[Draft rejection email<br/>with AI feedback]
+    H --> I[Record evaluation against application]
+    I --> J{Score meets recruiter threshold?}
+    J -->|Yes| K[Candidate shortlisted]
+    J -->|No| L[Candidate rejected with feedback]
   "),
-  caption: [ML & Multi-Agent Shortlisting - activity diagram],
+  caption: [ML and multi-agent shortlisting activity diagram],
 ) <fig:ml-shortlisting>
 
 #figure(
@@ -645,21 +571,14 @@ graph TD
 classDiagram
     class Job {
         +UUID id
-        +UUID company_id
-        +UUID posted_by
         +String title
-        +String location
-        +LocationType location_type
-        +Integer salary_min
-        +Integer salary_max
         +JobStatus status
         +Boolean auto_shortlist
-        +ShortlistStatus shortlist_status
         +Integer shortlist_threshold
-        +Boolean final_shortlist_completed
+        +ShortlistStatus shortlist_status
         +DateTime expires_at
-        +Array requirements
-        +Array responsibilities
+        +is_active() bool
+        +expire() void
     }
 
     class Application {
@@ -668,66 +587,52 @@ classDiagram
         +UUID user_id
         +UUID resume_id
         +Integer score
-        +Array strengths
-        +Array weaknesses
         +Float ml_bouncer_score
+        +String[] strengths
+        +String[] weaknesses
         +ApplicationStatus status
-        +DateTime created_at
+        +transition_to(status) void
+        +is_terminal() bool
     }
 
-    class JobSyncEvent {
-        +UUID id
-        +UUID job_id
-        +SyncAction action
-        +SyncStatus status
-        +String error_message
-        +DateTime created_at
+    class ShortlistGraph {
+        <<workflow>>
+        +run(resume, jd) Evaluation
+        +should_reflect(judge) bool
     }
 
-    Job --> Application : has
-    Job --> JobSyncEvent : has
+    Job \"1\" --> \"*\" Application
+    Application ..> ShortlistGraph : evaluated by
   "),
-  caption: [ML & Multi-Agent Shortlisting - class diagram],
+  caption: [ML and multi-agent shortlisting class diagram],
 ) <fig:ml-shortlisting-class>
 
 #figure(
   mermaid("
 sequenceDiagram
-    participant Candidate
+    participant Trigger as Recruiter / Expiry
     participant API
+    participant ML as ML bouncer
+    participant Graph as LangGraph
     participant DB
-    participant MLModel
-    participant LLMService
 
-    Candidate->>API: POST /apply
-    API->>DB: Create application
-    DB-->>API: Application created
+    Trigger->>API: Trigger shortlisting (job_id)
+    API->>DB: Load applications
+    API->>ML: Score unscored apps
+    ML-->>API: ml_bouncer_scores
+    API->>DB: Persist scores, pick top N
 
-    alt Auto-shortlist enabled
-        API->>MLModel: Score resume
-        MLModel-->>API: ML score
-        API->>DB: Update ML score
+    loop For each top app
+        API->>Graph: invoke(resume, jd)
+        Graph->>Graph: CTO + HR parallel, Critique, optional reflect, Final
+        Graph-->>API: score, strengths, weaknesses
+        API->>DB: Save evaluation
     end
 
-    Note over API,DB: Job expires
-
-    API->>DB: Fetch applications
-    DB-->>API: Applications list
-
-    API->>MLModel: Score missing applications
-    MLModel-->>API: ML scores
-    API->>DB: Update ML scores
-
-    API->>API: Select top 20%
-    API->>LLMService: Deep review
-    LLMService-->>API: Evaluation results
-    API->>DB: Save strengths/concerns
-
-    API->>API: Apply threshold
-    API->>DB: Update status
-    API->>DB: Create email draft
+    API->>API: Finalize: threshold compare
+    API->>DB: Update statuses (shortlisted / rejected)
   "),
-  caption: [ML & Multi-Agent Shortlisting - sequence diagram],
+  caption: [ML and multi-agent shortlisting sequence diagram],
 ) <fig:ml-shortlisting-sequence>
 
 == Subsystem 3 Recruiter Chatbot with Agentic RAG (humanized)
@@ -737,54 +642,28 @@ The recruiter chatbot is built with a custom intent router. The system categoriz
 #figure(
   mermaid("
 graph TD
-    A([Start]) --> B[Recruiter sends message]
+    A([Recruiter sends message]) --> B[Safety check on input]
+    B --> C[Recall recent conversation, summarize older turns when needed]
+    C --> D[Determine recruiter intent]
 
-    B --> C[Auth check]
-    C --> D[Rate limit check]
+    D --> E{Intent}
+    E -->|Find candidates| F[Semantic candidate search across applicants]
+    E -->|Look up a job| G[Retrieve matching company job]
+    E -->|Edit a job| H[Show edit preview, await recruiter confirmation]
+    E -->|Salary research| I[Gather market salary insights]
+    E -->|Drafting help or recruiting question| J[Generate written response]
+    E -->|Out of scope| K[Politely decline]
 
-    D --> E{Duplicate message?}
-    E -->|Yes| F[Return cached response]
-    E -->|No| G[Prompt injection guardrail<br/>block malicious input]
+    F --> L[Stream answer back to recruiter]
+    G --> L
+    H --> L
+    I --> L
+    J --> L
+    K --> L
 
-    G --> H[Append to history]
-
-    H --> I{History > 40 messages?}
-    I -->|Yes| J[Summarize old turns]
-    I -->|No| K[Keep history]
-
-    J --> K
-
-    K --> L[Intent router]
-
-    L --> M{Rule-based match?}
-    M -->|Yes| N[Direct handler<br/>zero cost]
-    M -->|No| O[AI classifier<br/>structured JSON]
-
-    N --> P[Execute intent]
-    O --> P
-
-    P --> Q{Intent type?}
-
-    Q -->|search_candidates| R[Hybrid search<br/>dense + sparse]
-    Q -->|lookup_candidate| S[Fetch application details]
-    Q -->|salary_research| T[Web search<br/>24h cache]
-    Q -->|list_jobs| U[Fetch company jobs]
-    Q -->|lookup_job| V[Fuzzy job match]
-    Q -->|edit_job| W[14-field allowlist<br/>preview + confirm]
-    Q -->|chat| X[General conversation]
-
-    R --> Y[Stream SSE response]
-    S --> Y
-    T --> Y
-    U --> Y
-    V --> Y
-    W --> Y
-    X --> Y
-
-    Y --> Z[Save state<br/>increment version]
-    Z --> AA[Cache for retry]
+    L --> M[Persist conversation for future turns]
   "),
-  caption: [Recruiter Chatbot with Agentic RAG - activity diagram],
+  caption: [Recruiter chatbot with agentic RAG activity diagram],
 ) <fig:recruiter-chat>
 
 #figure(
@@ -797,55 +676,61 @@ classDiagram
         +String thread_id
         +String title
         +DateTime last_interaction_at
-        +Dict state_json
-        +DateTime created_at
+        +append_message(msg) void
+        +summarize_old_turns() void
+        +clear_pending_mode() void
     }
+
+    class SessionState {
+        <<struct>>
+        +Message[] history
+        +String conversation_summary
+        +String pending_mode
+    }
+
+    class IntentClassifier {
+        +classify(message) IntentResult
+        +matches_pending_mode(intent, mode) bool
+    }
+
+    RecruiterChatSession \"1\" --> \"1\" SessionState
+    RecruiterChatSession ..> IntentClassifier : uses per turn
   "),
-  caption: [Recruiter Chatbot with Agentic RAG - class diagram],
+  caption: [Recruiter chatbot with agentic RAG class diagram],
 ) <fig:recruiter-chat-class>
 
 #figure(
   mermaid("
 sequenceDiagram
-    participant Recruiter
+    participant R as Recruiter
     participant API
-    participant Cache
-    participant AI
+    participant Cache as Redis
+    participant LLM
+    participant Qdrant
     participant DB
-    participant Search
 
-    Recruiter->>API: POST /chat
-    API->>API: Auth check
-    API->>API: Rate limit check
-    API->>Cache: Check duplicate
-    Cache-->>API: Not found
+    R->>API: POST /sessions/{id}/messages/stream
+    API->>Cache: Check idempotency key
+    API->>LLM: Input guardrail
+    API->>DB: Load session state
+    API->>LLM: Classify intent
 
-    API->>AI: Prompt injection guardrail
-    AI-->>API: Safe
-
-    API->>DB: Load chat history
-    DB-->>API: History loaded
-
-    API->>AI: Classify intent
-    AI-->>API: Intent type
-
-    alt Candidate search
-        API->>Search: Hybrid search
-        Search-->>API: Candidates
-    else Salary research
-        API->>Search: Web search
-        Search-->>API: Salary data
+    alt candidate_search
+        API->>Qdrant: Hybrid dense+sparse, RRF
+    else salary_research
+        API->>Cache: Salary cache (24h)
+        API->>LLM: Tavily search + synth
+    else job_edit
+        API->>DB: Load job, build preview
     end
 
-    API->>AI: Generate response
-    AI-->>API: Response
-
-    API->>DB: Save state
-    API->>Cache: Cache response
-
-    API-->>Recruiter: Stream response
+    API->>LLM: Generate response (streaming)
+    LLM-->>API: Token stream
+    API-->>R: SSE tokens + final exchange
+    API->>DB: Save state_json
+    API->>Cache: Cache final exchange
   "),
-  caption: [Recruiter Chatbot with Agentic RAG - sequence diagram],
+  caption: [Recruiter chatbot with agentic RAG sequence diagram],
 ) <fig:recruiter-chat-sequence>
 
 == Subsystem 4 AI Resume Parsing and Job Fit Gap Analysis (humanized)
@@ -855,47 +740,27 @@ Once a candidate submits a resume, the system reads it and then uses it Llama Cl
 #figure(
   mermaid("
 graph TD
-    A([Start]) --> B{User Action}
+    A([Candidate]) --> B{Action}
 
-    B -->|Import PDF| C[AI extract<br/>structured data]
-    B -->|Create resume| D[Fork from profile<br/>or start fresh]
-    B -->|Gap Analysis| E[Analyze resume vs JD]
-    B -->|Auto-Patch| F[Generate improvements]
+    B -->|Import existing resume| C[Upload resume document]
+    C --> D[AI extracts skills, experience, education and projects]
+    D --> E[Candidate previews and confirms structured fields]
+    E --> F[Resume saved to profile]
 
-    C --> G[AI normaliser<br/>fill profile fields]
-    G --> H[Candidate reviews<br/>confirms fields]
-    H --> I[Save resume object]
+    B -->|Build resume manually| G[Edit resume fields with live preview]
+    G --> F
 
-    D --> J[Edit resume fields]
-    J --> K[Live preview<br/>download PDF]
-
-    E --> L[Check cache<br/>10 min TTL]
-    L --> M{Cached?}
-    M -->|Yes| N[Return cached result]
-    M -->|No| O[PII redaction guardrail<br/>block injection]
-
-    O --> P[AI analysis]
-    P --> Q[Return score 0-100<br/>gaps + suggestions]
-    Q --> R[Cache result]
-
-    F --> S[PII redaction guardrail]
-    S --> T[AI generates patch]
-
-    T --> U[Immutable fields guard<br/>preserve facts]
-    U --> V[Skill cap<br/>max 5 new, 30 total]
-
-    V --> W[Server validation<br/>field limits]
-    W --> X[Pending patch workflow]
-
-    X --> Y{Candidate decision}
-    Y -->|Confirm| Z[Apply changes<br/>save resume]
-    Y -->|Discard| AA[Abandon patch]
-
-    I --> AB[Use in application]
-    K --> AB
-    Z --> AB
+    B -->|Apply to a job| H[Run gap analysis against job description]
+    H --> I[Show fit score, missing skills and suggestions]
+    I --> J{Candidate response}
+    J -->|Accept suggested improvements| K[AI proposes safe edits, factual fields preserved]
+    K --> L[Candidate reviews proposed changes]
+    L --> M{Confirm changes?}
+    M -->|Yes| N[Updated resume submitted with application]
+    M -->|No| O[Original resume submitted with application]
+    J -->|Apply as-is| O
   "),
-  caption: [AI Resume Parsing and Job Fit Gap Analysis - activity diagram],
+  caption: [AI resume parsing and job-fit gap analysis activity diagram],
 ) <fig:resume-parsing-gap>
 
 #figure(
@@ -907,89 +772,83 @@ classDiagram
         +String resume_name
         +String headline
         +String summary
-        +String phone
-        +String location
-        +String linkedin_url
-        +String github_url
-        +String portfolio_url
         +Integer years_of_experience
-        +DateTime created_at
+        +to_text() String
+        +apply_patch(patch) void
     }
 
     class ResumeExperience {
-        +UUID id
-        +UUID resume_id
         +String company_name
         +String title
         +DateTime start_date
         +DateTime end_date
-        +Array description
+        +String[] description
     }
 
     class ResumeEducation {
-        +UUID id
-        +UUID resume_id
         +String institution
         +String degree
         +String field_of_study
-        +DateTime start_date
-        +DateTime end_date
     }
 
     class ResumeSkill {
-        +UUID id
-        +UUID resume_id
         +String skill_name
     }
 
-    Resume --> ResumeExperience : has
-    Resume --> ResumeEducation : has
-    Resume --> ResumeSkill : has
+    class ResumeImportTask {
+        +UUID id
+        +UUID user_id
+        +ImportStatus status
+        +mark_completed(data) void
+        +mark_failed(error) void
+    }
+
+    Resume \"1\" --> \"*\" ResumeExperience
+    Resume \"1\" --> \"*\" ResumeEducation
+    Resume \"1\" --> \"*\" ResumeSkill
+    ResumeImportTask ..> Resume : preview commit
   "),
-  caption: [AI Resume Parsing and Job Fit Gap Analysis - class diagram],
+  caption: [AI resume parsing and job-fit gap analysis class diagram],
 ) <fig:resume-parsing-gap-class>
 
 #figure(
   mermaid("
 sequenceDiagram
-    participant Candidate
+    participant C as Candidate
     participant API
-    participant Cache
-    participant AI
+    participant Llama as LlamaExtract
+    participant LLM as Groq
+    participant Cache as Redis
     participant DB
 
-    Candidate->>API: POST /import-pdf
-    API->>AI: Extract structured data
-    AI-->>API: Extracted data
-    API->>AI: Normalize fields
-    AI-->>API: Normalized data
-    API->>DB: Save resume
-    DB-->>API: Resume saved
+    C->>API: POST /ai-resume-import (PDF)
+    API->>DB: Create ResumeImportTask
+    API-)Llama: Background extract (Gemini + GPT mini)
+    Llama-->>API: Structured fields
+    API->>DB: Save result_data
+    C->>API: Commit preview
+    API->>DB: Insert Resume + children
 
-    Candidate->>API: POST /gap-analysis
-    API->>Cache: Check cache
-    Cache-->>API: Not found
-    API->>AI: PII redaction guardrail
-    AI-->>API: Safe
-    API->>AI: Analyze gaps
-    AI-->>API: Score + gaps
-    API->>Cache: Cache result
-    API-->>Candidate: Analysis result
+    C->>API: POST /resume-gap/analyze
+    API->>Cache: Look up resume_gap key
+    alt miss
+        API->>LLM: Guardrail + analyze
+        LLM-->>API: Score, gaps, suggestions
+        API->>Cache: Set with TTL
+    end
+    API-->>C: Gap analysis
 
-    Candidate->>API: POST /auto-patch
-    API->>AI: PII redaction guardrail
-    AI-->>API: Safe
-    API->>AI: Generate patch
-    AI-->>API: Suggested changes
-    API->>API: Validate fields
-    API->>DB: Save pending patch
-    DB-->>API: Saved
+    C->>API: POST /resume-gap/auto-patch
+    API->>LLM: Guardrail + generate patch
+    API->>API: Apply caps, preserve immutable fields
+    API->>Cache: Stage pending patch
 
-    Candidate->>API: POST /confirm-patch
-    API->>DB: Apply changes
-    DB-->>API: Resume updated
+    C->>API: POST /applications (apply)
+    API->>Cache: Consume pending patch
+    API->>DB: Persist patched Resume
+    API->>Cache: Invalidate gap cache
   "),
-  caption: [AI Resume Parsing and Job Fit Gap Analysis - sequence diagram],
+  caption: [AI resume parsing and job-fit gap analysis sequence diagram],
 ) <fig:resume-parsing-gap-sequence>
 
 == Subsystem 5 Fine-Tuned ASR for Interview Transcription and Scoring  (humanized)
@@ -999,47 +858,24 @@ Interviews are uploaded to Amazon S3 and then transcribed using a finetuned ASR 
 #figure(
   mermaid("
 graph TD
-    A([Start]) --> B{User Action}
+    A([Recruiter uploads interview recording]) --> B[Recording stored against the application]
+    B --> C[Fine-tuned speech recognition model transcribes the interview]
+    C --> D{Transcription successful?}
+    D -->|No| E[Mark for retry]
+    D -->|Yes| F[Transcript saved]
 
-    B -->|Upload audio| C[Upload to cloud storage<br/>presigned URL]
-    B -->|Batch transcribe| D[Select candidates]
+    F --> G[Evaluation agent scores transcript against job rubric]
+    G --> H[AI evaluation recorded]
 
-    C --> E[Create recording<br/>status: uploaded]
+    H --> I{Recruiter adds human scores?}
+    I -->|Yes| J[Human scores recorded per criterion]
+    I -->|No| K[AI evaluation only]
 
-    E --> F[Trigger transcription]
-
-    F --> G[Download audio from cloud]
-    G --> H[Send to ASR model<br/>fine-tuned for interviews]
-
-    H --> I{Success?}
-    I -->|Yes| J[Save transcript<br/>status: transcribed]
-    I -->|No| K[Retry on cold start<br/>status: failed]
-
-    D --> L[List recordings<br/>filter by status]
-    L --> M[Queue batch transcribe<br/>concurrent processing]
-
-    M --> F
-
-    J --> N[Trigger AI evaluation]
-    K --> O[Retry transcription]
-
-    N --> P[Load job schema<br/>rubric criteria]
-    P --> Q[AI evaluation<br/>against transcript]
-
-    Q --> R[Save AI scores<br/>status: evaluated]
-
-    R --> S{Human evaluation?}
-    S -->|Yes| T[Recruiter scores<br/>per criterion]
-    S -->|No| U[AI scores only]
-
-    T --> V[Combine AI + Human<br/>weighted average]
-    V --> W[Save final scores]
-
-    U --> W
-
-    W --> X[Side-by-side view<br/>AI vs Human]
+    J --> L[Final score combines AI and human evaluations using rubric weights]
+    K --> L
+    L --> M[Side-by-side evaluation shown to recruiter]
   "),
-  caption: [Fine-Tuned ASR for Interview Transcription and Scoring - activity diagram],
+  caption: [Fine-tuned ASR for interview transcription and scoring activity diagram],
 ) <fig:asr-transcription>
 
 #figure(
@@ -1048,82 +884,72 @@ classDiagram
     class InterviewRecording {
         +UUID id
         +UUID application_id
-        +String s3_audio_url
         +String s3_audio_key
         +String transcript
-        +String evaluation
         +RecordingStatus status
         +Integer duration_seconds
-        +DateTime created_at
+        +transcribe() void
+        +mark_failed(error) void
     }
 
     class JobEvaluationSchema {
         +UUID id
         +UUID job_id
         +Integer version
-        +Array criteria
+        +Criterion[] criteria
         +Float human_weight
         +Float llm_weight
-        +DateTime created_at
+        +combine(human, llm) Float
     }
 
     class CandidateEvaluationScore {
         +UUID id
         +UUID application_id
-        +UUID job_id
         +UUID schema_id
-        +String evaluator_type
+        +EvaluatorType evaluator_type
         +Dict scores
-        +Array criteria_snapshot
-        +String notes
         +Float weighted_total
-        +UUID submitted_by_user_id
-        +String evaluator_label
-        +DateTime created_at
+        +compute_weighted_total() Float
     }
 
-    InterviewRecording --> JobEvaluationSchema : uses
-    CandidateEvaluationScore --> JobEvaluationSchema : references
+    JobEvaluationSchema \"1\" --> \"*\" CandidateEvaluationScore
+    InterviewRecording ..> CandidateEvaluationScore : feeds transcript
   "),
-  caption: [Fine-Tuned ASR for Interview Transcription and Scoring - class diagram],
+  caption: [Fine-tuned ASR for interview transcription and scoring class diagram],
 ) <fig:asr-transcription-class>
 
 #figure(
   mermaid("
 sequenceDiagram
-    participant Recruiter
+    participant R as Recruiter
     participant API
-    participant DB
     participant S3
-    participant ASRModel
-    participant AI
+    participant ASR as Whisper service
+    participant LLM
+    participant DB
 
-    Recruiter->>API: Upload audio
-    API->>S3: Upload file
-    S3-->>API: URL
-    API->>DB: Create recording
-    DB-->>API: Saved
+    R->>API: Upload audio
+    API->>S3: Put object
+    API->>DB: Create InterviewRecording
 
-    API->>API: Trigger transcription
-    API->>S3: Download audio
-    S3-->>API: Audio data
-    API->>ASRModel: Transcribe
-    ASRModel-->>API: Transcript
+    R->>API: POST /recordings/{id}/transcribe
+    API->>S3: Get audio bytes
+    API->>ASR: Transcribe
+    ASR-->>API: Transcript
     API->>DB: Save transcript
 
-    API->>AI: Evaluate transcript
-    AI->>DB: Load job schema
-    DB-->>AI: Schema
-    AI->>AI: Score against rubric
-    AI-->>API: AI scores
-    API->>DB: Save AI scores
+    R->>API: POST /evaluation/llm
+    API->>DB: Load JobEvaluationSchema
+    API->>LLM: Score transcript against rubric
+    LLM-->>API: scores JSON
+    API->>DB: Insert CandidateEvaluationScore (llm)
 
-    Recruiter->>API: Submit human scores
-    API->>DB: Save human scores
-    API->>API: Combine AI + Human
-    API->>DB: Save final scores
+    R->>API: POST /evaluation/human
+    API->>DB: Insert CandidateEvaluationScore (human)
+    API->>API: Weighted combine using schema weights
+    API-->>R: Combined view
   "),
-  caption: [Fine-Tuned ASR for Interview Transcription and Scoring - sequence diagram],
+  caption: [Fine-tuned ASR for interview transcription and scoring sequence diagram],
 ) <fig:asr-transcription-sequence>
 
 == Subsystem 6 AI Job Drafting and Hybrid Semantic Search (humanized)
@@ -1133,49 +959,25 @@ When recruiters need to write a job description, there is an AI Job Draft Assist
 #figure(
   mermaid("
 graph TD
-    A([Start]) --> B{User Action}
+    A([Recruiter]) --> B{Action}
 
-    B -->|AI Job Assistant| C[Enter description]
-    B -->|Manual form| D[Fill job fields]
-    B -->|Hybrid Search| E[Natural language query]
+    B -->|Use AI job assistant| C[Provide role idea and rough description]
+    C --> D[Assistant gathers salary benchmarks]
+    D --> E[Assistant generates job draft and flags missing fields]
+    E --> F[Recruiter reviews the draft]
+    F --> G{Decision}
+    G -->|Request improvements| E
+    G -->|Approve| H[Job published]
+    G -->|Save for later| I[Draft stored privately]
+    G -->|Discard| J[Draft removed]
 
-    C --> F[AI workflow]
+    B -->|Fill form manually| H
 
-    F --> G{Salary research?}
-    G -->|Yes| H[Web search<br/>24h cache]
-    G -->|No| I[Skip research]
-
-    H --> J[AI synthesize salary]
-    I --> J
-
-    J --> K[Generate draft]
-
-    K --> L[Server validators]
-
-    L --> M{Valid?}
-    M -->|No| N[Return errors<br/>refine loop]
-    M -->|Yes| O[Human review]
-
-    O --> P{Recruiter decision}
-    P -->|Edit fields| Q[Regenerate]
-    P -->|Approve| R[Commit to job]
-    P -->|Discard| S[Delete draft]
-
-    Q --> K
-
-    R --> T[Job created<br/>status: draft/active]
-
-    D --> T
-
-    E --> U[Dense search<br/>vector embeddings]
-    E --> V[Sparse search<br/>keyword matching]
-
-    U --> W[Hybrid retrieval<br/>merge results]
-    V --> W
-
-    W --> X[Return ranked jobs<br/>by relevance]
+    K([Candidate or recruiter]) --> L[Enter natural-language search]
+    L --> M[Hybrid semantic search blends meaning and keywords]
+    M --> N[Relevant jobs returned in ranked order]
   "),
-  caption: [AI Job Drafting and Hybrid Semantic Search - activity diagram],
+  caption: [AI job drafting and hybrid semantic search activity diagram],
 ) <fig:job-drafting-search>
 
 #figure(
@@ -1185,61 +987,66 @@ classDiagram
         +UUID id
         +UUID recruiter_id
         +UUID company_id
-        +String thread_id
-        +String status
-        +String mode
-        +String source_title
-        +String source_rough_description
-        +Array locked_fields
+        +DraftStatus status
+        +DraftMode mode
         +Dict latest_draft
-        +Dict salary_research
-        +Array assumptions
-        +Array warnings
-        +Array missing_fields
-        +Dict last_interrupt
+        +String[] missing_fields
         +UUID committed_job_id
-        +DateTime created_at
+        +refine(decision) void
+        +commit_to_job() Job
     }
+
+    class Job {
+        +UUID id
+        +String title
+        +JobStatus status
+    }
+
+    class HybridSearchIndex {
+        <<service>>
+        +upsert_job(job) void
+        +search(query) Job[]
+    }
+
+    JobAIDraft ..> Job : commits to
+    Job ..> HybridSearchIndex : indexed in
   "),
-  caption: [AI Job Drafting and Hybrid Semantic Search - class diagram],
+  caption: [AI job drafting and hybrid semantic search class diagram],
 ) <fig:job-drafting-search-class>
 
 #figure(
   mermaid("
 sequenceDiagram
-    participant Recruiter
+    participant R as Recruiter
     participant API
-    participant AI
-    participant Search
-    participant WebSearch
+    participant Graph as LangGraph
+    participant Web as Tavily
+    participant Qdrant
     participant DB
 
-    Recruiter->>API: POST /job-draft
-    API->>AI: Start AI workflow
-    AI->>WebSearch: Salary research
-    WebSearch-->>AI: Salary data
-    AI->>AI: Synthesize salary
-    AI->>AI: Generate draft
-    AI-->>API: Draft generated
-    API->>API: Validate fields
+    R->>API: POST /jobs/ai/draft
+    API->>DB: Create JobAIDraft
+    API-)Graph: Start run
+    Graph->>Web: Salary research (cached 24h)
+    Graph->>Graph: synthesize_salary, generate_draft, validate_draft
+    Graph-->>API: interrupt (review payload)
+    API->>DB: Save last_interrupt
 
-    Recruiter->>API: POST /edit-fields
-    API->>AI: Regenerate selected
-    AI-->>API: Updated draft
+    R->>API: POST /drafts/{id}/respond (refine | approve)
+    alt refine
+        API-)Graph: Command(resume=edit)
+        Graph-->>API: New draft + interrupt
+    else approve
+        API->>DB: Create Job from latest_draft
+        API->>Qdrant: Upsert dense + BM25 vectors
+    end
 
-    Recruiter->>API: POST /approve
-    API->>DB: Create job
-    DB-->>API: Job created
-
-    Recruiter->>API: POST /search-jobs
-    API->>Search: Dense search
-    Search-->>API: Vector results
-    API->>Search: Sparse search
-    Search-->>API: Keyword results
-    API->>API: Merge results
-    API-->>Recruiter: Ranked jobs
+    R->>API: GET /jobs?q=...
+    API->>Qdrant: Hybrid prefetch + RRF fusion
+    Qdrant-->>API: Ranked job ids
+    API-->>R: Job list
   "),
-  caption: [AI Job Drafting and Hybrid Semantic Search - sequence diagram],
+  caption: [AI job drafting and hybrid semantic search sequence diagram],
 ) <fig:job-drafting-search-sequence>
 
 == Subsystem 7 AI Outreach Drafting and Interview Scheduling (humanized)
@@ -1249,37 +1056,24 @@ Once a recruiter shortlists a candidate, they can generate an outreach email usi
 #figure(
   mermaid("
 graph TD
-    A([Start]) --> B{User Action}
+    A([Recruiter finalizes shortlist]) --> B[AI drafts personalized email for each candidate]
+    B --> C{Outcome}
+    C -->|Shortlisted| D[Warm invite with interview booking link]
+    C -->|Rejected| E[Rejection note with AI feedback]
 
-    B -->|Shortlist finalize| C[Generate email drafts]
-    B -->|Send all| D[Dispatch approved emails]
-    B -->|Interview booking| E[Webhook trigger]
+    D --> F[Recruiter reviews and approves drafts]
+    E --> F
+    F --> G[Approved emails sent to candidates]
 
-    C --> F{Application status?}
-    F -->|Shortlisted| G[Draft warm invite<br/>+ booking link]
-    F -->|Rejected| H[Draft rejection<br/>+ AI feedback]
+    G --> H{Outreach type}
+    H -->|Shortlist| I[Candidate selects interview slot]
+    H -->|Rejection| J[Process ends for that candidate]
 
-    G --> I[Save draft<br/>status: pending]
-    H --> I
-
-    D --> J[Email service send<br/>approved drafts only]
-    J --> K[Mark sent]
-
-    K --> L{Email type?}
-    L -->|Shortlist| M[Candidate clicks<br/>booking link]
-    L -->|Rejection| N[No scheduling]
-
-    M --> O[Interview booking]
-
-    E --> P{Booking created?}
-    P -->|Yes| Q[Match to application]
-    P -->|No| R[Ignore]
-
-    Q --> S[Create interview record]
-    S --> T[Status: interview_booked]
-    T --> U[Notify candidate<br/>+ recruiter]
+    I --> K[System receives booking confirmation]
+    K --> L[Interview scheduled against application]
+    L --> M[Candidate and recruiter notified]
   "),
-  caption: [AI Outreach Drafting and Interview Scheduling - activity diagram],
+  caption: [AI outreach drafting and interview scheduling activity diagram],
 ) <fig:outreach-interview>
 
 #figure(
@@ -1289,8 +1083,8 @@ classDiagram
         +UUID id
         +UUID user_id
         +UUID job_id
-        +String status
-        +Float score
+        +ApplicationStatus status
+        +Integer score
     }
 
     class EmailDraft {
@@ -1301,82 +1095,101 @@ classDiagram
         +Boolean is_approved
         +Boolean is_sent
         +Boolean is_discarded
-        +DateTime created_at
+        +approve() void
+        +send() void
+        +discard() void
     }
 
     class Interview {
         +UUID id
         +UUID application_id
         +String cal_booking_uid
-        +String candidate_name
         +String candidate_email
         +DateTime start_time
         +DateTime end_time
         +String location
-        +String title
+        +from_booking(payload) Interview
     }
 
-    Application --> EmailDraft : has
-    Application --> Interview : has
+    Application \"1\" --> \"1\" EmailDraft
+    Application \"1\" --> \"1\" Interview
   "),
-  caption: [AI Outreach Drafting and Interview Scheduling - class diagram],
+  caption: [AI outreach drafting and interview scheduling class diagram],
 ) <fig:outreach-interview-class>
 
 #figure(
   mermaid("
 sequenceDiagram
-    participant Recruiter
+    participant R as Recruiter
+    participant C as Candidate
     participant API
+    participant LLM as Groq
+    participant Email
+    participant Cal as Cal.com
     participant DB
-    participant EmailService
-    participant Webhook
-    participant Notification
 
-    Recruiter->>API: Finalize shortlist
-    API->>DB: Get applications
-    DB-->>API: Applications
-    API->>AI: Generate email drafts
-    AI-->>API: Drafts
-    API->>DB: Save drafts
-    DB-->>API: Saved
+    R->>API: POST /outreach/jobs/{id}/prepare-drafts
+    API->>DB: Load shortlist + rejection apps
+    API->>LLM: Compose drafts (fallback to static template)
+    API->>DB: Insert EmailDraft rows
 
-    Recruiter->>API: Approve draft
-    API->>DB: Mark approved
-    DB-->>API: Approved
+    R->>API: Approve draft
+    R->>API: POST /send-all
+    API-)Email: Send approved drafts
+    API->>DB: Mark is_sent
 
-    Recruiter->>API: Send all
-    API->>EmailService: Send emails
-    EmailService-->>API: Sent
-    API->>DB: Mark sent
-    DB-->>API: Updated
-
-    Candidate->>API: Click booking link
-    Candidate->>Candidate: Book interview
-    Webhook->>API: Booking webhook
-    API->>DB: Match application
-    DB-->>API: Found
-    API->>DB: Create interview
-    DB-->>API: Created
-    API->>Notification: Notify candidate
-    API->>Notification: Notify recruiter
+    C->>Cal: Book interview slot
+    Cal->>API: BOOKING_CREATED webhook
+    API->>DB: Match Company + Application by emails
+    API->>DB: Create Interview, status -> interview_booked
+    API-->>R: Notify recruiter
+    API-->>C: Notify candidate
   "),
-  caption: [AI Outreach Drafting and Interview Scheduling - sequence diagram],
+  caption: [AI outreach drafting and interview scheduling sequence diagram],
 ) <fig:outreach-interview-sequence>
 
-== Database Schema Diagram
+== Entity-Relationship Diagram (humanized)
+
+The following entity relationship diagram is a high-level overview of the entire system, how the entities are related to one another. No column types, no foreign key fields, no junction tables here, The idea is just to look at the platform and understand who relates to whom. A user can be a applicant or can be related to a company by becoming a member of it and the company will post its jobs. The candidate then applies for a position with a job and sends a resume, from there it all flows. Once the candidate is shortlisted, they receive an interview, and a transcript and scores of the interview are created based on an evaluation schema created by the recruiter for the job. Outreach e-mails are also connected to the application, for shortlist and rejection situations. On the side of the recruiter, there is the job AI draft which eventually becomes a real job, and the recruiter chat session, which the recruiter utilizes to communicate with the assistant. Activity events and notifications are also present for tracking the system's activities.
 
 #figure(
-  rect(width: 100%, height: 5cm, stroke: 0.5pt + gray)[#align(center + horizon)[_DB schema placeholder_]],
-  caption: [PostgreSQL schema diagram],
-) <fig:db-schema>
+  mermaid("
+erDiagram
+    User ||--o{ Company : \"belongs to via membership\"
+    Company ||--o{ Job : \"posts\"
+    User ||--o{ Application : \"submits as candidate\"
+    Job ||--o{ Application : \"receives\"
+    Application }o--|| Resume : \"submitted with\"
+    Application ||--o| Interview : \"results in\"
+    Application ||--o{ EmailDraft : \"has outreach\"
+    Interview ||--o| InterviewRecording : \"captured as\"
+    InterviewRecording ||--o{ EvaluationScore : \"scored as\"
+    Job ||--o| EvaluationSchema : \"defines rubric\"
+    EvaluationSchema ||--o{ EvaluationScore : \"scored against\"
+    User ||--o{ JobAIDraft : \"drafts\"
+    JobAIDraft ||--o| Job : \"commits to\"
+    User ||--o{ RecruiterChatSession : \"converses in\"
+    User ||--o{ ActivityEvent : \"acts in\"
+    ActivityEvent ||--o{ Notification : \"surfaces as\"
+  "),
+  caption: [Conceptual entity-relationship diagram of ConvexHire],
+) <fig:er-conceptual>
 
-== Finetuning OpenAI Whisper
 
- synthetic data, crowdsourcing, storage.
+== Finetuning OpenAI Whisper (humanized)
 
-=== Integration
+Whisper Small is multilingual, but not well trained for Nepali as it is a low-resource language and Whisper had little exposure to Nepali during training. So I fine tuned it on #link("https://huggingface.co/datasets/amitpant7/nepali-speech-to-text")[`amitpant7/nepali-speech-to-text`], around 3000 Nepali clips of about 30 seconds each from OpenSLR SLR43 and Mozilla Common Voice, split 90/10.
 
- decoupled FastAPI service for the ASR pipeline.
+The training was conducted over 30 epochs with batch size 32 and gradient accumulation 2, learning rate 3e-5 cosine, weight decay 0.01, dropout 0.1, using one RTX PRO 6000 Blackwell. I applied SpecAugment, Gaussian noise, and early stopping on validation WER and gradient clipping as a result of being a small dataset. The best checkpoint achieves a held out split WER of 31.64% and a CER of 7.27%, far superior to the base Whisper Small zero shot on Nepali.
+
+#figure(
+  image("backend/notebooks/plots/training_curves_v3.png", width: 100%),
+  caption: [Training curves - train and validation loss, WER, CER, and cosine learning rate schedule across all training steps],
+) <fig:whisper-training-curves>
+
+=== Integration (humanized)
+
+The model is hosted in Hugging Face Hub as #link("https://huggingface.co/devrahulbanjara/whisper-small-nepali")[`devrahulbanjara/whisper-small-nepali`] and is deployed as a Hugging Face Space in a small Docker file with a `/transcribe` endpoint. As the Space is based on the free CPU tier (no GPU), inference is slower and the container will go to sleep when it is idle. The Space loads weights at start up and responds to transcription requests. The recording service fetches audio from S3, invokes the Space via HTTP and stores the result. The first 503 that hit during cold start retries with backoff are served by URL, timeout and retry settings in the backend configuration.
 
 // 8. TEST PLANS
 = Test Plans
@@ -1469,9 +1282,9 @@ Whisper Small was fine-tuned on Nepali speech for 30 epochs on Colab with an A10
   caption: [Whisper Small fine-tuning results on the Nepali validation set (lower is better)],
 ) <tbl:whisper-eval>
 
-== Guardrails
+== Guardrails (humanized)
 
-Guardrails are checks installed in runtime to run between the user and the language model and the system. They determine what is read into the model, what it is allowed to say and what form the answer should take. ConvexHire has three layers of guardrails: one at the input, one over the content it processes, and one over the output it generates, so that one weak point does not lead to unfair, unsafe or fabricated behaviour towards the recruiter or candidate. (humanized)
+Guardrails are checks installed in runtime to run between the user and the language model and the system. They determine what is read into the model, what it is allowed to say and what form the answer should take. ConvexHire has three layers of guardrails: one at the input, one over the content it processes, and one over the output it generates, so that one weak point does not lead to unfair, unsafe or fabricated behaviour towards the recruiter or candidate.
 
 === Input Guardrail Prompt Injection Defense (humanized)
 

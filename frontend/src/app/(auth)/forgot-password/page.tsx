@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
       return
     }
     try {
-      const result = await forgotPassword({ email }).unwrap()
+      const result = await forgotPassword({ email: email.trim().toLowerCase() }).unwrap()
       if (result.success) {
         setSent(true)
       } else {

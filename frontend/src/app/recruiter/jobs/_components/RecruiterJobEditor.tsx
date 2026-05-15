@@ -2,6 +2,13 @@
 
 import { type FormEvent, useState } from 'react'
 
+import {
+  LIMITS,
+  hasDuplicate,
+  isFutureDate,
+  isSalaryRangeValid,
+  nowDatetimeLocalInput,
+} from '@/lib/validation'
 import type { CreateJobPayload, JobDetail, JobStatus, LocationType } from '@/store/services/jobsApi'
 import { Plus, X } from 'lucide-react'
 
@@ -133,10 +140,20 @@ function ListInput({
   onChange: (items: string[]) => void
 }) {
   const [draft, setDraft] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   function add() {
     const trimmed = draft.trim()
     if (!trimmed) return
+    if (trimmed.length > LIMITS.listItem) {
+      setError(`Too long (max ${LIMITS.listItem} chars)`)
+      return
+    }
+    if (hasDuplicate(items, trimmed)) {
+      setError('Already added')
+      return
+    }
+    setError(null)
     onChange([...items, trimmed])
     setDraft('')
   }
@@ -184,7 +201,11 @@ function ListInput({
         <input
           type="text"
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          maxLength={LIMITS.listItem}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            if (error) setError(null)
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault()
@@ -205,6 +226,11 @@ function ListInput({
           Add
         </button>
       </div>
+      {error ? (
+        <span className="auth__error-msg" role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -228,9 +254,34 @@ export default function RecruiterJobEditor({
     event.preventDefault()
 
     const nextErrors: Partial<Record<keyof RecruiterJobFormState, string>> = {}
-    if (!form.title.trim()) nextErrors.title = 'Title is required.'
-    if (form.salary_min && form.salary_max && Number(form.salary_min) > Number(form.salary_max)) {
-      nextErrors.salary_min = 'Min salary cannot exceed max.'
+    const title = form.title.trim()
+    if (!title) nextErrors.title = 'Title is required.'
+    else if (title.length > LIMITS.title) nextErrors.title = `Title too long (max ${LIMITS.title}).`
+    if (form.overview && form.overview.length > LIMITS.overview)
+      nextErrors.overview = `Overview too long (max ${LIMITS.overview}).`
+    if (form.location && form.location.length > LIMITS.location)
+      nextErrors.location = `Location too long (max ${LIMITS.location}).`
+
+    if (form.salary_min && Number(form.salary_min) < 0)
+      nextErrors.salary_min = 'Min salary cannot be negative.'
+    if (form.salary_max && Number(form.salary_max) < 0)
+      nextErrors.salary_max = 'Max salary cannot be negative.'
+    if (!isSalaryRangeValid(form.salary_min, form.salary_max))
+      nextErrors.salary_max = 'Max salary must be greater than or equal to min.'
+
+    if (form.expires_at && !isFutureDate(form.expires_at))
+      nextErrors.expires_at = 'Expiry must be in the future.'
+
+    if (form.shortlist_threshold) {
+      const n = Number(form.shortlist_threshold)
+      if (Number.isNaN(n) || n < 0 || n > 100)
+        nextErrors.shortlist_threshold = 'Threshold must be between 0 and 100.'
+    }
+
+    if (form.required_years_of_experience) {
+      const n = Number(form.required_years_of_experience)
+      if (Number.isNaN(n) || n < 0 || n > LIMITS.yearsExperience)
+        nextErrors.required_years_of_experience = `Years must be 0–${LIMITS.yearsExperience}.`
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -251,6 +302,7 @@ export default function RecruiterJobEditor({
           <input
             type="text"
             value={form.title}
+            maxLength={LIMITS.title}
             onChange={(event) => set('title', event.target.value)}
             placeholder="e.g. Senior Frontend Engineer"
             className={`job-ai-input${errors.title ? ' auth__input--error' : ''}`}
@@ -269,12 +321,18 @@ export default function RecruiterJobEditor({
           </label>
           <textarea
             value={form.overview}
+            maxLength={LIMITS.overview}
             onChange={(event) => set('overview', event.target.value)}
             placeholder="Brief summary of the role and team..."
             rows={6}
-            className="job-ai-textarea"
+            className={`job-ai-textarea${errors.overview ? ' auth__input--error' : ''}`}
             disabled={isLoading}
           />
+          {errors.overview ? (
+            <span className="auth__error-msg" role="alert">
+              {errors.overview}
+            </span>
+          ) : null}
         </div>
 
         <div className="job-ai-form__stack">
@@ -314,11 +372,17 @@ export default function RecruiterJobEditor({
             <input
               type="text"
               value={form.location}
+              maxLength={LIMITS.location}
               onChange={(event) => set('location', event.target.value)}
               placeholder="e.g. Kathmandu, Nepal"
-              className="job-ai-input"
+              className={`job-ai-input${errors.location ? ' auth__input--error' : ''}`}
               disabled={isLoading}
             />
+            {errors.location ? (
+              <span className="auth__error-msg" role="alert">
+                {errors.location}
+              </span>
+            ) : null}
           </div>
 
           <div className="job-ai-field job-ai-field--manual job-editor-form__field">
@@ -342,10 +406,16 @@ export default function RecruiterJobEditor({
             <input
               type="datetime-local"
               value={form.expires_at}
+              min={nowDatetimeLocalInput()}
               onChange={(event) => set('expires_at', event.target.value)}
-              className="job-ai-input"
+              className={`job-ai-input${errors.expires_at ? ' auth__input--error' : ''}`}
               disabled={isLoading}
             />
+            {errors.expires_at ? (
+              <span className="auth__error-msg" role="alert">
+                {errors.expires_at}
+              </span>
+            ) : null}
           </div>
 
           <div className="job-ai-field job-ai-field--manual job-editor-form__toggle-field">
@@ -424,6 +494,7 @@ export default function RecruiterJobEditor({
                 onChange={(event) => set('salary_min', event.target.value)}
                 placeholder="Min salary"
                 min={0}
+                max={LIMITS.salaryMax}
                 className={`job-ai-input${errors.salary_min ? ' auth__input--error' : ''}`}
                 disabled={isLoading}
               />
@@ -433,7 +504,8 @@ export default function RecruiterJobEditor({
                 onChange={(event) => set('salary_max', event.target.value)}
                 placeholder="Max salary"
                 min={0}
-                className="job-ai-input"
+                max={LIMITS.salaryMax}
+                className={`job-ai-input${errors.salary_max ? ' auth__input--error' : ''}`}
                 disabled={isLoading}
               />
               <select
@@ -449,9 +521,9 @@ export default function RecruiterJobEditor({
                 <option value="INR">INR</option>
               </select>
             </div>
-            {errors.salary_min ? (
+            {errors.salary_min || errors.salary_max ? (
               <span className="auth__error-msg" role="alert">
-                {errors.salary_min}
+                {errors.salary_min || errors.salary_max}
               </span>
             ) : null}
           </div>

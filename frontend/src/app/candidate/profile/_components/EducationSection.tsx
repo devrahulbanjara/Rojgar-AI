@@ -1,5 +1,6 @@
 'use client'
 
+import { LIMITS, isDateOrderValid } from '@/lib/validation'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 
 import styles from '../page.module.scss'
@@ -88,6 +89,9 @@ function EducationEntry({
   onRemove,
   onChange,
 }: EntryProps) {
+  const dateError = !isDateOrderValid(entry.startDate, entry.endDate)
+    ? 'End date must be on or after start date.'
+    : null
   return (
     <article className={styles.entry}>
       <header className={styles.entryHeader}>
@@ -110,7 +114,7 @@ function EducationEntry({
                 type="button"
                 className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
                 onClick={onSave}
-                disabled={isSaving}
+                disabled={isSaving || Boolean(dateError)}
               >
                 Save
               </button>
@@ -148,6 +152,7 @@ function EducationEntry({
               <input
                 className={styles.fieldInput}
                 value={entry.degree}
+                maxLength={LIMITS.title}
                 onChange={(e) => onChange('degree', e.target.value)}
                 placeholder="B.S. Computer Science"
               />
@@ -157,6 +162,7 @@ function EducationEntry({
               <input
                 className={styles.fieldInput}
                 value={entry.institution}
+                maxLength={LIMITS.companyName}
                 onChange={(e) => onChange('institution', e.target.value)}
                 placeholder="University name"
               />
@@ -166,6 +172,7 @@ function EducationEntry({
               <input
                 className={styles.fieldInput}
                 value={entry.field_of_study}
+                maxLength={LIMITS.shortText}
                 onChange={(e) => onChange('field_of_study', e.target.value)}
                 placeholder="e.g. Computer Science"
               />
@@ -185,10 +192,16 @@ function EducationEntry({
                 className={styles.fieldInput}
                 type="month"
                 value={entry.endDate}
+                min={entry.startDate || undefined}
                 onChange={(e) => onChange('endDate', e.target.value)}
               />
             </div>
           </div>
+          {dateError ? (
+            <span className="auth__error-msg" role="alert">
+              {dateError}
+            </span>
+          ) : null}
         </div>
       ) : (
         <div className={styles.entryMeta}>

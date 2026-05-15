@@ -125,6 +125,7 @@ function SchemaEditor({
               <input
                 className={styles.input}
                 value={criterion.label}
+                maxLength={120}
                 onChange={(event) => updateCriterion(criterion.id, { label: event.target.value })}
                 placeholder="Confidence"
               />
@@ -136,6 +137,7 @@ function SchemaEditor({
                 className={styles.input}
                 type="number"
                 min={1}
+                max={100}
                 value={criterion.max_score}
                 onChange={(event) =>
                   updateCriterion(criterion.id, {
@@ -151,6 +153,7 @@ function SchemaEditor({
                 className={styles.input}
                 type="number"
                 min={0.1}
+                max={10}
                 step={0.1}
                 value={criterion.weight}
                 onChange={(event) =>

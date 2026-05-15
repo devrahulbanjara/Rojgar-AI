@@ -1059,6 +1059,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
               }
               rows={1}
               value={draftMessage}
+              maxLength={4000}
               onChange={(event) => setDraftMessage(event.target.value)}
               onKeyDown={handleComposerKeyDown}
               disabled={isSending || Boolean(pendingAction)}

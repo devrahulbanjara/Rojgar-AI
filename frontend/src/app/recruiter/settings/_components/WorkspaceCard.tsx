@@ -1,5 +1,7 @@
 'use client'
 
+import { LIMITS } from '@/lib/validation'
+
 import styles from '../page.module.scss'
 import type { SettingsForm } from './settingsForm'
 
@@ -12,6 +14,19 @@ export default function WorkspaceCard({ form, onChange }: Props) {
   function update<K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) {
     onChange({ ...form, [key]: value })
   }
+
+  const durationError =
+    form.default_interview_duration_minutes < 5 ||
+    form.default_interview_duration_minutes > LIMITS.interviewMinutes
+      ? `Duration must be between 5 and ${LIMITS.interviewMinutes} minutes.`
+      : null
+  const bufferError =
+    form.default_interview_buffer_minutes < 0 ||
+    form.default_interview_buffer_minutes > LIMITS.interviewMinutes
+      ? `Buffer must be between 0 and ${LIMITS.interviewMinutes} minutes.`
+      : form.default_interview_buffer_minutes >= form.default_interview_duration_minutes
+        ? 'Buffer should be less than interview duration.'
+        : null
 
   return (
     <section className={styles.card} aria-label="Workspace defaults">
@@ -66,12 +81,19 @@ export default function WorkspaceCard({ form, onChange }: Props) {
             id="recruiter-duration"
             type="number"
             min={5}
+            max={LIMITS.interviewMinutes}
             className={styles.fieldInput}
             value={form.default_interview_duration_minutes}
             onChange={(e) =>
               update('default_interview_duration_minutes', Number(e.target.value) || 45)
             }
+            aria-invalid={Boolean(durationError)}
           />
+          {durationError ? (
+            <span className="auth__error-msg" role="alert">
+              {durationError}
+            </span>
+          ) : null}
         </div>
 
         <div className={styles.field}>
@@ -82,12 +104,19 @@ export default function WorkspaceCard({ form, onChange }: Props) {
             id="recruiter-buffer"
             type="number"
             min={0}
+            max={LIMITS.interviewMinutes}
             className={styles.fieldInput}
             value={form.default_interview_buffer_minutes}
             onChange={(e) =>
               update('default_interview_buffer_minutes', Number(e.target.value) || 0)
             }
+            aria-invalid={Boolean(bufferError)}
           />
+          {bufferError ? (
+            <span className="auth__error-msg" role="alert">
+              {bufferError}
+            </span>
+          ) : null}
         </div>
       </div>
     </section>

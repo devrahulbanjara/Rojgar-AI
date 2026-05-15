@@ -1,5 +1,6 @@
 'use client'
 
+import { LIMITS, isDateOrderValid, todayMonthInput } from '@/lib/validation'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 
 import styles from '../page.module.scss'
@@ -92,6 +93,19 @@ function ExperienceEntry({
   onRemove,
   onChange,
 }: EntryProps) {
+  const today = todayMonthInput()
+  const titleError = !entry.title.trim() ? 'Title is required.' : null
+  const startInFuture = entry.startDate && entry.startDate > today
+  const endInFuture = !entry.current && entry.endDate && entry.endDate > today
+  const dateOrderBad = !entry.current && !isDateOrderValid(entry.startDate, entry.endDate)
+  const dateError = startInFuture
+    ? 'Start date cannot be in the future.'
+    : endInFuture
+      ? 'End date cannot be in the future.'
+      : dateOrderBad
+        ? 'End date must be on or after start date.'
+        : null
+  const hasError = Boolean(titleError || dateError)
   return (
     <article className={styles.entry}>
       <header className={styles.entryHeader}>
@@ -114,7 +128,7 @@ function ExperienceEntry({
                 type="button"
                 className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
                 onClick={onSave}
-                disabled={isSaving}
+                disabled={isSaving || hasError}
               >
                 Save
               </button>
@@ -152,15 +166,22 @@ function ExperienceEntry({
               <input
                 className={styles.fieldInput}
                 value={entry.title}
+                maxLength={LIMITS.title}
                 onChange={(e) => onChange('title', e.target.value)}
                 placeholder="Senior Product Designer"
               />
+              {titleError ? (
+                <span className="auth__error-msg" role="alert">
+                  {titleError}
+                </span>
+              ) : null}
             </div>
             <div className={styles.field}>
               <label className={styles.fieldLabel}>Company</label>
               <input
                 className={styles.fieldInput}
                 value={entry.company_name}
+                maxLength={LIMITS.companyName}
                 onChange={(e) => onChange('company_name', e.target.value)}
                 placeholder="Company name"
               />
@@ -171,6 +192,7 @@ function ExperienceEntry({
                 className={styles.fieldInput}
                 type="month"
                 value={entry.startDate}
+                max={today}
                 onChange={(e) => onChange('startDate', e.target.value)}
               />
             </div>
@@ -180,11 +202,18 @@ function ExperienceEntry({
                 className={styles.fieldInput}
                 type="month"
                 value={entry.endDate}
+                min={entry.startDate || undefined}
+                max={today}
                 disabled={entry.current}
                 onChange={(e) => onChange('endDate', e.target.value)}
               />
             </div>
           </div>
+          {dateError ? (
+            <span className="auth__error-msg" role="alert">
+              {dateError}
+            </span>
+          ) : null}
           <label className={styles.checkRow}>
             <input
               type="checkbox"
@@ -201,6 +230,7 @@ function ExperienceEntry({
               className={styles.fieldTextarea}
               rows={4}
               value={entry.description}
+              maxLength={LIMITS.description}
               onChange={(e) => onChange('description', e.target.value)}
               placeholder={
                 'Led end-to-end design for the core product\nIncreased engagement by 32%'

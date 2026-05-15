@@ -17,7 +17,13 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "// --- fix-all ---": "full clean: scss → lint → format (before commit)",
-    "fix-all": "pnpm type-check && pnpm stylelint:fix && pnpm lint:fix && pnpm format"
+    "fix-all": "pnpm type-check && pnpm stylelint:fix && pnpm lint:fix && pnpm format",
+    "// --- e2e ---": "Playwright — boots docker test stack + migrations + backend (uv) + frontend automatically",
+    "e2e": "node e2e/run-e2e.mjs",
+    "e2e:ui": "node e2e/run-e2e.mjs --ui",
+    "e2e:keep": "KEEP_DOCKER=1 node e2e/run-e2e.mjs",
+    "e2e:no-backend": "SKIP_BACKEND=1 SKIP_DOCKER=1 SKIP_MIGRATIONS=1 node e2e/run-e2e.mjs",
+    "e2e:no-docker": "SKIP_DOCKER=1 SKIP_MIGRATIONS=1 node e2e/run-e2e.mjs"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",
@@ -27,6 +33,7 @@
     "gsap": "^3.14.2",
     "html2pdf.js": "^0.14.0",
     "lenis": "^1.3.18-dev.0",
+    "libphonenumber-js": "^1.13.2",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "react": "19.2.3",
@@ -37,9 +44,12 @@
     "react-toastify": "^11.0.5",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
-    "swiper": "^12.1.2"
+    "swiper": "^12.1.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.60.0",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/node": "^20",
     "@types/react": "^19",

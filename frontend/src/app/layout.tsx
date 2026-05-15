@@ -58,6 +58,9 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${lato.variable} ${ebGaramond.variable} ${geistMono.variable}`}
       >
+        <a href="#main-content" className="skip-to-content">
+          Skip to main content
+        </a>
         <StoreProvider>
           <BackendConnectionBanner />
           <LenisProvider>

@@ -9,6 +9,7 @@ import { mapRecruiterCandidateResume } from '@/app/recruiter/candidates/_lib/map
 import { buildEmailPreviewDocument } from '@/lib/email/preview'
 import { notify } from '@/lib/notify'
 import { getAllRecruiterSelectableStatuses } from '@/lib/statusMetadata'
+import { LIMITS } from '@/lib/validation'
 import {
   type ApplicationStatus,
   type RecruiterCandidateDetailView,
@@ -547,6 +548,7 @@ function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
                 <input
                   type="text"
                   value={item}
+                  maxLength={LIMITS.listItem}
                   onChange={(event) => updateStrength(index, event.target.value)}
                   className={styles.reviewListInput}
                   placeholder="Add strength"
@@ -579,6 +581,7 @@ function ShortlistingEvaluationEditor({ candidate }: { candidate: Candidate }) {
                 <input
                   type="text"
                   value={item}
+                  maxLength={LIMITS.listItem}
                   onChange={(event) => updateWeakness(index, event.target.value)}
                   className={styles.reviewListInput}
                   placeholder="Add gap"
@@ -883,6 +886,7 @@ function DraftEditor({
         type="text"
         className={styles.outreachInput}
         value={subject}
+        maxLength={LIMITS.title}
         disabled={!editable}
         onChange={(event) => {
           setSubject(event.target.value)
@@ -897,6 +901,7 @@ function DraftEditor({
         id="drawer-outreach-body"
         className={styles.outreachTextarea}
         value={body}
+        maxLength={LIMITS.longText * 5}
         disabled={!editable}
         rows={12}
         onChange={(event) => {

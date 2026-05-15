@@ -16,13 +16,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname()
 
   if (isDashboardPath(pathname)) {
-    return <>{children}</>
+    return (
+      <div id="main-content" tabIndex={-1}>
+        {children}
+      </div>
+    )
   }
 
   return (
     <>
       <Header />
-      <main className="page">{children}</main>
+      <main id="main-content" tabIndex={-1} className="page">
+        {children}
+      </main>
       <Footer />
       <CookieBanner />
     </>

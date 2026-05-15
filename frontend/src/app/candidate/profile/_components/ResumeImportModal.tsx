@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { parseApiError } from '@/lib/apiError'
 import { notify } from '@/lib/notify'
+import { LIMITS, validateResumeFile } from '@/lib/validation'
 import {
   type CandidateProfileData,
   type ResumeImportAction,
@@ -190,6 +191,12 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
   }
 
   async function handleFile(file: File) {
+    const fileCheck = validateResumeFile(file)
+    if (!fileCheck.ok) {
+      setError(fileCheck.error)
+      notify.error(fileCheck.error)
+      return
+    }
     setError(null)
     setDraft(null)
     setTargets([])
@@ -229,9 +236,16 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
 
   async function handleCommit() {
     if (!draft) return
-    if (action === 'create_resume' && !resumeName.trim()) {
-      setError('Give the new resume a name first.')
-      return
+    if (action === 'create_resume') {
+      const name = resumeName.trim()
+      if (!name) {
+        setError('Give the new resume a name first.')
+        return
+      }
+      if (name.length > LIMITS.name) {
+        setError(`Resume name too long (max ${LIMITS.name}).`)
+        return
+      }
     }
     if (action === 'update_resume' && !selectedResumeId) {
       setError('Choose which resume should be updated.')
@@ -353,6 +367,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
                     <input
                       className="resume-field__input"
                       value={resumeName}
+                      maxLength={LIMITS.name}
                       onChange={(event) => setResumeName(event.target.value)}
                       placeholder="e.g. Backend Engineer Resume"
                     />
@@ -948,7 +963,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,application/pdf"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           hidden
           onChange={(event) => {
             const file = event.target.files?.[0]
