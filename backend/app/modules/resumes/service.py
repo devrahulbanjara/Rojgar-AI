@@ -1,5 +1,3 @@
-import json
-
 from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy import select
@@ -12,7 +10,7 @@ from app.core.cache import (
     invalidate_resume_caches,
     invalidate_resume_gap_caches,
 )
-from app.infrastructures.redis.service import redis_service
+from app.core.swr_cache import swr_get
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.models import User
@@ -79,21 +77,15 @@ async def list_resumes(db: AsyncSession, user: User) -> list[ResumeListItem]:
     return await list_resumes_by_user_id(db, user.id)
 
 
-async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListItem]:
-    """List all resumes for a user ID (lightweight, no child collections)."""
-    cache_key = _resume_list_cache_key(str(user_id))
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        data = json.loads(cached_data)
-        return [ResumeListItem.model_validate(item) for item in data]
-
+async def _build_resume_list(db: AsyncSession, user_id) -> list[ResumeListItem]:
+    """Run the query that produces a user's resume list."""
     result = await db.execute(
         select(Resume)
         .where(Resume.user_id == user_id)
         .order_by(Resume.updated_at.desc())
     )
     resumes = result.scalars().all()
-    response = [
+    return [
         ResumeListItem(
             id=resume.id,
             resume_name=resume.resume_name,
@@ -102,13 +94,18 @@ async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListI
         )
         for resume in resumes
     ]
-    await redis_service.set(
-        cache_key,
-        json.dumps([item.model_dump(mode="json") for item in response]),
-        ttl_seconds=900,
-        ttl_jitter_seconds=120,
-    )
-    return response
+
+
+async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListItem]:
+    """List all resumes for a user ID (SWR-cached, lightweight)."""
+    cache_key = _resume_list_cache_key(str(user_id))
+
+    async def _load() -> list:
+        items = await _build_resume_list(db, user_id)
+        return [item.model_dump(mode="json") for item in items]
+
+    payload = await swr_get(cache_key, _load, soft_ttl=180, hard_ttl=900)
+    return [ResumeListItem.model_validate(item) for item in payload]
 
 
 async def fork_resume_from_profile(
@@ -186,16 +183,13 @@ async def fork_resume_from_profile(
     return _resume_to_response(resume)
 
 
-async def get_resume(db: AsyncSession, user: User, resume_id: str) -> ResumeResponse:
-    """Fetch a specific resume owned by the user."""
-    cache_key = _resume_detail_cache_key(str(user.id), resume_id)
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return ResumeResponse.model_validate_json(cached_data)
-
+async def _build_resume_detail(
+    db: AsyncSession, user_id, resume_id: str
+) -> ResumeResponse:
+    """Run the query that produces a resume detail response."""
     result = await db.execute(
         select(Resume)
-        .where(Resume.id == resume_id, Resume.user_id == user.id)
+        .where(Resume.id == resume_id, Resume.user_id == user_id)
         .options(
             selectinload(Resume.experiences),
             selectinload(Resume.educations),
@@ -208,14 +202,19 @@ async def get_resume(db: AsyncSession, user: User, resume_id: str) -> ResumeResp
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Resume not found.",
         )
-    response = _resume_to_response(resume)
-    await redis_service.set(
-        cache_key,
-        response.model_dump_json(),
-        ttl_seconds=900,
-        ttl_jitter_seconds=120,
-    )
-    return response
+    return _resume_to_response(resume)
+
+
+async def get_resume(db: AsyncSession, user: User, resume_id: str) -> ResumeResponse:
+    """Fetch a specific resume owned by the user (SWR-cached)."""
+    cache_key = _resume_detail_cache_key(str(user.id), resume_id)
+
+    async def _load() -> dict:
+        response = await _build_resume_detail(db, user.id, resume_id)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=180, hard_ttl=900)
+    return ResumeResponse.model_validate(payload)
 
 
 async def update_resume(

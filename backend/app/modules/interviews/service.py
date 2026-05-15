@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import uuid
 from datetime import datetime
 
@@ -14,12 +13,12 @@ from app.core.cache import (
     invalidate_company_dashboard_caches,
     invalidate_interview_list_caches,
 )
+from app.core.swr_cache import swr_get
 from app.modules.activity.service import create_activity_event
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import Company, CompanyMembership
-from app.infrastructures.redis.service import redis_service
 from app.modules.interviews.models import Interview
 from app.modules.interviews.schemas import CandidateInterviewView, InterviewResponse
 from app.modules.jobs.models import Job
@@ -42,33 +41,14 @@ def _interview_list_cache_key(
     )
 
 
-async def list_interviews(
+async def _build_interview_list(
     db: AsyncSession,
-    user_id: uuid.UUID,
-    job_id: uuid.UUID | None = None,
-    start: datetime | None = None,
-    end: datetime | None = None,
+    company_id,
+    job_id: uuid.UUID | None,
+    start: datetime | None,
+    end: datetime | None,
 ) -> list[InterviewResponse]:
-    """List interviews visible to a recruiter's active company."""
-    result = await db.execute(
-        select(CompanyMembership.company_id).where(
-            CompanyMembership.user_id == user_id,
-            CompanyMembership.status == MembershipStatus.active,
-        )
-    )
-    company_id = result.scalar_one_or_none()
-    if not company_id:
-        raise HTTPException(
-            status_code=403, detail="Active company membership required."
-        )
-    cache_key = _interview_list_cache_key(str(company_id), job_id, start, end)
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        data = json.loads(cached_data)
-        return [InterviewResponse.model_validate(item) for item in data]
-
-    # Include interviews even when the job is marked hiring-complete, so recruiters
-    # still see bookings that match candidate-facing "interview booked" status.
+    """Run the queries that produce the recruiter interview list."""
     filters = [Job.company_id == company_id]
     if job_id is not None:
         filters.append(Application.job_id == job_id)
@@ -85,7 +65,7 @@ async def list_interviews(
         .order_by(Interview.start_time.asc())
     )
 
-    response = [
+    return [
         InterviewResponse(
             id=interview.id,
             application_id=interview.application_id,
@@ -106,13 +86,35 @@ async def list_interviews(
         )
         for interview, application, job in rows.all()
     ]
-    await redis_service.set(
-        cache_key,
-        json.dumps([item.model_dump(mode="json") for item in response]),
-        ttl_seconds=180,
-        ttl_jitter_seconds=30,
+
+
+async def list_interviews(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    job_id: uuid.UUID | None = None,
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> list[InterviewResponse]:
+    """List interviews visible to a recruiter's active company (SWR-cached)."""
+    result = await db.execute(
+        select(CompanyMembership.company_id).where(
+            CompanyMembership.user_id == user_id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
     )
-    return response
+    company_id = result.scalar_one_or_none()
+    if not company_id:
+        raise HTTPException(
+            status_code=403, detail="Active company membership required."
+        )
+    cache_key = _interview_list_cache_key(str(company_id), job_id, start, end)
+
+    async def _load() -> list:
+        items = await _build_interview_list(db, company_id, job_id, start, end)
+        return [item.model_dump(mode="json") for item in items]
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=180)
+    return [InterviewResponse.model_validate(item) for item in payload]
 
 
 async def list_candidate_interviews(

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.cache import invalidate_profile_read_caches
-from app.infrastructures.redis.service import redis_service
+from app.core.swr_cache import swr_get
 from app.modules.auth.models import User
 from app.modules.profiles.models import (
     Profile,
@@ -49,13 +49,8 @@ async def invalidate_profile_reads(user_id: str) -> None:
     await invalidate_profile_read_caches(user_id)
 
 
-async def get_or_create_profile(db: AsyncSession, user: User) -> ProfileResponse:
-    """Return the user's profile, creating an empty one if it does not exist."""
-    cache_key = f"profile:detail:{user.id}"
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return ProfileResponse.model_validate_json(cached_data)
-
+async def _build_profile(db: AsyncSession, user: User) -> ProfileResponse:
+    """Load the user's profile, creating an empty row on first read."""
     result = await db.execute(
         select(Profile)
         .where(Profile.user_id == user.id)
@@ -74,20 +69,24 @@ async def get_or_create_profile(db: AsyncSession, user: User) -> ProfileResponse
             await db.commit()
         except IntegrityError:
             await db.rollback()
-            # Another request beat us — just fetch the profile
             result = await db.execute(select(Profile).where(Profile.user_id == user.id))
             profile = result.scalar_one()
         profile = await _load_full_profile(db, profile.id)
         logger.info(f"Created empty profile for user {user.id}")
 
-    response = _profile_to_response(profile, user.avatar_url)
-    await redis_service.set(
-        cache_key,
-        response.model_dump_json(),
-        ttl_seconds=900,
-        ttl_jitter_seconds=120,
-    )
-    return response
+    return _profile_to_response(profile, user.avatar_url)
+
+
+async def get_or_create_profile(db: AsyncSession, user: User) -> ProfileResponse:
+    """Return the user's profile (SWR-cached), creating an empty one if missing."""
+    cache_key = f"profile:detail:{user.id}"
+
+    async def _load() -> dict:
+        response = await _build_profile(db, user)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=180, hard_ttl=900)
+    return ProfileResponse.model_validate(payload)
 
 
 async def update_profile(
@@ -140,15 +139,8 @@ async def update_profile(
     return response
 
 
-async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileResponse:
-    """Fetch a public profile response by user ID, with caching."""
-    cache_key = f"profile:detail:{user_id}"
-
-    # 1. Try Cache
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return ProfileResponse.model_validate_json(cached_data)
-
+async def _build_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileResponse:
+    """Load a public profile response by user ID."""
     user = await db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise HTTPException(
@@ -172,12 +164,19 @@ async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileRespo
             detail="Profile not found.",
         )
 
-    response = _profile_to_response(profile, user.avatar_url)
+    return _profile_to_response(profile, user.avatar_url)
 
-    # 3. Save to Cache (TTL 1 hour)
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
 
-    return response
+async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileResponse:
+    """Fetch a public profile response by user ID (SWR-cached)."""
+    cache_key = f"profile:detail:{user_id}"
+
+    async def _load() -> dict:
+        response = await _build_profile_by_user_id(db, user_id)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=600, hard_ttl=3600)
+    return ProfileResponse.model_validate(payload)
 
 
 async def complete_onboarding(

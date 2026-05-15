@@ -23,9 +23,9 @@ def monkeypatch_session():
 @pytest.fixture(scope="session", autouse=True)
 def disable_side_effects(monkeypatch_session):
     original_send_emails = settings.send_emails
-    original_redis_enabled = settings.redis_enabled
+    original_redis_url = settings.redis_url
     settings.send_emails = False
-    settings.redis_enabled = False
+    settings.redis_url = settings.test_redis_url
 
     import app.infrastructures.qdrant.service as _qdrant_mod
 
@@ -58,7 +58,7 @@ def disable_side_effects(monkeypatch_session):
 
     yield
     settings.send_emails = original_send_emails
-    settings.redis_enabled = original_redis_enabled
+    settings.redis_url = original_redis_url
 
 
 @pytest.fixture(scope="session")
@@ -66,6 +66,31 @@ def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def redis_test_client(disable_side_effects):
+    from app.infrastructures.redis.service import redis_service
+
+    await redis_service.connect()
+    if redis_service._client is None:
+        pytest.skip("No test Redis: failed to connect to redis-test container")
+    try:
+        await redis_service._client.ping()
+    except Exception as exc:
+        await redis_service.disconnect()
+        pytest.skip(f"No test Redis: {exc}")
+
+    yield redis_service
+
+    await redis_service.disconnect()
+
+
+@pytest.fixture(autouse=True)
+async def _flush_redis_between_tests(redis_test_client):
+    if redis_test_client._client is not None:
+        await redis_test_client._client.flushdb()
+    yield
 
 
 @pytest.fixture(scope="session")

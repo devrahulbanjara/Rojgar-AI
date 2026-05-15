@@ -1,4 +1,3 @@
-import json
 import os
 import uuid
 from datetime import datetime, timezone
@@ -20,6 +19,7 @@ from app.core.cache import (
     invalidate_job_detail_caches,
 )
 from app.core.config import settings
+from app.core.swr_cache import swr_get
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
@@ -596,20 +596,10 @@ async def _get_active_company_id(db: AsyncSession, user: User) -> UUID:
     return company_id
 
 
-async def list_candidate_applications(
-    db: AsyncSession, user_id, page: int = 1, size: int = 20
+async def _build_candidate_applications(
+    db: AsyncSession, user_id, page: int, size: int
 ) -> list[CandidateApplicationView]:
-    """Return candidate applications across all companies with job and company metadata."""
-    cache_key = f"applications:candidate:{user_id}:p{page}:s{size}"
-
-    # 1. Try Cache
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        import json
-
-        data = json.loads(cached_data)
-        return [CandidateApplicationView.model_validate(item) for item in data]
-
+    """Run the queries that produce the candidate applications list."""
     stmt = (
         select(Application, Job, Company)
         .join(Job, Job.id == Application.job_id)
@@ -643,35 +633,31 @@ async def list_candidate_applications(
                 weaknesses=visible_weaknesses,
             )
         )
-
-    # 3. Save to Cache (TTL 5 minutes - applications status can change)
-    import json
-
-    await redis_service.set(
-        cache_key,
-        json.dumps([item.model_dump(mode="json") for item in response]),
-        ttl_seconds=300,
-    )
-
     return response
 
 
-async def list_company_applications(
+async def list_candidate_applications(
+    db: AsyncSession, user_id, page: int = 1, size: int = 20
+) -> list[CandidateApplicationView]:
+    """Return candidate applications across all companies (SWR-cached)."""
+    cache_key = f"applications:candidate:{user_id}:p{page}:s{size}"
+
+    async def _load() -> list:
+        items = await _build_candidate_applications(db, user_id, page, size)
+        return [item.model_dump(mode="json") for item in items]
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return [CandidateApplicationView.model_validate(item) for item in payload]
+
+
+async def _build_company_applications(
     db: AsyncSession,
     company_id,
-    job_id=None,
-    page: int = 1,
-    size: int = 20,
+    job_id,
+    page: int,
+    size: int,
 ) -> list[RecruiterApplicationView]:
-    """Return applications for a company inbox, optionally filtered to a single job."""
-    cache_key = _company_applications_cache_key(
-        str(company_id), str(job_id) if job_id else None, page, size
-    )
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        data = json.loads(cached_data)
-        return [RecruiterApplicationView.model_validate(item) for item in data]
-
+    """Run the queries that produce the company applications list."""
     stmt = (
         select(Application, User, Job)
         .join(User, User.id == Application.user_id)
@@ -689,7 +675,7 @@ async def list_company_applications(
     )
     rows = (await db.execute(stmt)).all()
 
-    response = [
+    return [
         RecruiterApplicationView(
             id=application.id,
             status=application.status,
@@ -706,37 +692,37 @@ async def list_company_applications(
         )
         for application, applicant, job in rows
     ]
-    await redis_service.set(
-        cache_key,
-        json.dumps([item.model_dump(mode="json") for item in response]),
-        ttl_seconds=180,
-        ttl_jitter_seconds=30,
-    )
-    return response
 
 
-async def list_company_candidates(
+async def list_company_applications(
     db: AsyncSession,
-    user: User,
+    company_id,
+    job_id=None,
+    page: int = 1,
+    size: int = 20,
+) -> list[RecruiterApplicationView]:
+    """Return applications for a company inbox (SWR-cached)."""
+    cache_key = _company_applications_cache_key(
+        str(company_id), str(job_id) if job_id else None, page, size
+    )
+
+    async def _load() -> list:
+        items = await _build_company_applications(db, company_id, job_id, page, size)
+        return [item.model_dump(mode="json") for item in items]
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=180)
+    return [RecruiterApplicationView.model_validate(item) for item in payload]
+
+
+async def _build_company_candidates(
+    db: AsyncSession,
+    company_id,
     job_id: str | None,
     status_filter: ApplicationStatus | None,
     page: int,
     size: int,
 ) -> list[RecruiterCandidateListItem]:
-    """Return recruiter candidate rows grouped by candidate across applications."""
-    company_id = await _get_active_company_id(db, user)
-    cache_key = _company_candidates_cache_key(
-        str(company_id),
-        job_id,
-        status_filter,
-        page,
-        size,
-    )
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        data = json.loads(cached_data)
-        return [RecruiterCandidateListItem.model_validate(item) for item in data]
-
+    """Run the queries that produce the company candidates list."""
     stmt = (
         select(Application, User, Job)
         .join(User, User.id == Application.user_id)
@@ -812,26 +798,41 @@ async def list_company_candidates(
     candidate_rows.sort(key=lambda item: item.latest_updated_at, reverse=True)
     start = (page - 1) * size
     end = start + size
-    response = candidate_rows[start:end]
-    await redis_service.set(
-        cache_key,
-        json.dumps([item.model_dump(mode="json") for item in response]),
-        ttl_seconds=180,
-        ttl_jitter_seconds=30,
-    )
-    return response
+    return candidate_rows[start:end]
 
 
-async def get_company_candidate_detail(
-    db: AsyncSession, user: User, application_id: str
-) -> RecruiterCandidateDetailView:
-    """Return the recruiter-safe candidate detail view for one application."""
+async def list_company_candidates(
+    db: AsyncSession,
+    user: User,
+    job_id: str | None,
+    status_filter: ApplicationStatus | None,
+    page: int,
+    size: int,
+) -> list[RecruiterCandidateListItem]:
+    """Return recruiter candidate rows grouped by candidate (SWR-cached)."""
     company_id = await _get_active_company_id(db, user)
-    cache_key = _company_candidate_detail_cache_key(str(company_id), application_id)
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return RecruiterCandidateDetailView.model_validate_json(cached_data)
+    cache_key = _company_candidates_cache_key(
+        str(company_id),
+        job_id,
+        status_filter,
+        page,
+        size,
+    )
 
+    async def _load() -> list:
+        items = await _build_company_candidates(
+            db, company_id, job_id, status_filter, page, size
+        )
+        return [item.model_dump(mode="json") for item in items]
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=180)
+    return [RecruiterCandidateListItem.model_validate(item) for item in payload]
+
+
+async def _build_company_candidate_detail(
+    db: AsyncSession, company_id, application_id: str
+) -> RecruiterCandidateDetailView:
+    """Run the queries that produce the recruiter candidate detail view."""
     result = await db.execute(
         select(Application)
         .where(Application.id == application_id)
@@ -865,7 +866,7 @@ async def get_company_candidate_detail(
     )
     outreach_audit = await _get_outreach_audit_items(db, application.id)
 
-    response = RecruiterCandidateDetailView(
+    return RecruiterCandidateDetailView(
         id=application.id,
         candidate_id=applicant.id,
         status=application.status,
@@ -904,13 +905,21 @@ async def get_company_candidate_detail(
         timeline=timeline,
         outreach_audit=outreach_audit,
     )
-    await redis_service.set(
-        cache_key,
-        response.model_dump_json(),
-        ttl_seconds=180,
-        ttl_jitter_seconds=30,
-    )
-    return response
+
+
+async def get_company_candidate_detail(
+    db: AsyncSession, user: User, application_id: str
+) -> RecruiterCandidateDetailView:
+    """Return the recruiter-safe candidate detail view (SWR-cached)."""
+    company_id = await _get_active_company_id(db, user)
+    cache_key = _company_candidate_detail_cache_key(str(company_id), application_id)
+
+    async def _load() -> dict:
+        response = await _build_company_candidate_detail(db, company_id, application_id)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=180)
+    return RecruiterCandidateDetailView.model_validate(payload)
 
 
 async def list_user_applications(
