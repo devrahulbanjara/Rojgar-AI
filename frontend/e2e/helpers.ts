@@ -10,7 +10,10 @@ export const SEED = {
 export async function loginAs(page: Page, email: string, password = SEED.password) {
   await page.goto('/login')
   await page.getByLabel(/email/i).fill(email)
-  await page.getByLabel(/password/i).first().fill(password)
+  await page
+    .getByLabel(/password/i)
+    .first()
+    .fill(password)
   await page.getByRole('button', { name: /sign in|log in/i }).click()
 }
 

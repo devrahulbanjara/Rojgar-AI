@@ -16,7 +16,9 @@ for (const path of PAGES) {
     if (serious.length > 0) {
       console.warn(
         `[a11y ${path}] non-blocking serious issues:`,
-        serious.map((v) => `${v.id} (${v.nodes.length} node${v.nodes.length === 1 ? '' : 's'})`).join(', '),
+        serious
+          .map((v) => `${v.id} (${v.nodes.length} node${v.nodes.length === 1 ? '' : 's'})`)
+          .join(', '),
       )
     }
 

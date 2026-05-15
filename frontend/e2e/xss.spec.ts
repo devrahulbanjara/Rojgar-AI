@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import { SEED, loginAs } from './helpers'
 
 const XSS_PAYLOAD = '<script>window.__xss=true</script>'
-const IMG_PAYLOAD = "<img src=x onerror=\"window.__xss='img'\">"
+const IMG_PAYLOAD = '<img src=x onerror="window.__xss=\'img\'">'
 
 test.describe('XSS smoke', () => {
   test('script payload in headline renders as text — no script execution', async ({ page }) => {
