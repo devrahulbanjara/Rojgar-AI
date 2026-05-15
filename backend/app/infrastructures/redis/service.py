@@ -80,6 +80,24 @@ class RedisService:
         except Exception as exc:
             logger.error("Redis SET failed for key {}: {}", key, exc)
 
+    async def set_nx(
+        self,
+        key: str,
+        value: str,
+        ttl_seconds: int = 10,
+    ) -> bool:
+        """Set a key only if it does not exist. Returns True on acquire."""
+        if not self._client:
+            return False
+        try:
+            result = await self._client.set(
+                self._build_key(key), value, nx=True, ex=ttl_seconds
+            )
+            return result is True
+        except Exception as exc:
+            logger.error("Redis SET NX failed for key {}: {}", key, exc)
+            return False
+
     async def delete(self, key: str) -> None:
         """Delete a specific key (used for event-driven invalidation)."""
         await self.delete_many(key)

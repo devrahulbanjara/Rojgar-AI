@@ -16,6 +16,7 @@ from app.core.cache import (
     invalidate_job_detail_caches,
 )
 from app.core.config import settings
+from app.core.swr_cache import swr_get, swr_set
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application, ApplicationSyncEvent
@@ -528,20 +529,10 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     return response
 
 
-async def get_job_detail(
-    db: AsyncSession, job_id: str, user: User | None = None
+async def _load_job_detail_response(
+    db: AsyncSession, job_id: str, user: User | None
 ) -> JobDetailResponse:
-    """Get full job details including description."""
-    cache_key = (
-        f"job:detail:{job_id}:candidate:{user.id}"
-        if user and user.primary_role == UserRole.candidate
-        else f"job:detail:{job_id}"
-    )
-
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return JobDetailResponse.model_validate_json(cached_data)
-
+    """Load a job detail response from the database for cache population."""
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -557,15 +548,34 @@ async def get_job_detail(
         )
     job, applications_count = row
     applied_job_ids = await _get_applied_job_ids(db, user, [job.id])
-    response = _job_detail_response_from_row(
+    return _job_detail_response_from_row(
         job,
         applications_count,
         has_applied=job.id in applied_job_ids,
     )
 
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
 
-    return response
+async def get_job_detail(
+    db: AsyncSession, job_id: str, user: User | None = None
+) -> JobDetailResponse:
+    """Get full job details including description (SWR-cached)."""
+    cache_key = (
+        f"job:detail:{job_id}:candidate:{user.id}"
+        if user and user.primary_role == UserRole.candidate
+        else f"job:detail:{job_id}"
+    )
+
+    async def _load() -> dict:
+        response = await _load_job_detail_response(db, job_id, user)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(
+        cache_key,
+        loader=_load,
+        soft_ttl=300,
+        hard_ttl=3600,
+    )
+    return JobDetailResponse.model_validate(payload)
 
 
 async def update_job(
@@ -696,6 +706,13 @@ async def update_job(
     await invalidate_company_application_caches(str(company_id))
     await invalidate_interview_list_caches(str(company_id))
     await invalidate_candidate_read_caches_for_users(applicant_user_ids)
+
+    if published:
+        await swr_set(
+            f"job:detail:{job_id}",
+            response.model_dump(mode="json"),
+            hard_ttl=3600,
+        )
 
     return response
 

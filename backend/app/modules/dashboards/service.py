@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructures.redis.service import redis_service
+from app.core.swr_cache import swr_get
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
@@ -177,15 +177,10 @@ async def _get_company_context(
     return result[0], result[1]
 
 
-async def get_candidate_dashboard(
+async def _build_candidate_dashboard(
     db: AsyncSession, current_user: User
 ) -> CandidateDashboardResponse:
-    """Build the candidate dashboard summary response."""
-    cache_key = f"dashboard:candidate:{current_user.id}"
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return CandidateDashboardResponse.model_validate_json(cached_data)
-
+    """Run the queries that produce the candidate dashboard response."""
     profile_result = await db.execute(
         select(Profile.is_open_to_work).where(Profile.user_id == current_user.id)
     )
@@ -278,26 +273,37 @@ async def get_candidate_dashboard(
         for row in interview_rows.all()
     ]
 
-    response = CandidateDashboardResponse(
+    return CandidateDashboardResponse(
         user_name=current_user.full_name,
         is_open_to_work=is_open_to_work,
         applications=applications,
         interviews=interviews,
     )
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-    return response
 
 
-async def get_candidate_dashboard_analytics(
-    db: AsyncSession, current_user: User, range_key: str
+async def get_candidate_dashboard(
+    db: AsyncSession, current_user: User
+) -> CandidateDashboardResponse:
+    """Build the candidate dashboard summary response (SWR-cached)."""
+    cache_key = f"dashboard:candidate:{current_user.id}"
+
+    async def _load() -> dict:
+        response = await _build_candidate_dashboard(db, current_user)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return CandidateDashboardResponse.model_validate(payload)
+
+
+async def _build_candidate_dashboard_analytics(
+    db: AsyncSession,
+    current_user: User,
+    normalized_range: str,
+    start_dt: datetime,
+    start_date: date,
+    end_date: date,
 ) -> CandidateDashboardAnalyticsResponse:
-    """Build analytics for the candidate dashboard."""
-    normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
-    cache_key = f"dashboard:candidate:{current_user.id}:analytics:{normalized_range}"
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return CandidateDashboardAnalyticsResponse.model_validate_json(cached_data)
-
+    """Run the queries that produce the candidate dashboard analytics response."""
     stats_row = (
         await db.execute(
             select(
@@ -421,7 +427,7 @@ async def get_candidate_dashboard_analytics(
         )
     ).all()
 
-    response = CandidateDashboardAnalyticsResponse(
+    return CandidateDashboardAnalyticsResponse(
         range_key=normalized_range,
         stats=stats,
         funnel=[
@@ -444,8 +450,23 @@ async def get_candidate_dashboard_analytics(
             ),
         ),
     )
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-    return response
+
+
+async def get_candidate_dashboard_analytics(
+    db: AsyncSession, current_user: User, range_key: str
+) -> CandidateDashboardAnalyticsResponse:
+    """Build analytics for the candidate dashboard (SWR-cached)."""
+    normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
+    cache_key = f"dashboard:candidate:{current_user.id}:analytics:{normalized_range}"
+
+    async def _load() -> dict:
+        response = await _build_candidate_dashboard_analytics(
+            db, current_user, normalized_range, start_dt, start_date, end_date
+        )
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return CandidateDashboardAnalyticsResponse.model_validate(payload)
 
 
 async def _get_recruiter_stats(
@@ -600,18 +621,13 @@ async def _get_pending_drafts(
     return drafts
 
 
-async def get_recruiter_dashboard(
+async def _build_recruiter_dashboard(
     db: AsyncSession, current_user: User
 ) -> RecruiterDashboardResponse:
-    """Build the recruiter dashboard summary response."""
-    cache_key = f"dashboard:recruiter:{current_user.id}"
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return RecruiterDashboardResponse.model_validate_json(cached_data)
-
+    """Run the queries that produce the recruiter dashboard response."""
     company_id, company_name = await _get_company_context(db, current_user.id)
     if company_id is None:
-        response = RecruiterDashboardResponse(
+        return RecruiterDashboardResponse(
             company_name="",
             recruiter_name=current_user.full_name,
             stats=RecruiterStats(
@@ -625,10 +641,8 @@ async def get_recruiter_dashboard(
             todays_interviews=[],
             pending_drafts=[],
         )
-        await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-        return response
 
-    response = RecruiterDashboardResponse(
+    return RecruiterDashboardResponse(
         company_name=company_name,
         recruiter_name=current_user.full_name,
         stats=await _get_recruiter_stats(db, company_id),
@@ -636,8 +650,20 @@ async def get_recruiter_dashboard(
         todays_interviews=await _get_todays_interviews(db, company_id),
         pending_drafts=await _get_pending_drafts(db, company_id),
     )
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-    return response
+
+
+async def get_recruiter_dashboard(
+    db: AsyncSession, current_user: User
+) -> RecruiterDashboardResponse:
+    """Build the recruiter dashboard summary response (SWR-cached)."""
+    cache_key = f"dashboard:recruiter:{current_user.id}"
+
+    async def _load() -> dict:
+        response = await _build_recruiter_dashboard(db, current_user)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return RecruiterDashboardResponse.model_validate(payload)
 
 
 async def _get_recruiter_analytics_stats(
@@ -919,19 +945,18 @@ async def _get_recruiter_velocity(
     )
 
 
-async def get_recruiter_dashboard_analytics(
-    db: AsyncSession, current_user: User, range_key: str
+async def _build_recruiter_dashboard_analytics(
+    db: AsyncSession,
+    current_user: User,
+    normalized_range: str,
+    start_dt: datetime,
+    start_date: date,
+    end_date: date,
 ) -> RecruiterDashboardAnalyticsResponse:
-    """Build analytics for the recruiter dashboard."""
-    normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
-    cache_key = f"dashboard:recruiter:{current_user.id}:analytics:{normalized_range}"
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return RecruiterDashboardAnalyticsResponse.model_validate_json(cached_data)
-
+    """Run the queries that produce the recruiter analytics response."""
     company_id, _company_name = await _get_company_context(db, current_user.id)
     if company_id is None:
-        response = RecruiterDashboardAnalyticsResponse(
+        return RecruiterDashboardAnalyticsResponse(
             range_key=normalized_range,
             stats=RecruiterAnalyticsStats(
                 active_jobs=0,
@@ -956,11 +981,9 @@ async def get_recruiter_dashboard_analytics(
             ),
             velocity=RecruiterAnalyticsVelocity(),
         )
-        await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-        return response
 
     stats = await _get_recruiter_analytics_stats(db, company_id)
-    response = RecruiterDashboardAnalyticsResponse(
+    return RecruiterDashboardAnalyticsResponse(
         range_key=normalized_range,
         stats=stats,
         funnel=[
@@ -980,8 +1003,23 @@ async def get_recruiter_dashboard_analytics(
         outreach=await _get_outreach_summary(db, company_id),
         velocity=await _get_recruiter_velocity(db, company_id),
     )
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-    return response
+
+
+async def get_recruiter_dashboard_analytics(
+    db: AsyncSession, current_user: User, range_key: str
+) -> RecruiterDashboardAnalyticsResponse:
+    """Build analytics for the recruiter dashboard (SWR-cached)."""
+    normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
+    cache_key = f"dashboard:recruiter:{current_user.id}:analytics:{normalized_range}"
+
+    async def _load() -> dict:
+        response = await _build_recruiter_dashboard_analytics(
+            db, current_user, normalized_range, start_dt, start_date, end_date
+        )
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return RecruiterDashboardAnalyticsResponse.model_validate(payload)
 
 
 async def _get_join_requests(
@@ -1118,18 +1156,13 @@ async def _get_team_activity(
     return team_activity
 
 
-async def get_recruiter_admin_dashboard(
+async def _build_recruiter_admin_dashboard(
     db: AsyncSession, current_user: User
 ) -> RecruiterAdminDashboardResponse:
-    """Build the recruiter-admin dashboard summary response."""
-    cache_key = f"dashboard:recruiter-admin:{current_user.id}"
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return RecruiterAdminDashboardResponse.model_validate_json(cached_data)
-
+    """Run the queries that produce the recruiter-admin dashboard response."""
     company_id, company_name = await _get_company_context(db, current_user.id)
     if company_id is None:
-        response = RecruiterAdminDashboardResponse(
+        return RecruiterAdminDashboardResponse(
             company_name="",
             recruiter_name=current_user.full_name,
             stats=RecruiterAdminStats(
@@ -1146,12 +1179,10 @@ async def get_recruiter_admin_dashboard(
             join_requests=[],
             team_activity=[],
         )
-        await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-        return response
 
     base_stats = await _get_recruiter_stats(db, company_id)
     join_requests = await _get_join_requests(db, company_id)
-    response = RecruiterAdminDashboardResponse(
+    return RecruiterAdminDashboardResponse(
         company_name=company_name,
         recruiter_name=current_user.full_name,
         stats=RecruiterAdminStats(
@@ -1168,8 +1199,20 @@ async def get_recruiter_admin_dashboard(
         join_requests=join_requests,
         team_activity=await _get_team_activity(db, company_id),
     )
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-    return response
+
+
+async def get_recruiter_admin_dashboard(
+    db: AsyncSession, current_user: User
+) -> RecruiterAdminDashboardResponse:
+    """Build the recruiter-admin dashboard summary response (SWR-cached)."""
+    cache_key = f"dashboard:recruiter-admin:{current_user.id}"
+
+    async def _load() -> dict:
+        response = await _build_recruiter_admin_dashboard(db, current_user)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return RecruiterAdminDashboardResponse.model_validate(payload)
 
 
 async def _get_membership_breakdown(
@@ -1253,21 +1296,18 @@ async def _get_join_request_timeseries(
     ]
 
 
-async def get_recruiter_admin_dashboard_analytics(
-    db: AsyncSession, current_user: User, range_key: str
+async def _build_recruiter_admin_dashboard_analytics(
+    db: AsyncSession,
+    current_user: User,
+    normalized_range: str,
+    start_dt: datetime,
+    start_date: date,
+    end_date: date,
 ) -> RecruiterAdminDashboardAnalyticsResponse:
-    """Build analytics for the recruiter-admin dashboard."""
-    normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
-    cache_key = (
-        f"dashboard:recruiter-admin:{current_user.id}:analytics:{normalized_range}"
-    )
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return RecruiterAdminDashboardAnalyticsResponse.model_validate_json(cached_data)
-
+    """Run the queries that produce the recruiter-admin analytics response."""
     company_id, _company_name = await _get_company_context(db, current_user.id)
     if company_id is None:
-        response = RecruiterAdminDashboardAnalyticsResponse(
+        return RecruiterAdminDashboardAnalyticsResponse(
             range_key=normalized_range,
             stats=RecruiterAdminAnalyticsStats(
                 active_jobs=0,
@@ -1284,8 +1324,6 @@ async def get_recruiter_admin_dashboard_analytics(
             team_activity=[],
             velocity=RecruiterAnalyticsVelocity(),
         )
-        await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-        return response
 
     recruiter_stats = await _get_recruiter_analytics_stats(db, company_id)
     membership_breakdown = await _get_membership_breakdown(db, company_id)
@@ -1306,7 +1344,7 @@ async def get_recruiter_admin_dashboard_analytics(
         0,
     )
 
-    response = RecruiterAdminDashboardAnalyticsResponse(
+    return RecruiterAdminDashboardAnalyticsResponse(
         range_key=normalized_range,
         stats=RecruiterAdminAnalyticsStats(
             active_jobs=recruiter_stats.active_jobs,
@@ -1337,5 +1375,22 @@ async def get_recruiter_admin_dashboard_analytics(
         team_activity=await _get_team_activity(db, company_id),
         velocity=await _get_recruiter_velocity(db, company_id),
     )
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
-    return response
+
+
+async def get_recruiter_admin_dashboard_analytics(
+    db: AsyncSession, current_user: User, range_key: str
+) -> RecruiterAdminDashboardAnalyticsResponse:
+    """Build analytics for the recruiter-admin dashboard (SWR-cached)."""
+    normalized_range, start_dt, start_date, end_date = _analytics_window(range_key)
+    cache_key = (
+        f"dashboard:recruiter-admin:{current_user.id}:analytics:{normalized_range}"
+    )
+
+    async def _load() -> dict:
+        response = await _build_recruiter_admin_dashboard_analytics(
+            db, current_user, normalized_range, start_dt, start_date, end_date
+        )
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return RecruiterAdminDashboardAnalyticsResponse.model_validate(payload)

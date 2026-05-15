@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     redis_url: str | None = None  # using upstash from convexhire gmail
     redis_enabled: bool = True
 
+    # Redis (local test, docker-compose redis-test)
+    test_redis_url: str = "redis://localhost:6380/0"
+
     # Embeddings
     embedding_model: str = "models/gemini-embedding-001"
     embedding_output_dimensionality: int = 3072

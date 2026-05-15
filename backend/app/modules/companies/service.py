@@ -1,5 +1,3 @@
-import json
-
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import func, select
@@ -12,9 +10,10 @@ from app.core.cache import (
     invalidate_company_detail_caches,
     invalidate_job_detail_caches,
 )
+from app.core.security import create_pending_signup_token, decode_pending_signup_token
+from app.core.swr_cache import swr_get
 from app.infrastructures.redis.service import redis_service
 
-from app.core.security import create_pending_signup_token, decode_pending_signup_token
 from app.infrastructures.email.service import EmailService
 from app.modules.activity.service import create_activity_event
 from app.modules.audit.service import create_custom_audit_log
@@ -67,24 +66,16 @@ async def invalidate_company_content_caches(db: AsyncSession, company_id: str) -
 
 
 async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
-    """Return the current user's company, using cache when available."""
+    """Return the current user's company (SWR-cached)."""
     cache_key = f"company:detail:{user.id}"
 
-    # 1. Try Cache
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        try:
-            return CompanyResponse.model_validate_json(cached_data)
-        except Exception:
-            await redis_service.delete(cache_key)
+    async def _load() -> dict:
+        company = await get_member_company(db, user)
+        response = _company_to_response(company)
+        return response.model_dump(mode="json")
 
-    company = await get_member_company(db, user)
-    response = _company_to_response(company)
-
-    # 3. Save to Cache (TTL 1 hour)
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
-
-    return response
+    payload = await swr_get(cache_key, _load, soft_ttl=600, hard_ttl=3600)
+    return CompanyResponse.model_validate(payload)
 
 
 async def update_my_company(
@@ -236,28 +227,21 @@ async def request_join_company(
     logger.info(f"Recruiter join-request verification email sent to {email}")
 
 
-async def list_company_recruiters(
-    db: AsyncSession, user: User
+async def _build_company_recruiters(
+    db: AsyncSession, company_id
 ) -> list[RecruiterMemberResponse]:
-    """List all recruiters for the admin's company."""
-    company = await get_admin_company(db, user)
-    cache_key = _company_recruiters_cache_key(str(company.id))
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        data = json.loads(cached_data)
-        return [RecruiterMemberResponse.model_validate(item) for item in data]
-
+    """Run the queries that produce the recruiter list for a company."""
     result = await db.execute(
         select(CompanyMembership, User)
         .join(User, CompanyMembership.user_id == User.id)
         .where(
-            CompanyMembership.company_id == company.id,
+            CompanyMembership.company_id == company_id,
             CompanyMembership.role == MembershipRole.recruiter,
         )
         .order_by(CompanyMembership.created_at.desc())
     )
     rows = result.all()
-    response = [
+    return [
         RecruiterMemberResponse(
             membership_id=m.id,
             user_id=u.id,
@@ -269,13 +253,21 @@ async def list_company_recruiters(
         )
         for m, u in rows
     ]
-    await redis_service.set(
-        cache_key,
-        json.dumps([item.model_dump(mode="json") for item in response]),
-        ttl_seconds=300,
-        ttl_jitter_seconds=60,
-    )
-    return response
+
+
+async def list_company_recruiters(
+    db: AsyncSession, user: User
+) -> list[RecruiterMemberResponse]:
+    """List all recruiters for the admin's company (SWR-cached)."""
+    company = await get_admin_company(db, user)
+    cache_key = _company_recruiters_cache_key(str(company.id))
+
+    async def _load() -> list:
+        items = await _build_company_recruiters(db, company.id)
+        return [item.model_dump(mode="json") for item in items]
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return [RecruiterMemberResponse.model_validate(item) for item in payload]
 
 
 async def update_recruiter_status(

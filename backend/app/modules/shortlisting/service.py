@@ -20,6 +20,7 @@ from app.core.cache import (
 )
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
+from app.core.swr_cache import swr_get
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_events
@@ -587,21 +588,11 @@ async def evaluate_single_application(
     return application
 
 
-async def get_shortlist_summary(
-    db: AsyncSession, job_id: uuid.UUID, user_id: uuid.UUID
+async def _build_shortlist_summary(
+    db: AsyncSession, job_id: uuid.UUID, company_id: uuid.UUID
 ) -> ShortlistSummaryResponse:
-    """Return shortlisting progress for a recruiter-visible job."""
-    company_id = await _get_company_id_for_user(db, user_id)
+    """Compute shortlist summary; auto-fails stale in-progress runs."""
     job = await _get_job_for_company(db, job_id, company_id)
-    cache_key = f"shortlist:summary:{job_id}"
-
-    if job.shortlist_status != ShortlistStatus.in_progress:
-        cached_data = await redis_service.get(cache_key)
-        if cached_data:
-            return ShortlistSummaryResponse.model_validate_json(cached_data)
-    else:
-        await redis_service.delete(cache_key)
-
     total = int(
         await db.scalar(
             select(func.count(Application.id)).where(Application.job_id == job_id)
@@ -633,7 +624,7 @@ async def get_shortlist_summary(
             await db.commit()
             await db.refresh(job)
 
-    response = ShortlistSummaryResponse(
+    return ShortlistSummaryResponse(
         job_id=job_id,
         total_applications=total,
         scored=scored,
@@ -643,10 +634,28 @@ async def get_shortlist_summary(
         shortlist_threshold=job.shortlist_threshold,
     )
 
-    if response.shortlist_status != ShortlistStatus.in_progress:
-        await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
 
-    return response
+async def get_shortlist_summary(
+    db: AsyncSession, job_id: uuid.UUID, user_id: uuid.UUID
+) -> ShortlistSummaryResponse:
+    """Return shortlisting progress for a recruiter-visible job.
+
+    SWR-cached only when not in_progress; live progress reads bypass the cache.
+    """
+    company_id = await _get_company_id_for_user(db, user_id)
+    job = await _get_job_for_company(db, job_id, company_id)
+    cache_key = f"shortlist:summary:{job_id}"
+
+    if job.shortlist_status == ShortlistStatus.in_progress:
+        await redis_service.delete(cache_key)
+        return await _build_shortlist_summary(db, job_id, company_id)
+
+    async def _load() -> dict:
+        response = await _build_shortlist_summary(db, job_id, company_id)
+        return response.model_dump(mode="json")
+
+    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
+    return ShortlistSummaryResponse.model_validate(payload)
 
 
 async def trigger_shortlisting(

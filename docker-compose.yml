@@ -20,5 +20,12 @@ services:
     volumes:
       - qdrant-test-data:/qdrant/storage
 
+  redis-test:
+    image: redis:7-alpine
+    container_name: convexhire-redis-test
+    restart: always
+    ports:
+      - "6380:6379"
+
 volumes:
   qdrant-test-data:
