@@ -157,7 +157,7 @@ function LoginPageInner() {
 
     try {
       const result = await login({
-        email: formValues.email,
+        email: formValues.email.trim().toLowerCase(),
         password: formValues.password,
         remember_me: formValues.rememberMe,
       }).unwrap()
@@ -265,6 +265,7 @@ function LoginPageInner() {
                       autoComplete="email"
                       placeholder="you@example.com"
                       value={formValues.email}
+                      maxLength={254}
                       onChange={handleChange}
                       disabled={isLoading}
                       className={`auth__input${errors.email ? ' auth__input--error' : ''}`}
@@ -291,6 +292,7 @@ function LoginPageInner() {
                       autoComplete="current-password"
                       placeholder="Enter your password"
                       value={formValues.password}
+                      maxLength={128}
                       onChange={handleChange}
                       disabled={isLoading}
                       className={`auth__input auth__input--password${errors.password ? ' auth__input--error' : ''}`}

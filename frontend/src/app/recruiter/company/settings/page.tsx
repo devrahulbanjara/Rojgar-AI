@@ -7,6 +7,7 @@ import { parseApiError } from '@/lib/apiError'
 import { createCroppedImageFile } from '@/lib/cropImage'
 import { formatBytes, validateImageFile } from '@/lib/mediaValidation'
 import { notify } from '@/lib/notify'
+import { LIMITS, isValidEmail, isValidUrl } from '@/lib/validation'
 import { useAppSelector } from '@/store/hooks'
 import {
   useGetMyCompanyQuery,
@@ -130,16 +131,41 @@ export default function CompanySettingsPage() {
     setSaveError(null)
     setSaveSuccess(false)
 
+    if (!form.name.trim()) {
+      const msg = 'Company name is required.'
+      setSaveError(msg)
+      notify.error(msg)
+      return
+    }
+    if (form.website_url && !isValidUrl(form.website_url)) {
+      const msg = 'Website URL must start with http:// or https://.'
+      setSaveError(msg)
+      notify.error(msg)
+      return
+    }
+    if (form.cal_booking_url && !isValidUrl(form.cal_booking_url)) {
+      const msg = 'Cal booking URL must start with http:// or https://.'
+      setSaveError(msg)
+      notify.error(msg)
+      return
+    }
+    if (form.cal_organizer_email && !isValidEmail(form.cal_organizer_email)) {
+      const msg = 'Enter a valid organizer email.'
+      setSaveError(msg)
+      notify.error(msg)
+      return
+    }
+
     try {
       await updateCompany({
-        name: form.name || null,
-        industry: form.industry || null,
-        company_size: form.company_size || null,
-        location: form.location || null,
-        website_url: form.website_url || null,
-        cal_booking_url: form.cal_booking_url || null,
-        cal_organizer_email: form.cal_organizer_email || null,
-        description: form.description || null,
+        name: form.name.trim() || null,
+        industry: form.industry.trim() || null,
+        company_size: form.company_size.trim() || null,
+        location: form.location.trim() || null,
+        website_url: form.website_url.trim() || null,
+        cal_booking_url: form.cal_booking_url.trim() || null,
+        cal_organizer_email: form.cal_organizer_email.trim().toLowerCase() || null,
+        description: form.description.trim() || null,
       }).unwrap()
       setSaveSuccess(true)
       notify.success('Company details updated.')
@@ -423,6 +449,7 @@ export default function CompanySettingsPage() {
                   id="company-cal-booking-url"
                   className="resume-field__input"
                   value={form.cal_booking_url}
+                  maxLength={LIMITS.url}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, cal_booking_url: event.target.value }))
                   }
@@ -439,6 +466,7 @@ export default function CompanySettingsPage() {
                   id="company-cal-organizer-email"
                   className="resume-field__input"
                   value={form.cal_organizer_email}
+                  maxLength={LIMITS.email}
                   onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
@@ -490,6 +518,7 @@ export default function CompanySettingsPage() {
                       id="company-name"
                       className="resume-field__input"
                       value={form.name}
+                      maxLength={LIMITS.companyName}
                       onChange={(event) =>
                         setForm((prev) => ({ ...prev, name: event.target.value }))
                       }
@@ -541,6 +570,7 @@ export default function CompanySettingsPage() {
                       id="company-location"
                       className="resume-field__input"
                       value={form.location}
+                      maxLength={LIMITS.location}
                       onChange={(event) =>
                         setForm((prev) => ({ ...prev, location: event.target.value }))
                       }
@@ -559,6 +589,7 @@ export default function CompanySettingsPage() {
                     id="company-description"
                     className="resume-field__textarea"
                     value={form.description}
+                    maxLength={LIMITS.description}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, description: event.target.value }))
                     }
@@ -576,6 +607,7 @@ export default function CompanySettingsPage() {
                     id="company-website"
                     className="resume-field__input"
                     value={form.website_url}
+                    maxLength={LIMITS.url}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, website_url: event.target.value }))
                     }

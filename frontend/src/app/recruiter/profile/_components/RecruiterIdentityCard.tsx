@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 
 import { formatBytes } from '@/lib/mediaValidation'
+import { LIMITS } from '@/lib/validation'
 import { BriefcaseBusiness, Camera, Mail, Shield, Trash2 } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
@@ -141,7 +142,7 @@ export default function RecruiterIdentityCard({
           <button
             type="button"
             className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
-            disabled={isSaving}
+            disabled={isSaving || !inputName.trim()}
             onClick={() => void onSave()}
           >
             Save
@@ -157,9 +158,11 @@ export default function RecruiterIdentityCard({
               id="recruiter-full-name"
               className={styles.fieldInput}
               value={inputName}
+              maxLength={LIMITS.name}
               onChange={(e) => onChangeName(e.target.value)}
               placeholder="Your full name"
               type="text"
+              aria-invalid={!inputName.trim()}
             />
           </div>
 

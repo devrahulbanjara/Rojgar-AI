@@ -183,6 +183,7 @@ function RecruiterRowEditor({
         <textarea
           className={styles.textarea}
           value={draft.notes}
+          maxLength={5000}
           onChange={(event) => setDraft({ ...draft, notes: event.target.value })}
           placeholder="Add context: strengths, concerns, signals from this round."
         />

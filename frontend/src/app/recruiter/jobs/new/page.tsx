@@ -19,6 +19,7 @@ import JobDraftForm from '@/app/recruiter/jobs/new/_components/JobDraftForm'
 import SalaryResearchCard from '@/app/recruiter/jobs/new/_components/SalaryResearchCard'
 import { parseApiError } from '@/lib/apiError'
 import { notify } from '@/lib/notify'
+import { LIMITS, isSalaryRangeValid } from '@/lib/validation'
 import { useUpsertJobEvaluationSchemaMutation } from '@/store/services/evaluationApi'
 import {
   type JobAIDraftPayload,
@@ -470,6 +471,30 @@ export default function RecruiterJobAIDraftPage() {
 
   async function handlePostJob() {
     if (!pageState.draftId || !pageState.draft) return
+    const d = pageState.draft
+    if (!d.title?.trim()) {
+      notify.error('Job title is required.')
+      return
+    }
+    if (!isSalaryRangeValid(d.salary_min, d.salary_max)) {
+      notify.error('Maximum salary must be greater than or equal to minimum.')
+      return
+    }
+    if (
+      d.required_years_of_experience != null &&
+      (d.required_years_of_experience < 0 ||
+        d.required_years_of_experience > LIMITS.yearsExperience)
+    ) {
+      notify.error(`Required years of experience must be 0–${LIMITS.yearsExperience}.`)
+      return
+    }
+    if (
+      d.shortlist_threshold != null &&
+      (d.shortlist_threshold < 0 || d.shortlist_threshold > LIMITS.shortlistThreshold)
+    ) {
+      notify.error('Shortlist threshold must be between 0 and 100.')
+      return
+    }
     if (evaluationEnabled) {
       const validationMessage = validateEvaluationSchemaDraft(evaluationDraft)
       if (validationMessage) {

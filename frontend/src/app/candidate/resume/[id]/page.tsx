@@ -21,6 +21,15 @@ import { resumePrintStyles } from '../_components/resumePrintStyles'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 /** Convert the UI Resume shape back to the PUT request body */
 function uiResumeToApiUpdate(r: Resume) {
   return {
@@ -64,7 +73,7 @@ function ResumeViewer({ resume, onEdit }: { resume: Resume; onEdit: () => void }
     win.document.write(`
       <html>
         <head>
-          <title>${resume.fullName} - Resume</title>
+          <title>${escapeHtml(resume.fullName)} - Resume</title>
           <style>${resumePrintStyles}</style>
         </head>
         <body>${content.innerHTML}</body>

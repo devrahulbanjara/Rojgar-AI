@@ -1,5 +1,6 @@
 'use client'
 
+import { LIMITS, isValidPhone, isValidUrl } from '@/lib/validation'
 import { Pencil } from 'lucide-react'
 
 import styles from '../page.module.scss'
@@ -17,26 +18,45 @@ interface OverviewSectionProps {
   onChange: <K extends keyof FormProfile>(key: K, value: FormProfile[K]) => void
 }
 
+type FieldKey =
+  | 'headline'
+  | 'phone'
+  | 'location'
+  | 'years_of_experience'
+  | 'linkedin_url'
+  | 'github_url'
+  | 'portfolio_url'
+
 const FIELDS: ReadonlyArray<{
-  key:
-    | 'headline'
-    | 'phone'
-    | 'location'
-    | 'years_of_experience'
-    | 'linkedin_url'
-    | 'github_url'
-    | 'portfolio_url'
+  key: FieldKey
   label: string
   type: string
+  max?: number
 }> = [
-  { key: 'headline', label: 'Professional Headline', type: 'text' },
-  { key: 'phone', label: 'Phone', type: 'tel' },
-  { key: 'location', label: 'Location', type: 'text' },
+  { key: 'headline', label: 'Professional Headline', type: 'text', max: LIMITS.headline },
+  { key: 'phone', label: 'Phone', type: 'tel', max: LIMITS.phone },
+  { key: 'location', label: 'Location', type: 'text', max: LIMITS.location },
   { key: 'years_of_experience', label: 'Years of Experience', type: 'number' },
-  { key: 'linkedin_url', label: 'LinkedIn URL', type: 'url' },
-  { key: 'github_url', label: 'GitHub URL', type: 'url' },
-  { key: 'portfolio_url', label: 'Portfolio / Website URL', type: 'url' },
+  { key: 'linkedin_url', label: 'LinkedIn URL', type: 'url', max: LIMITS.url },
+  { key: 'github_url', label: 'GitHub URL', type: 'url', max: LIMITS.url },
+  { key: 'portfolio_url', label: 'Portfolio / Website URL', type: 'url', max: LIMITS.url },
 ]
+
+function validateOverviewField(key: FieldKey, value: string): string | null {
+  if (!value) return null
+  if (key === 'phone' && !isValidPhone(value)) return 'Enter a valid phone number.'
+  if (
+    (key === 'linkedin_url' || key === 'github_url' || key === 'portfolio_url') &&
+    !isValidUrl(value)
+  )
+    return 'URL must start with http:// or https://.'
+  if (key === 'years_of_experience') {
+    const n = Number(value)
+    if (Number.isNaN(n) || n < 0 || n > LIMITS.yearsExperience)
+      return `Must be 0–${LIMITS.yearsExperience}.`
+  }
+  return null
+}
 
 export default function OverviewSection({
   form,
@@ -49,6 +69,16 @@ export default function OverviewSection({
   onCancel,
   onChange,
 }: OverviewSectionProps) {
+  const fieldErrors = FIELDS.reduce<Partial<Record<FieldKey, string>>>((acc, f) => {
+    const err = validateOverviewField(f.key, String(form[f.key] ?? ''))
+    if (err) acc[f.key] = err
+    return acc
+  }, {})
+  const summaryError =
+    form.summary && form.summary.length > LIMITS.summary
+      ? `Summary too long (max ${LIMITS.summary} chars).`
+      : null
+  const hasError = Object.keys(fieldErrors).length > 0 || Boolean(summaryError)
   return (
     <>
       <div className={styles.card}>
@@ -72,7 +102,7 @@ export default function OverviewSection({
                   type="button"
                   className={`btn btn--primary btn--sm${isSaving ? ' btn--loading' : ''}`}
                   onClick={onSave}
-                  disabled={isSaving}
+                  disabled={isSaving || hasError}
                 >
                   Save
                 </button>
@@ -101,7 +131,14 @@ export default function OverviewSection({
                   onChange={(e) => onChange(f.key, e.target.value as FormProfile[typeof f.key])}
                   placeholder={f.label}
                   min={f.type === 'number' ? 0 : undefined}
+                  max={f.key === 'years_of_experience' ? LIMITS.yearsExperience : undefined}
+                  maxLength={f.max}
                 />
+                {fieldErrors[f.key] ? (
+                  <span className="auth__error-msg" role="alert">
+                    {fieldErrors[f.key]}
+                  </span>
+                ) : null}
               </div>
             ))}
           </div>
@@ -144,13 +181,21 @@ export default function OverviewSection({
         </div>
 
         {isEditing ? (
-          <textarea
-            className={styles.fieldTextarea}
-            rows={6}
-            value={form.summary}
-            onChange={(e) => onChange('summary', e.target.value)}
-            placeholder="Write a compelling professional summary…"
-          />
+          <>
+            <textarea
+              className={styles.fieldTextarea}
+              rows={6}
+              value={form.summary}
+              maxLength={LIMITS.summary}
+              onChange={(e) => onChange('summary', e.target.value)}
+              placeholder="Write a compelling professional summary…"
+            />
+            {summaryError ? (
+              <span className="auth__error-msg" role="alert">
+                {summaryError}
+              </span>
+            ) : null}
+          </>
         ) : (
           <p
             className={styles.infoValue}

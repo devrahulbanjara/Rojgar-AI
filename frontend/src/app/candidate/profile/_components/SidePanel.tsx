@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+import { LIMITS } from '@/lib/validation'
 import { FileUp, X } from 'lucide-react'
 
 import styles from '../page.module.scss'
@@ -91,7 +92,8 @@ function TargetRolesCard({ roles, isSaving, onAdd, onRemove }: TargetRolesProps)
 
   function commit(role: string) {
     const r = role.trim()
-    if (!r || roles.includes(r)) return
+    if (!r || r.length > LIMITS.shortText) return
+    if (roles.some((existing) => existing.toLowerCase() === r.toLowerCase())) return
     onAdd(r)
     setInput('')
     setOpen(false)
@@ -134,6 +136,7 @@ function TargetRolesCard({ roles, isSaving, onAdd, onRemove }: TargetRolesProps)
           className={styles.fieldInput}
           placeholder="Add a target role…"
           value={input}
+          maxLength={LIMITS.shortText}
           onFocus={() => setOpen(true)}
           onChange={(e) => {
             setInput(e.target.value)

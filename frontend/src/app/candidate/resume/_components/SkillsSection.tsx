@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+import { LIMITS, hasDuplicate } from '@/lib/validation'
+
 // ── Skills chip input ──────────────────────────────────────────────────────
 
 export default function SkillsSection({
@@ -15,9 +17,19 @@ export default function SkillsSection({
 }) {
   const [input, setInput] = useState('')
 
+  const trimmed = input.trim()
+  const duplicate = hasDuplicate(skills, trimmed)
+  const tooLong = trimmed.length > LIMITS.skill
+  const error = duplicate
+    ? 'Skill already added.'
+    : tooLong
+      ? `Skill too long (max ${LIMITS.skill}).`
+      : null
+  const canAdd = Boolean(trimmed) && !duplicate && !tooLong
+
   function handleAdd() {
-    if (input.trim()) {
-      onAdd(input.trim())
+    if (canAdd) {
+      onAdd(trimmed)
       setInput('')
     }
   }
@@ -30,6 +42,7 @@ export default function SkillsSection({
           className="resume-field__input"
           placeholder="Add a skill (e.g. Figma)"
           value={input}
+          maxLength={LIMITS.skill}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -38,10 +51,15 @@ export default function SkillsSection({
             }
           }}
         />
-        <button className="btn btn--primary btn--sm" onClick={handleAdd}>
+        <button className="btn btn--primary btn--sm" onClick={handleAdd} disabled={!canAdd}>
           Add
         </button>
       </div>
+      {error ? (
+        <span className="auth__error-msg" role="alert">
+          {error}
+        </span>
+      ) : null}
       <div className="skills-wrap">
         {skills.map((sk) => (
           <span className="skill-item" key={sk}>

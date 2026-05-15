@@ -186,6 +186,7 @@ function OnboardingForm() {
                 <input
                   type="text"
                   value={inputValue}
+                  maxLength={200}
                   onChange={(e) => {
                     setInputValue(e.target.value)
                     setIsDropdownOpen(true)

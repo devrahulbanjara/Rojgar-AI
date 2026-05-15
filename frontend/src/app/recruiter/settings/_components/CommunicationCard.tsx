@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { LIMITS } from '@/lib/validation'
 import { ArrowRight } from 'lucide-react'
 
 import styles from '../page.module.scss'
@@ -36,11 +37,13 @@ export default function CommunicationCard({ form, isAdmin, onChange }: Props) {
           className={styles.fieldTextarea}
           rows={6}
           value={form.outreach_signature}
+          maxLength={LIMITS.signature}
           onChange={(e) => update('outreach_signature', e.target.value)}
           placeholder={'Priya Maharjan\nSenior Recruiter\nPinnacle Tech Nepal Pvt. Ltd.'}
         />
         <span className={styles.fieldHint}>
-          Appended to outreach emails you send from ConvexHire.
+          Appended to outreach emails you send from ConvexHire. {form.outreach_signature.length}/
+          {LIMITS.signature} characters.
         </span>
       </div>
 

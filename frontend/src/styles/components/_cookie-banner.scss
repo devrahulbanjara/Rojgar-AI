@@ -86,4 +86,15 @@
     gap: $space-2;
     justify-content: flex-end;
   }
+
+  &__link {
+    color: #1d4ed8;
+    text-decoration: underline;
+    font-weight: 600;
+
+    &:hover,
+    &:focus-visible {
+      color: #1e40af;
+    }
+  }
 }

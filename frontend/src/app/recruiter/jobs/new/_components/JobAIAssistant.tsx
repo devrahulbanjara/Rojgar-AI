@@ -89,6 +89,7 @@ export default function JobAIAssistant({
                 type="text"
                 className="job-ai-input"
                 value={title}
+                maxLength={120}
                 onChange={(event) => onTitleChange(event.target.value)}
                 placeholder="e.g. Senior AI Engineer"
               />
@@ -103,6 +104,7 @@ export default function JobAIAssistant({
                 className="job-ai-textarea"
                 rows={4}
                 value={roughDescription}
+                maxLength={5000}
                 onChange={(event) => onRoughDescriptionChange(event.target.value)}
                 placeholder="e.g. 5 years exp, need FastAPI advanced exp, PyTorch, skilled in LLMs"
               />
@@ -199,6 +201,7 @@ export default function JobAIAssistant({
                 className="job-ai-textarea"
                 rows={3}
                 value={followUpFeedback}
+                maxLength={2000}
                 onChange={(event) => onFollowUpFeedbackChange(event.target.value)}
                 placeholder={
                   refineTarget === 'all'

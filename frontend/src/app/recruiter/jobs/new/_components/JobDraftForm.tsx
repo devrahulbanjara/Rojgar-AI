@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from 'react'
 
+import { LIMITS, hasDuplicate, isSalaryRangeValid } from '@/lib/validation'
 import type { JobAIDraftPayload } from '@/store/services/jobAiApi'
 import { Lock, LockOpen, Plus, X } from 'lucide-react'
 
@@ -158,10 +159,11 @@ function ListEditor({
   onChange: (items: string[]) => void
 }) {
   const [newItem, setNewItem] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   function updateItem(index: number, value: string) {
     const next = [...items]
-    next[index] = value
+    next[index] = value.slice(0, LIMITS.listItem)
     onChange(next)
   }
 
@@ -172,6 +174,15 @@ function ListEditor({
   function addItem() {
     const value = newItem.trim()
     if (!value) return
+    if (value.length > LIMITS.listItem) {
+      setError(`Too long (max ${LIMITS.listItem} chars)`)
+      return
+    }
+    if (hasDuplicate(items, value)) {
+      setError('Already added')
+      return
+    }
+    setError(null)
     onChange([...items, value])
     setNewItem('')
   }
@@ -185,6 +196,7 @@ function ListEditor({
               <input
                 className="job-ai-input job-ai-list-editor__input"
                 value={item}
+                maxLength={LIMITS.listItem}
                 onChange={(event) => updateItem(index, event.target.value)}
                 disabled={disabled}
               />
@@ -206,7 +218,17 @@ function ListEditor({
         <input
           className="job-ai-input job-ai-list-editor__composer-input"
           value={newItem}
-          onChange={(event) => setNewItem(event.target.value)}
+          maxLength={LIMITS.listItem}
+          onChange={(event) => {
+            setNewItem(event.target.value)
+            if (error) setError(null)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              addItem()
+            }
+          }}
           placeholder={`Add a new ${label.toLowerCase()} item`}
           disabled={disabled}
         />
@@ -220,6 +242,11 @@ function ListEditor({
           Add
         </button>
       </div>
+      {error ? (
+        <span className="auth__error-msg" role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -298,6 +325,7 @@ export default function JobDraftForm({
               <input
                 className="job-ai-input"
                 value={draft.title}
+                maxLength={LIMITS.title}
                 onChange={(event) => onFieldChange('title', event.target.value)}
                 disabled={disabled}
               />
@@ -307,6 +335,7 @@ export default function JobDraftForm({
               <input
                 className="job-ai-input"
                 value={draft.location ?? ''}
+                maxLength={LIMITS.location}
                 onChange={(event) => onFieldChange('location', event.target.value || null)}
                 disabled={disabled}
               />
@@ -359,12 +388,21 @@ export default function JobDraftForm({
             label="Salary range"
             fieldKeys={['salary_min', 'salary_max', 'currency']}
             {...fieldProps}
-            warning={salaryWarning}
+            warning={
+              salaryWarning ||
+              (!isSalaryRangeValid(draft.salary_min, draft.salary_max) ? (
+                <span className="auth__error-msg" role="alert">
+                  Max salary must be greater than or equal to min.
+                </span>
+              ) : undefined)
+            }
           >
             <div className="job-ai-form__salary-grid">
               <input
                 className="job-ai-input"
                 type="number"
+                min={0}
+                max={LIMITS.salaryMax}
                 value={draft.salary_min ?? ''}
                 onChange={(event) =>
                   onFieldChange(
@@ -378,6 +416,8 @@ export default function JobDraftForm({
               <input
                 className="job-ai-input"
                 type="number"
+                min={0}
+                max={LIMITS.salaryMax}
                 value={draft.salary_max ?? ''}
                 onChange={(event) =>
                   onFieldChange(
@@ -444,6 +484,7 @@ export default function JobDraftForm({
               className="job-ai-textarea"
               rows={8}
               value={draft.overview}
+              maxLength={LIMITS.overview}
               onChange={(event) => onFieldChange('overview', event.target.value)}
               disabled={disabled}
             />

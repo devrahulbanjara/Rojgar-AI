@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+import { LIMITS } from '@/lib/validation'
+
 // ── Modal for naming a new resume before creation ─────────────────────────
 
 export default function CreateResumeModal({
@@ -43,6 +45,7 @@ export default function CreateResumeModal({
                 autoFocus
                 placeholder="e.g. Frontend Engineer at Acme"
                 value={name}
+                maxLength={LIMITS.name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
               />
