@@ -153,9 +153,9 @@ ConvexHire is an AI-powered recruitment platform that aims to simplify the entir
 
 == Project Briefing (humanized)
 
-ConvexHire is an AI-augmented recruitment platform that automates and enhances the full hiring lifecycle for both job seekers and recruiters. The system integrates AI-driven tools to draft job descriptions, existing resume imports, job matching according to skills, and preferences, and assistant recruiter to shortlist. ConvexHire is built on a Human-in-the-Loop (HITL) architecture which means every decision made by AI has to be approved by a human before finally it takes place. The system has three user roles: candidates, recruiters, and company administrators. For candidates, the system makes easier to find the appropraite job they want to apply to, along with maximizing their chance of shortlist (if they are a good fit), by allowing them to find any gaps in their selected resume by comparing against the job description.
+ConvexHire is an AI-augmented recruitment platform that automates and enhances the full hiring lifecycle for both job seekers and recruiters. The system integrates AI-driven tools to draft job descriptions, existing resume imports, job matching according to skills, and preferences, and assistant recruiter to shortlist. ConvexHire is built on a Human-in-the-Loop (HITL) architecture which means every decision made by AI has to be approved by a human before finally it takes place. The system has three user roles: candidates, recruiters, and company administrators. For candidates, the system makes easier to find the appropraite job they want to apply to, along with maximizing their chance of shortlist (if they are a good fit), by allowing them to find any gaps in their selected resume by comparing against the job description. For recruiters, the system provides with different smart AI features that makes the hiring pipeline insanely fast, efficient and professional along with having a full control of the system.
 
-Recruiters use automated job drafting, agentic ai based candidate screening, contacting candidates, a conversational AI assistant with live platform access, and automated interview evaluation. Their employers/admins of the company can manage team membership, company settings, and all administrative actions like audit log access. Every AI action, including shortlisting, outreach emails, and resume patches, requires human approval before finally applying. The system uses a full stack architecture where Next.js for frontend, Python FastAPI backend, PostgreSQL primary as primary database, Redis for caching layer, Qdrant for vector database, and LangChain/LangGraph AI orchestration. For a secure system, there is Role-based access control on every endpoint. For a secure AI usage, Prompt injection guardrails, PII redaction for unbiased dealing, hallucination prevention measures have been taken.
+The system uses a monolithic full stack architecture and Kanban project management methodology. Further tools and technologies have been discussed in later sections. The system heavily focuses on security, that is why there is Role-based access control on every endpoint. For a secure AI usage, Prompt injection guardrails, PII redaction for unbiased dealing, hallucination prevention measures have been taken.
 
 === AI Aspect (humanized)
 
@@ -229,7 +229,10 @@ $ "CER" = (S + D + I) / N $
   - $N$ - Total characters in the reference transcript
 
 
+== Academic Question
 
+
+*How can AI improve recruitment efficiency while maintaining transparency and human oversight?*
 
 == Aims (humanized)
 
@@ -251,7 +254,7 @@ ConvexHire primarily aims to engineer an end to end secure, transparent and bias
 
 === FDD
 
- FDD figure + seven-subsystem decomposition.
+ConvexHire is broken down into seven distinct subsystems. The artefacts range from a secure authenticated system to usage of classical machine learning models, multi-agent systems, and LLM APIs, a fullstack software and so on, which can be visualized in the figure below.
 
 #figure(
   mermaid("
@@ -277,17 +280,13 @@ graph TD
   caption: [Feature Decomposition Diagram of ConvexHire],
 ) <fig:fdd>
 
-== Academic Question
-
-
-*How can AI improve recruitment efficiency while maintaining transparency and human oversight?*
 
 == Scope and Limitations (humanized)
 === Scope
 
 The system covers the entire hiring process, ranging from a candidate's job search and application, through to the shortlisting, interviewing and final decision made by a recruiter. All of these big steps are covered: resumes parsing, gap analysis, AI screening, outreach, interview transcription and evaluation. There are dedicated, functional processes on both sides of the process – candidate and recruiter.
 
-Howver, the system stops here and doesnt deal with post-hire matters. No paperwork, no signing of contracts, no monitoring of performance. Once a candidate accepts a job at ConvexHire, that's the end of the job. All activities after the hiring are out of scope.
+However, the system stops here and does not deal with post-hire matters. No paperwork, no signing of contracts, no monitoring of performance. Once a candidate accepts a job at ConvexHire, that's the end of the job. All activities after the hiring are out of scope.
 
 === Limitations
 - A very expected limitation is the Cold Start Deadlock. Companies will not purchase the system if candidates are not present, and candidates will not purchase if there are no companies offering jobs. 
@@ -296,6 +295,10 @@ Howver, the system stops here and doesnt deal with post-hire matters. No paperwo
 - The Machine Learning Model used to pre-filter the talents before the shortlisting agent even sees is trained on synthetic data, as it works, but can cause some problems if false positives increasing.
 - The Whisper model finetuned regardless of performing good on a short normal nepali audio, struggles on a real conversation of interview.
 
+
+== Report Structure
+
+This report covers: Introduction, Literature Review, Project Methodology, Tools and Technologies, Artefact Designs, Implementation, and Testing and Evaluation.
 
 // 3. LITERATURE REVIEW
 = Literature Review
