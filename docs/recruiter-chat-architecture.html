@@ -787,22 +787,24 @@
 <!-- ============================================================== -->
 <h2>6. Security &amp; Guardrails</h2>
 <div class="frame">
-<svg viewBox="0 0 1400 280" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+<svg viewBox="0 0 1400 380" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
   <g transform="translate(40,20)">
     <!-- Row 1 -->
     <g transform="translate(0,0)">
       <rect width="320" height="80" rx="10" fill="#fee2e2" stroke="#dc2626"/>
-      <text x="20" y="22" font-size="10" fill="#7f1d1d" font-weight="700">🛡 Prompt Injection Defense (3 layers)</text>
-      <text x="20" y="38" font-size="9" fill="#991b1b">1. NeMo self_check_input rail (Groq classifier)</text>
-      <text x="20" y="52" font-size="9" fill="#991b1b">2. XML tag scrubber + &lt;user_message&gt; wrap</text>
-      <text x="20" y="66" font-size="9" fill="#991b1b">3. Recruiter DB strings sanitized before LLM</text>
+      <text x="20" y="20" font-size="10" fill="#7f1d1d" font-weight="700">🛡 Prompt Injection Defense (4 layers)</text>
+      <text x="20" y="34" font-size="9" fill="#991b1b">1. NeMo self_check_input rail (Groq classifier)</text>
+      <text x="20" y="46" font-size="9" fill="#991b1b">2. XML tag scrubber + &lt;user_message&gt; wrap</text>
+      <text x="20" y="58" font-size="9" fill="#991b1b">3. NFKC normalize + strip every &lt;tag&gt; on DB text</text>
+      <text x="20" y="70" font-size="9" fill="#991b1b">4. Replayed history re-sanitized each LLM hop</text>
     </g>
     <g transform="translate(340,0)">
       <rect width="320" height="80" rx="10" fill="#ffedd5" stroke="#ea580c"/>
-      <text x="20" y="22" font-size="10" fill="#7c2d12" font-weight="700">✏️ Job Edit Allowlist</text>
-      <text x="20" y="40" font-size="9" fill="#9a3412">14 fields only (title, location, salary...)</text>
-      <text x="20" y="54" font-size="9" fill="#9a3412">Staleness check: updated_at must match</text>
-      <text x="20" y="68" font-size="9" fill="#9a3412">Human must approve before DB write</text>
+      <text x="20" y="20" font-size="10" fill="#7c2d12" font-weight="700">✏️ Job Edit Allowlist + Re-validation</text>
+      <text x="20" y="34" font-size="9" fill="#9a3412">15 fields (status removed — lifecycle is dashboard-only)</text>
+      <text x="20" y="46" font-size="9" fill="#9a3412">Pydantic JobUpdate re-validates patch at confirm</text>
+      <text x="20" y="58" font-size="9" fill="#9a3412">Staleness check: updated_at must match preview</text>
+      <text x="20" y="70" font-size="9" fill="#9a3412">Delegates write → outbox + Qdrant + Redis bust</text>
     </g>
     <g transform="translate(680,0)">
       <rect width="320" height="80" rx="10" fill="#fef9c3" stroke="#ca8a04"/>
@@ -848,10 +850,40 @@
       <text x="20" y="54" font-size="9" fill="#1e40af">Tavily down → skip web search gracefully</text>
       <text x="20" y="68" font-size="9" fill="#1e40af">Summarize fails → hard cap, no user error</text>
     </g>
+
+    <!-- Row 3 -->
+    <g transform="translate(0,200)">
+      <rect width="320" height="80" rx="10" fill="#fef2f2" stroke="#b91c1c"/>
+      <text x="20" y="22" font-size="10" fill="#7f1d1d" font-weight="700">⚖️ Bias Rail (Recruiter Writing)</text>
+      <text x="20" y="40" font-size="9" fill="#991b1b">Input refused for protected-class phrasing</text>
+      <text x="20" y="54" font-size="9" fill="#991b1b">Output flagged + warning footer on draft</text>
+      <text x="20" y="68" font-size="9" fill="#991b1b">Categories: age, gender, family, race, religion…</text>
+    </g>
+    <g transform="translate(340,200)">
+      <rect width="320" height="80" rx="10" fill="#ecfeff" stroke="#0891b2"/>
+      <text x="20" y="22" font-size="10" fill="#164e63" font-weight="700">🪪 PII Redaction (Web Search Egress)</text>
+      <text x="20" y="40" font-size="9" fill="#155e75">emails / phones / SSN-like patterns scrubbed</text>
+      <text x="20" y="54" font-size="9" fill="#155e75">Applied before query leaves to Tavily</text>
+      <text x="20" y="68" font-size="9" fill="#155e75">Shared helper: app/shared/text_safety.py</text>
+    </g>
+    <g transform="translate(680,200)">
+      <rect width="320" height="80" rx="10" fill="#f0fdf4" stroke="#15803d"/>
+      <text x="20" y="22" font-size="10" fill="#14532d" font-weight="700">🧱 Tenant Filter (Followup Reads)</text>
+      <text x="20" y="40" font-size="9" fill="#166534">company_id required on every Application join</text>
+      <text x="20" y="54" font-size="9" fill="#166534">Never trust JSONB state for tenant scope</text>
+      <text x="20" y="68" font-size="9" fill="#166534">Qdrant payload filter mirrors the SQL guard</text>
+    </g>
+    <g transform="translate(1020,200)">
+      <rect width="320" height="80" rx="10" fill="#fffbeb" stroke="#b45309"/>
+      <text x="20" y="22" font-size="10" fill="#78350f" font-weight="700">🧪 Cache + Outbox Coherence</text>
+      <text x="20" y="40" font-size="9" fill="#92400e">Chat edit reuses jobs.service.update_job</text>
+      <text x="20" y="54" font-size="9" fill="#92400e">→ JobSyncEvent outbox → Qdrant re-embed</text>
+      <text x="20" y="68" font-size="9" fill="#92400e">→ Redis + dashboard caches invalidated</text>
+    </g>
   </g>
 
   <!-- Bottom note -->
-  <g transform="translate(40,220)">
+  <g transform="translate(40,320)">
     <rect width="1320" height="40" rx="10" fill="#f1f4ff" stroke="#c7cfe5"/>
     <text x="660" y="25" text-anchor="middle" font-size="10" fill="#1a2240" font-weight="600">Every guardrail fires automatically on every turn — no recruiter action needed. Defense in depth.</text>
   </g>

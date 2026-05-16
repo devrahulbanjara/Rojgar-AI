@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse
 from fastapi_limiter.depends import RateLimiter
 from pyrate_limiter import Duration, Limiter, Rate
@@ -132,9 +132,10 @@ async def confirm_recruiter_chat_job_edit(
     payload: ConfirmJobEditRequest,
     user: ActiveMember,
     db: DbSession,
+    bg_tasks: BackgroundTasks,
 ) -> UnifiedResponse[ChatExchangeResponse]:
     """Approve or cancel a pending job edit inside recruiter chat."""
-    data = await service.confirm_job_edit(db, user, session_id, payload)
+    data = await service.confirm_job_edit(db, user, session_id, payload, bg_tasks)
     return ResponseBuilder.success(data=data, message="Job edit decision recorded.")
 
 

@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
+from sqlalchemy import distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -66,6 +67,7 @@ from app.modules.recruiter_chat.tools import (
 )
 from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.shared.enums import ApplicationStatus, JobStatus
+from app.shared.text_safety import flag_bias, redact_pii
 
 CANDIDATE_SEARCH_EXCLUDED_STATUSES: tuple[str, ...] = (
     ApplicationStatus.rejected.value,
@@ -101,17 +103,19 @@ GENERIC_FIRST_MESSAGES: frozenset[str] = frozenset(
     }
 )
 
-# Tags we never want surfaced verbatim to the LLM from recruiter-controlled DB content.
-_INJECTION_TAG_RE = re.compile(
-    r"</?\s*(?:user_message|system|assistant|recruiter_data)\s*>",
-    re.IGNORECASE,
-)
+# Strip every angle-bracket tag from recruiter-controlled DB content before LLM
+# ingest. Unicode is NFKC-normalized first so fullwidth/lookalike brackets
+# (e.g. "＜system＞") collapse to ASCII before the regex runs.
+_INJECTION_TAG_RE = re.compile(r"<[^>\n]{0,200}>")
+_FENCED_BLOCK_RE = re.compile(r"```[\s\S]*?```", re.MULTILINE)
 
 
 def _sanitize_freeform(value: Any) -> Any:
-    """Strip prompt-injection tags from freeform DB strings before LLM ingest."""
+    """Strip prompt-injection tags and fenced blocks from freeform DB strings."""
     if isinstance(value, str):
-        return _INJECTION_TAG_RE.sub("[tag-removed]", value)
+        normalized = unicodedata.normalize("NFKC", value)
+        normalized = _FENCED_BLOCK_RE.sub("[code-removed]", normalized)
+        return _INJECTION_TAG_RE.sub("[tag-removed]", normalized)
     if isinstance(value, list):
         return [_sanitize_freeform(item) for item in value]
     return value
@@ -125,7 +129,6 @@ EDITABLE_JOB_FIELDS: frozenset[str] = frozenset(
         "salary_min",
         "salary_max",
         "currency",
-        "status",
         "expires_at",
         "overview",
         "responsibilities",
@@ -134,6 +137,7 @@ EDITABLE_JOB_FIELDS: frozenset[str] = frozenset(
         "benefits",
         "auto_shortlist",
         "shortlist_threshold",
+        "required_years_of_experience",
     }
 )
 
@@ -374,7 +378,7 @@ def _build_handler_context(state: dict[str, Any]) -> str:
         lines: list[str] = []
         for m in recent:
             role = m.get("role", "user")
-            content = m.get("content", "")
+            content = _sanitize_freeform(m.get("content", ""))
             if role == "assistant" and len(content) > 200:
                 content = content[:200] + "..."
             lines.append(f"{role}: {content}")
@@ -533,10 +537,18 @@ def _pending_action_from_state(state: dict[str, Any]) -> PendingActionPayload | 
 
 
 class IntentClassification(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    # `extra="ignore"` so older classifier outputs (without the new fields) or
+    # models that include extra debug keys don't crash the parse. Default values
+    # on the new fields keep behavior backward-compatible.
+    model_config = ConfigDict(extra="ignore")
 
     intent: str
-    reason: str | None
+    reason: str | None = None
+    confidence: str | None = None
+    target: str | None = None
+    requires_predicate: bool | None = None
+    wants_list: bool | None = None
+    status_filter: str | None = None
 
 
 class SalarySlotExtraction(BaseModel):
@@ -561,7 +573,11 @@ class DirectRecruitingResponse(BaseModel):
 
 
 class JobEditPatchPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    # NOTE: `extra="ignore"` so an over-eager LLM emitting forbidden fields like
+    # `status` won't crash the parse. The allowlist in `_filter_patch_to_allowlist`
+    # is the authoritative gate; values for non-allowlisted fields are dropped
+    # and surfaced to the recruiter via the "dropped fields" note.
+    model_config = ConfigDict(extra="ignore")
 
     title: str | None
     location: str | None
@@ -569,7 +585,6 @@ class JobEditPatchPayload(BaseModel):
     salary_min: int | None
     salary_max: int | None
     currency: str | None
-    status: str | None
     expires_at: str | None
     overview: str | None
     responsibilities: list[str] | None
@@ -578,6 +593,7 @@ class JobEditPatchPayload(BaseModel):
     benefits: list[str] | None
     auto_shortlist: bool | None
     shortlist_threshold: int | None
+    required_years_of_experience: int | None
 
 
 class JobEditPatchSchema(BaseModel):
@@ -603,16 +619,136 @@ async def _safe_classify_intent(message: str, state: dict[str, Any]) -> str:
 
 
 async def _safe_search_web(query: str, *, max_results: int = 5) -> list[dict[str, Any]]:
-    """Run a web search; return [] when the provider fails so callers can recover."""
+    """Run a web search; return [] when the provider fails so callers can recover.
+
+    `query` is redacted of emails/phones/SSN-like tokens before it leaves the
+    tenant boundary into the external search provider.
+    """
+    cleaned = redact_pii(query)
     try:
-        return await search_web(query, max_results=max_results)
+        return await search_web(cleaned, max_results=max_results)
     except Exception as exc:
         logger.warning("Web search provider failed: {}", exc)
         return []
 
 
+_VALID_INTENTS: frozenset[str] = frozenset(
+    {
+        "salary_research",
+        "job_query",
+        "job_description",
+        "job_edit",
+        "candidate_count",
+        "candidate_list",
+        "candidate_search",
+        "candidate_followup",
+        "recruiter_writing",
+        "recruiting_web_question",
+        "out_of_scope",
+    }
+)
+
+# Maps each intent to the target dimension it implies. Used to repair
+# LLM outputs where `intent` and `target` disagree.
+_INTENT_TO_TARGET: dict[str, str] = {
+    "salary_research": "external",
+    "recruiting_web_question": "external",
+    "job_query": "jobs",
+    "job_description": "jobs",
+    "job_edit": "jobs",
+    "candidate_count": "candidates",
+    "candidate_list": "candidates",
+    "candidate_search": "candidates",
+    "candidate_followup": "candidates",
+    "recruiter_writing": "writing",
+    "out_of_scope": "none",
+}
+
+
+def _resolve_candidate_intent(
+    requires_predicate: bool | None, wants_list: bool | None
+) -> str:
+    """Pick the right candidate-* intent from decision signals."""
+    if requires_predicate:
+        return "candidate_search"
+    if wants_list:
+        return "candidate_list"
+    return "candidate_count"
+
+
+def _repair_classification(
+    classified: IntentClassification, state: dict[str, Any]
+) -> str:
+    """Apply deterministic repair rules to the LLM-emitted intent.
+
+    The LLM provides `intent` plus signal fields (`target`, `requires_predicate`,
+    `confidence`). We trust the signals more than the label when they conflict,
+    because a wrong label paired with consistent signals is the most common
+    classifier failure mode in practice.
+    """
+    intent = classified.intent if classified.intent in _VALID_INTENTS else None
+
+    target = (classified.target or "").lower().strip() or None
+    requires_predicate = classified.requires_predicate
+    wants_list = classified.wants_list
+
+    # 1. Fall through to safe default when intent is unknown.
+    if intent is None:
+        if target == "candidates":
+            return _resolve_candidate_intent(requires_predicate, wants_list)
+        if target == "jobs":
+            return "job_query"
+        if target == "writing":
+            return "recruiter_writing"
+        return "recruiting_web_question"
+
+    # 2. Followup is only valid when prior turn returned candidate results.
+    if intent == "candidate_followup" and not state.get("last_candidate_search_data"):
+        return _resolve_candidate_intent(requires_predicate, wants_list)
+
+    # 3. Reconcile intent vs target. Trust target when it points to a clearly
+    #    different domain than the label.
+    expected_target = _INTENT_TO_TARGET.get(intent)
+    if target and expected_target and target != expected_target:
+        if target == "candidates":
+            return _resolve_candidate_intent(requires_predicate, wants_list)
+        if target == "jobs":
+            return "job_query"
+        if target == "writing":
+            return "recruiter_writing"
+        if target == "external":
+            return "recruiting_web_question"
+
+    # 4. Candidate-side predicate / list-vs-number sanity:
+    #    - search needs a predicate; if classifier says no predicate, downgrade
+    #      based on wants_list (list vs count).
+    #    - count means a number; if classifier says they want a list, upgrade
+    #      to candidate_list.
+    #    - list means enumeration; if classifier says they want a number,
+    #      downgrade to candidate_count.
+    if intent == "candidate_search" and requires_predicate is False:
+        return "candidate_list" if wants_list else "candidate_count"
+    if intent == "candidate_count" and wants_list is True:
+        return "candidate_list"
+    if (
+        intent == "candidate_list"
+        and wants_list is False
+        and requires_predicate is False
+    ):
+        return "candidate_count"
+    if intent in {"candidate_count", "candidate_list"} and requires_predicate is True:
+        return "candidate_search"
+
+    return intent
+
+
 async def _classify_intent(message: str, state: dict[str, Any]) -> str:
-    """Classify the recruiter's message into a supported chat intent using LLM."""
+    """Classify the recruiter's message into a supported chat intent using LLM.
+
+    Returns a validated/repaired intent string. The classifier emits structured
+    decision fields (intent, confidence, target, requires_predicate) and the
+    repair pass uses those fields to override the label when they disagree.
+    """
     recent_history = _build_classifier_history(state)
 
     payload: dict[str, Any] = {"message": _wrap_user_input(message)}
@@ -626,25 +762,25 @@ async def _classify_intent(message: str, state: dict[str, Any]) -> str:
         model=settings.groq_model_recruiter_chat,
     )
 
-    intent = classified.intent
-    valid_intents = {
-        "salary_research",
-        "job_query",
-        "job_description",
-        "job_edit",
-        "candidate_search",
-        "candidate_followup",
-        "recruiter_writing",
-        "recruiting_web_question",
-        "out_of_scope",
-    }
-    if intent not in valid_intents:
-        return "recruiting_web_question"
+    repaired = _repair_classification(classified, state)
 
-    if intent == "candidate_followup" and not state.get("last_candidate_search_data"):
-        return "candidate_search"
+    # Stash the structured classification so downstream handlers (e.g. the
+    # candidate_list handler reading status_filter) can use the extracted
+    # signals without re-running the LLM.
+    state["_last_classification"] = classified.model_dump()
 
-    return intent
+    if classified.intent != repaired:
+        logger.debug(
+            "Intent classifier repaired: raw={!r} target={!r} predicate={!r} "
+            "confidence={!r} → final={!r}",
+            classified.intent,
+            classified.target,
+            classified.requires_predicate,
+            classified.confidence,
+            repaired,
+        )
+
+    return repaired
 
 
 def _build_classifier_history(state: dict[str, Any]) -> str:
@@ -660,7 +796,7 @@ def _build_classifier_history(state: dict[str, Any]) -> str:
     lines: list[str] = []
     for entry in recent:
         role = entry.get("role", "user")
-        content = entry.get("content", "")
+        content = _sanitize_freeform(entry.get("content", ""))
         response_type = entry.get("response_type")
 
         if role == "assistant" and response_type == "candidate_search_results":
@@ -964,6 +1100,10 @@ async def _save_session_state(
     so the version field exists for clients (e.g. multi-tab UIs) to detect a stale view.
     """
     state["state_version"] = int(state.get("state_version") or 0) + 1
+    # Drop volatile per-turn helper keys before persisting. Any key prefixed
+    # with `_` is treated as in-memory scratch and never written to JSONB.
+    for ephemeral_key in [k for k in state if k.startswith("_")]:
+        state.pop(ephemeral_key, None)
     session.state_json = state
     session.last_interaction_at = _utcnow()
     if not session.title:
@@ -1542,6 +1682,207 @@ def _extract_candidate_count(
     return default
 
 
+async def _handle_candidate_count(
+    db: AsyncSession,
+    user: User,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    """Handle pure count/aggregate queries about the company's applicant pool.
+
+    Returns total unique candidates + per-status application counts. No Qdrant
+    semantic search, no LLM call — direct SQL aggregate scoped by company_id.
+    """
+    from app.modules.applications.models import Application
+    from app.modules.jobs.models import Job
+
+    company_id = await get_active_company_id(db, user.id)
+
+    total_unique_candidates = await db.scalar(
+        select(func.count(distinct(Application.user_id)))
+        .select_from(Application)
+        .join(Job, Job.id == Application.job_id)
+        .where(Job.company_id == company_id)
+    )
+    total_unique_candidates = int(total_unique_candidates or 0)
+
+    total_applications = await db.scalar(
+        select(func.count(Application.id))
+        .select_from(Application)
+        .join(Job, Job.id == Application.job_id)
+        .where(Job.company_id == company_id)
+    )
+    total_applications = int(total_applications or 0)
+
+    status_rows = await db.execute(
+        select(Application.status, func.count(Application.id))
+        .select_from(Application)
+        .join(Job, Job.id == Application.job_id)
+        .where(Job.company_id == company_id)
+        .group_by(Application.status)
+    )
+    by_status: dict[str, int] = {
+        row[0].value if hasattr(row[0], "value") else str(row[0]): int(row[1])
+        for row in status_rows.all()
+    }
+
+    if total_unique_candidates == 0:
+        reply_text = "No candidates have applied to your company yet."
+    else:
+        lines = [
+            f"You have **{total_unique_candidates}** unique candidate"
+            f"{'s' if total_unique_candidates != 1 else ''} across "
+            f"**{total_applications}** application"
+            f"{'s' if total_applications != 1 else ''}."
+        ]
+        if by_status:
+            lines.append("")
+            lines.append("By status:")
+            for status_key in sorted(by_status):
+                pretty = status_key.replace("_", " ")
+                lines.append(f"- {pretty}: {by_status[status_key]}")
+        reply_text = "\n".join(lines)
+
+    data = {
+        "total_unique_candidates": total_unique_candidates,
+        "total_applications": total_applications,
+        "by_status": by_status,
+    }
+    _append_history(
+        state,
+        "assistant",
+        reply_text,
+        response_type=ChatResponseType.text,
+        data=data,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(ChatResponseType.text, reply_text, data=data)
+
+
+_CANDIDATE_LIST_MAX_ROWS = 30
+_VALID_LIST_STATUSES: frozenset[str] = frozenset(s.value for s in ApplicationStatus)
+
+
+def _classifier_status_filter(state: dict[str, Any]) -> str | None:
+    """Pull a validated status filter out of the last classification, if any."""
+    raw = (state.get("_last_classification") or {}).get("status_filter")
+    if isinstance(raw, str) and raw in _VALID_LIST_STATUSES:
+        return raw
+    return None
+
+
+async def _handle_candidate_list(
+    db: AsyncSession,
+    user: User,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    """Handle non-semantic "list candidates" requests with an optional status filter.
+
+    Plain SQL — no Qdrant, no LLM. Returns up to `_CANDIDATE_LIST_MAX_ROWS` rows
+    ordered by most recent application. Status filter is taken from the
+    classifier's `status_filter` signal when present (e.g. "list rejected").
+    """
+    from app.modules.applications.models import Application
+    from app.modules.auth.models import User as UserModel
+    from app.modules.jobs.models import Job
+
+    company_id = await get_active_company_id(db, user.id)
+    status_filter = _classifier_status_filter(state)
+
+    base_stmt = (
+        select(Application, UserModel, Job)
+        .join(UserModel, UserModel.id == Application.user_id)
+        .join(Job, Job.id == Application.job_id)
+        .where(Job.company_id == company_id)
+    )
+    if status_filter is not None:
+        base_stmt = base_stmt.where(Application.status == status_filter)
+
+    base_stmt = base_stmt.order_by(Application.created_at.desc()).limit(
+        _CANDIDATE_LIST_MAX_ROWS
+    )
+    rows = (await db.execute(base_stmt)).all()
+
+    if not rows:
+        if status_filter is None:
+            reply_text = "No candidates have applied to your company yet."
+        else:
+            pretty = status_filter.replace("_", " ")
+            reply_text = f"No candidates with status **{pretty}** yet."
+        _append_history(
+            state, "assistant", reply_text, response_type=ChatResponseType.text
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, reply_text)
+
+    candidates: list[dict[str, Any]] = []
+    for application, applicant, job in rows:
+        full_name = application.shared_full_name or applicant.full_name
+        candidates.append(
+            {
+                "user_id": str(applicant.id),
+                "application_id": str(application.id),
+                "avatar_url": applicant.avatar_url,
+                "full_name": full_name,
+                "applied_for_job": job.title,
+                "application_status": application.status.value,
+                "score": application.score,
+                # Plain list, not semantic ranking → omit match score so the
+                # frontend skips the "%" badge.
+                "match_score": None,
+                "relevance": "high",
+            }
+        )
+
+    if status_filter is None:
+        headline = (
+            f"Here are your most recent **{len(candidates)}** application"
+            f"{'s' if len(candidates) != 1 else ''}"
+            f"{' (showing latest 30)' if len(candidates) >= _CANDIDATE_LIST_MAX_ROWS else ''}."
+        )
+    else:
+        pretty = status_filter.replace("_", " ")
+        headline = (
+            f"Here are **{len(candidates)}** application"
+            f"{'s' if len(candidates) != 1 else ''} with status **{pretty}**"
+            f"{' (showing latest 30)' if len(candidates) >= _CANDIDATE_LIST_MAX_ROWS else ''}."
+        )
+
+    lines = [headline]
+    for i, c in enumerate(candidates, 1):
+        status_label = c["application_status"].replace("_", " ")
+        score_part = f" (score: {c['score']})" if c.get("score") is not None else ""
+        lines.append(
+            f"{i}. **{c['full_name']}** — applied for {c['applied_for_job']}, "
+            f"status: {status_label}{score_part}"
+        )
+    reply = "\n".join(lines)
+    data = {
+        "candidates": candidates,
+        "total": len(candidates),
+        "high_relevance_count": len(candidates),
+        "low_relevance_count": 0,
+        "status_filter": status_filter,
+        "is_list": True,
+    }
+    _append_history(
+        state,
+        "assistant",
+        reply,
+        response_type=ChatResponseType.candidate_search_results,
+        data=data,
+    )
+    state["last_candidate_search_turn"] = state.get("turn", 0)
+    state["last_candidate_search_data"] = candidates
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(
+        ChatResponseType.candidate_search_results, reply, data=data
+    )
+
+
 async def _handle_candidate_search(
     db: AsyncSession,
     user: User,
@@ -1705,12 +2046,13 @@ async def _handle_candidate_followup(
     from app.modules.auth.models import User as UserModel
     from app.modules.jobs.models import Job
 
+    company_id = await get_active_company_id(db, user.id)
     app_id = uuid.UUID(target["application_id"])
     stmt = (
         select(Application, UserModel, Job)
         .join(UserModel, UserModel.id == Application.user_id)
         .join(Job, Job.id == Application.job_id)
-        .where(Application.id == app_id)
+        .where(Application.id == app_id, Job.company_id == company_id)
     )
     row = (await db.execute(stmt)).first()
     if row is None:
@@ -2024,6 +2366,27 @@ async def _handle_recruiting_web_question(
     return _serialize_response(ChatResponseType.text, answer, data=data)
 
 
+_BIAS_REFUSAL_TEMPLATE = (
+    "I can't draft that — the request asks for language that references protected "
+    "characteristics ({categories}). Hiring communication has to stay tied to "
+    "job-relevant qualifications. Re-ask with a neutral, qualification-based reason."
+)
+_BIAS_OUTPUT_WARNING_TEMPLATE = (
+    "\n\n⚠️ Draft flagged ({categories}) — review for protected-class wording "
+    "before sending. Prefer language tied to job-relevant qualifications."
+)
+
+
+def _bias_refusal(categories: list[str]) -> str:
+    return _BIAS_REFUSAL_TEMPLATE.format(categories=", ".join(sorted(set(categories))))
+
+
+def _bias_output_warning(categories: list[str]) -> str:
+    return _BIAS_OUTPUT_WARNING_TEMPLATE.format(
+        categories=", ".join(sorted(set(categories)))
+    )
+
+
 async def _handle_recruiter_writing(
     db: AsyncSession,
     session: RecruiterChatSession,
@@ -2031,6 +2394,17 @@ async def _handle_recruiter_writing(
     message: str,
 ) -> RecruiterChatResponse:
     """Draft recruiting-adjacent text (emails, screening questions, rubrics)."""
+    # Input-side bias rail: refuse before calling the model when the recruiter
+    # is explicitly asking for protected-class language.
+    request_bias = flag_bias(message)
+    if request_bias:
+        refusal = _bias_refusal(request_bias)
+        _append_history(
+            state, "assistant", refusal, response_type=ChatResponseType.text
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, refusal)
+
     handler_ctx = _build_handler_context(state)
     payload: dict[str, Any] = {"request": _wrap_user_input(message)}
     if handler_ctx:
@@ -2049,6 +2423,14 @@ async def _handle_recruiter_writing(
             "I couldn't draft that right now. Please retry, "
             "and tell me the role, candidate name, or any details I should include."
         )
+
+    output_bias = flag_bias(answer)
+    if output_bias:
+        answer = answer + _bias_output_warning(output_bias)
+        logger.warning(
+            "Recruiter writing output flagged for bias categories={}", output_bias
+        )
+
     _append_history(
         state,
         "assistant",
@@ -2066,6 +2448,18 @@ async def _handle_recruiter_writing_stream(
     message: str,
 ):
     """Stream recruiter writing answers over SSE."""
+    # Input-side bias rail: short-circuit before streaming any model tokens.
+    request_bias = flag_bias(message)
+    if request_bias:
+        refusal = _bias_refusal(request_bias)
+        yield _sse("start", {"type": ChatResponseType.text.value})
+        yield _sse("token", {"content": refusal})
+        reply = _serialize_response(ChatResponseType.text, refusal)
+        _append_history(state, "assistant", refusal, response_type=reply.response_type)
+        await _save_session_state(db, session, state, title_hint=message)
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+        return
+
     yield _sse("start", {"type": ChatResponseType.text.value})
     full_text = ""
     handler_ctx = _build_handler_context(state)
@@ -2085,7 +2479,18 @@ async def _handle_recruiter_writing_stream(
         yield _sse("final", _final_exchange_payload(reply=reply, state=state))
         return
 
-    reply = _serialize_response(ChatResponseType.text, full_text.strip())
+    final_text = full_text.strip()
+    output_bias = flag_bias(final_text)
+    if output_bias:
+        warning = _bias_output_warning(output_bias)
+        final_text = final_text + warning
+        yield _sse("token", {"content": warning})
+        logger.warning(
+            "Recruiter writing stream output flagged for bias categories={}",
+            output_bias,
+        )
+
+    reply = _serialize_response(ChatResponseType.text, final_text)
     _append_history(
         state,
         "assistant",
@@ -2312,6 +2717,10 @@ async def _send_message_inner(
         reply = await _handle_job_description(db, user, session, state, user_message)
     elif intent == "job_edit":
         reply = await _handle_job_edit(db, user, session, state, user_message)
+    elif intent == "candidate_count":
+        reply = await _handle_candidate_count(db, user, session, state, user_message)
+    elif intent == "candidate_list":
+        reply = await _handle_candidate_list(db, user, session, state, user_message)
     elif intent == "candidate_search":
         reply = await _handle_candidate_search(db, user, session, state, user_message)
     elif intent == "candidate_followup":
@@ -2477,8 +2886,12 @@ async def confirm_job_edit(
     user: User,
     session_id: uuid.UUID,
     payload: ConfirmJobEditRequest,
+    bg_tasks: BackgroundTasks,
 ) -> ChatExchangeResponse:
     """Approve or cancel a pending recruiter chat job edit."""
+    from app.modules.jobs import service as jobs_service
+    from app.modules.jobs.schemas import JobUpdate
+
     session = await get_session(db, user, session_id, for_update=True)
     state = _copy_state(session.state_json)
     pending = state.get("pending_edit")
@@ -2536,28 +2949,78 @@ async def confirm_job_edit(
             pending_action=None,
         )
 
-    patch = pending.get("patch") or {}
+    raw_patch = pending.get("patch") or {}
+    safe_patch = {k: v for k, v in raw_patch.items() if k in EDITABLE_JOB_FIELDS}
+    dropped_now = [k for k in raw_patch.keys() if k not in EDITABLE_JOB_FIELDS]
+    for dropped_field in dropped_now:
+        logger.warning(
+            "Rejected edit to disallowed field %r on job %s", dropped_field, job.id
+        )
 
-    for field, value in patch.items():
-        if field in EDITABLE_JOB_FIELDS:
-            setattr(job, field, value)
-        else:
-            logger.warning(
-                "Rejected edit to disallowed field %r on job %s", field, job.id
-            )
-    await db.commit()
-    await db.refresh(job)
+    if not safe_patch:
+        state["mode"] = "idle"
+        state["pending_edit"] = None
+        reply_text = (
+            "I couldn't apply that edit — nothing safe remained after policy checks."
+        )
+        reply = _serialize_response(ChatResponseType.text, reply_text)
+        _append_history(
+            state, "assistant", reply_text, response_type=reply.response_type
+        )
+        await _save_session_state(db, session, state)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=None,
+        )
 
+    try:
+        validated_payload = JobUpdate.model_validate(safe_patch)
+    except Exception as exc:
+        state["mode"] = "idle"
+        state["pending_edit"] = None
+        logger.warning("Rejected pending job edit on validation: {}", exc)
+        reply_text = (
+            "I couldn't apply that edit — the proposed values didn't pass the job "
+            "schema checks (ranges, types, or salary order). Please re-issue the edit."
+        )
+        reply = _serialize_response(ChatResponseType.text, reply_text)
+        _append_history(
+            state, "assistant", reply_text, response_type=reply.response_type
+        )
+        await _save_session_state(db, session, state)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=None,
+        )
+
+    # Persist updated state BEFORE delegating to update_job so the chat session
+    # row's lock is released; update_job opens its own transaction scope.
     state["mode"] = "idle"
     state["pending_edit"] = None
     _set_last_job(state, job.id)
+    await _save_session_state(db, session, state)
 
-    reply_text = f"I updated {job.title} successfully."
+    await jobs_service.update_job(
+        db=db,
+        user=user,
+        job_id=str(job.id),
+        payload=validated_payload,
+        bg_tasks=bg_tasks,
+    )
+
+    # Re-read the updated job for the response payload.
+    refreshed = await get_job_by_id_for_company(db, company_id, job.id)
+    reply_text = f"I updated {refreshed.title} successfully."
     reply = _serialize_response(
         ChatResponseType.text,
         reply_text,
-        data={"job": serialize_job_list_item(job)},
+        data={"job": serialize_job_list_item(refreshed)},
     )
+
+    session = await get_session(db, user, session_id, for_update=True)
+    state = _copy_state(session.state_json)
     _append_history(
         state,
         "assistant",
@@ -3061,6 +3524,12 @@ async def _stream_message_inner(
             )
         elif intent == "job_edit":
             reply = await _handle_job_edit(db, user, session, state, user_message)
+        elif intent == "candidate_count":
+            reply = await _handle_candidate_count(
+                db, user, session, state, user_message
+            )
+        elif intent == "candidate_list":
+            reply = await _handle_candidate_list(db, user, session, state, user_message)
         elif intent == "candidate_search":
             reply = await _handle_candidate_search(
                 db, user, session, state, user_message
