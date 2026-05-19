@@ -86,7 +86,7 @@ print(f"\nSaving outputs to: {output_dir}")
 
 report_path = os.path.join(output_dir, "classification_report.txt")
 with open(report_path, "w") as f:
-    f.write("Classification Report for RandomForest Bouncer\n")
+    f.write("Classification Report\n")
     f.write("=" * 60 + "\n\n")
     f.write(report_str)
 print("  classification_report.txt")
@@ -101,7 +101,7 @@ sns.heatmap(
     xticklabels=["Not Shortlisted (0)", "Shortlisted (1)"],
     yticklabels=["Not Shortlisted (0)", "Shortlisted (1)"],
 )
-plt.title("Confusion Matrix - RandomForest Bouncer")
+plt.title("Confusion Matrix")
 plt.ylabel("True Label")
 plt.xlabel("Predicted Label")
 plt.tight_layout()

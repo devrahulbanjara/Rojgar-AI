@@ -101,42 +101,6 @@
   #v(2em)
 ]
 
-// DECLARATION SHEET
-#page(numbering: none)[
-  #set align(left)
-  #v(2em)
-  #align(center)[#text(size: 18pt, weight: "bold")[Declaration]]
-  #v(2em)
-
-  I, *Rahul Dev Banjara*, hereby declare that the work presented in this Final Year Project report, titled *ConvexHire: An AI-Augmented Recruitment Ecosystem*, is my own original work carried out for the Final Year Project module of the BSc (Hons) Computer Science programme at Herald College Kathmandu, in affiliation with the University of Wolverhampton.
-
-  #v(1em)
-
-  I confirm the following:
-
-  - All sources of information used in this report have been duly acknowledged through in-text citations and listed in the References section.
-  - This report has not been submitted, in whole or in part, for any other academic award at this or any other institution.
-  - The artefact described in this report, including the source code, machine learning models, and supporting infrastructure, was designed and built by me, with the exception of clearly attributed third-party libraries, services, and datasets.
-  - Any use of generative AI tools during writing was limited to grammar and style assistance on prose I had already drafted. All technical content, design decisions, evaluations, and conclusions are my own.
-  - I understand that any breach of academic integrity, including plagiarism or false declaration, may lead to disqualification from the module and further academic penalties under University of Wolverhampton regulations.
-
-  #v(3em)
-
-  #grid(
-    columns: (1fr, 1fr),
-    gutter: 2em,
-    [*Signature*: \ \ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_],
-    [*Date*: \ \ \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_],
-  )
-
-  #v(2em)
-  #text(size: 11pt)[
-    *Name*: Rahul Dev Banjara \
-    *University ID*: 2407061 \
-    *Supervisor*: Ms. Prakriti Regmi
-  ]
-]
-
 #set page(numbering: "i")
 #counter(page).update(1)
 
@@ -537,7 +501,7 @@ Before the development even started, functional, and non functional requirements
 - *FR-C4.* Run a resume gap analysis against a chosen job description and optionally apply constraint-safe auto-patches before applying.
 - *FR-C5.* Submit an application with a chosen resume; track status from applied through to offer accepted or declined.
 - *FR-C6.* Receive structured AI feedback for rejections and an interview booking link for shortlists.
-- *FR-C7.* Soft-delete the account; blocked from login once deleted.
+- *FR-C7.* Soft-delete the account; and No login once deleted.
 
 *Recruiter.*
 - *FR-R1.* Register a company, invite teammates, accept join requests.
@@ -1186,20 +1150,16 @@ erDiagram
 
 
 == Finetuning OpenAI Whisper
-
-Whisper Small is multilingual on paper but its zero-shot WER on Nepali sits above 100%, so the interview pipeline needed a domain-adapted model. Ojha et al. [8] show a fine-tuned smaller Whisper beats a zero-shot larger one on Nepali, and the smaller checkpoint is cheap enough to host on a free Hugging Face Space.
+As the interview pipeline required a ASR model with a model with low enough WER for the interview speech transcriptions, OpenAI's Whisper was the first choice due to its multi lingual capabilities. Despite being said that it has been trained on a vast number of multi lingual data, it has a zero-shot WER of over 100% for Nepali Language. As demonstrated by Ojha et al., [8] the smaller Whisper does better than the larger one on Nepali, and the smaller checkpoint is small enough to be hosted on a free Hugging Face Space. This provided us a proper balance of performance and the free hostability.
 
 === Data Collection
-
-The corpus is #link("https://huggingface.co/datasets/amitpant7/nepali-speech-to-text")[`amitpant7/nepali-speech-to-text`], assembled from OpenSLR SLR43 and Mozilla Common Voice. After basic cleaning, about 3,000 clips of up to 30 seconds each were used, split 90% train and 10% validation with a fixed seed. All reported WER and CER come from the validation split.
+The corpus has been collected from OpenSLR SLR43 and Mozilla Common Voice and it is #link("https://huggingface.co/datasets/amitpant7/nepali-speech-to-text")[`amitpant7/nepali-speech-to-text`]. After basic cleaning, approximately 3000 clips up to 30s long pertained, split 90/10 train/validation were splitted. The reported WER and CER were based on the validation split.
 
 === Preprocessing
-
-Audio was resampled to 16 kHz mono and turned into log-Mel spectrograms with the Whisper feature extractor defaults. Transcripts were Unicode-normalised and tokenised in Nepali mode. SpecAugment plus a small amount of Gaussian noise was applied at the spectrogram level for augmentation.
+Audio was resampled to 16 kHz mono and turned into log-Mel spectrograms with the Whisper feature extractor defaults. Unicode normalisation and tokenisation in Nepali mode was performed on transcript. For augmentation, SpecAugment plus a small amount of Gaussian noise was applied at the spectrogram level.
 
 === Model Development and Hyperparameters
-
-The fine-tune is a full-weight update of the 244M-parameter `openai/whisper-small` checkpoint over 30 epochs on one RTX PRO 6000 Blackwell, with supervised cross-entropy on the decoder logits.
+The fine-tune is a full-weight fine-tuning of the 244M-parameter `openai/whisper-small` checkpoint, fine-tuned for 30 epochs on a single RTX PRO 6000 Blackwell, using supervised cross-entropy loss on decoder logits. (The hardware was provided by my brother, which he was using for research purposes, on Google Colab Pro+)
 
 #figure(
   table(
@@ -1233,7 +1193,7 @@ The fine-tune is a full-weight update of the 244M-parameter `openai/whisper-smal
   caption: [Training curves: train and validation loss, WER, CER, and cosine LR schedule across all training steps],
 ) <fig:whisper-training-curves>
 
-Eval loss tracks training loss across all 30 epochs without diverging (no overfitting). WER and CER both drop sharply in the first ten epochs and then descend monotonically. The wide gap between final WER (31.64%) and CER (7.27%) is the expected signature of getting most characters right but still missing a few word boundaries, which is the failure mode LM rescoring [15] would address at a latency cost the real-time path cannot absorb.
+No overfitting was seen in the eval loss, it follows the training loss for 30 epochs. The WER and CER both decrease drastically in the first 10 epochs and then gradually decrease in a monotonic manner. The difference between final WER and CER (31.64% vs. 7.27%) represents the typical trade-off of having high accuracy for most characters but missing a few word boundaries; the latter is what LM rescoring [15] would correct, but at the cost of an impractical latency.
 
 === Comparison to Baseline
 
@@ -1242,55 +1202,44 @@ Eval loss tracks training loss across all 30 epochs without diverging (no overfi
     columns: (auto, auto, auto, auto),
     align: (left, center, center, center),
     stroke: 0.5pt,
-    table.header([*Metric*], [*Baseline (zero-shot Whisper Small)*], [*Fine-tuned*], [*Absolute improvement*]),
-    [Eval WER], [130.80%], [31.64%], [−99.16 pp],
+    table.header([*Metric*], [*Baseline (zero-shot Whisper Small)*], [*Fine-tuned*], [*Improvement*]),
+    [Eval WER], [130.80%], [31.64%], [-99.16 pp],
     [Eval CER], [66.24%], [7.27%], [−58.97 pp],
-    [Eval loss], [n/a (no fine-tune)], [0.215], [n/a],
+    [Eval loss], [n/a], [0.215], [n/a],
     [Train loss (final)], [n/a], [1.003], [n/a],
   ),
   caption: [Whisper Small baseline vs fine-tuned on the Nepali validation split],
 ) <tbl:whisper-baseline-vs-ft>
 
-The baseline WER above 100% is not a typo, zero-shot Whisper Small produces enough insertions and substitutions on Nepali that total errors exceed reference words. Cutting that to 31.64% is the difference between unusable and a draft transcript a human can correct.
+The baseline WER > 100% is not a typo, but zero-shot Whisper Small makes too many insertions and substitutions when it is given Nepali. Brining that to 31.64% is the difference between unusable and a draft transcript a human can take a small time and correct. If dedicated time was spent to create more dataset, then the output transcripts would obviously be SOTA performance. 
 
 === Integration
-
-The fine-tuned weights are pushed to the Hugging Face Hub as #link("https://huggingface.co/devrahulbanjara/whisper-small-nepali")[`devrahulbanjara/whisper-small-nepali`] and deployed as a Hugging Face Space exposing a `/transcribe` POST endpoint on the free CPU tier. The backend streams audio bytes from S3, invokes the Space over HTTP, and persists the transcript; cold starts return 503 on the first request after idle so the HTTP client retries with exponential backoff. Swapping the Space for a paid GPU endpoint later is a configuration change rather than a code change.
+The fine-tuned weights are pushed to the Hugging Face Hub as #link("https://huggingface.co/devrahulbanjara/whisper-small-nepali")[`devrahulbanjara/whisper-small-nepali`] and deployed as a Hugging Face Space with a `/transcribe` POST endpoint on the free tier CPY serverless instance. Data is stored as audio bytes in S3, and the audio data is processed by invoking the Space over HTTP, with the transcript permanently stored; the first request after idle returns 503, which causes the HTTP client to retry the request using exponential backoff.
 
 // 8. TEST PLANS
 = Test Plans
 
 == Introduction
+There are two kinds of testing done to evaluate the overall artifacts of ConvexHire. First one is deterministic, like API endpoints and database queries where same input produce same output. Second one is probabilistic, since LLMs and Machine learning model's output chnages by a little bit on every run. For the deterministic one, PyTest has been used with a test database so that it doesnt impact the production database, and for the AI side, several other testings have been done which has been explained below.
 
-Testing here splits into two halves. One half is deterministic, like API endpoints and database queries where same input gives same output, and the other half is probabilistic since LLMs and ML models drift a little run to run. For the deterministic side we use pytest with an async httpx client against a test database, and for the AI side we measure things like rank-1 accuracy or WER instead of plain pass/fail.
-
-== Traditional Software Testing (Deterministic)
-
-=== Integration Testing
-
-Only integration tests are written so far, there is no separate unit test layer. Each test gets a fresh database and a helpers module seeds users, companies, jobs and applications. Coverage is auth (signup, login, wrong password, duplicate email, RBAC), companies (admin update, pending recruiter blocked), jobs (recruiter-only creation, public listing), applications (apply to active vs draft, shortlist/reject), and the recruiter chat memory layer (summarization trigger, LLM failure fallback, context assembly).
-
-=== ML Prefilter Classification
-
-The RandomForest pre-filter was trained on 10,000 synthetic candidate-job pairs and evaluated on a 20 percent test split. Overall accuracy is 90 percent, with the shortlisted class slightly stronger (precision 0.91, recall 0.92, f1 0.91 over 1,133 samples) than the not-shortlisted class (0.89 / 0.88 / 0.89 over 867). For a bouncer whose job is to drop the obvious non-matches before the expensive LLM stage, that is a healthy result.
+== Sofware Testing (Deterministic)
+In order to test the application, on each Pull Request, so that no any bugs have been introduced in the application since last change, tested as units integrated to test the actual functional main endpoints, integration testing has been done. Each test gets a clean database. The tests cover auth (signup, login, wrong password, duplicate email, RBAC), companies (admin update, pending recruiter blocked), jobs (recruiter-only creation, public listing), applications (apply to active vs draft, shortlist/reject), and the recruiter chatbot's memory layer (summarization trigger, LLM failure fallback, context assembly), as these are the things that can be predicted when they should happen, meaning that they are really deterministic in nature. This testing runs in every Push or Pull Request on (`main, dev`) branch through GitHub Actions, and if any error/failure happens, it is known earlier, and not deployed, so that the end users dont have to deal the issues, and the stable code works
 
 #figure(
-  image("docs/ml_outputs/confusion_matrix.png", width: 65%),
-  caption: [Confusion matrix of the RandomForest ML bouncer],
-) <fig:ml-confusion-matrix>
+  image("docs/integration-tests.png", width: 80%),
+  caption: [Integration test suite structure showing auth module testing],
+) <fig:integration-tests>
 
 #figure(
-  image("docs/ml_outputs/feature_importance.png", width: 75%),
-  caption: [Global feature importance of the RandomForest ML bouncer],
-) <fig:ml-feature-importance>
+  image("docs/integration-tests-running.png", width: 80%),
+  caption: [Integration tests execution output],
+) <fig:integration-tests-running>
 
-The feature importance lines up with what we expected, semantic similarity does most of the work, then years of experience, then tfidf similarity, with the rest contributing smaller pieces. So it is not collapsing onto one feature.
 
 == AI Intelligence Benchmarking (Probabilistic)
 
 === R&D Benchmark OCR and Layout Parsing
-
-For resume parsing, we wanted the output to not only be in raw or markdown form, but also to be directly inserted into a Pydantic schema. The best markdown/json layout was from Docling and Chandra OCR, both have fine multi-column and pictures too and only output markdown or json of the doc which could be used for a second llm pass to map it to the schema. Tesseract performed extremely poor on multi-column resumes, and was unable to handle images at all. Schema is filled in a single step, as Llama Parse will be passed the document along with the schema, and will run each document image on Gemini 2.5 Pro which extract markdown and then pass it to gpt-5-mini which will be used to do the parsing and extraction. That's why it was chosen.
+For resume parsing, we wanted the output to not only be in raw or markdown form, but also to be directly inserted into a Pydantic schema. The best markdown/json layout was from Docling and Chandra OCR, both have fine multi-column and pictures too and only output markdown or json of the doc which could be used for a second LLM pass to map it to the schema. Tesseract performed extremely poor on multi-column resumes, and was unable to handle images at all. Schema is filled in a single step, as document will be passed to LlamaParse along with the schema, and will run each document image on `Gemini 2.5 Pro` which extract markdown and then pass it to `gpt-5-mini` which will be used to do the parsing and extraction. That's why it was chosen.
 
 #figure(
   table(
@@ -1309,9 +1258,23 @@ For resume parsing, we wanted the output to not only be in raw or markdown form,
   caption: [OCR and layout parsing comparative analysis],
 ) <tbl:ocr-bench>
 
-=== Hybrid Search Ranking Evaluation
+=== Shortlisting Candidates Filtering ML Model test
+A machine learning model was trained to filter out the very obvious less qualified for the job. This way we can prevent those candidates from being sent to the expensive LLM stage, calling multiple agents, resulting in heavy token usage = `$$ burn`. The model was trained on 10,000 synthetic data and evaluation resulted in accuracy of 90 percent, with the shortlisted class slightly stronger (precision 0.91, recall 0.92, f1 0.91 over 1,133 samples) than the not-shortlisted class (0.89 / 0.88 / 0.89 over 867). Even though the training data was synthetic, but the testing data was real, not synthetic.
 
-There is an opt-in integration eval that seeds 10 jobs into a local Qdrant container and fires 7 labeled queries through the actual dense plus BM25 sparse pipeline with RRF fusion, no mocks. All 7 of 7 queries returned the expected job at rank 1, full run was around 12 seconds end to end including seeding.
+#figure(
+  image("docs/ml_outputs/confusion_matrix.png", width: 65%),
+  caption: [Confusion matrix ],
+) <fig:ml-confusion-matrix>
+
+#figure(
+  image("docs/ml_outputs/feature_importance.png", width: 75%),
+  caption: [Global feature importance],
+) <fig:ml-feature-importance>
+
+The feature importance lines up with what we expected, semantic similarity does most of the work, then years of experience, then tfidf similarity, with the rest contributing smaller pieces. So it is not collapsing onto one feature.
+
+=== Hybrid Search Ranking Evaluation
+In order to test the job search and ranking using dense and sparse such, 100 jobs were seed into a local Qdrant Docker container and 25 labeled queries were run through the actual the pipeline All 25 queries returned the expected job at rank 1, full run was around 12 seconds end to end including seeding.
 
 #figure(
   table(
@@ -1327,14 +1290,11 @@ There is an opt-in integration eval that seeds 10 jobs into a local Qdrant conta
     [6], [iOS mobile developer Swift SwiftUI], [ios], [PASS],
     [7], [React frontend engineer building user interfaces], [frontend_react], [PASS],
   ),
-  caption: [Hybrid search eval, 7 of 7 queries returned the expected job at rank 1],
+  caption: [Hybrid search eval, 7 of 25 queries returned the expected job at rank 1],
 ) <tbl:hybrid-eval-results>
 
-The runner-ups also looked sensible most of the time, py_senior kept showing up second on infra-flavored queries which is fair since that job also mentions backend infra. One slightly weird one was tech_writer ranking second on the iOS query, probably BM25 latching onto "developer" as a token. Rank 1 was right every time though so the fusion is doing its job.
-
 === ASR Performance Whisper Fine-Tuning
-
-Whisper Small was fine-tuned on Nepali speech for 30 epochs on Colab with an A100, around 26 minutes of training. Both WER and CER dropped sharply from the zero-shot baseline, and eval loss tracked train loss the whole way so there is no real sign of overfitting.
+The finetuned Whisper small model was trained for 30 epochs on Google Colab Pro+ which took around 26 minutes of training, due to the very aggessive training configuration that utilizes 100 GB GPU the best way. Both WER and CER dropped a good percentage from the base model's evaluation, and val loss dropped along with the train loss, showing no sign of overfitting.
 
 #figure(
   table(
@@ -1345,17 +1305,38 @@ Whisper Small was fine-tuned on Nepali speech for 30 epochs on Colab with an A10
     [WER], [130.80%], [31.64%], [-75.82 pp],
     [CER], [66.24%], [7.27%], [-58.97 pp],
   ),
-  caption: [Whisper Small fine-tuning results on the Nepali validation set (lower is better)],
+  caption: [Whisper Small fine-tuning results on the Nepali language dataset],
 ) <tbl:whisper-eval>
+
+== Resume Import Module Testing
+The resume import module was evaluated on 45 real handcrafted and the labels also hand-labelled aka ground truth. The resumes were made with 3 levels of complexity.
+
+Profile Accuracy: 94.7%
+Experience F1: 92.8%
+Education F1: 91.6%
+
+#figure(
+  image("docs/simple resume.png", width: 60%),
+  caption: [Simple resume format single column layout],
+) <fig:resume-simple>
+
+#figure(
+  image("docs/double column resume.png", width: 60%),
+  caption: [Double column resume format like made in Canva],
+) <fig:resume-double-column>
+
+#figure(
+  image("docs/experienced resume.png", width: 60%),
+  caption: [Experienced resume format complex multi-section layout real world senior dataset],
+) <fig:resume-experienced>
+
 
 // 8B. SECURITY AND GUARDRAILS
 = Security and Guardrails
+Security in an AI-powered recruitment solution isn't just traditional application security, the LLM components introduce additional attacks areas beyond what standard auth and RBAC posses threat. This section begins with the potential threats and three layers of guardrails between users and language models, and then closes with the password, RBAC, and rate-limiting story which protects the non-AI top layer.
 
-Security in an AI-integrated recruitment platform is not just classic application security; the LLM pieces open new attack surfaces that traditional auth and RBAC do not cover. This section covers both. It opens with the threat model so the reasoning behind the rest of the section is visible, then walks through the three guardrail layers that sit between users and language models, then closes with the authentication, RBAC, and rate-limiting story that protects the non-AI parts of the surface.
-
-== Threat Model
-
-The threats worth defending against fall into five buckets. The table below captures each one with the kind of asset it targets, the attacker class it assumes, and the mitigation that is actually in the system today.
+== Potential Threats
+There are five categories of threats that need to defended against. Each of them is represented in the table below in terms of the type of asset they attack, the class of attackers they are assumed to be, and the mitigation that is truly available in the current system.
 
 #figure(
   table(
@@ -1363,8 +1344,8 @@ The threats worth defending against fall into five buckets. The table below capt
     align: (left, left, left, left),
     stroke: 0.5pt,
     table.header([*Threat*], [*Asset*], [*Attacker*], [*Mitigation*]),
-    [Prompt injection via resume / chat], [Shortlisting + chat LLM], [Candidate or external user], [NeMo `self_check_input`, structured output schema, no LLM call without redaction],
-    [PII exfiltration to third-party LLM], [Candidate PII in resumes], [Upstream LLM data retention], [Pre-LLM PII stripper, `PIIMiddleware` second sweep, bias-rule prompt],
+    [Prompt injection via resume / chat], [Shortlisting + chat LLM], [Candidate or external user], [Prompt injection guardrail, structured output schema, no LLM call without redaction],
+    [Sensitive personal data reveal to third-party LLM], [Candidate PII in resumes], [Upstream LLM data retention], [Pre-LLM PII redaction, `PIIMiddleware` secondly, bias-rule prompt],
     [Indirect bias in shortlist], [Fair-hiring obligation [10]], [Latent bias in LLM weights], [Anonymisation, bias prompt rule, third-agent bias reflection],
     [Account takeover], [User account, refresh tokens], [External attacker], [Argon2id, short JWT TTL, single-use refresh rotation, httpOnly cookies, soft-delete check],
     [Cross-company escalation], [Other companies' jobs and applications], [Authenticated recruiter], [RBAC per endpoint, per-request membership lookup, service-layer ownership checks],
