@@ -64,9 +64,15 @@ def lanes(lane_names: list[str], vw: int, vh: int) -> str:
     lw = vw / n
     for i in range(n):
         x = i * lw
-        parts.append(f'<rect class="lane" x="{x:.0f}" y="60" width="{lw:.0f}" height="{vh - 60}"/>')
-        parts.append(f'<rect class="lane-head" x="{x:.0f}" y="20" width="{lw:.0f}" height="40"/>')
-        parts.append(f'<text class="lane-title" x="{x + lw / 2:.0f}" y="46">{lane_names[i]}</text>')
+        parts.append(
+            f'<rect class="lane" x="{x:.0f}" y="60" width="{lw:.0f}" height="{vh - 60}"/>'
+        )
+        parts.append(
+            f'<rect class="lane-head" x="{x:.0f}" y="20" width="{lw:.0f}" height="40"/>'
+        )
+        parts.append(
+            f'<text class="lane-title" x="{x + lw / 2:.0f}" y="46">{lane_names[i]}</text>'
+        )
     return "\n".join(parts)
 
 
@@ -139,15 +145,21 @@ def fork_join_bar(cx: float, cy: float, w: int = 260) -> str:
 # ---------------------------------------------------------------------------
 # Edge primitives.
 # ---------------------------------------------------------------------------
-def line_edge(x1: float, y1: float, x2: float, y2: float, guard: str | None = None) -> str:
-    parts = [f'<line class="flow" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" marker-end="url(#arrow)"/>']
+def line_edge(
+    x1: float, y1: float, x2: float, y2: float, guard: str | None = None
+) -> str:
+    parts = [
+        f'<line class="flow" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" marker-end="url(#arrow)"/>'
+    ]
     if guard:
         gx, gy = (x1 + x2) / 2 + 12, (y1 + y2) / 2 - 4
         parts.append(f'<text class="guard" x="{gx}" y="{gy}">{guard}</text>')
     return "\n".join(parts)
 
 
-def path_edge(d: str, guard: str | None = None, guard_xy: tuple[float, float] | None = None) -> str:
+def path_edge(
+    d: str, guard: str | None = None, guard_xy: tuple[float, float] | None = None
+) -> str:
     parts = [f'<path class="flow" d="{d}" marker-end="url(#arrow)"/>']
     if guard and guard_xy:
         gx, gy = guard_xy
@@ -184,27 +196,36 @@ def build_subsystem2() -> str:
     ]
     # Flows
     parts += [
-        line_edge(cx[0], 101, cx[0], 128),                                          # start → trigger
-        path_edge(f"M {cx[0] + 110} 150 L {cx[1] - 110} 240"),                       # trigger → load
-        line_edge(cx[1], 263, cx[1], 298),                                           # load → ML
-        line_edge(cx[1], 343, cx[1], 360),                                           # ML → decision
+        line_edge(cx[0], 101, cx[0], 128),  # start → trigger
+        path_edge(f"M {cx[0] + 110} 150 L {cx[1] - 110} 240"),  # trigger → load
+        line_edge(cx[1], 263, cx[1], 298),  # load → ML
+        line_edge(cx[1], 343, cx[1], 360),  # ML → decision
         # decision: no → mark rejected (right column, will be reached via cross-lane)
-        path_edge(f"M {cx[1] + 80} 410 L {cx[1] + 80} 1320 L {cx[1] + 110} 1320",
-                  guard="[bottom 80%]", guard_xy=(cx[1] + 96, 600)),
-        line_edge(cx[1], 460, cx[1], 517, guard="[top 20%]"),                        # → anonymize
-        path_edge(f"M {cx[1] + 110} 540 L {cx[2] - 110} 640"),                       # → CTO + HR
-        line_edge(cx[2], 663, cx[2], 717),                                           # → critique
-        line_edge(cx[2], 763, cx[2], 800),                                           # → confident?
+        path_edge(
+            f"M {cx[1] + 80} 410 L {cx[1] + 80} 1320 L {cx[1] + 110} 1320",
+            guard="[bottom 80%]",
+            guard_xy=(cx[1] + 96, 600),
+        ),
+        line_edge(cx[1], 460, cx[1], 517, guard="[top 20%]"),  # → anonymize
+        path_edge(f"M {cx[1] + 110} 540 L {cx[2] - 110} 640"),  # → CTO + HR
+        line_edge(cx[2], 663, cx[2], 717),  # → critique
+        line_edge(cx[2], 763, cx[2], 800),  # → confident?
         # confident? no → loop back to CTO+HR
-        path_edge(f"M {cx[2] - 80} 850 L {cx[2] - 200} 850 L {cx[2] - 200} 640 L {cx[2] - 110} 640",
-                  guard="[reflect]", guard_xy=(cx[2] - 260, 750)),
-        line_edge(cx[2], 900, cx[2], 957, guard="[confident]"),                      # → final merge
-        path_edge(f"M {cx[2] - 110} 980 L {cx[1] + 110} 1090"),                      # → record eval
-        line_edge(cx[1], 1113, cx[1], 1140),                                         # → threshold?
-        line_edge(cx[1], 1240, cx[1], 1297, guard="[no]"),                           # → rejected
-        path_edge(f"M {cx[1] - 80} 1190 L {cx[0] + 110} 1320",
-                  guard="[yes]", guard_xy=(cx[1] - 80, 1240)),                       # → shortlisted
-        line_edge(cx[0], 1343, cx[0], 1437),                                         # → final
+        path_edge(
+            f"M {cx[2] - 80} 850 L {cx[2] - 200} 850 L {cx[2] - 200} 640 L {cx[2] - 110} 640",
+            guard="[reflect]",
+            guard_xy=(cx[2] - 260, 750),
+        ),
+        line_edge(cx[2], 900, cx[2], 957, guard="[confident]"),  # → final merge
+        path_edge(f"M {cx[2] - 110} 980 L {cx[1] + 110} 1090"),  # → record eval
+        line_edge(cx[1], 1113, cx[1], 1140),  # → threshold?
+        line_edge(cx[1], 1240, cx[1], 1297, guard="[no]"),  # → rejected
+        path_edge(
+            f"M {cx[1] - 80} 1190 L {cx[0] + 110} 1320",
+            guard="[yes]",
+            guard_xy=(cx[1] - 80, 1240),
+        ),  # → shortlisted
+        line_edge(cx[0], 1343, cx[0], 1437),  # → final
     ]
     parts.append(footer())
     return "\n".join(parts)
@@ -244,12 +265,36 @@ def build_subsystem3() -> str:
         path_edge(f"M {cx[1] + 110} 350 L {cx[2] - 110} 460"),
         line_edge(cx[2], 483, cx[2], 540),
         # 6 branches from intent decision
-        path_edge(f"M {cx[2] - 80} 590 L {cx[1] + 110} 770", guard="[find]", guard_xy=(cx[1] + 240, 680)),
-        path_edge(f"M {cx[2] - 80} 600 L {cx[1] + 110} 870", guard="[lookup]", guard_xy=(cx[1] + 240, 760)),
-        path_edge(f"M {cx[2] - 80} 610 L {cx[1] + 110} 970", guard="[edit]", guard_xy=(cx[1] + 240, 850)),
-        path_edge(f"M {cx[2] - 20} 640 L {cx[2] - 20} 747", guard="[salary]", guard_xy=(cx[2] + 4, 690)),
-        path_edge(f"M {cx[2] + 20} 640 L {cx[2] + 20} 847", guard="[general]", guard_xy=(cx[2] + 44, 740)),
-        path_edge(f"M {cx[2] + 60} 640 L {cx[2] + 60} 947", guard="[out of scope]", guard_xy=(cx[2] + 84, 820)),
+        path_edge(
+            f"M {cx[2] - 80} 590 L {cx[1] + 110} 770",
+            guard="[find]",
+            guard_xy=(cx[1] + 240, 680),
+        ),
+        path_edge(
+            f"M {cx[2] - 80} 600 L {cx[1] + 110} 870",
+            guard="[lookup]",
+            guard_xy=(cx[1] + 240, 760),
+        ),
+        path_edge(
+            f"M {cx[2] - 80} 610 L {cx[1] + 110} 970",
+            guard="[edit]",
+            guard_xy=(cx[1] + 240, 850),
+        ),
+        path_edge(
+            f"M {cx[2] - 20} 640 L {cx[2] - 20} 747",
+            guard="[salary]",
+            guard_xy=(cx[2] + 4, 690),
+        ),
+        path_edge(
+            f"M {cx[2] + 20} 640 L {cx[2] + 20} 847",
+            guard="[general]",
+            guard_xy=(cx[2] + 44, 740),
+        ),
+        path_edge(
+            f"M {cx[2] + 60} 640 L {cx[2] + 60} 947",
+            guard="[out of scope]",
+            guard_xy=(cx[2] + 84, 820),
+        ),
         # branches → merge (Backend) - route Backend actions straight to merge
         path_edge(f"M {cx[1]} 793 L {cx[1]} 1070"),
         path_edge(f"M {cx[1] + 110} 870 L {cx[1] + 60} 1110"),
@@ -291,7 +336,6 @@ def build_subsystem4() -> str:
         merge_node(cx[1], 720),
         action_node(cx[1], 840, "Save resume to profile"),
         end_node(cx[1], 940),
-
         # --- Apply flow (bottom block) ---
         start_node(cx[0], 1080),
         action_node(cx[0], 1150, "Open application form"),
@@ -308,10 +352,16 @@ def build_subsystem4() -> str:
         # Start → decision
         line_edge(cx[0], 101, cx[0], 150),
         # decision → import / build
-        path_edge(f"M {cx[0] - 80} 200 L {sub_l} 317",
-                  guard="[import]", guard_xy=(cx[0] - 220, 270)),
-        path_edge(f"M {cx[0] + 80} 200 L {cx[0] + 80} 530 L {sub_r} 567",
-                  guard="[build]", guard_xy=(cx[0] + 100, 380)),
+        path_edge(
+            f"M {cx[0] - 80} 200 L {sub_l} 317",
+            guard="[import]",
+            guard_xy=(cx[0] - 220, 270),
+        ),
+        path_edge(
+            f"M {cx[0] + 80} 200 L {cx[0] + 80} 530 L {sub_r} 567",
+            guard="[build]",
+            guard_xy=(cx[0] + 100, 380),
+        ),
         # Import chain
         path_edge(f"M {sub_l + 95} 340 L {cx[2] - 110} 460"),
         path_edge(f"M {cx[2] - 110} 460 L {sub_l + 95} 590"),
@@ -321,24 +371,35 @@ def build_subsystem4() -> str:
         # Merge → Save → end
         line_edge(cx[1], 760, cx[1], 817),
         line_edge(cx[1], 863, cx[1], 926),
-
         # --- Apply flow ---
         line_edge(cx[0], 1091, cx[0], 1127),
         path_edge(f"M {cx[0] + 110} 1150 L {cx[2] - 110} 1260"),
         path_edge(f"M {cx[2] - 110} 1260 L {cx[0] + 110} 1380"),
         line_edge(cx[0], 1403, cx[0], 1450),
         # response decision
-        path_edge(f"M {cx[0] + 80} 1500 L {cx[2] - 110} 1640",
-                  guard="[accept]", guard_xy=(cx[0] + 200, 1560)),
-        path_edge(f"M {cx[0] - 80} 1500 L {cx[0] - 80} 1760 L {cx[1] - 110} 1760",
-                  guard="[apply as-is]", guard_xy=(cx[0] - 230, 1620)),
+        path_edge(
+            f"M {cx[0] + 80} 1500 L {cx[2] - 110} 1640",
+            guard="[accept]",
+            guard_xy=(cx[0] + 200, 1560),
+        ),
+        path_edge(
+            f"M {cx[0] - 80} 1500 L {cx[0] - 80} 1760 L {cx[1] - 110} 1760",
+            guard="[apply as-is]",
+            guard_xy=(cx[0] - 230, 1620),
+        ),
         # accept: Propose edits → confirm? (both in AI lane)
         line_edge(cx[2], 1663, cx[2], 1710),
         # confirm? yes → Submit updated, no → Submit original
-        path_edge(f"M {cx[2] - 80} 1760 L {sub_r + 95} 1640",
-                  guard="[yes]", guard_xy=(cx[2] - 220, 1690)),
-        path_edge(f"M {cx[2] - 80} 1760 L {cx[1] + 110} 1760",
-                  guard="[no]", guard_xy=(cx[2] - 100, 1750)),
+        path_edge(
+            f"M {cx[2] - 80} 1760 L {sub_r + 95} 1640",
+            guard="[yes]",
+            guard_xy=(cx[2] - 220, 1690),
+        ),
+        path_edge(
+            f"M {cx[2] - 80} 1760 L {cx[1] + 110} 1760",
+            guard="[no]",
+            guard_xy=(cx[2] - 100, 1750),
+        ),
         # Both submit → end
         path_edge(f"M {sub_r} 1663 L {cx[1] - 14} 1830"),
         line_edge(cx[1], 1783, cx[1], 1816),
@@ -379,20 +440,32 @@ def build_subsystem5() -> str:
         path_edge(f"M {cx[1] + 110} 240 L {cx[2] - 110} 340"),
         line_edge(cx[2], 363, cx[2], 410),
         # transcription decision
-        path_edge(f"M {cx[2] - 80} 460 L {cx[1] + 200 - 80} 557",
-                  guard="[failed]", guard_xy=(cx[2] - 140, 510)),
+        path_edge(
+            f"M {cx[2] - 80} 460 L {cx[1] + 200 - 80} 557",
+            guard="[failed]",
+            guard_xy=(cx[2] - 140, 510),
+        ),
         line_edge(cx[1] + 200, 603, cx[1] + 200, 666),  # Mark for retry → flow final
-        path_edge(f"M {cx[2] - 80} 470 L {cx[1] + 80} 557",
-                  guard="[success]", guard_xy=(cx[2] - 200, 540)),
+        path_edge(
+            f"M {cx[2] - 80} 470 L {cx[1] + 80} 557",
+            guard="[success]",
+            guard_xy=(cx[2] - 200, 540),
+        ),
         # Save transcript → Evaluation agent (drop down then diagonal to avoid Mark-for-retry box)
         path_edge(f"M {cx[1]} 603 L {cx[1]} 670 L {cx[2] - 110} 720"),
         # Evaluation agent → Record AI evaluation
         path_edge(f"M {cx[2] - 110} 720 L {cx[1] + 110} 820"),
         line_edge(cx[1], 843, cx[1], 890),
-        path_edge(f"M {cx[1] - 80} 940 L {cx[0] + 110} 1080",
-                  guard="[yes]", guard_xy=(cx[1] - 220, 1010)),
-        path_edge(f"M {cx[1] + 80} 940 L {cx[1] + 60} 1200",
-                  guard="[no, AI only]", guard_xy=(cx[1] + 90, 1060)),
+        path_edge(
+            f"M {cx[1] - 80} 940 L {cx[0] + 110} 1080",
+            guard="[yes]",
+            guard_xy=(cx[1] - 220, 1010),
+        ),
+        path_edge(
+            f"M {cx[1] + 80} 940 L {cx[1] + 60} 1200",
+            guard="[no, AI only]",
+            guard_xy=(cx[1] + 90, 1060),
+        ),
         path_edge(f"M {cx[0] + 110} 1080 L {cx[1] - 60} 1200"),
         line_edge(cx[1], 1240, cx[1], 1287),
         path_edge(f"M {cx[1] - 110} 1310 L {cx[0] + 110} 1410"),
@@ -400,6 +473,7 @@ def build_subsystem5() -> str:
     ]
     parts.append(footer())
     return "\n".join(parts)
+
 
 # (separator)
 # ===========================================================================
@@ -437,12 +511,14 @@ def build_subsystem6() -> str:
         # manual branch detours past Provide role idea via x = cx[0]+200 down to Publish
         path_edge(
             f"M {cx[0] + 80} 200 L {cx[0] + 200} 250 L {cx[0] + 200} 940 L {cx[1] - 110} 940",
-            guard="[manual]", guard_xy=(cx[0] + 210, 480),
+            guard="[manual]",
+            guard_xy=(cx[0] + 210, 480),
         ),
         # search branch detours past Review draft on the left to Enter search
         path_edge(
             f"M {cx[0] - 80} 200 L {cx[0] - 200} 250 L {cx[0] - 200} 1290 L {cx[0] - 110} 1290",
-            guard="[search]", guard_xy=(cx[0] - 270, 700),
+            guard="[search]",
+            guard_xy=(cx[0] - 270, 700),
         ),
         # AI draft chain
         path_edge(f"M {cx[0] + 110} 340 L {cx[2] - 110} 450"),
@@ -452,18 +528,32 @@ def build_subsystem6() -> str:
         # decision? → improve loop / approve / save / discard
         path_edge(
             f"M {cx[2] - 110} 560 L {cx[2] - 230} 560 L {cx[2] - 230} 800 L {cx[0] + 80} 800",
-            guard="[improve]", guard_xy=(cx[2] - 320, 680),
+            guard="[improve]",
+            guard_xy=(cx[2] - 320, 680),
         ),
-        path_edge(f"M {cx[0] + 80} 800 L {cx[1] - 110} 940",
-                  guard="[approve]", guard_xy=(cx[0] + 100, 870)),
-        path_edge(f"M {cx[0] + 80} 800 L {cx[1] - 110} 1050",
-                  guard="[save]", guard_xy=(cx[0] + 100, 940)),
-        path_edge(f"M {cx[0] + 80} 800 L {cx[1] - 110} 1160",
-                  guard="[discard]", guard_xy=(cx[0] + 100, 1010)),
+        path_edge(
+            f"M {cx[0] + 80} 800 L {cx[1] - 110} 940",
+            guard="[approve]",
+            guard_xy=(cx[0] + 100, 870),
+        ),
+        path_edge(
+            f"M {cx[0] + 80} 800 L {cx[1] - 110} 1050",
+            guard="[save]",
+            guard_xy=(cx[0] + 100, 940),
+        ),
+        path_edge(
+            f"M {cx[0] + 80} 800 L {cx[1] - 110} 1160",
+            guard="[discard]",
+            guard_xy=(cx[0] + 100, 1010),
+        ),
         # publish/store/discard → AI-draft end node (cx[1], 1240)
         # Publish and Store route around the right side to avoid crossing later boxes.
-        path_edge(f"M {cx[1] + 110} 940 L {cx[1] + 220} 940 L {cx[1] + 220} 1240 L {cx[1] + 14} 1240"),
-        path_edge(f"M {cx[1] + 110} 1050 L {cx[1] + 180} 1050 L {cx[1] + 180} 1240 L {cx[1] + 14} 1240"),
+        path_edge(
+            f"M {cx[1] + 110} 940 L {cx[1] + 220} 940 L {cx[1] + 220} 1240 L {cx[1] + 14} 1240"
+        ),
+        path_edge(
+            f"M {cx[1] + 110} 1050 L {cx[1] + 180} 1050 L {cx[1] + 180} 1240 L {cx[1] + 14} 1240"
+        ),
         path_edge(f"M {cx[1]} 1183 L {cx[1]} 1226"),
         # Search chain
         path_edge(f"M {cx[0] + 110} 1320 L {cx[1] - 110} 1420"),
@@ -505,10 +595,16 @@ def build_subsystem7() -> str:
         path_edge(f"M {cx[0] + 110} 150 L {cx[2] - 110} 240"),
         line_edge(cx[2], 263, cx[2], 310),
         # outcome branches
-        path_edge(f"M {cx[2] - 80} 360 L {cx[2] - 80} 487",
-                  guard="[shortlist]", guard_xy=(cx[2] - 220, 420)),
-        path_edge(f"M {cx[2] + 80} 360 L {cx[2] + 80} 607",
-                  guard="[reject]", guard_xy=(cx[2] + 100, 480)),
+        path_edge(
+            f"M {cx[2] - 80} 360 L {cx[2] - 80} 487",
+            guard="[shortlist]",
+            guard_xy=(cx[2] - 220, 420),
+        ),
+        path_edge(
+            f"M {cx[2] + 80} 360 L {cx[2] + 80} 607",
+            guard="[reject]",
+            guard_xy=(cx[2] + 100, 480),
+        ),
         # Both → merge in Backend
         path_edge(f"M {cx[2] - 110} 510 L {cx[1] + 60} 760"),
         path_edge(f"M {cx[2] - 110} 630 L {cx[1] + 60} 760"),
@@ -517,10 +613,16 @@ def build_subsystem7() -> str:
         path_edge(f"M {cx[0] + 110} 870 L {cx[1] - 110} 970"),
         line_edge(cx[1], 993, cx[1], 1030),
         # outreach type? → either select slot (Candidate) or flow-final (reject)
-        path_edge(f"M {cx[1] + 80} 1080 L {cx[3] - 110} 1240",
-                  guard="[shortlist]", guard_xy=(cx[1] + 200, 1150)),
-        path_edge(f"M {cx[1] - 80} 1080 L {cx[1] - 14} 1240",
-                  guard="[reject]", guard_xy=(cx[1] - 200, 1150)),
+        path_edge(
+            f"M {cx[1] + 80} 1080 L {cx[3] - 110} 1240",
+            guard="[shortlist]",
+            guard_xy=(cx[1] + 200, 1150),
+        ),
+        path_edge(
+            f"M {cx[1] - 80} 1080 L {cx[1] - 14} 1240",
+            guard="[reject]",
+            guard_xy=(cx[1] - 200, 1150),
+        ),
         # candidate → backend chain
         path_edge(f"M {cx[3] - 110} 1240 L {cx[1] + 110} 1350"),
         path_edge(f"M {cx[1]} 1373 L {cx[1]} 1407"),
@@ -564,14 +666,18 @@ def screenshot_all() -> None:
     brave = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path=brave)
-        page = browser.new_page(viewport={"width": 1800, "height": 1200}, device_scale_factor=2)
+        page = browser.new_page(
+            viewport={"width": 1800, "height": 1200}, device_scale_factor=2
+        )
         for html_name in ALL_HTML:
             html_path = DOCS / html_name
             if not html_path.exists():
                 print(f"skip {html_name}: missing")
                 continue
             page.goto(f"file://{html_path}")
-            page.locator("svg").screenshot(path=str(DOCS / html_name.replace(".html", ".png")))
+            page.locator("svg").screenshot(
+                path=str(DOCS / html_name.replace(".html", ".png"))
+            )
             print(f"rendered {html_name} → png")
         browser.close()
 

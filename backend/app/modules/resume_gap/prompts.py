@@ -13,6 +13,10 @@ Rules:
 - overall_verdict = 2-3 sentences, honest and constructive, speaking directly to them
 - Do not invent requirements that are not in the job description
 - Do not fabricate experience they do not have
+- Every missing_skills and experience_gaps item MUST include:
+  - evidence_span: a short quote (max 200 chars) copied exactly, word-for-word, from either the resume or the job description
+  - evidence_source: "resume" if the quote is from the resume, or "jd" if it is from the job description
+- The evidence_span must appear exactly the same way in the chosen source. Do not paraphrase, do not summarise, do not translate, do not reword. If you cannot find an exact quote that supports the gap, do not output the gap at all.
 - Output only a single JSON object with no markdown or preamble
 """.strip()
 

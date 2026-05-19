@@ -10,6 +10,7 @@ from app.infrastructures.guardrails import guardrails_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.auth.models import User
 from app.modules.jobs.models import Job
+from app.modules.resume_gap.helpers import filter_grounded
 from app.modules.resume_gap.providers.groq_provider import GroqGapAnalysisProvider
 from app.modules.resume_gap.schemas import (
     AutoPatchRequest,
@@ -176,10 +177,31 @@ async def analyze_gaps(
         source="resume_gap.analyze",
     )
 
+    resume_payload = _serialize_resume(resume)
+    job_payload = _serialize_job(job)
+
     result = await _provider.analyze_gaps(
-        resume_data=_serialize_resume(resume),
-        job_data=_serialize_job(job),
+        resume_data=resume_payload,
+        job_data=job_payload,
     )
+
+    missing_kept, missing_dropped = filter_grounded(
+        result.missing_skills, resume_payload, job_payload
+    )
+    gaps_kept, gaps_dropped = filter_grounded(
+        result.experience_gaps, resume_payload, job_payload
+    )
+    if missing_dropped or gaps_dropped:
+        logger.warning(
+            "resume_gap grounding | resume_id={} job_id={} dropped_missing={} dropped_gaps={}",
+            payload.resume_id,
+            payload.job_id,
+            [item.area for item in missing_dropped],
+            [item.area for item in gaps_dropped],
+        )
+    result.missing_skills = missing_kept
+    result.experience_gaps = gaps_kept
+
     await redis_service.set(
         cache_key,
         result.model_dump_json(),
