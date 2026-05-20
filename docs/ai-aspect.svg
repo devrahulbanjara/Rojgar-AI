@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 550" font-family="Inter, Arial, sans-serif">
+  <defs>
+    <linearGradient id="aiGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eff6ff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <style>
+      .hdr { font-size: 16px; font-weight: 700; fill: #1e3a8a; }
+      .badge { font-size: 11px; font-weight: 700; fill: #ffffff; letter-spacing: 0.5px; }
+      .title { font-size: 19px; font-weight: 700; fill: #1e3a8a; }
+      .label { font-size: 12px; font-weight: 700; fill: #1e3a8a; letter-spacing: 0.4px; }
+      .body { font-size: 13.5px; fill: #1e293b; }
+    </style>
+  </defs>
+
+  <text x="360" y="38" text-anchor="middle" class="hdr">AI PARADIGMS USED IN CONVEXHIRE</text>
+
+  <!-- NLP (top-left) -->
+  <g>
+    <rect x="30" y="80" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
+    <rect x="30" y="80" width="70" height="24" rx="6" fill="#2563eb"/>
+    <text x="65" y="97" text-anchor="middle" class="badge">NLP</text>
+    <text x="50" y="138" class="title">Hybrid Semantic Search</text>
+    <text x="50" y="170" class="label">MODEL</text>
+    <text x="50" y="188" class="body">Gemini embeddings + BM25, fused by RRF</text>
+    <text x="50" y="218" class="label">WHERE</text>
+    <text x="50" y="236" class="body">Job &amp; candidate search (S3, S6)</text>
+    <text x="50" y="266" class="label">EXAMPLE</text>
+    <text x="50" y="284" class="body">Dense meaning + lexical precision combined</text>
+  </g>
+
+  <!-- ASR (top-right) -->
+  <g>
+    <rect x="370" y="80" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
+    <rect x="370" y="80" width="70" height="24" rx="6" fill="#2563eb"/>
+    <text x="405" y="97" text-anchor="middle" class="badge">ASR</text>
+    <text x="390" y="138" class="title">Nepali Speech Transcription</text>
+    <text x="390" y="170" class="label">MODEL</text>
+    <text x="390" y="188" class="body">Fine-tuned Whisper Small (Nepali)</text>
+    <text x="390" y="218" class="label">WHERE</text>
+    <text x="390" y="236" class="body">Interview transcription (S5)</text>
+    <text x="390" y="266" class="label">EXAMPLE</text>
+    <text x="390" y="284" class="body">WER 130.80% → 31.64% on val split</text>
+  </g>
+
+  <!-- Generative AI (bottom-left) -->
+  <g>
+    <rect x="30" y="320" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
+    <rect x="30" y="320" width="105" height="24" rx="6" fill="#2563eb"/>
+    <text x="82.5" y="337" text-anchor="middle" class="badge">GENERATIVE AI</text>
+    <text x="50" y="378" class="title">LLM Reasoning</text>
+    <text x="50" y="410" class="label">MODEL</text>
+    <text x="50" y="428" class="body">Groq, Claude, GPT, Gemini</text>
+    <text x="50" y="458" class="label">WHERE</text>
+    <text x="50" y="476" class="body">Shortlist, chat, gap, outreach (S2–S7)</text>
+    <text x="50" y="506" class="label">EXAMPLE</text>
+    <text x="50" y="524" class="body">Reasoning where classical ML cannot</text>
+  </g>
+
+  <!-- Agentic AI (bottom-right) -->
+  <g>
+    <rect x="370" y="320" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
+    <rect x="370" y="320" width="90" height="24" rx="6" fill="#2563eb"/>
+    <text x="415" y="337" text-anchor="middle" class="badge">AGENTIC AI</text>
+    <text x="390" y="378" class="title">Multi-Agent Orchestration</text>
+    <text x="390" y="410" class="label">MODEL</text>
+    <text x="390" y="428" class="body">LangGraph (graphs + interrupts)</text>
+    <text x="390" y="458" class="label">WHERE</text>
+    <text x="390" y="476" class="body">Job Draft (S6), Shortlisting (S2)</text>
+    <text x="390" y="506" class="label">EXAMPLE</text>
+    <text x="390" y="524" class="body">Critique loop with HITL approval gate</text>
+  </g>
+
+</svg>
