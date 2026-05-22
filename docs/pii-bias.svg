@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" font-family="Inter, system-ui, Arial, sans-serif">
+  <defs>
+    <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fee2e2"/><stop offset="1" stop-color="#fecaca"/>
+    </linearGradient>
+    <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dcfce7"/><stop offset="1" stop-color="#bbf7d0"/>
+    </linearGradient>
+  </defs>
+
+  <text x="600" y="36" text-anchor="middle" fill="#1a2240" font-size="22" font-weight="800">PII Redaction</text>
+  <text x="600" y="58" text-anchor="middle" fill="#5b6788" font-size="13">what the LLM sees, before vs after</text>
+
+  <!-- BEFORE label -->
+  <g transform="translate(40,80)">
+    <rect width="510" height="32" rx="8" fill="#7f1d1d"/>
+    <text x="20" y="22" fill="#fff" font-size="14" font-weight="800">BEFORE</text>
+    <text x="120" y="22" fill="#fecaca" font-size="12">resume payload, raw</text>
+  </g>
+
+  <!-- BEFORE card -->
+  <g transform="translate(40,122)">
+    <rect width="510" height="290" rx="14" fill="url(#gRed)" stroke="#dc2626" stroke-width="2"/>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#7f1d1d">
+      <rect x="20" y="22" width="470" height="30" rx="5" fill="#fff" stroke="#ef4444"/>
+      <text x="32" y="42">Name:    Aarav Sharma</text>
+
+      <rect x="20" y="62" width="470" height="30" rx="5" fill="#fff" stroke="#ef4444"/>
+      <text x="32" y="82">Email:   aarav.sharma@example.com</text>
+
+      <rect x="20" y="102" width="470" height="30" rx="5" fill="#fff" stroke="#ef4444"/>
+      <text x="32" y="122">Phone:   +977 98XXXXXXXX</text>
+
+      <rect x="20" y="142" width="470" height="30" rx="5" fill="#fff" stroke="#ef4444"/>
+      <text x="32" y="162">LinkedIn: linkedin.com/in/aarav-sharma</text>
+
+      <rect x="20" y="182" width="470" height="30" rx="5" fill="#fff" stroke="#ef4444"/>
+      <text x="32" y="202">Skills:   Python, FastAPI, PostgreSQL</text>
+
+      <rect x="20" y="222" width="470" height="30" rx="5" fill="#fff" stroke="#ef4444"/>
+      <text x="32" y="242">Experience:  3 years, backend engineer</text>
+    </g>
+  </g>
+
+  <!-- arrow between panels -->
+  <g transform="translate(560,250)">
+    <polygon points="80,20 20,0 20,12 0,12 0,28 20,28 20,40" fill="#1a2240"/>
+  </g>
+
+  <!-- AFTER label -->
+  <g transform="translate(650,80)">
+    <rect width="510" height="32" rx="8" fill="#14532d"/>
+    <text x="20" y="22" fill="#fff" font-size="14" font-weight="800">AFTER</text>
+    <text x="120" y="22" fill="#bbf7d0" font-size="12">resume payload, email url phone redacted</text>
+  </g>
+
+  <!-- AFTER card -->
+  <g transform="translate(650,122)">
+    <rect width="510" height="290" rx="14" fill="url(#gGreen)" stroke="#16a34a" stroke-width="2"/>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#14532d">
+      <rect x="20" y="22" width="470" height="30" rx="5" fill="#fff" stroke="#22c55e"/>
+      <text x="32" y="42">Name:    Aarav Sharma</text>
+
+      <rect x="20" y="62" width="470" height="30" rx="5" fill="#fff" stroke="#22c55e"/>
+      <text x="32" y="82">Email:   [email redacted]</text>
+
+      <rect x="20" y="102" width="470" height="30" rx="5" fill="#fff" stroke="#22c55e"/>
+      <text x="32" y="122">Phone:   [phone redacted]</text>
+
+      <rect x="20" y="142" width="470" height="30" rx="5" fill="#fff" stroke="#22c55e"/>
+      <text x="32" y="162">LinkedIn: [url redacted]</text>
+
+      <rect x="20" y="182" width="470" height="30" rx="5" fill="#fff" stroke="#22c55e"/>
+      <text x="32" y="202">Skills:   Python, FastAPI, PostgreSQL</text>
+
+      <rect x="20" y="222" width="470" height="30" rx="5" fill="#fff" stroke="#22c55e"/>
+      <text x="32" y="242">Experience:  3 years, backend engineer</text>
+    </g>
+  </g>
+</svg>

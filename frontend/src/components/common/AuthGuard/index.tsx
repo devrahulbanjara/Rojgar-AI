@@ -15,7 +15,7 @@
  *   <AuthGuard requiredRole="candidate">{children}</AuthGuard>
  *   <AuthGuard requiredRole={["recruiter_admin", "recruiter"]}>{children}</AuthGuard>
  */
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useStore } from 'react-redux'
 
 import { usePathname, useRouter } from 'next/navigation'
@@ -52,6 +52,8 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   const [mounted, setMounted] = useState(false)
   // After trying POST /auth/refresh when Redux has no access token (shared cookie, new tab)
   const [sessionChecked, setSessionChecked] = useState(false)
+  // Track whether this mount ever saw an authenticated user — intentional logout should be silent
+  const wasAuthenticatedRef = useRef(false)
 
   useEffect(() => {
     setMounted(true)
@@ -98,11 +100,15 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
     if (!mounted || !sessionChecked) return
 
     if (!isAuthenticated || !user) {
-      notify.error('Please log in to access that page.')
+      if (!wasAuthenticatedRef.current) {
+        notify.error('Please log in to access that page.')
+      }
       const next = encodeURIComponent(pathname)
       router.replace(`/login?next=${next}`)
       return
     }
+
+    wasAuthenticatedRef.current = true
 
     if (!hasRequiredRole(user.primary_role, requiredRole)) {
       notify.error("You don't have permission to access that page.")

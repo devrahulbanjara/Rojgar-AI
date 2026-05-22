@@ -425,6 +425,7 @@ export default function ProfilePage() {
                 onAddTargetRole={addTargetRole}
                 onRemoveTargetRole={removeTargetRole}
                 onOpenImport={() => setShowResumeImportModal(true)}
+                highlightImport={activeSection === 'Resumes'}
               />
             </div>
           </div>

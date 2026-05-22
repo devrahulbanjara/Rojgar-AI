@@ -30,6 +30,10 @@ export interface AutoPatchResponse {
   diffs: PatchedFieldDiff[]
 }
 
+export interface PendingPatchActionResponse {
+  applied: boolean
+}
+
 export const resumeGapApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     analyzeResumeGap: builder.mutation<
@@ -52,9 +56,36 @@ export const resumeGapApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Resumes', 'Applications'],
+    }),
+
+    commitPendingPatch: builder.mutation<
+      ApiResponse<PendingPatchActionResponse>,
+      { resume_id: string; job_id: string }
+    >({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/resume-gap/commit-patch`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Resumes'],
+    }),
+
+    discardPendingPatch: builder.mutation<
+      ApiResponse<PendingPatchActionResponse>,
+      { resume_id: string; job_id: string }
+    >({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/resume-gap/discard-patch`,
+        method: 'POST',
+        body,
+      }),
     }),
   }),
 })
 
-export const { useAnalyzeResumeGapMutation, useAutoPatchResumeMutation } = resumeGapApi
+export const {
+  useAnalyzeResumeGapMutation,
+  useAutoPatchResumeMutation,
+  useCommitPendingPatchMutation,
+  useDiscardPendingPatchMutation,
+} = resumeGapApi

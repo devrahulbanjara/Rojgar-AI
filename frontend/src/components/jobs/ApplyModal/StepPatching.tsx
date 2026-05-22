@@ -1,26 +1,23 @@
 import type { PatchedFieldDiff } from '@/store/services/resumeGapApi'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, FileDiff } from 'lucide-react'
 
 import styles from './applyModal.module.scss'
 
+type StepPatchingMode = 'loading' | 'preview' | 'committing' | 'committed'
+
 interface StepPatchingProps {
-  isPatching: boolean
+  mode: StepPatchingMode
   patchedDiffs?: PatchedFieldDiff[]
   message?: string
-  onContinue: () => void
 }
 
 function normalize(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
-export default function StepPatching({
-  isPatching,
-  patchedDiffs,
-  message,
-  onContinue,
-}: StepPatchingProps) {
-  if (isPatching) {
+export default function StepPatching({ mode, patchedDiffs, message }: StepPatchingProps) {
+  if (mode === 'loading' || mode === 'committing') {
+    const isCommitting = mode === 'committing'
     return (
       <div className={styles.applyModal__loading}>
         <div className={styles.applyModal__loadingDots}>
@@ -29,9 +26,13 @@ export default function StepPatching({
           <span className={styles.applyModal__loadingDot} />
         </div>
         <div>
-          <p className={styles.applyModal__loadingTitle}>Updating your resume</p>
+          <p className={styles.applyModal__loadingTitle}>
+            {isCommitting ? 'Saving changes to your resume' : 'Drafting proposed changes'}
+          </p>
           <p className={styles.applyModal__loadingCopy}>
-            Rewriting the strongest safe version for this application.
+            {isCommitting
+              ? 'Persisting the confirmed AI updates.'
+              : 'Comparing the job to your resume and preparing a safe rewrite — nothing is saved yet.'}
           </p>
         </div>
       </div>
@@ -42,22 +43,31 @@ export default function StepPatching({
     (diff) => normalize(diff.old_value) !== normalize(diff.new_value),
   )
   const hasChanges = visibleDiffs.length > 0
+  const isPreview = mode === 'preview'
+
+  const heroIcon = isPreview ? <FileDiff size={20} /> : <CheckCircle2 size={20} />
+  const heroTitle = isPreview
+    ? hasChanges
+      ? 'Proposed updates (not yet saved)'
+      : 'No changes proposed'
+    : hasChanges
+      ? 'Resume updated'
+      : 'Resume already aligned'
+  const heroCopy = isPreview
+    ? hasChanges
+      ? 'Review the red/green diff below. Your resume is unchanged until you confirm.'
+      : (message ?? 'Your resume already fits this job well — nothing to update.')
+    : hasChanges
+      ? 'These changes are now part of your resume. You can apply to this job or close this dialog.'
+      : (message ?? 'No changes were needed — your resume already fits this job well.')
 
   return (
     <div className={styles.applyModal__patchSuccess}>
       <div className={styles.applyModal__patchHero}>
-        <div className={styles.applyModal__patchIconWrap}>
-          <CheckCircle2 size={20} />
-        </div>
+        <div className={styles.applyModal__patchIconWrap}>{heroIcon}</div>
         <div>
-          <p className={styles.applyModal__patchTitle}>
-            {hasChanges ? 'Resume updated' : 'Resume already aligned'}
-          </p>
-          <p className={styles.applyModal__patchCopy}>
-            {hasChanges
-              ? 'Your resume has been enhanced with AI suggestions to better match this job.'
-              : (message ?? 'No changes were needed - your resume already fits this job well.')}
-          </p>
+          <p className={styles.applyModal__patchTitle}>{heroTitle}</p>
+          <p className={styles.applyModal__patchCopy}>{heroCopy}</p>
         </div>
       </div>
 
@@ -98,12 +108,6 @@ export default function StepPatching({
           ))}
         </div>
       )}
-
-      <div className={styles.applyModal__stepActions}>
-        <button className="btn btn--primary" onClick={onContinue} type="button">
-          Continue to submit
-        </button>
-      </div>
     </div>
   )
 }

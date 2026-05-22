@@ -63,8 +63,10 @@ from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
+from app.infrastructures.guardrails import guardrails_service
 from app.modules.resume_gap.service import (
     consume_pending_patch as consume_pending_resume_patch,
+    resume_text_for_guardrails,
 )
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeResponse
@@ -441,7 +443,16 @@ async def apply_to_job(
         )
 
     # 2. Verify the resume exists and belongs to the user (IDOR prevention)
-    resume = await db.scalar(select(Resume).where(Resume.id == payload.resume_id))
+    resume_stmt = (
+        select(Resume)
+        .where(Resume.id == payload.resume_id)
+        .options(
+            selectinload(Resume.experiences),
+            selectinload(Resume.educations),
+            selectinload(Resume.skills),
+        )
+    )
+    resume = await db.scalar(resume_stmt)
     if not resume or resume.user_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -451,7 +462,22 @@ async def apply_to_job(
     # 2b. Apply any pending AI resume patch the candidate accepted in the apply flow.
     if payload.apply_pending_patch:
         await consume_pending_resume_patch(db, user, payload.resume_id, payload.job_id)
-        resume = await db.scalar(select(Resume).where(Resume.id == payload.resume_id))
+        resume = await db.scalar(resume_stmt)
+
+    # 2c. Prompt-injection guardrail on candidate-controlled resume text.
+    # Block submission outright so injected payloads never sit in the DB or hit
+    # downstream LLM hops (shortlisting, recruiter chat candidate summaries).
+    scanned_text = resume_text_for_guardrails(resume)
+    logger.info(
+        "Apply guardrail scan | resume_id={} | text_len={} | preview={!r}",
+        payload.resume_id,
+        len(scanned_text),
+        scanned_text[:300],
+    )
+    await guardrails_service.assert_input_safe(
+        scanned_text,
+        source="applications.apply",
+    )
 
     # 3. Check for duplicate application before inserting
     existing = await db.execute(

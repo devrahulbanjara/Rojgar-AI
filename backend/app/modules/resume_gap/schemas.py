@@ -70,3 +70,16 @@ class AutoPatchResponse(BaseModel):
     updated_fields: list[str]
     message: str
     diffs: list[PatchedFieldDiff]
+
+
+class PendingPatchActionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    resume_id: UUID
+    job_id: UUID
+
+
+class PendingPatchActionResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    applied: bool

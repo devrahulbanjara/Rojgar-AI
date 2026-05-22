@@ -1,0 +1,112 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<style>
+  body{margin:0;padding:0;background:#fff;font-family:Inter,system-ui,sans-serif}
+  svg{display:block}
+</style></head><body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" font-family="Inter, system-ui, Arial, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c2d12"/>
+    </marker>
+
+    <symbol id="coinStack" viewBox="0 0 90 60">
+      <ellipse cx="22" cy="50" rx="18" ry="6" fill="#b45309"/>
+      <rect x="4" y="20" width="36" height="30" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/>
+      <ellipse cx="22" cy="20" rx="18" ry="6" fill="#fcd34d" stroke="#b45309" stroke-width="1.5"/>
+      <ellipse cx="55" cy="50" rx="14" ry="5" fill="#b45309"/>
+      <rect x="41" y="28" width="28" height="22" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/>
+      <ellipse cx="55" cy="28" rx="14" ry="5" fill="#fcd34d" stroke="#b45309" stroke-width="1.5"/>
+      <ellipse cx="78" cy="50" rx="10" ry="4" fill="#b45309"/>
+      <rect x="68" y="35" width="20" height="15" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/>
+      <ellipse cx="78" cy="35" rx="10" ry="4" fill="#fcd34d" stroke="#b45309" stroke-width="1.5"/>
+    </symbol>
+
+    <symbol id="person" viewBox="0 0 30 40">
+      <circle cx="15" cy="10" r="6" fill="#94a3b8" stroke="#475569" stroke-width="1.2"/>
+      <path d="M3 36 Q3 22 15 22 Q27 22 27 36 Z" fill="#94a3b8" stroke="#475569" stroke-width="1.2"/>
+    </symbol>
+
+    <symbol id="personGreen" viewBox="0 0 30 40">
+      <circle cx="15" cy="10" r="6" fill="#86efac" stroke="#14532d" stroke-width="1.2"/>
+      <path d="M3 36 Q3 22 15 22 Q27 22 27 36 Z" fill="#86efac" stroke="#14532d" stroke-width="1.2"/>
+    </symbol>
+
+    <symbol id="chip" viewBox="0 0 60 60">
+      <rect x="12" y="12" width="36" height="36" rx="4" fill="#f59e0b" stroke="#7c2d12" stroke-width="2"/>
+      <rect x="20" y="20" width="20" height="20" fill="#fef3c7" stroke="#7c2d12"/>
+      <text x="30" y="35" text-anchor="middle" font-size="11" font-weight="900" fill="#7c2d12">RF</text>
+      <line x1="6" y1="20" x2="12" y2="20" stroke="#7c2d12" stroke-width="2"/>
+      <line x1="6" y1="30" x2="12" y2="30" stroke="#7c2d12" stroke-width="2"/>
+      <line x1="6" y1="40" x2="12" y2="40" stroke="#7c2d12" stroke-width="2"/>
+      <line x1="48" y1="20" x2="54" y2="20" stroke="#7c2d12" stroke-width="2"/>
+      <line x1="48" y1="30" x2="54" y2="30" stroke="#7c2d12" stroke-width="2"/>
+      <line x1="48" y1="40" x2="54" y2="40" stroke="#7c2d12" stroke-width="2"/>
+    </symbol>
+  </defs>
+
+  <text x="600" y="40" text-anchor="middle" fill="#1a2240" font-size="22" font-weight="900">Cheap ML pre-filter drops 80% before any LLM call</text>
+
+  <!-- 100 candidates left -->
+  <g transform="translate(80,110)">
+    <text x="100" y="-12" text-anchor="middle" fill="#5b6788" font-size="13" font-weight="700">100 candidates</text>
+    <g>
+      <use href="#person" x="0"   y="0"  width="18" height="24"/>
+      <use href="#person" x="22"  y="0"  width="18" height="24"/>
+      <use href="#person" x="44"  y="0"  width="18" height="24"/>
+      <use href="#person" x="66"  y="0"  width="18" height="24"/>
+      <use href="#person" x="88"  y="0"  width="18" height="24"/>
+      <use href="#person" x="110" y="0"  width="18" height="24"/>
+      <use href="#person" x="132" y="0"  width="18" height="24"/>
+      <use href="#person" x="154" y="0"  width="18" height="24"/>
+      <use href="#person" x="176" y="0"  width="18" height="24"/>
+      <use href="#person" x="0"   y="30" width="18" height="24"/>
+      <use href="#person" x="22"  y="30" width="18" height="24"/>
+      <use href="#person" x="44"  y="30" width="18" height="24"/>
+      <use href="#person" x="66"  y="30" width="18" height="24"/>
+      <use href="#person" x="88"  y="30" width="18" height="24"/>
+      <use href="#person" x="110" y="30" width="18" height="24"/>
+      <use href="#person" x="132" y="30" width="18" height="24"/>
+      <use href="#person" x="154" y="30" width="18" height="24"/>
+      <use href="#person" x="176" y="30" width="18" height="24"/>
+    </g>
+  </g>
+
+  <!-- arrow -->
+  <path d="M300 130 L420 130" stroke="#7c2d12" stroke-width="3" marker-end="url(#ah)" fill="none"/>
+
+  <!-- chip -->
+  <use href="#chip" x="430" y="100" width="70" height="70"/>
+  <text x="465" y="190" text-anchor="middle" fill="#7c2d12" font-size="13" font-weight="800">RandomForest</text>
+  <text x="465" y="208" text-anchor="middle" fill="#92400e" font-size="11">milliseconds, ~free</text>
+
+  <!-- arrow -->
+  <path d="M520 130 L640 130" stroke="#7c2d12" stroke-width="3" marker-end="url(#ah)" fill="none"/>
+
+  <!-- 20 survivors -->
+  <g transform="translate(660,110)">
+    <text x="100" y="-12" text-anchor="middle" fill="#14532d" font-size="13" font-weight="700">top 20 reach LLM</text>
+    <g>
+      <use href="#personGreen" x="0"  y="0"  width="18" height="24"/>
+      <use href="#personGreen" x="22" y="0"  width="18" height="24"/>
+      <use href="#personGreen" x="44" y="0"  width="18" height="24"/>
+      <use href="#personGreen" x="66" y="0"  width="18" height="24"/>
+      <use href="#personGreen" x="88" y="0"  width="18" height="24"/>
+      <use href="#personGreen" x="0"  y="30" width="18" height="24"/>
+      <use href="#personGreen" x="22" y="30" width="18" height="24"/>
+      <use href="#personGreen" x="44" y="30" width="18" height="24"/>
+      <use href="#personGreen" x="66" y="30" width="18" height="24"/>
+      <use href="#personGreen" x="88" y="30" width="18" height="24"/>
+    </g>
+  </g>
+
+  <!-- savings -->
+  <g transform="translate(900,90)">
+    <rect width="240" height="120" rx="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <use href="#coinStack" x="20" y="20" width="80" height="55"/>
+    <text x="170" y="50" text-anchor="middle" fill="#7c2d12" font-size="18" font-weight="900">5× fewer</text>
+    <text x="170" y="70" text-anchor="middle" fill="#7c2d12" font-size="13" font-weight="700">LLM calls per job</text>
+    <text x="120" y="105" text-anchor="middle" fill="#92400e" font-size="11">100 → 20</text>
+  </g>
+</svg>
+</body></html>

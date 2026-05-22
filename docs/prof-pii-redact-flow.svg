@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="1200" height="340" font-family="Inter, system-ui, Arial, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a2240"/>
+    </marker>
+    <linearGradient id="gRaw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fee2e2"/><stop offset="1" stop-color="#fecaca"/></linearGradient>
+    <linearGradient id="gOk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcfce7"/><stop offset="1" stop-color="#bbf7d0"/></linearGradient>
+    <linearGradient id="gM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ede9fe"/><stop offset="1" stop-color="#ddd6fe"/></linearGradient>
+  </defs>
+
+  <text x="600" y="38" text-anchor="middle" fill="#1a2240" font-size="22" font-weight="900">PII Redaction Before the LLM</text>
+
+  <!-- Raw resume -->
+  <g transform="translate(40,80)">
+    <rect width="320" height="200" rx="14" fill="url(#gRaw)" stroke="#dc2626" stroke-width="2"/>
+    <text x="20" y="30" fill="#7f1d1d" font-size="14" font-weight="900">RAW RESUME</text>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#7f1d1d">
+      <text x="20" y="64">Aarav Sharma</text>
+      <text x="20" y="86">aarav@example.com</text>
+      <text x="20" y="108">+977 98XXXXXXXX</text>
+      <text x="20" y="130">linkedin.com/in/aarav-sharma</text>
+      <text x="20" y="158" font-weight="700">Python, FastAPI, 3 yrs</text>
+    </g>
+  </g>
+
+  <!-- Redactor -->
+  <g transform="translate(395,140)">
+    <rect width="160" height="80" rx="14" fill="#1a2240"/>
+    <text x="80" y="36" text-anchor="middle" fill="#fff" font-size="15" font-weight="900">PII Redactor</text>
+    <text x="80" y="58" text-anchor="middle" fill="#a8b2cc" font-size="11">regex + NER pipeline</text>
+  </g>
+
+  <path d="M360 180 L395 180" stroke="#1a2240" stroke-width="2.5" marker-end="url(#ah)"/>
+  <path d="M555 180 L590 180" stroke="#1a2240" stroke-width="2.5" marker-end="url(#ah)"/>
+
+  <!-- Redacted resume -->
+  <g transform="translate(590,80)">
+    <rect width="320" height="200" rx="14" fill="url(#gOk)" stroke="#16a34a" stroke-width="2"/>
+    <text x="20" y="30" fill="#14532d" font-size="14" font-weight="900">SAFE INPUT</text>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#14532d">
+      <text x="20" y="64">[REDACTED_NAME]</text>
+      <text x="20" y="86">[REDACTED_EMAIL]</text>
+      <text x="20" y="108">[REDACTED_PHONE]</text>
+      <text x="20" y="130">[REDACTED_URL]</text>
+      <text x="20" y="158" font-weight="700">Python, FastAPI, 3 yrs</text>
+    </g>
+  </g>
+
+  <path d="M910 180 L945 180" stroke="#1a2240" stroke-width="2.5" marker-end="url(#ah)"/>
+
+  <!-- LLM -->
+  <g transform="translate(945,100)">
+    <rect width="215" height="160" rx="14" fill="url(#gM)" stroke="#7c3aed" stroke-width="2"/>
+    <text x="108" y="36" text-anchor="middle" fill="#3b1d6f" font-size="16" font-weight="900">LLM</text>
+    <text x="108" y="60" text-anchor="middle" fill="#3b1d6f" font-size="12">judges only by</text>
+    <text x="108" y="80" text-anchor="middle" fill="#3b1d6f" font-size="12">skills, experience,</text>
+    <text x="108" y="100" text-anchor="middle" fill="#3b1d6f" font-size="12">role match</text>
+    <text x="108" y="135" text-anchor="middle" fill="#3b1d6f" font-size="13" font-weight="900">no demographic signal</text>
+  </g>
+</svg>

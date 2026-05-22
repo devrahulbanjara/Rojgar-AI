@@ -566,13 +566,16 @@ async def evaluate_single_application(
         )
         application.strengths = result.strengths
         application.weaknesses = result.weaknesses
-    except Exception:
+    except Exception as exc:
         _, strengths, weaknesses = _score_application(application)
         application.strengths = strengths
         application.weaknesses = weaknesses
-        logger.warning(
-            "AI evaluation failed for application {}, used fallback strengths/weaknesses",
+        logger.opt(exception=exc).warning(
+            "AI evaluation failed for application {} ({}: {}), used fallback "
+            "strengths/weaknesses",
             application_id,
+            type(exc).__name__,
+            exc,
         )
 
     enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)

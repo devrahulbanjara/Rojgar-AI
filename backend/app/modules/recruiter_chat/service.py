@@ -2617,7 +2617,7 @@ async def _send_message_inner(
     if not verdict.safe:
         reply = _serialize_response(
             ChatResponseType.clarification,
-            "I can't help with that — your message looked unsafe and was blocked by our safety policy.",
+            verdict.refusal_message,
         )
         _append_history(
             state,
@@ -3412,7 +3412,7 @@ async def _stream_message_inner(
         if not verdict.safe:
             reply = _serialize_response(
                 ChatResponseType.clarification,
-                "I can't help with that — your message looked unsafe and was blocked by our safety policy.",
+                verdict.refusal_message,
             )
             _append_history(state, "user", user_message)
             _append_history(

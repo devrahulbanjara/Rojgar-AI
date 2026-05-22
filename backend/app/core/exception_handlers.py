@@ -28,8 +28,13 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request, exc: StarletteHTTPException):
         """Standard HTTP errors (401, 403, 404, …) in the unified envelope."""
+        detail = exc.detail
+        if isinstance(detail, dict):
+            message = str(detail.get("message") or detail.get("code") or detail)
+        else:
+            message = str(detail)
         return ResponseBuilder.error(
-            message=str(exc.detail),
+            message=message,
             status_code=exc.status_code,
         )
 

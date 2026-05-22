@@ -126,6 +126,7 @@ class Settings(BaseSettings):
 
     # Guardrails
     guardrails_enabled: bool = True
+    guardrails_groq_model: str = "openai/gpt-oss-120b"
 
     # Recruiter chat
     recruiter_chat_candidate_min_score: float = 0.55

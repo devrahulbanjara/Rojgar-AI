@@ -1,74 +1,107 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 550" font-family="Inter, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 580" width="1100" height="580" font-family="Inter, system-ui, Arial, sans-serif">
   <defs>
-    <linearGradient id="aiGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#eff6ff"/>
-      <stop offset="100%" stop-color="#dbeafe"/>
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cffafe"/><stop offset="1" stop-color="#a5f3fc"/>
     </linearGradient>
-    <style>
-      .hdr { font-size: 16px; font-weight: 700; fill: #1e3a8a; }
-      .badge { font-size: 11px; font-weight: 700; fill: #ffffff; letter-spacing: 0.5px; }
-      .title { font-size: 19px; font-weight: 700; fill: #1e3a8a; }
-      .label { font-size: 12px; font-weight: 700; fill: #1e3a8a; letter-spacing: 0.4px; }
-      .body { font-size: 13.5px; fill: #1e293b; }
-    </style>
+    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fef3c7"/><stop offset="1" stop-color="#fde68a"/>
+    </linearGradient>
+    <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ede9fe"/><stop offset="1" stop-color="#ddd6fe"/>
+    </linearGradient>
+    <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dcfce7"/><stop offset="1" stop-color="#bbf7d0"/>
+    </linearGradient>
+    <linearGradient id="gSlate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0f2fe"/><stop offset="1" stop-color="#bae6fd"/>
+    </linearGradient>
+
+    <symbol id="i-nlp" viewBox="0 0 24 24">
+      <path d="M4 5 h16 a2 2 0 0 1 2 2 v8 a2 2 0 0 1 -2 2 H10 l-5 4 V17 H4 a2 2 0 0 1 -2 -2 V7 a2 2 0 0 1 2 -2 Z" fill="none" stroke="#0e4f5b" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="7" y1="10" x2="17" y2="10" stroke="#0e4f5b" stroke-width="1.8"/>
+      <line x1="7" y1="13" x2="14" y2="13" stroke="#0e4f5b" stroke-width="1.8"/>
+    </symbol>
+    <symbol id="i-asr" viewBox="0 0 24 24">
+      <rect x="9" y="3" width="6" height="12" rx="3" fill="none" stroke="#7c2d12" stroke-width="2"/>
+      <path d="M5 11 a7 7 0 0 0 14 0" fill="none" stroke="#7c2d12" stroke-width="2"/>
+      <line x1="12" y1="18" x2="12" y2="21" stroke="#7c2d12" stroke-width="2"/>
+      <line x1="9" y1="21" x2="15" y2="21" stroke="#7c2d12" stroke-width="2"/>
+    </symbol>
+    <symbol id="i-gen" viewBox="0 0 24 24">
+      <path d="M12 3 L14 9 L20 11 L14 13 L12 19 L10 13 L4 11 L10 9 Z" fill="none" stroke="#3b1d6f" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="19" cy="5" r="1.5" fill="#3b1d6f"/>
+      <circle cx="5" cy="19" r="1.5" fill="#3b1d6f"/>
+    </symbol>
+    <symbol id="i-agent" viewBox="0 0 24 24">
+      <rect x="5" y="7" width="14" height="11" rx="2" fill="none" stroke="#14532d" stroke-width="2"/>
+      <circle cx="9" cy="12" r="1.4" fill="#14532d"/>
+      <circle cx="15" cy="12" r="1.4" fill="#14532d"/>
+      <line x1="12" y1="3" x2="12" y2="7" stroke="#14532d" stroke-width="2"/>
+      <circle cx="12" cy="3" r="1.4" fill="#14532d"/>
+      <line x1="5" y1="14" x2="2" y2="14" stroke="#14532d" stroke-width="2"/>
+      <line x1="22" y1="14" x2="19" y2="14" stroke="#14532d" stroke-width="2"/>
+    </symbol>
+    <symbol id="i-ml" viewBox="0 0 24 24">
+      <path d="M12 3 L4 8 L4 16 L12 21 L20 16 L20 8 Z" fill="none" stroke="#075985" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="12" y1="3" x2="12" y2="12" stroke="#075985" stroke-width="1.8"/>
+      <line x1="4" y1="8" x2="12" y2="12" stroke="#075985" stroke-width="1.8"/>
+      <line x1="20" y1="8" x2="12" y2="12" stroke="#075985" stroke-width="1.8"/>
+      <line x1="12" y1="12" x2="12" y2="21" stroke="#075985" stroke-width="1.8"/>
+    </symbol>
   </defs>
 
-  <text x="360" y="38" text-anchor="middle" class="hdr">AI PARADIGMS USED IN CONVEXHIRE</text>
+  <text x="550" y="40" text-anchor="middle" fill="#1a2240" font-size="24" font-weight="800">AI Paradigms in ConvexHire</text>
 
-  <!-- NLP (top-left) -->
-  <g>
-    <rect x="30" y="80" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
-    <rect x="30" y="80" width="70" height="24" rx="6" fill="#2563eb"/>
-    <text x="65" y="97" text-anchor="middle" class="badge">NLP</text>
-    <text x="50" y="138" class="title">Hybrid Semantic Search</text>
-    <text x="50" y="170" class="label">MODEL</text>
-    <text x="50" y="188" class="body">Gemini embeddings + BM25, fused by RRF</text>
-    <text x="50" y="218" class="label">WHERE</text>
-    <text x="50" y="236" class="body">Job &amp; candidate search (S3, S6)</text>
-    <text x="50" y="266" class="label">EXAMPLE</text>
-    <text x="50" y="284" class="body">Dense meaning + lexical precision combined</text>
+  <!-- Classical ML -->
+  <g transform="translate(40,80)">
+    <rect width="500" height="140" rx="16" fill="url(#gSlate)" stroke="#0284c7" stroke-width="2"/>
+    <rect x="20" y="20" width="56" height="56" rx="12" fill="#fff" stroke="#0284c7" stroke-width="1.8"/>
+    <use href="#i-ml" x="34" y="34" width="28" height="28"/>
+    <text x="92" y="46" fill="#075985" font-size="20" font-weight="800">Classical ML</text>
+    <text x="92" y="68" fill="#0369a1" font-size="13">supervised models</text>
+    <text x="20" y="108" fill="#075985" font-size="14" font-weight="600">RandomForest,</text>
+    <text x="20" y="126" fill="#075985" font-size="14" font-weight="600">resume prefilter before LLM</text>
   </g>
 
-  <!-- ASR (top-right) -->
-  <g>
-    <rect x="370" y="80" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
-    <rect x="370" y="80" width="70" height="24" rx="6" fill="#2563eb"/>
-    <text x="405" y="97" text-anchor="middle" class="badge">ASR</text>
-    <text x="390" y="138" class="title">Nepali Speech Transcription</text>
-    <text x="390" y="170" class="label">MODEL</text>
-    <text x="390" y="188" class="body">Fine-tuned Whisper Small (Nepali)</text>
-    <text x="390" y="218" class="label">WHERE</text>
-    <text x="390" y="236" class="body">Interview transcription (S5)</text>
-    <text x="390" y="266" class="label">EXAMPLE</text>
-    <text x="390" y="284" class="body">WER 130.80% → 31.64% on val split</text>
+  <!-- NLP -->
+  <g transform="translate(560,80)">
+    <rect width="500" height="140" rx="16" fill="url(#gCyan)" stroke="#06b6d4" stroke-width="2"/>
+    <rect x="20" y="20" width="56" height="56" rx="12" fill="#fff" stroke="#06b6d4" stroke-width="1.8"/>
+    <use href="#i-nlp" x="34" y="34" width="28" height="28"/>
+    <text x="92" y="46" fill="#0e4f5b" font-size="20" font-weight="800">NLP</text>
+    <text x="92" y="68" fill="#0e7490" font-size="13">natural language processing</text>
+    <text x="20" y="108" fill="#0e4f5b" font-size="14" font-weight="600">Gemini embeddings + BM25,</text>
+    <text x="20" y="126" fill="#0e4f5b" font-size="14" font-weight="600">fused with RRF</text>
   </g>
 
-  <!-- Generative AI (bottom-left) -->
-  <g>
-    <rect x="30" y="320" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
-    <rect x="30" y="320" width="105" height="24" rx="6" fill="#2563eb"/>
-    <text x="82.5" y="337" text-anchor="middle" class="badge">GENERATIVE AI</text>
-    <text x="50" y="378" class="title">LLM Reasoning</text>
-    <text x="50" y="410" class="label">MODEL</text>
-    <text x="50" y="428" class="body">Groq, Claude, GPT, Gemini</text>
-    <text x="50" y="458" class="label">WHERE</text>
-    <text x="50" y="476" class="body">Shortlist, chat, gap, outreach (S2–S7)</text>
-    <text x="50" y="506" class="label">EXAMPLE</text>
-    <text x="50" y="524" class="body">Reasoning where classical ML cannot</text>
+  <!-- ASR -->
+  <g transform="translate(40,240)">
+    <rect width="500" height="140" rx="16" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="2"/>
+    <rect x="20" y="20" width="56" height="56" rx="12" fill="#fff" stroke="#f59e0b" stroke-width="1.8"/>
+    <use href="#i-asr" x="34" y="34" width="28" height="28"/>
+    <text x="92" y="46" fill="#7c2d12" font-size="20" font-weight="800">ASR</text>
+    <text x="92" y="68" fill="#92400e" font-size="13">automatic speech recognition</text>
+    <text x="20" y="108" fill="#7c2d12" font-size="14" font-weight="600">Whisper Small,</text>
+    <text x="20" y="126" fill="#7c2d12" font-size="14" font-weight="600">fine-tuned on Nepali</text>
   </g>
 
-  <!-- Agentic AI (bottom-right) -->
-  <g>
-    <rect x="370" y="320" width="320" height="210" rx="10" fill="url(#aiGrad)" stroke="#93c5fd" stroke-width="1.5"/>
-    <rect x="370" y="320" width="90" height="24" rx="6" fill="#2563eb"/>
-    <text x="415" y="337" text-anchor="middle" class="badge">AGENTIC AI</text>
-    <text x="390" y="378" class="title">Multi-Agent Orchestration</text>
-    <text x="390" y="410" class="label">MODEL</text>
-    <text x="390" y="428" class="body">LangGraph (graphs + interrupts)</text>
-    <text x="390" y="458" class="label">WHERE</text>
-    <text x="390" y="476" class="body">Job Draft (S6), Shortlisting (S2)</text>
-    <text x="390" y="506" class="label">EXAMPLE</text>
-    <text x="390" y="524" class="body">Critique loop with HITL approval gate</text>
+  <!-- Generative AI -->
+  <g transform="translate(560,240)">
+    <rect width="500" height="140" rx="16" fill="url(#gPurple)" stroke="#7c3aed" stroke-width="2"/>
+    <rect x="20" y="20" width="56" height="56" rx="12" fill="#fff" stroke="#7c3aed" stroke-width="1.8"/>
+    <use href="#i-gen" x="34" y="34" width="28" height="28"/>
+    <text x="92" y="46" fill="#3b1d6f" font-size="20" font-weight="800">Generative AI</text>
+    <text x="92" y="68" fill="#4c1d95" font-size="13">large language models</text>
+    <text x="20" y="108" fill="#3b1d6f" font-size="14" font-weight="600">Groq, Claude, GPT, Gemini</text>
   </g>
 
+  <!-- Multi-Agent Shortlisting Pipeline -->
+  <g transform="translate(300,400)">
+    <rect width="500" height="140" rx="16" fill="url(#gGreen)" stroke="#16a34a" stroke-width="2"/>
+    <rect x="20" y="20" width="56" height="56" rx="12" fill="#fff" stroke="#16a34a" stroke-width="1.8"/>
+    <use href="#i-agent" x="34" y="34" width="28" height="28"/>
+    <text x="92" y="46" fill="#14532d" font-size="20" font-weight="800">Agentic AI</text>
+    <text x="92" y="68" fill="#166534" font-size="13">multi-agent + tool use</text>
+    <text x="20" y="108" fill="#14532d" font-size="14" font-weight="600">Multi-Agent Shortlisting Pipeline</text>
+  </g>
 </svg>

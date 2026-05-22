@@ -1,0 +1,224 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/>
+<style>
+  body{margin:0;padding:0;background:#fff;font-family:Inter,system-ui,sans-serif}
+  svg{display:block}
+</style></head><body>
+<svg width="1100" height="1280" viewBox="0 0 1100 1280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a2240"/>
+    </marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/>
+    </marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fef3c7"/><stop offset="1" stop-color="#fde68a"/>
+    </linearGradient>
+    <linearGradient id="gIndigo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0e7ff"/><stop offset="1" stop-color="#c7d2fe"/>
+    </linearGradient>
+    <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ede9fe"/><stop offset="1" stop-color="#ddd6fe"/>
+    </linearGradient>
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cffafe"/><stop offset="1" stop-color="#a5f3fc"/>
+    </linearGradient>
+    <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dcfce7"/><stop offset="1" stop-color="#bbf7d0"/>
+    </linearGradient>
+    <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fce7f3"/><stop offset="1" stop-color="#fbcfe8"/>
+    </linearGradient>
+
+    <symbol id="db" viewBox="0 0 60 60">
+      <ellipse cx="30" cy="10" rx="26" ry="8" fill="#1a2240" stroke="#1a2240"/>
+      <path d="M4 10 V50 A26 8 0 0 0 56 50 V10" fill="#1a2240" stroke="#1a2240"/>
+      <ellipse cx="30" cy="10" rx="26" ry="8" fill="none" stroke="#3b4a78"/>
+      <ellipse cx="30" cy="26" rx="26" ry="8" fill="none" stroke="#3b4a78"/>
+      <ellipse cx="30" cy="42" rx="26" ry="8" fill="none" stroke="#3b4a78"/>
+    </symbol>
+    <symbol id="doc" viewBox="0 0 40 50">
+      <rect x="2" y="2" width="36" height="46" rx="3" fill="#fff" stroke="#5b6788" stroke-width="1.5"/>
+      <line x1="8" y1="14" x2="32" y2="14" stroke="#94a3c4" stroke-width="1.6"/>
+      <line x1="8" y1="22" x2="32" y2="22" stroke="#94a3c4" stroke-width="1.6"/>
+      <line x1="8" y1="30" x2="26" y2="30" stroke="#94a3c4" stroke-width="1.6"/>
+      <line x1="8" y1="38" x2="22" y2="38" stroke="#94a3c4" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="lock" viewBox="0 0 24 24">
+      <rect x="5" y="10" width="14" height="11" rx="2" fill="#fff" stroke="#dc2626" stroke-width="1.8"/>
+      <path d="M8 10 V7 A4 4 0 0 1 16 7 V10" fill="none" stroke="#dc2626" stroke-width="1.8"/>
+    </symbol>
+  </defs>
+
+  <text x="550" y="34" text-anchor="middle" fill="#1a2240" font-size="22" font-weight="800">Resume Gap Analysis and Auto-Patch</text>
+
+  <!-- Phase 1 tag -->
+  <rect x="40" y="60" width="180" height="26" rx="7" fill="#1a2240"/>
+  <text x="130" y="78" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">Phase 1   Analyze</text>
+
+  <!-- Trigger -->
+  <g transform="translate(380,90)">
+    <rect width="340" height="56" rx="14" fill="#1a2240"/>
+    <text x="170" y="24" text-anchor="middle" fill="#a8b2cc" font-size="11">candidate authenticated</text>
+    <text x="170" y="44" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">POST /resume-gap/analyze</text>
+  </g>
+  <path d="M550 146 V172" stroke="#1a2240" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Redis cache check -->
+  <g transform="translate(430,180)">
+    <rect width="240" height="60" rx="12" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="1.8"/>
+    <text x="120" y="26" text-anchor="middle" fill="#7c2d12" font-size="14" font-weight="800">Redis Cache</text>
+    <text x="120" y="46" text-anchor="middle" fill="#92400e" font-size="11">TTL 10 min</text>
+  </g>
+
+  <!-- Cache hit branch -->
+  <path d="M670 210 L780 210" stroke="#16a34a" stroke-width="2.5" fill="none" marker-end="url(#ahg)"/>
+  <text x="725" y="200" text-anchor="middle" fill="#16a34a" font-size="12" font-weight="800">hit</text>
+  <g transform="translate(780,180)">
+    <rect width="260" height="60" rx="12" fill="url(#gCyan)" stroke="#06b6d4" stroke-width="1.8"/>
+    <text x="130" y="26" text-anchor="middle" fill="#0e4f5b" font-size="14" font-weight="700">Return Cached Result</text>
+    <text x="130" y="46" text-anchor="middle" fill="#0e7490" font-size="11">no AI call, instant</text>
+  </g>
+
+  <!-- Cache miss -->
+  <path d="M550 240 V270" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6 4" fill="none" marker-end="url(#ahr)"/>
+  <text x="570" y="262" fill="#dc2626" font-size="12" font-weight="800">miss</text>
+
+  <!-- Load from PG -->
+  <g transform="translate(140,280)">
+    <rect width="820" height="80" rx="12" fill="url(#gIndigo)" stroke="#6366f1" stroke-width="1.8"/>
+    <text x="20" y="28" fill="#1e1b4b" font-size="14" font-weight="800">Load from PostgreSQL</text>
+    <use href="#db" x="740" y="14" width="60" height="50"/>
+    <rect x="20" y="40" width="350" height="30" rx="8" fill="#fff" stroke="#6366f1"/>
+    <text x="195" y="59" text-anchor="middle" fill="#1e1b4b" font-size="11" font-weight="700">Resume: headline, summary, skills, experience</text>
+    <rect x="380" y="40" width="340" height="30" rx="8" fill="#fff" stroke="#6366f1"/>
+    <text x="550" y="59" text-anchor="middle" fill="#1e1b4b" font-size="11" font-weight="700">Job: title, requirements, preferred</text>
+  </g>
+  <path d="M550 360 V390" stroke="#1a2240" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Gap LLM block -->
+  <g transform="translate(40,400)">
+    <rect width="1020" height="200" rx="14" fill="#f1f4ff" stroke="#c7cfe5" stroke-dasharray="6 5" stroke-width="1.5"/>
+    <text x="20" y="28" fill="#1a2240" font-size="15" font-weight="800">Gap Analysis  (Groq LLM)</text>
+
+    <rect x="20" y="42" width="980" height="26" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+    <text x="34" y="60" font-size="12" fill="#7f1d1d" font-weight="700">Guardrails</text>
+    <text x="120" y="60" font-size="12" fill="#991b1b">NeMo input rail  +  no invented facts policy  +  schema-bound JSON output</text>
+
+    <!-- output chips row -->
+    <g transform="translate(20,82)">
+      <rect width="180" height="42" rx="8" fill="#fef2f2" stroke="#ef4444"/>
+      <text x="90" y="22" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="800">missing skills</text>
+      <text x="90" y="36" text-anchor="middle" fill="#991b1b" font-size="10">critical / preferred / bonus</text>
+
+      <rect x="190" width="180" height="42" rx="8" fill="#fff7ed" stroke="#f59e0b"/>
+      <text x="280" y="22" text-anchor="middle" fill="#92400e" font-size="11" font-weight="800">experience gaps</text>
+      <text x="280" y="36" text-anchor="middle" fill="#92400e" font-size="10">role-vs-resume deltas</text>
+
+      <rect x="380" width="180" height="42" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+      <text x="470" y="22" text-anchor="middle" fill="#1e3a8a" font-size="11" font-weight="800">add to summary</text>
+      <text x="470" y="36" text-anchor="middle" fill="#1e3a8a" font-size="10">phrases to surface</text>
+
+      <rect x="570" width="180" height="42" rx="8" fill="#f9fafb" stroke="#9ca3af"/>
+      <text x="660" y="22" text-anchor="middle" fill="#374151" font-size="11" font-weight="800">de-emphasize</text>
+      <text x="660" y="36" text-anchor="middle" fill="#374151" font-size="10">off-target items</text>
+
+      <rect x="760" width="220" height="42" rx="8" fill="#f0fdf4" stroke="#22c55e"/>
+      <text x="870" y="22" text-anchor="middle" fill="#14532d" font-size="11" font-weight="800">strengths and score 0..100</text>
+      <text x="870" y="36" text-anchor="middle" fill="#14532d" font-size="10">overall shortlisting estimate</text>
+    </g>
+
+    <text x="510" y="170" text-anchor="middle" fill="#5b6788" font-size="12" font-style="italic">structured JSON, 2-sentence verdict, addresses candidate as "you"</text>
+  </g>
+  <path d="M550 600 V630" stroke="#1a2240" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Cache + return -->
+  <g transform="translate(140,640)">
+    <rect width="820" height="60" rx="12" fill="#1a2240"/>
+    <text x="20" y="26" fill="#fff" font-size="14" font-weight="700">Cache result (Redis, 10 min) and return to candidate</text>
+    <text x="20" y="46" fill="#a8b2cc" font-size="11">candidate views score, gaps, and verdict in UI</text>
+  </g>
+
+  <!-- divider -->
+  <line x1="40" y1="725" x2="1060" y2="725" stroke="#c7cfe5" stroke-width="1.5" stroke-dasharray="8 5"/>
+
+  <!-- Phase 2 tag -->
+  <rect x="40" y="740" width="220" height="26" rx="7" fill="#0f766e"/>
+  <text x="150" y="758" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">Phase 2   Auto-Patch</text>
+
+  <g transform="translate(380,738)">
+    <rect width="340" height="56" rx="14" fill="#1a2240"/>
+    <text x="170" y="24" text-anchor="middle" fill="#a8b2cc" font-size="11">candidate clicks "tailor resume"</text>
+    <text x="170" y="44" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">POST /resume-gap/auto-patch</text>
+  </g>
+  <path d="M550 794 V820" stroke="#1a2240" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Patch LLM + guardrails -->
+  <g transform="translate(40,828)">
+    <rect width="1020" height="200" rx="14" fill="url(#gGreen)" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="20" y="28" fill="#14532d" font-size="15" font-weight="800">Resume Rewriter  (Groq LLM)</text>
+
+    <rect x="20" y="42" width="980" height="26" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5"/>
+    <use href="#lock" x="30" y="44" width="22" height="22"/>
+    <text x="60" y="60" font-size="12" fill="#7f1d1d" font-weight="700">Frozen Facts</text>
+    <text x="160" y="60" font-size="12" fill="#991b1b">company, title, dates, institution, certifications  (never modified)</text>
+
+    <g transform="translate(20,82)">
+      <rect width="200" height="42" rx="8" fill="#fff" stroke="#22c55e"/>
+      <text x="100" y="22" text-anchor="middle" fill="#14532d" font-size="11" font-weight="800">headline</text>
+      <text x="100" y="36" text-anchor="middle" fill="#14532d" font-size="10">max 120 chars</text>
+
+      <rect x="210" width="200" height="42" rx="8" fill="#fff" stroke="#22c55e"/>
+      <text x="310" y="22" text-anchor="middle" fill="#14532d" font-size="11" font-weight="800">summary</text>
+      <text x="310" y="36" text-anchor="middle" fill="#14532d" font-size="10">max 400 chars</text>
+
+      <rect x="420" width="200" height="42" rx="8" fill="#fff" stroke="#22c55e"/>
+      <text x="520" y="22" text-anchor="middle" fill="#14532d" font-size="11" font-weight="800">skills</text>
+      <text x="520" y="36" text-anchor="middle" fill="#14532d" font-size="10">max 5 new, 30 total</text>
+
+      <rect x="630" width="350" height="42" rx="8" fill="#fff" stroke="#22c55e"/>
+      <text x="805" y="22" text-anchor="middle" fill="#14532d" font-size="11" font-weight="800">experience bullets</text>
+      <text x="805" y="36" text-anchor="middle" fill="#14532d" font-size="10">max 6 per role, 220 chars each</text>
+    </g>
+
+    <text x="510" y="170" text-anchor="middle" fill="#14532d" font-size="12" font-style="italic">server enforces caps even if LLM exceeds, case-insensitive dedupe, skip unchanged</text>
+  </g>
+  <path d="M550 1028 V1058" stroke="#1a2240" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Diff stage -->
+  <g transform="translate(280,1068)">
+    <rect width="540" height="60" rx="12" fill="url(#gPink)" stroke="#ec4899" stroke-width="1.8"/>
+    <text x="270" y="26" text-anchor="middle" fill="#831843" font-size="14" font-weight="800">Stage Diff in Redis</text>
+    <text x="270" y="46" text-anchor="middle" fill="#831843" font-size="11">PatchedFieldDiff per field, TTL 30 min, never auto-applied</text>
+  </g>
+  <path d="M550 1128 V1158" stroke="#1a2240" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- Decision -->
+  <g transform="translate(470,1168)">
+    <polygon points="0,30 80,0 160,30 80,60" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="80" y="36" text-anchor="middle" fill="#3b1d6f" font-size="13" font-weight="800">candidate confirms?</text>
+  </g>
+
+  <!-- Accept -->
+  <path d="M630 1198 L770 1198" stroke="#16a34a" stroke-width="2.5" fill="none" marker-end="url(#ahg)"/>
+  <text x="700" y="1190" text-anchor="middle" fill="#16a34a" font-size="12" font-weight="800">accept</text>
+  <g transform="translate(770,1180)">
+    <rect width="280" height="50" rx="12" fill="url(#gIndigo)" stroke="#2563eb" stroke-width="1.8"/>
+    <text x="140" y="22" text-anchor="middle" fill="#1e3a8a" font-size="13" font-weight="800">Apply to PostgreSQL</text>
+    <text x="140" y="40" text-anchor="middle" fill="#1e3a8a" font-size="11">invalidate gap cache, drop pending</text>
+  </g>
+
+  <!-- Discard -->
+  <path d="M470 1198 L330 1198" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6 4" fill="none" marker-end="url(#ahr)"/>
+  <text x="400" y="1190" text-anchor="middle" fill="#dc2626" font-size="12" font-weight="800">discard</text>
+  <g transform="translate(50,1180)">
+    <rect width="280" height="50" rx="12" fill="#fef2f2" stroke="#ef4444" stroke-width="1.8"/>
+    <text x="140" y="22" text-anchor="middle" fill="#991b1b" font-size="13" font-weight="800">Drop Pending Patch</text>
+    <text x="140" y="40" text-anchor="middle" fill="#991b1b" font-size="11">resume unchanged, gap cache kept</text>
+  </g>
+</svg>
+</body></html>

@@ -21,6 +21,9 @@ CANDIDATE RESUME:
 PREVIOUS CRITIQUE: {last_critique}
 
 Output rules:
+- Evaluate on skills/work-relevance/past-experiences, and mainly based on Job Description.
+- Focus on pecific tools they are highly proficient in as needed in the JD, prioritizing depth over a long, superficial list of buzzwords.
+- Search for Measurable Impact: "Reduced server latency by \(40\%\)" or "scaled microservices to \(100,000\) users" is heavily favored over generic job descriptions.
 - strengths/concerns/evidence: max 4 items each, each ≤15 words
 - Each item must cite a phrase from the resume or JD; omit if you cannot cite
 - Use web_search only if a vendor/library/employer claim is unfamiliar AND affects credibility
@@ -42,6 +45,8 @@ CANDIDATE RESUME:
 PREVIOUS CRITIQUE: {last_critique}
 
 Output rules:
+- Evaluate mainly on the candidate's consistent progression and tenure, checking for unexplained, long-term employment gaps.
+- Evidence of cross-functional collaboration, mentoring, or leadership abilities.
 - strengths/concerns/evidence: max 4 items each, each ≤15 words
 - Each item must cite a phrase from the resume or JD; omit if you cannot cite
 - Use web_search only if employer/role/market context is unclear AND changes interpretation

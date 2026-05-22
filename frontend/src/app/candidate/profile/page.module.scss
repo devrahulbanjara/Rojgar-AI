@@ -652,6 +652,34 @@
   color: var(--color-text-muted);
 }
 
+.importCardHighlight {
+  border-color: var(--color-primary);
+  background: linear-gradient(180deg, rgb(0 112 243 / 6%) 0%, #fff 70%);
+  box-shadow:
+    0 0 0 3px rgb(0 112 243 / 12%),
+    0 6px 18px rgb(0 112 243 / 14%);
+  animation: import-card-pulse 2.4s ease-in-out infinite;
+
+  .cardEyebrow {
+    color: var(--color-primary);
+  }
+}
+
+@keyframes import-card-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px rgb(0 112 243 / 12%),
+      0 6px 18px rgb(0 112 243 / 14%);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 5px rgb(0 112 243 / 18%),
+      0 8px 22px rgb(0 112 243 / 22%);
+  }
+}
+
 // ── Empty state inside section card ─────────────────────────────
 .empty {
   border: 1px dashed var(--color-border);

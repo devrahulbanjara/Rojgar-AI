@@ -65,13 +65,21 @@ async def discard_pending_patch(
     await redis_service.delete(_pending_patch_key(user.id, resume_id, job_id))
 
 
-def _resume_text_for_guardrails(resume: Resume) -> str:
-    """Flatten the resume's free-text fields into a single string for the input rail."""
+def resume_text_for_guardrails(resume: Resume) -> str:
+    """Flatten every candidate-controlled free-text field into one string for the input rail."""
     parts: list[str] = []
-    if resume.headline:
-        parts.append(str(resume.headline))
-    if resume.summary:
-        parts.append(str(resume.summary))
+    for attr in (
+        "resume_name",
+        "headline",
+        "summary",
+        "location",
+        "linkedin_url",
+        "github_url",
+        "portfolio_url",
+    ):
+        value = getattr(resume, attr, None)
+        if value:
+            parts.append(str(value))
     for experience in resume.experiences:
         if experience.title:
             parts.append(str(experience.title))
@@ -79,6 +87,16 @@ def _resume_text_for_guardrails(resume: Resume) -> str:
             parts.append(str(experience.company_name))
         for bullet in experience.description or []:
             parts.append(str(bullet))
+    for education in resume.educations:
+        if education.institution:
+            parts.append(str(education.institution))
+        if education.degree:
+            parts.append(str(education.degree))
+        if education.field_of_study:
+            parts.append(str(education.field_of_study))
+    for skill in resume.skills:
+        if skill.skill_name:
+            parts.append(str(skill.skill_name))
     return "\n".join(parts)
 
 
@@ -173,7 +191,7 @@ async def analyze_gaps(
     # Pre-flight prompt-injection check on candidate-controlled resume text.
     # Block before the gap-analysis LLM ever sees it.
     await guardrails_service.assert_input_safe(
-        _resume_text_for_guardrails(resume),
+        resume_text_for_guardrails(resume),
         source="resume_gap.analyze",
     )
 
@@ -220,7 +238,7 @@ async def auto_patch_resume(
 
     # Same input rail as analyze_gaps — patch-build also feeds resume text to LLM.
     await guardrails_service.assert_input_safe(
-        _resume_text_for_guardrails(resume),
+        resume_text_for_guardrails(resume),
         source="resume_gap.auto_patch",
     )
 

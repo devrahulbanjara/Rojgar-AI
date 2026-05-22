@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" font-family="Inter, system-ui, Arial, sans-serif">
+  <defs>
+    <linearGradient id="gLaw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fef3c7"/><stop offset="1" stop-color="#fde68a"/></linearGradient>
+    <linearGradient id="gCtl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcfce7"/><stop offset="1" stop-color="#bbf7d0"/></linearGradient>
+  </defs>
+
+  <text x="600" y="38" text-anchor="middle" fill="#1a2240" font-size="22" font-weight="900">Law to Control Map</text>
+
+  <text x="180" y="78" text-anchor="middle" fill="#7c2d12" font-size="15" font-weight="900">LAWS / STANDARDS</text>
+  <text x="1020" y="78" text-anchor="middle" fill="#14532d" font-size="15" font-weight="900">CONVEXHIRE CONTROLS</text>
+
+  <!-- Laws -->
+  <g font-size="13" font-weight="700">
+    <rect x="40" y="100" width="280" height="60" rx="10" fill="url(#gLaw)" stroke="#d97706" stroke-width="1.8"/>
+    <text x="180" y="130" text-anchor="middle" fill="#7c2d12">NP Privacy Act 2018 § 3</text>
+    <text x="180" y="148" text-anchor="middle" fill="#92400e" font-size="11" font-weight="500">consent before collection</text>
+
+    <rect x="40" y="180" width="280" height="60" rx="10" fill="url(#gLaw)" stroke="#d97706" stroke-width="1.8"/>
+    <text x="180" y="210" text-anchor="middle" fill="#7c2d12">NP Privacy Act § 4</text>
+    <text x="180" y="228" text-anchor="middle" fill="#92400e" font-size="11" font-weight="500">purpose limitation</text>
+
+    <rect x="40" y="260" width="280" height="60" rx="10" fill="url(#gLaw)" stroke="#d97706" stroke-width="1.8"/>
+    <text x="180" y="290" text-anchor="middle" fill="#7c2d12">GDPR Article 22</text>
+    <text x="180" y="308" text-anchor="middle" fill="#92400e" font-size="11" font-weight="500">no solely-automated decision</text>
+
+    <rect x="40" y="340" width="280" height="60" rx="10" fill="url(#gLaw)" stroke="#d97706" stroke-width="1.8"/>
+    <text x="180" y="370" text-anchor="middle" fill="#7c2d12">GDPR Right to Erasure</text>
+    <text x="180" y="388" text-anchor="middle" fill="#92400e" font-size="11" font-weight="500">delete on request</text>
+
+    <rect x="40" y="420" width="280" height="60" rx="10" fill="url(#gLaw)" stroke="#d97706" stroke-width="1.8"/>
+    <text x="180" y="450" text-anchor="middle" fill="#7c2d12">UK Equality Act 2010</text>
+    <text x="180" y="468" text-anchor="middle" fill="#92400e" font-size="11" font-weight="500">no protected-class bias</text>
+
+    <rect x="40" y="500" width="280" height="50" rx="10" fill="url(#gLaw)" stroke="#d97706" stroke-width="1.8"/>
+    <text x="180" y="530" text-anchor="middle" fill="#7c2d12">EU AI Act (high-risk)</text>
+  </g>
+
+  <!-- Controls -->
+  <g font-size="13" font-weight="700">
+    <rect x="880" y="100" width="280" height="60" rx="10" fill="url(#gCtl)" stroke="#16a34a" stroke-width="1.8"/>
+    <text x="1020" y="130" text-anchor="middle" fill="#14532d">Consent opt-in flow</text>
+    <text x="1020" y="148" text-anchor="middle" fill="#166534" font-size="11" font-weight="500">at signup, per AI step</text>
+
+    <rect x="880" y="180" width="280" height="60" rx="10" fill="url(#gCtl)" stroke="#16a34a" stroke-width="1.8"/>
+    <text x="1020" y="210" text-anchor="middle" fill="#14532d">Company-scoped data</text>
+    <text x="1020" y="228" text-anchor="middle" fill="#166534" font-size="11" font-weight="500">resume to A invisible to B</text>
+
+    <rect x="880" y="260" width="280" height="60" rx="10" fill="url(#gCtl)" stroke="#16a34a" stroke-width="1.8"/>
+    <text x="1020" y="290" text-anchor="middle" fill="#14532d">HITL gates</text>
+    <text x="1020" y="308" text-anchor="middle" fill="#166534" font-size="11" font-weight="500">human approves every action</text>
+
+    <rect x="880" y="340" width="280" height="60" rx="10" fill="url(#gCtl)" stroke="#16a34a" stroke-width="1.8"/>
+    <text x="1020" y="370" text-anchor="middle" fill="#14532d">Cascading deletes</text>
+    <text x="1020" y="388" text-anchor="middle" fill="#166534" font-size="11" font-weight="500">DELETE /auth/me wipes all</text>
+
+    <rect x="880" y="420" width="280" height="60" rx="10" fill="url(#gCtl)" stroke="#16a34a" stroke-width="1.8"/>
+    <text x="1020" y="450" text-anchor="middle" fill="#14532d">PII redaction layer</text>
+    <text x="1020" y="468" text-anchor="middle" fill="#166534" font-size="11" font-weight="500">no demographic signal to LLM</text>
+
+    <rect x="880" y="500" width="280" height="50" rx="10" fill="url(#gCtl)" stroke="#16a34a" stroke-width="1.8"/>
+    <text x="1020" y="530" text-anchor="middle" fill="#14532d">Audit log + transparency</text>
+  </g>
+
+  <!-- Connectors -->
+  <g stroke="#5b6788" stroke-width="1.8" fill="none">
+    <path d="M320 130 L880 130"/>
+    <path d="M320 210 L880 210"/>
+    <path d="M320 290 L880 290"/>
+    <path d="M320 370 L880 370"/>
+    <path d="M320 450 L880 450"/>
+    <path d="M320 525 L880 525"/>
+  </g>
+</svg>

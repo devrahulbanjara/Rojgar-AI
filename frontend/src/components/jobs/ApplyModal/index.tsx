@@ -61,8 +61,34 @@ function resolveStepTitle(step: string, jobTitle: string) {
   if (step === 'patching') {
     return {
       eyebrow: 'Step 3',
+      title: 'Preparing proposed changes',
+      subtitle: 'Drafting safe AI suggestions for you to review before anything is saved.',
+    }
+  }
+
+  if (step === 'patch_preview') {
+    return {
+      eyebrow: 'Step 3',
+      title: 'Review proposed changes',
+      subtitle:
+        'Nothing has been saved yet. Confirm to apply these updates to your resume, or cancel to keep it as-is.',
+    }
+  }
+
+  if (step === 'committing_patch') {
+    return {
+      eyebrow: 'Step 3',
       title: 'Updating your resume',
-      subtitle: 'Applying safe AI suggestions to your selected resume for this job.',
+      subtitle: 'Saving the confirmed AI suggestions to your resume.',
+    }
+  }
+
+  if (step === 'patch_committed') {
+    return {
+      eyebrow: 'Step 3',
+      title: 'Resume updated',
+      subtitle:
+        'Your resume has been updated. Apply to this job now, or cancel to keep the changes for later.',
     }
   }
 
@@ -119,7 +145,9 @@ export default function ApplyModal({
   const isWideStep = [
     'analyzing',
     'patching',
-    'patch_done',
+    'patch_preview',
+    'committing_patch',
+    'patch_committed',
     'share_profile',
     'submitting',
   ].includes(flow.step)
@@ -225,11 +253,22 @@ export default function ApplyModal({
               <StepGapResults result={flow.gapResult} />
             ) : null}
 
-            {flow.step === 'patching' ? (
+            {flow.step === 'patching' ? <StepPatching mode="loading" /> : null}
+
+            {flow.step === 'patch_preview' ? (
               <StepPatching
-                isPatching={flow.isPatching}
+                mode="preview"
                 message={flow.patchMessage}
-                onContinue={flow.handleSubmit}
+                patchedDiffs={flow.patchedDiffs}
+              />
+            ) : null}
+
+            {flow.step === 'committing_patch' ? <StepPatching mode="committing" /> : null}
+
+            {flow.step === 'patch_committed' ? (
+              <StepPatching
+                mode="committed"
+                message={flow.patchMessage}
                 patchedDiffs={flow.patchedDiffs}
               />
             ) : null}
@@ -265,6 +304,41 @@ export default function ApplyModal({
             </button>
             <button className="btn btn--ghost" onClick={flow.handleBackToChoice} type="button">
               Back
+            </button>
+          </div>
+        ) : null}
+
+        {flow.step === 'patch_preview' ? (
+          <div className={styles.applyModal__footer}>
+            <button
+              className="btn btn--primary btn--full"
+              onClick={() => void flow.handleConfirmPatch()}
+              type="button"
+              disabled={flow.patchedDiffs.length === 0}
+            >
+              Confirm update
+            </button>
+            <button
+              className="btn btn--ghost btn--full"
+              onClick={() => void flow.handleCancelPatch()}
+              type="button"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
+
+        {flow.step === 'patch_committed' ? (
+          <div className={styles.applyModal__footer}>
+            <button
+              className="btn btn--primary btn--full"
+              onClick={() => flow.handleOpenShareStep('patch_committed')}
+              type="button"
+            >
+              Apply now
+            </button>
+            <button className="btn btn--ghost btn--full" onClick={onClose} type="button">
+              Cancel
             </button>
           </div>
         ) : null}

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 920" font-family="Inter, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1090" font-family="Inter, Arial, sans-serif">
   <defs>
     <linearGradient id="gapGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#fef2f2"/>
@@ -26,36 +26,45 @@
   <!-- Row 2 -->
   <g>
     <rect x="40" y="230" width="640" height="150" rx="10" fill="url(#gapGrad)" stroke="#fca5a5" stroke-width="1.5"/>
-    <text x="58" y="262" class="gap-title">Bias hides in identifiers</text>
-    <text x="58" y="292" class="gap-body">Names, emails, phone numbers and URLs leak</text>
-    <text x="58" y="314" class="gap-body">gender, ethnicity and nationality signals.</text>
+    <text x="58" y="262" class="gap-title">Identifier bias left unredacted</text>
+    <text x="58" y="292" class="gap-body">No standard redaction step for names, emails,</text>
+    <text x="58" y="314" class="gap-body">phones, URLs that leak gender/ethnicity/nationality.</text>
     <text x="58" y="356" class="gap-src">Fabris et al. [10] (survey of 250+ hiring tools)</text>
   </g>
 
   <!-- Row 3 -->
   <g>
     <rect x="40" y="400" width="640" height="150" rx="10" fill="url(#gapGrad)" stroke="#fca5a5" stroke-width="1.5"/>
-    <text x="58" y="432" class="gap-title">Recruiters just click approve on AI scores</text>
-    <text x="58" y="462" class="gap-body">If only a number is shown, recruiters tend to</text>
-    <text x="58" y="484" class="gap-body">go with the AI even when it's wrong.</text>
+    <text x="58" y="432" class="gap-title">No evidence shown behind AI scores</text>
+    <text x="58" y="462" class="gap-body">Papers show only a number, so recruiters approve</text>
+    <text x="58" y="484" class="gap-body">the AI even when it is wrong.</text>
     <text x="58" y="526" class="gap-src">Peng et al. [9], Filatova et al. [13]</text>
   </g>
 
   <!-- Row 4 -->
   <g>
     <rect x="40" y="570" width="640" height="150" rx="10" fill="url(#gapGrad)" stroke="#fca5a5" stroke-width="1.5"/>
-    <text x="58" y="602" class="gap-title">Hybrid retrieval only tested one way</text>
-    <text x="58" y="632" class="gap-body">Dense + sparse beats either alone, but the papers</text>
-    <text x="58" y="654" class="gap-body">show it on single-direction search benchmarks.</text>
+    <text x="58" y="602" class="gap-title">Hybrid retrieval not proven for two-way matching</text>
+    <text x="58" y="632" class="gap-body">Dense + sparse only tested on one-way search;</text>
+    <text x="58" y="654" class="gap-body">job-to-candidate and candidate-to-job untested.</text>
     <text x="58" y="696" class="gap-src">Rosenberger et al. [2], Hsu and Tzeng [3]</text>
   </g>
 
   <!-- Row 5 -->
   <g>
     <rect x="40" y="740" width="640" height="150" rx="10" fill="url(#gapGrad)" stroke="#fca5a5" stroke-width="1.5"/>
-    <text x="58" y="772" class="gap-title">Resume text can carry prompt injections</text>
+    <text x="58" y="772" class="gap-title">Resume text can carry unhandled prompt injection</text>
     <text x="58" y="802" class="gap-body">Candidates write the resume, so any single-layer</text>
     <text x="58" y="824" class="gap-body">defence can be bypassed with crafted text.</text>
     <text x="58" y="866" class="gap-src">Liu et al. [6, 14], Sharma et al. [7]</text>
+  </g>
+
+  <!-- Row 6 -->
+  <g>
+    <rect x="40" y="910" width="640" height="150" rx="10" fill="url(#gapGrad)" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="58" y="942" class="gap-title">Candidates rarely told why they get this result</text>
+    <text x="58" y="972" class="gap-body">Scoring is hidden, so applicants can't check or</text>
+    <text x="58" y="994" class="gap-body">correct the data used to judge them.</text>
+    <text x="58" y="1036" class="gap-src">Fabris et al. [10], Peng et al. [9]</text>
   </g>
 </svg>

@@ -14,6 +14,7 @@ interface SidePanelProps {
   onAddTargetRole: (role: string) => void
   onRemoveTargetRole: (role: string) => void
   onOpenImport: () => void
+  highlightImport?: boolean
 }
 
 export default function SidePanel({
@@ -22,6 +23,7 @@ export default function SidePanel({
   onAddTargetRole,
   onRemoveTargetRole,
   onOpenImport,
+  highlightImport = false,
 }: SidePanelProps) {
   return (
     <>
@@ -32,7 +34,7 @@ export default function SidePanel({
         onAdd={onAddTargetRole}
         onRemove={onRemoveTargetRole}
       />
-      <ResumeImportCard onOpen={onOpenImport} />
+      <ResumeImportCard onOpen={onOpenImport} highlight={highlightImport} />
     </>
   )
 }
@@ -174,9 +176,10 @@ function TargetRolesCard({ roles, isSaving, onAdd, onRemove }: TargetRolesProps)
   )
 }
 
-function ResumeImportCard({ onOpen }: { onOpen: () => void }) {
+function ResumeImportCard({ onOpen, highlight }: { onOpen: () => void; highlight: boolean }) {
+  const className = highlight ? `${styles.card} ${styles.importCardHighlight}` : styles.card
   return (
-    <div className={styles.card}>
+    <div className={className}>
       <div className={styles.cardHeader}>
         <div>
           <div className={styles.cardEyebrow}>Faster setup</div>
@@ -186,7 +189,11 @@ function ResumeImportCard({ onOpen }: { onOpen: () => void }) {
       <div className={styles.importCardBody}>
         Upload a PDF or DOCX and we&rsquo;ll pre-fill your profile and resume in seconds.
       </div>
-      <button type="button" className="btn btn--secondary btn--sm" onClick={onOpen}>
+      <button
+        type="button"
+        className={`btn ${highlight ? 'btn--primary' : 'btn--secondary'} btn--sm`}
+        onClick={onOpen}
+      >
         <FileUp size={13} />
         Import resume
       </button>

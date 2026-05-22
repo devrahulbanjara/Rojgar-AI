@@ -1,11 +1,14 @@
 import { useCallback, useState } from 'react'
 
+import { notify } from '@/lib/notify'
 import { useApplyToJobMutation } from '@/store/services/applicationsApi'
 import {
   type GapAnalysisResult,
   type PatchedFieldDiff,
   useAnalyzeResumeGapMutation,
   useAutoPatchResumeMutation,
+  useCommitPendingPatchMutation,
+  useDiscardPendingPatchMutation,
 } from '@/store/services/resumeGapApi'
 
 export type FlowStep =
@@ -14,7 +17,9 @@ export type FlowStep =
   | 'analyzing'
   | 'gap_results'
   | 'patching'
-  | 'patch_done'
+  | 'patch_preview'
+  | 'committing_patch'
+  | 'patch_committed'
   | 'share_profile'
   | 'submitting'
 
@@ -55,11 +60,13 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
   const [error, setError] = useState<string | null>(null)
   const [shareSettings, setShareSettings] = useState<ShareSettingsDraft>(DEFAULT_SHARE_SETTINGS)
   const [shareReturnStep, setShareReturnStep] = useState<
-    'gap_choice' | 'gap_results' | 'patch_done'
+    'gap_choice' | 'gap_results' | 'patch_committed'
   >('gap_choice')
 
   const [analyzeResumeGap] = useAnalyzeResumeGapMutation()
   const [autoPatchResume] = useAutoPatchResumeMutation()
+  const [commitPendingPatch] = useCommitPendingPatchMutation()
+  const [discardPendingPatch] = useDiscardPendingPatchMutation()
   const [applyToJob] = useApplyToJobMutation()
 
   const handleResumeConfirmed = useCallback((resumeId: string) => {
@@ -99,12 +106,13 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         (err as { data?: { detail?: string; message?: string } })?.data?.message ||
         'Gap analysis failed. You can still apply directly.'
       setError(message)
+      notify.error(message)
       setStep('gap_choice')
     }
   }, [analyzeResumeGap, jobId, selectedResumeId])
 
   const handleOpenShareStep = useCallback(
-    (fromStep: 'gap_choice' | 'gap_results' | 'patch_done') => {
+    (fromStep: 'gap_choice' | 'gap_results' | 'patch_committed') => {
       setShareReturnStep(fromStep)
       setError(null)
       setStep('share_profile')
@@ -133,16 +141,61 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
       setPatchMessage(response.data.message)
       setHasPendingPatch(response.data.updated_fields.length > 0)
       setIsPatching(false)
+      setStep('patch_preview')
     } catch (err: unknown) {
       const message =
         (err as { data?: { detail?: string; message?: string } })?.data?.detail ||
         (err as { data?: { detail?: string; message?: string } })?.data?.message ||
         'Resume update failed. You can still apply with the current resume.'
       setError(message)
+      notify.error(message)
       setIsPatching(false)
       setStep('gap_results')
     }
   }, [autoPatchResume, gapResult, jobId, selectedResumeId])
+
+  const handleConfirmPatch = useCallback(async () => {
+    if (!selectedResumeId) return
+
+    setStep('committing_patch')
+    setError(null)
+
+    try {
+      await commitPendingPatch({
+        resume_id: selectedResumeId,
+        job_id: jobId,
+      }).unwrap()
+      setHasPendingPatch(false)
+      setStep('patch_committed')
+    } catch (err: unknown) {
+      const message =
+        (err as { data?: { detail?: string; message?: string } })?.data?.detail ||
+        (err as { data?: { detail?: string; message?: string } })?.data?.message ||
+        'Failed to update resume. Please try again.'
+      setError(message)
+      notify.error(message)
+      setStep('patch_preview')
+    }
+  }, [commitPendingPatch, jobId, selectedResumeId])
+
+  const handleCancelPatch = useCallback(async () => {
+    setError(null)
+    if (selectedResumeId) {
+      try {
+        await discardPendingPatch({
+          resume_id: selectedResumeId,
+          job_id: jobId,
+        }).unwrap()
+      } catch {
+        // Silent: pending patch TTLs out anyway
+      }
+    }
+    setPatchedFields([])
+    setPatchedDiffs([])
+    setPatchMessage('')
+    setHasPendingPatch(false)
+    setStep('gap_results')
+  }, [discardPendingPatch, jobId, selectedResumeId])
 
   const handleBackFromShare = useCallback(() => {
     setStep(shareReturnStep)
@@ -193,6 +246,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         (err as { data?: { detail?: string; message?: string } })?.data?.message ||
         'Failed to submit application.'
       setError(message)
+      notify.error(message)
       setStep('share_profile')
     }
   }, [applyToJob, hasPendingPatch, jobId, onSuccess, selectedResumeId, shareSettings])
@@ -213,6 +267,8 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     handleAnalyze,
     handleOpenShareStep,
     handleAutoPatch,
+    handleConfirmPatch,
+    handleCancelPatch,
     handleSubmit,
     updateShareSetting,
   }

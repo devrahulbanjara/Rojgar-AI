@@ -1,4 +1,3 @@
-import re
 from typing import Any, cast
 
 from langchain.agents import create_agent
@@ -15,13 +14,12 @@ from app.infrastructures.aws.bedrock import get_bedrock_llm
 from app.infrastructures.guardrails import guardrails_service
 
 
-def _safety_blocked_evaluation() -> PersonaEvaluation:
+def _safety_blocked_evaluation(reason: str | None, score: int) -> PersonaEvaluation:
     """Stand-in evaluation returned when the prompt-injection rail blocks the resume."""
+    detail = reason or "prompt-injection pattern detected"
     return PersonaEvaluation(
         strengths=[],
-        concerns=[
-            "Resume rejected by safety policy: prompt-injection pattern detected."
-        ],
+        concerns=[f"Resume rejected by safety policy: {detail} (score {score})."],
         evidence=["Input rail blocked the resume content before evaluation."],
     )
 
@@ -40,10 +38,14 @@ async def cto_node(state: ShortlistState) -> dict:
     )
     if not verdict.safe:
         logger.warning(
-            "[{}] CTO node skipped — resume blocked by guardrails.",
+            "[{}] CTO node skipped — resume blocked by guardrails (score={}, reason={!r}).",
             state["applicant_name"],
+            verdict.score,
+            verdict.reason or "",
         )
-        return {"cto_evals": [_safety_blocked_evaluation()]}
+        return {
+            "cto_evals": [_safety_blocked_evaluation(verdict.reason, verdict.score)]
+        }
 
     prompt = CTO_PROMPT.format(
         bias_policy=SHARED_BIAS_POLICY,
@@ -63,7 +65,7 @@ async def cto_node(state: ShortlistState) -> dict:
             PIIMiddleware("url", strategy="redact", apply_to_input=True),
             PIIMiddleware(
                 "phone_number",
-                detector=re.compile(r"\+?\d{1,3}[\s.-]?\d{3,4}[\s.-]?\d{4}"),
+                detector=r"\+?\d{1,3}[\s.-]?\d{3,4}[\s.-]?\d{4}",
                 strategy="redact",
                 apply_to_input=True,
             ),
