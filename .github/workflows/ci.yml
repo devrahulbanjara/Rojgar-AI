@@ -47,7 +47,6 @@ jobs:
     env:
       TEST_DATABASE_URL: postgresql+asyncpg://testuser:testpassword@localhost:5432/rojgarai_test
       SECRET_KEY: ci-secret-key-not-used-in-production
-      ALGORITHM: HS256
       ENVIRONMENT: test
       FRONTEND_URL: http://localhost:3000
       BACKEND_URL: http://localhost:8000
@@ -78,10 +77,6 @@ jobs:
       QDRANT_URL: ${{ secrets.QDRANT_URL }}
       QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
       REDIS_URL: ${{ secrets.REDIS_URL }}
-      LANGSMITH_TRACING: "false"
-      LANGSMITH_ENDPOINT: https://api.smith.langchain.com
-      LANGSMITH_API_KEY: unused
-      LANGSMITH_PROJECT: Rojgar AI
       LLAMA_CLOUD_API_KEY: unused
       TAVILY_API_KEY: unused
 
