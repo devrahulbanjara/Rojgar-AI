@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import { SEED, expectLoggedInAsCandidate, loginAs } from './helpers'
 
 test.describe('Auth flow (real backend)', () => {
-  test('seeded candidate logs in → lands on /candidate', async ({ page }) => {
+  test('seeded candidate logs in → lands on /me/applications', async ({ page }) => {
     await loginAs(page, SEED.candidateEmail)
     await expectLoggedInAsCandidate(page)
   })
@@ -35,14 +35,14 @@ test.describe('Auth flow (real backend)', () => {
     expect([400, 409, 422]).toContain(res.status())
   })
 
-  test('logout clears session — re-visiting candidate area redirects to login', async ({
+  test('logout clears session — re-visiting candidate area asks to sign in', async ({
     page,
     context,
   }) => {
     await loginAs(page, SEED.candidateEmail)
     await expectLoggedInAsCandidate(page)
     await context.clearCookies()
-    await page.goto('/candidate')
-    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
+    await page.goto('/me/applications')
+    await expect(page).toHaveURL(/\/(signin|login)/, { timeout: 10_000 })
   })
 })

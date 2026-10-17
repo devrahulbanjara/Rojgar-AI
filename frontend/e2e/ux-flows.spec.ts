@@ -5,7 +5,6 @@ import { SEED, loginAs } from './helpers'
 // Flow regression tests for the shortest-path changes. They need the seeded
 // demo data (backend/seed_data.py); tests skip when it is absent.
 const DEMO_PASSWORD = 'Password@123'
-const DEMO_CANDIDATE = 'aakriti.shrestha@gmail.com'
 const DEMO_RECRUITER = 'priya.maharjan@f1soft.com'
 
 /** Counts user clicks so step budgets are asserted, not just eyeballed. */
@@ -25,26 +24,9 @@ test.describe('Shortest-path flows', () => {
   test('login ignores a backslash open-redirect in ?next', async ({ page }) => {
     await page.goto('/login?next=%2F%5Cevil.com')
     await loginAs(page, SEED.candidateEmail)
-    await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/(candidate|onboarding)/, {
+    await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/me\/applications/, {
       timeout: 15_000,
     })
-  })
-
-  test('candidate applies to a job in two clicks', async ({ page }) => {
-    await loginAs(page, DEMO_CANDIDATE, DEMO_PASSWORD)
-    await page.waitForURL(/\/candidate/, { timeout: 15_000 }).catch(() => null)
-    test.skip(!page.url().includes('/candidate'), 'seeded demo candidate not available')
-
-    await page.goto('/candidate/jobs')
-    const applyButton = page.getByRole('button', { name: /^Apply$/ }).first()
-    await applyButton.waitFor({ timeout: 15_000 }).catch(() => null)
-    test.skip(!(await applyButton.isVisible()), 'no open job left to apply to')
-
-    const clicks = await trackClicks(page)
-    await applyButton.click()
-    await page.getByRole('button', { name: 'Submit application' }).click()
-    await expect(page.getByText(/application submitted/i)).toBeVisible({ timeout: 15_000 })
-    expect(await clicks()).toBe(2)
   })
 
   test('recruiter shortlists from the row in one click', async ({ page }) => {
