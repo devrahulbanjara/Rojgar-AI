@@ -10,17 +10,23 @@ import { Logo } from '@/components/app/Logo'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 import { AccountMenu } from './AccountMenu'
-import { AppSidebar } from './AppSidebar'
+import { type AppArea, AppSidebar } from './AppSidebar'
 import { NotificationsBell } from './NotificationsBell'
 import { TopBar } from './TopBar'
 
-/** Recruiter/admin shell: AppSidebar + TopBar around the page. */
-export function RecruiterShell({ children }: { children: ReactNode }) {
+/** Business team and staff shell: AppSidebar + TopBar around the page. */
+export function RecruiterShell({
+  children,
+  area = 'business',
+}: {
+  children: ReactNode
+  area?: AppArea
+}) {
   return (
     <SidebarProvider className="app-surface">
-      <AppSidebar />
+      <AppSidebar area={area} />
       <SidebarInset className="min-w-0 bg-background">
-        <TopBar />
+        <TopBar area={area} />
         {children}
       </SidebarInset>
     </SidebarProvider>

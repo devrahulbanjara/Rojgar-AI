@@ -1,10 +1,14 @@
 import {
+  BusinessIcon,
   CandidatesIcon,
+  FlagIcon,
   type IconComponent,
   InsightsIcon,
   InterviewsIcon,
   JobsIcon,
+  PaymentsIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   TeamIcon,
   TodayIcon,
 } from '@/components/icons'
@@ -21,7 +25,7 @@ export type NavItem = {
 export const RECRUITER_NAV: NavItem[] = [
   { label: 'Today', href: '/recruiter', icon: TodayIcon, exact: true },
   { label: 'Jobs', href: '/recruiter/jobs', icon: JobsIcon },
-  { label: 'Candidates', href: '/recruiter/candidates', icon: CandidatesIcon },
+  { label: 'Applicants', href: '/recruiter/candidates', icon: CandidatesIcon },
   { label: 'Interviews', href: '/recruiter/interviews', icon: InterviewsIcon },
   { label: 'Team', href: '/recruiter/team', icon: TeamIcon, adminOnly: true },
 ]
@@ -38,6 +42,14 @@ export const RECRUITER_SETTINGS: NavItem = {
   href: '/recruiter/settings',
   icon: SettingsIcon,
 }
+
+/** Rojgar AI staff (/admin). */
+export const ADMIN_NAV: NavItem[] = [
+  { label: 'Approvals', href: '/admin', icon: ShieldCheckIcon, exact: true },
+  { label: 'Businesses', href: '/admin/businesses', icon: BusinessIcon },
+  { label: 'Reports', href: '/admin/reports', icon: FlagIcon },
+  { label: 'Payments', href: '/admin/payments', icon: PaymentsIcon },
+]
 
 export function isActivePath(pathname: string, item: NavItem): boolean {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href)

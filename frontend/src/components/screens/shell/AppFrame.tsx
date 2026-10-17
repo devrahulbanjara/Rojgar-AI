@@ -20,6 +20,17 @@ export function RecruiterFrame({ children }: { children: ReactNode }) {
   )
 }
 
+/** Rojgar AI staff pages (/admin): staff-only, with the staff sidebar. */
+export function AdminFrame({ children }: { children: ReactNode }) {
+  return (
+    <AuthGuard access="platform_admin">
+      <RecruiterShell area="admin">
+        <main className="min-w-0 flex-1">{children}</main>
+      </RecruiterShell>
+    </AuthGuard>
+  )
+}
+
 /** Pages every signed-in person shares (notifications): the shell follows the person. */
 export function SharedFrame({ children }: { children: ReactNode }) {
   const isMember = useAppSelector((s) => Boolean(s.auth.user?.active_business))

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sidebar'
 
 import {
+  ADMIN_NAV,
   type NavItem,
   RECRUITER_INSIGHTS,
   RECRUITER_NAV,
@@ -62,16 +63,23 @@ function PlanChip() {
   )
 }
 
-/** Recruiter/admin sidebar: Today · Jobs · Candidates · Interviews · Team, Settings pinned. */
-export function AppSidebar() {
+export type AppArea = 'business' | 'admin'
+
+/**
+ * Business: Today · Jobs · Applicants · Interviews · Team (owners), Insights and Settings pinned.
+ * Admin (Rojgar AI staff): Approvals · Businesses · Reports · Payments.
+ */
+export function AppSidebar({ area = 'business' }: { area?: AppArea }) {
   const pathname = usePathname()
   const isAdmin = useIsOwner()
-  const items = RECRUITER_NAV.filter((item) => isAdmin || !item.adminOnly)
+  const items =
+    area === 'admin' ? ADMIN_NAV : RECRUITER_NAV.filter((item) => isAdmin || !item.adminOnly)
+  const home = area === 'admin' ? '/admin' : '/recruiter'
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 justify-center px-4 group-data-[collapsible=icon]:px-2">
-        <Link href="/recruiter" className="flex items-center">
+        <Link href={home} className="flex items-center">
           <Logo className="h-7 group-data-[collapsible=icon]:hidden" />
           <Logo variant="mark" className="hidden size-8 group-data-[collapsible=icon]:block" />
         </Link>
@@ -85,13 +93,15 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        {isAdmin ? <PlanChip /> : null}
-        <SidebarMenu className="gap-1">
-          <NavLink item={RECRUITER_INSIGHTS} pathname={pathname} />
-          <NavLink item={RECRUITER_SETTINGS} pathname={pathname} />
-        </SidebarMenu>
-      </SidebarFooter>
+      {area === 'business' ? (
+        <SidebarFooter>
+          {isAdmin ? <PlanChip /> : null}
+          <SidebarMenu className="gap-1">
+            <NavLink item={RECRUITER_INSIGHTS} pathname={pathname} />
+            <NavLink item={RECRUITER_SETTINGS} pathname={pathname} />
+          </SidebarMenu>
+        </SidebarFooter>
+      ) : null}
     </Sidebar>
   )
 }
