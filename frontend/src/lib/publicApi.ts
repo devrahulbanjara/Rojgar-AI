@@ -1,15 +1,27 @@
 /**
  * Client for the no-account endpoints (/public/*, /me/applications).
- * Works in server and client components. In development, if the backend does
- * not have a route yet (FastAPI's bare {"detail":"Not Found"}), a small mock is
- * returned so the pages stay usable; production never mocks.
+ * Works in server and client components.
  */
-import type { ApplicationStatus } from '@/store/services/applicationsApi'
-
-import { publicApiMock } from './publicApiMock'
-
 export type LocationType = 'remote' | 'hybrid' | 'onsite'
-export type ApplySource = 'linkedin' | 'facebook' | 'merojob' | 'direct' | 'other'
+export type ApplySource =
+  | 'linkedin'
+  | 'facebook'
+  | 'merojob'
+  | 'viber'
+  | 'qr'
+  | 'referral'
+  | 'direct'
+  | 'other'
+
+/** What an applicant sees. Never shows the AI review. */
+export type Stage =
+  | 'new'
+  | 'shortlisted'
+  | 'interview'
+  | 'offer'
+  | 'hired'
+  | 'not_selected'
+  | 'withdrawn'
 
 export type PublicCompany = {
   name: string
@@ -19,6 +31,9 @@ export type PublicCompany = {
   location?: string | null
   industry?: string | null
   description?: string | null
+  /** Shown on the job page, careers page and poster. */
+  phone?: string | null
+  verified: boolean
 }
 
 export type PublicJobSummary = {
@@ -49,17 +64,22 @@ export type CvPrefill = {
   full_name?: string | null
   email?: string | null
   phone?: string | null
-  linkedin_url?: string | null
-  github_url?: string | null
-  portfolio_url?: string | null
 }
 
 export type GuestApplicationCreated = {
   application_id: string
   job_title: string
   company_name: string
-  email: string
+  phone: string
+  email?: string | null
   status_link_sent: boolean
+}
+
+export type InterviewInfo = {
+  starts_at: string
+  ends_at: string
+  location?: string | null
+  join_url?: string | null
 }
 
 export type ApplicationStatusView = {
@@ -68,9 +88,8 @@ export type ApplicationStatusView = {
   job_slug: string
   company_name: string
   company_slug: string
-  status: ApplicationStatus
-  status_label: string
-  next_step?: string | null
+  stage: Stage
+  interview?: InterviewInfo | null
   applied_at: string
   updated_at: string
   can_withdraw: boolean
@@ -78,6 +97,17 @@ export type ApplicationStatusView = {
 
 export type MyApplication = Omit<ApplicationStatusView, 'can_withdraw'> & {
   company_logo_url?: string | null
+  /** Opens this application's status page. */
+  status_token: string
+}
+
+export type RecommendInput = {
+  referrerName: string
+  referrerPhone?: string
+  name: string
+  phone: string
+  note?: string
+  ref?: string
 }
 
 export class PublicApiError extends Error {
@@ -91,7 +121,6 @@ export class PublicApiError extends Error {
 }
 
 const BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? ''
-const CAN_MOCK = process.env.NODE_ENV !== 'production'
 
 type Envelope<T> = {
   success?: boolean
@@ -101,7 +130,7 @@ type Envelope<T> = {
   detail?: unknown
 }
 
-async function request<T>(path: string, init?: RequestInit, mockKey?: string): Promise<T> {
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response
   try {
     res = await fetch(`${BASE}${path}`, { credentials: 'include', cache: 'no-store', ...init })
@@ -110,10 +139,6 @@ async function request<T>(path: string, init?: RequestInit, mockKey?: string): P
   }
   const body = (await res.json().catch(() => ({}))) as Envelope<T>
 
-  // Route not deployed yet (bare FastAPI 404) → dev mock.
-  if (res.status === 404 && body.detail === 'Not Found' && CAN_MOCK && mockKey) {
-    return publicApiMock<T>(mockKey, path, init)
-  }
   if (!res.ok || body.success === false) {
     const first = body.errors?.[0]
     const message =
@@ -125,89 +150,97 @@ async function request<T>(path: string, init?: RequestInit, mockKey?: string): P
   return body.data as T
 }
 
+const json = (body: unknown): RequestInit => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+})
+
 export const publicApi = {
-  job: (slug: string) =>
-    request<PublicJob>(`/public/jobs/${encodeURIComponent(slug)}`, undefined, 'job'),
+  job: (slug: string) => request<PublicJob>(`/public/jobs/${encodeURIComponent(slug)}`),
 
   careers: (companySlug: string) =>
-    request<CareersPage>(
-      `/public/companies/${encodeURIComponent(companySlug)}/jobs`,
-      undefined,
-      'careers',
-    ),
+    request<CareersPage>(`/public/companies/${encodeURIComponent(companySlug)}/jobs`),
 
   prefill: (cv: File) => {
     const form = new FormData()
     form.append('cv', cv)
-    return request<CvPrefill>('/public/cv-prefill', { method: 'POST', body: form }, 'prefill')
+    return request<CvPrefill>('/public/cv-prefill', { method: 'POST', body: form })
   },
 
   apply: (
     slug: string,
     input: {
       fullName: string
-      email: string
-      phone?: string
-      cv: File
+      phone: string
+      email?: string
+      cv?: File | null
       answers: { question: string; answer: string }[]
       src: ApplySource
+      ref?: string
       turnstileToken?: string
     },
   ) => {
     const form = new FormData()
     form.append('full_name', input.fullName)
-    form.append('email', input.email)
-    if (input.phone) form.append('phone', input.phone)
-    form.append('cv', input.cv)
+    form.append('phone', input.phone)
+    if (input.email) form.append('email', input.email)
+    if (input.cv) form.append('cv', input.cv)
     form.append('consent', 'true')
     if (input.answers.length) form.append('answers', JSON.stringify(input.answers))
     form.append('src', input.src)
+    if (input.ref) form.append('ref', input.ref)
     if (input.turnstileToken) form.append('turnstile_token', input.turnstileToken)
     return request<GuestApplicationCreated>(
       `/public/jobs/${encodeURIComponent(slug)}/applications`,
       { method: 'POST', body: form },
-      'apply',
     )
   },
+
+  recommend: (slug: string, input: RecommendInput) =>
+    request<{ sent: boolean }>(
+      `/public/jobs/${encodeURIComponent(slug)}/recommend`,
+      json({
+        referrer_name: input.referrerName,
+        referrer_phone: input.referrerPhone || null,
+        name: input.name,
+        phone: input.phone,
+        note: input.note || null,
+        ref: input.ref || null,
+      }),
+    ),
 
   status: (token: string) =>
     request<ApplicationStatusView>(
       `/public/applications/status?token=${encodeURIComponent(token)}`,
-      undefined,
-      'status',
     ),
 
   withdraw: (token: string) =>
     request<{ withdrawn: boolean; data_deleted: boolean }>(
       '/public/applications/withdraw',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      },
-      'withdraw',
+      json({ token }),
     ),
 
   magicLink: (email: string) =>
-    request<{ sent: boolean }>(
-      '/public/auth/magic-link',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      },
-      'magicLink',
-    ),
+    request<{ sent: boolean }>('/public/auth/magic-link', json({ email })),
 
   myApplications: (accessToken?: string) =>
     request<MyApplication[]>(
       '/me/applications',
       accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined,
-      'myApplications',
     ),
 }
 
-export const APPLY_SOURCES: ApplySource[] = ['linkedin', 'facebook', 'merojob', 'direct', 'other']
+export const APPLY_SOURCES: ApplySource[] = [
+  'linkedin',
+  'facebook',
+  'merojob',
+  'viber',
+  'qr',
+  'referral',
+  'direct',
+  'other',
+]
 
 export function toApplySource(value: string | null | undefined): ApplySource {
   return APPLY_SOURCES.includes(value as ApplySource) ? (value as ApplySource) : 'direct'

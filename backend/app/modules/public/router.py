@@ -30,8 +30,8 @@ from app.modules.public.schemas import (
     MagicLinkSent,
     MyApplication,
     PublicJob,
-    RecommendCreated,
     RecommendRequest,
+    RecommendSent,
     StatusTokenRequest,
     WithdrawResult,
 )
@@ -53,23 +53,6 @@ async def get_public_job(
     return ResponseBuilder.success(data=await service.get_public_job(db, slug, ref))
 
 
-@router.post(
-    "/public/jobs/{slug}/recommend",
-    status_code=status.HTTP_201_CREATED,
-    summary="Recommend someone for this job (no account needed)",
-    dependencies=[_per_ip("recommend", 5, 3600)],
-)
-async def recommend(
-    slug: str, payload: RecommendRequest, bg_tasks: BackgroundTasks, db: DbSession
-) -> UnifiedResponse[RecommendCreated]:
-    data = await service.recommend_candidate(db, slug, payload, bg_tasks)
-    return ResponseBuilder.success(
-        data=data,
-        message="Thanks for the recommendation",
-        status_code=status.HTTP_201_CREATED,
-    )
-
-
 @router.get("/public/companies/{slug}/jobs", summary="Company careers page: open jobs")
 async def get_careers_page(slug: str, db: DbSession) -> UnifiedResponse[CareersPage]:
     return ResponseBuilder.success(data=await service.get_careers_page(db, slug))
@@ -77,7 +60,7 @@ async def get_careers_page(slug: str, db: DbSession) -> UnifiedResponse[CareersP
 
 @router.post(
     "/public/cv-prefill",
-    summary="Read name/email/phone/links from a CV to fill the apply form",
+    summary="Read name/email/phone from a PDF CV to fill the apply form (photos: nothing)",
     dependencies=[_per_ip("cv_prefill", 20, 60)],
 )
 async def cv_prefill(cv: Annotated[UploadFile, File()]) -> UnifiedResponse[CvPrefill]:
@@ -87,7 +70,7 @@ async def cv_prefill(cv: Annotated[UploadFile, File()]) -> UnifiedResponse[CvPre
 @router.post(
     "/public/jobs/{slug}/applications",
     status_code=status.HTTP_201_CREATED,
-    summary="Apply without an account",
+    summary="Apply without an account: phone required; email and CV (PDF or photo) optional",
     dependencies=[_per_ip("apply", 10, 600, per_email=3)],
 )
 async def apply_as_guest(
@@ -96,30 +79,30 @@ async def apply_as_guest(
     bg_tasks: BackgroundTasks,
     db: DbSession,
     full_name: Annotated[str, Form(min_length=1, max_length=255)],
+    phone: Annotated[str, Form(min_length=7, max_length=30)],
     consent: Annotated[bool, Form()],
     email: Annotated[str | None, Form(max_length=255)] = None,
-    phone: Annotated[str | None, Form(max_length=30)] = None,
     cv: Annotated[UploadFile | None, File()] = None,
     answers: Annotated[str | None, Form(max_length=20000)] = None,
     src: Annotated[ApplySource, Form()] = "direct",
-    ref: Annotated[str | None, Form(max_length=32)] = None,
+    ref: Annotated[str | None, Form(max_length=64)] = None,
     turnstile_token: Annotated[str | None, Form(max_length=4096)] = None,
 ) -> UnifiedResponse[GuestApplicationCreated]:
     email = (email or "").strip() or None
-    if email is not None:
+    if email:
         try:
             _EMAIL.validate_python(email)
         except ValidationError as exc:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Please enter a valid email.",
+                detail="Please check your email, or leave it empty.",
             ) from exc
     data = await service.submit_guest_application(
         db,
         slug=slug,
         full_name=full_name,
+        phone=phone,
         email=email,
-        phone=(phone or "").strip() or None,
         cv=cv if cv is not None and cv.filename else None,
         answers_json=answers,
         consent=consent,
@@ -132,6 +115,18 @@ async def apply_as_guest(
     return ResponseBuilder.success(
         data=data, message="Application sent", status_code=status.HTTP_201_CREATED
     )
+
+
+@router.post(
+    "/public/jobs/{slug}/recommend",
+    summary="Suggest someone you know for a job (texts them the link)",
+    dependencies=[_per_ip("recommend", 10, 3600)],
+)
+async def recommend(
+    slug: str, payload: RecommendRequest, db: DbSession
+) -> UnifiedResponse[RecommendSent]:
+    await service.recommend(db, slug, payload)
+    return ResponseBuilder.success(data=RecommendSent())
 
 
 @router.get(

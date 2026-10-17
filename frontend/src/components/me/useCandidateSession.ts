@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
-import { updateAccessToken } from '@/store/slices/authSlice'
+import { setCredentials, updateAccessToken } from '@/store/slices/authSlice'
 
 export type CandidateSession =
   | { status: 'checking' }
@@ -33,9 +33,11 @@ export function useCandidateSession(): CandidateSession {
         const fresh = result.data?.access_token
         if (!fresh || cancelled) return
         dispatch(updateAccessToken(fresh))
-        await getMe()
+        const me = await getMe()
           .unwrap()
           .catch(() => undefined)
+        // Remember the session so public pages show "Open Rojgar AI" instead of "Log in".
+        if (me?.data) dispatch(setCredentials({ accessToken: fresh, user: me.data }))
       })
       .catch(() => undefined)
       .finally(() => !cancelled && setChecked(true))

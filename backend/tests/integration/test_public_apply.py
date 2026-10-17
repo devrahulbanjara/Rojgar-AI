@@ -1,5 +1,6 @@
-"""Public apply link: job page, CV prefill, no-account apply, status link,
-withdraw + delete, passwordless sign-in, and recruiter source counts."""
+"""Public apply link: job page, CV prefill, phone-first apply (CV as PDF, photo
+or none), suggest someone, status link, withdraw + delete, passwordless
+sign-in, and recruiter source counts."""
 
 import json
 import re
@@ -12,7 +13,9 @@ from app.infrastructures.email.service import EmailService
 from app.infrastructures.storage.service import storage_service
 from app.modules.applications.models import Application
 from app.modules.auth.models import User
-from app.modules.public.models import MagicLinkToken
+from app.modules.public import notify
+from app.modules.public.cv_text import PHOTO_NOT_READ
+from app.modules.public.models import JobSuggestion, MagicLinkToken
 from app.modules.public.tokens import hash_magic_token
 from app.modules.resumes.models import Resume
 from app.shared.enums import JobStatus
@@ -64,6 +67,10 @@ CV = make_pdf(
 )
 
 
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+HEIC = b"\x00\x00\x00\x18ftypheic" + b"\x00" * 64
+
+
 @pytest.fixture
 def outbox(monkeypatch):
     """Capture emails and fake private uploads (no SMTP/S3 in tests)."""
@@ -73,7 +80,7 @@ def outbox(monkeypatch):
         sent.append({"to": to_email, "subject": subject, "html": html_body})
 
     async def _upload(data, folder, *, extension, content_type):
-        assert data.startswith(b"%PDF-") and content_type == "application/pdf"
+        assert content_type in {"application/pdf", "image/png", "image/jpeg"}
         return f"private/{folder}/test.{extension}"
 
     async def _delete(_key):
@@ -85,24 +92,45 @@ def outbox(monkeypatch):
     return sent
 
 
+@pytest.fixture
+def texts(monkeypatch):
+    """Capture SMS sent through notify_applicant."""
+    sent: list[dict] = []
+
+    async def _sms(phone, text):
+        sent.append({"to": phone, "text": text})
+        return True
+
+    monkeypatch.setattr(notify, "sender", _sms)
+    return sent
+
+
 def _token_from(html: str, param: str = "token") -> str:
     match = re.search(rf"[?&]{param}=([A-Za-z0-9._\-]+)", html)
     assert match, html
     return match.group(1)
 
 
-async def _apply(client, slug, *, email="sita.gurung@example.com", **overrides):
+async def _apply(
+    client,
+    slug,
+    *,
+    email="sita.gurung@example.com",
+    cv=("cv.pdf", CV, "application/pdf"),
+    **overrides,
+):
     data = {
         "full_name": "Sita Gurung",
-        "email": email,
+        "phone": "9812345678",
         "consent": "true",
         "src": "linkedin",
+        **({"email": email} if email else {}),
         **overrides,
     }
     return await client.post(
         f"/public/jobs/{slug}/applications",
         data=data,
-        files={"cv": ("cv.pdf", CV, "application/pdf")},
+        files={"cv": cv} if cv else None,
     )
 
 
@@ -162,15 +190,28 @@ class TestCvPrefill:
         assert data["full_name"] == "Sita Gurung"
         assert data["email"] == "sita.gurung@example.com"
         assert data["phone"] == "+9779812345678"
-        assert data["linkedin_url"] == "https://linkedin.com/in/sita-gurung"
-        assert data["github_url"] == "https://github.com/sitag"
+        assert "github_url" not in data
 
-    async def test_rejects_non_pdf_even_with_pdf_name(self, client):
+    async def test_rejects_non_cv_files_even_with_pdf_name(self, client):
         resp = await client.post(
             "/public/cv-prefill",
             files={"cv": ("cv.pdf", b"<html>not a pdf</html>", "application/pdf")},
         )
         assert resp.status_code == 400
+
+    async def test_photo_is_accepted_but_not_read(self, client):
+        resp = await client.post(
+            "/public/cv-prefill", files={"cv": ("cv.png", PNG, "image/png")}
+        )
+        assert resp.status_code == 200
+        assert resp.json()["data"] == {"full_name": None, "email": None, "phone": None}
+
+    async def test_heic_photo_gets_a_clear_message(self, client):
+        resp = await client.post(
+            "/public/cv-prefill", files={"cv": ("cv.heic", HEIC, "image/heic")}
+        )
+        assert resp.status_code == 400
+        assert "HEIC" in resp.text
 
 
 class TestGuestApply:
@@ -223,6 +264,54 @@ class TestGuestApply:
 
         assert len(outbox) == 1 and outbox[0]["to"] == "sita.gurung@example.com"
         assert "/applications/status?token=" in outbox[0]["html"]
+
+    async def test_photo_cv_is_stored_and_marked_unread(self, client, db, outbox):
+        _, company = await make_recruiter_admin(db, email="a12@test.com")
+        job = await make_active_job(db, company.id)
+        resp = await _apply(client, job.slug, cv=("cv.png", PNG, "image/png"))
+        assert resp.status_code == 201, resp.text
+        application = await db.scalar(
+            select(Application).where(Application.job_id == job.id)
+        )
+        assert application.ai_flag_reason == PHOTO_NOT_READ
+        resume = await db.get(Resume, application.resume_id)
+        assert resume.cv_file_key == "private/cvs/test.png"
+        assert resume.summary is None
+
+    async def test_no_cv_is_fine_and_sms_carries_the_status_link(
+        self, client, db, outbox, texts
+    ):
+        _, company = await make_recruiter_admin(db, email="a13@test.com")
+        job = await make_active_job(db, company.id)
+        resp = await _apply(client, job.slug, cv=None, phone="+977 981-2345678")
+        assert resp.status_code == 201, resp.text
+        assert resp.json()["data"]["phone"] == "+9779812345678"
+        application = await db.scalar(
+            select(Application).where(Application.job_id == job.id)
+        )
+        resume = await db.get(Resume, application.resume_id)
+        assert resume.cv_file_key is None
+        assert texts[0]["to"] == "+9779812345678"
+        assert "/applications/status?token=" in texts[0]["text"]
+
+    async def test_bad_phone_is_rejected(self, client, db, outbox):
+        _, company = await make_recruiter_admin(db, email="a14@test.com")
+        job = await make_active_job(db, company.id)
+        resp = await _apply(client, job.slug, phone="1234567890")
+        assert resp.status_code == 422
+
+    async def test_phone_only_never_invents_an_email(self, client, db, outbox, texts):
+        _, company = await make_recruiter_admin(db, email="a15@test.com")
+        job = await make_active_job(db, company.id)
+        resp = await _apply(client, job.slug, email=None)
+        if User.__table__.c.email.nullable:
+            assert resp.status_code == 201, resp.text
+            assert resp.json()["data"]["email"] is None
+            assert outbox == [] and len(texts) == 1
+        else:
+            # Until users.email is nullable (wave/b1), ask for an email instead.
+            assert resp.status_code == 422
+            assert "email" in resp.text
 
     async def test_consent_is_required(self, client, db, outbox):
         _, company = await make_recruiter_admin(db, email="a5@test.com")
@@ -375,7 +464,8 @@ class TestStatusAndWithdraw:
         )
         assert status_resp.status_code == 200
         view = status_resp.json()["data"]
-        assert view["status_label"] == "Applied"
+        assert view["stage"] == "new"
+        assert view["interview"] is None
         assert view["can_withdraw"] is True
         assert "score" not in view and "ai_review_status" not in view
 
@@ -440,7 +530,11 @@ class TestMagicLink:
         assert mine.status_code == 200
         items = mine.json()["data"]
         assert [i["job_slug"] for i in items] == [job.slug]
-        assert items[0]["status_label"] == "Applied"
+        assert items[0]["stage"] == "new"
+        status = await client.get(
+            "/public/applications/status", params={"token": items[0]["status_token"]}
+        )
+        assert status.json()["data"]["job_slug"] == job.slug
 
     async def test_expired_link_is_rejected(self, client, db):
         db.add(
@@ -483,3 +577,66 @@ class TestRecruiterSide:
             f"/recruiter/v2/jobs/{job.id}/pipeline", headers=auth_headers(admin.id)
         )
         assert pipeline.json()["data"]["items"][0]["source"] == "facebook"
+
+
+class TestSuggestSomeone:
+    async def test_suggestion_texts_link_and_marks_the_application(
+        self, client, db, outbox, texts
+    ):
+        _, company = await make_recruiter_admin(
+            db, email="c1@test.com", company_name="Hotel Yak"
+        )
+        job = await make_active_job(db, company.id, title="Receptionist")
+        body = {
+            "referrer_name": "Ram Shrestha",
+            "referrer_phone": "9801111111",
+            "name": "Sita Gurung",
+            "phone": "9812345678",
+            "note": "Worked with me for 2 years",
+        }
+        resp = await client.post(f"/public/jobs/{job.slug}/recommend", json=body)
+        assert resp.status_code == 200, resp.text
+        again = await client.post(f"/public/jobs/{job.slug}/recommend", json=body)
+        assert again.status_code == 200
+        assert len(texts) == 1 and texts[0]["to"] == "+9779812345678"
+
+        suggestion = await db.scalar(
+            select(JobSuggestion).where(JobSuggestion.job_id == job.id)
+        )
+        assert suggestion.referrer_name == "Ram Shrestha"
+        assert suggestion.referrer_phone == "+9779801111111"
+        assert f"ref={suggestion.token}" in texts[0]["text"]
+
+        applied = await _apply(client, job.slug, src="direct", ref=suggestion.token)
+        assert applied.status_code == 201, applied.text
+        application = await db.scalar(
+            select(Application).where(Application.job_id == job.id)
+        )
+        assert application.source == "referral"
+        await db.refresh(suggestion)
+        assert suggestion.application_id == application.id
+
+    async def test_own_number_and_bad_numbers_are_rejected(self, client, db, texts):
+        _, company = await make_recruiter_admin(db, email="c2@test.com")
+        job = await make_active_job(db, company.id)
+        base = {"referrer_name": "Ram", "name": "Hari"}
+        same = await client.post(
+            f"/public/jobs/{job.slug}/recommend",
+            json={**base, "referrer_phone": "9801111111", "phone": "+9779801111111"},
+        )
+        assert same.status_code == 422
+        bad = await client.post(
+            f"/public/jobs/{job.slug}/recommend", json={**base, "phone": "1234567"}
+        )
+        assert bad.status_code == 422
+        assert texts == []
+
+    async def test_closed_job_cannot_be_suggested(self, client, db, texts):
+        _, company = await make_recruiter_admin(db, email="c3@test.com")
+        job = await make_active_job(db, company.id, status=JobStatus.draft)
+        resp = await client.post(
+            f"/public/jobs/{job.slug}/recommend",
+            json={"referrer_name": "Ram", "name": "Hari", "phone": "9812345678"},
+        )
+        assert resp.status_code == 404
+

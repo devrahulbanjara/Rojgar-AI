@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
 
-import { shortDate } from '@/lib/dates'
+import { formatDate } from '@/lib/i18n'
+import { useLocale, useT } from '@/lib/i18n/client'
 import { type ApplicationStatusView, publicApi } from '@/lib/publicApi'
 
-import { APPLICATION_STATUS, StatusPill } from '@/components/app/StatusPill'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -20,6 +21,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { AuthCard } from '../auth/AuthCard'
+import { InterviewBlock, StagePill, isUpcoming, nextStepLine } from './StageBits'
 
 type State =
   | { kind: 'loading' }
@@ -27,10 +29,12 @@ type State =
   | { kind: 'ready'; view: ApplicationStatusView }
   | { kind: 'withdrawn' }
 
-/** What a candidate sees from the emailed status link. */
+/** What an applicant sees from the status link in their SMS or email. */
 export function StatusView({ token }: { token: string | null }) {
+  const t = useT()
+  const locale = useLocale()
   const [state, setState] = useState<State>(
-    token ? { kind: 'loading' } : { kind: 'error', message: 'This link is incomplete.' },
+    token ? { kind: 'loading' } : { kind: 'error', message: t.status.incomplete },
   )
   const [withdrawing, setWithdrawing] = useState(false)
 
@@ -43,12 +47,12 @@ export function StatusView({ token }: { token: string | null }) {
       .catch(
         (err) =>
           !cancelled &&
-          setState({ kind: 'error', message: err instanceof Error ? err.message : 'Link not valid.' }),
+          setState({ kind: 'error', message: err instanceof Error ? err.message : t.common.error }),
       )
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [token, t])
 
   async function withdraw() {
     if (!token) return
@@ -56,6 +60,8 @@ export function StatusView({ token }: { token: string | null }) {
     try {
       await publicApi.withdraw(token)
       setState({ kind: 'withdrawn' })
+    } catch (err) {
+      setState({ kind: 'error', message: err instanceof Error ? err.message : t.common.error })
     } finally {
       setWithdrawing(false)
     }
@@ -63,7 +69,7 @@ export function StatusView({ token }: { token: string | null }) {
 
   if (state.kind === 'loading') {
     return (
-      <AuthCard title="Your application">
+      <AuthCard title={t.status.title}>
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="h-4 w-1/2" />
       </AuthCard>
@@ -72,10 +78,10 @@ export function StatusView({ token }: { token: string | null }) {
 
   if (state.kind === 'error') {
     return (
-      <AuthCard title="Link not valid">
+      <AuthCard title={t.status.invalidTitle}>
         <p className="text-sm text-foreground">{state.message}</p>
         <Button asChild variant="outline" size="lg" className="w-full">
-          <Link href="/signin">Get a sign-in link</Link>
+          <Link href="/signin">{t.status.getLink}</Link>
         </Button>
       </AuthCard>
     )
@@ -83,49 +89,60 @@ export function StatusView({ token }: { token: string | null }) {
 
   if (state.kind === 'withdrawn') {
     return (
-      <AuthCard title="Application withdrawn">
-        <p className="text-sm text-foreground">Your CV and details for this job were deleted.</p>
+      <AuthCard title={t.status.withdrawnTitle}>
+        <p className="text-sm text-foreground">{t.status.withdrawnLine}</p>
       </AuthCard>
     )
   }
 
   const { view } = state
-  const tone = APPLICATION_STATUS[view.status]?.tone ?? 'neutral'
+  const showInterview = view.stage === 'interview' && view.interview && isUpcoming(view.interview)
 
   return (
     <AuthCard
       title={view.job_title}
       footer={
-        <Link href="/signin" className="font-medium text-primary hover:underline">
-          See all my applications
+        <Link href="/me/applications" className="font-medium text-primary hover:underline">
+          {t.status.seeAll}
         </Link>
       }
+     
     >
       <div className="flex flex-col gap-3">
-        <Link href={`/c/${view.company_slug}`} className="text-sm font-medium hover:underline">
+        <Link href={`/c/${view.company_slug}`} className="w-fit text-sm font-medium hover:underline">
           {view.company_name}
         </Link>
-        <StatusPill tone={tone} className="w-fit">
-          {view.status_label}
-        </StatusPill>
-        {view.next_step ? <p className="text-sm text-foreground">{view.next_step}</p> : null}
-        <p className="text-xs text-muted-foreground">Applied {shortDate(view.applied_at)}</p>
+        <StagePill stage={view.stage} className="w-fit" />
+        <p className="text-sm text-foreground">{nextStepLine(t, view.stage, view.interview)}</p>
+        <p className="text-xs text-muted-foreground">
+          {t.status.applied(formatDate(view.applied_at, locale))}
+        </p>
       </div>
+
+      {showInterview ? (
+        <InterviewBlock
+          title={`${view.job_title} · ${view.company_name}`}
+          interview={view.interview!}
+        />
+      ) : null}
 
       {view.can_withdraw ? (
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="ghost" className="w-full text-muted-foreground">
-              Withdraw application
+              {t.status.withdraw}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Withdraw and delete your data?</DialogTitle>
+              <DialogTitle>{t.status.withdrawConfirm}</DialogTitle>
             </DialogHeader>
             <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">{t.status.cancel}</Button>
+              </DialogClose>
               <Button variant="destructive" loading={withdrawing} onClick={withdraw}>
-                Withdraw
+                {t.status.withdrawYes}
               </Button>
             </DialogFooter>
           </DialogContent>

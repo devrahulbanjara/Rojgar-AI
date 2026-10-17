@@ -4,6 +4,7 @@ withdraw, and passwordless sign-in."""
 import io
 import json
 import os
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from html import escape
@@ -13,6 +14,7 @@ from fastapi import BackgroundTasks, HTTPException, Response, UploadFile, status
 from loguru import logger
 from pydantic import ValidationError
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -39,15 +41,19 @@ from app.modules.auth.models import OAuthAccount, RefreshToken, User
 from app.modules.admin.guards import is_publicly_visible, taken_down_job_ids
 from app.modules.auth.enums import BusinessStatus
 from app.modules.companies.models import Company, CompanyMembership
+from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job, JobReferrer
 from app.modules.profiles.models import Profile
 from app.modules.public import cv_text
-from app.modules.public.models import MagicLinkToken
+from app.modules.public.models import JobSuggestion, MagicLinkToken
+from app.modules.public.notify import notify_applicant
+from app.modules.public.phone import normalize_phone
 from app.modules.public.schemas import (
     ApplicationStatusView,
     CareersPage,
     CvPrefill,
     GuestApplicationCreated,
+    InterviewInfo,
     MyApplication,
     PublicCategory,
     PublicCompany,
@@ -56,43 +62,11 @@ from app.modules.public.schemas import (
     PublicQuestion,
     RecommendCreated,
     RecommendRequest,
+    RecommendSent,
     ScreeningAnswer,
+    Stage,
     WithdrawResult,
 )
-from app.modules.public.tokens import (
-    create_status_token,
-    decode_status_token,
-    hash_magic_token,
-    new_magic_token,
-    status_url,
-)
-from app.modules.resumes.models import Resume
-from app.shared.enums import (
-    JOB_CATEGORY_LABELS,
-    ApplicationSource,
-    ApplicationStage,
-    EventType,
-    JobStatus,
-    QuestionType,
-    SyncAction,
-)
-from app.shared.normalize import normalize_phone
-
-TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-
-# Plain-English status for candidates; AI review state is never shown.
-_STAGE_COPY: dict[ApplicationStage, tuple[str, str | None]] = {
-    ApplicationStage.new: ("Applied", "The team is reviewing applications."),
-    ApplicationStage.shortlisted: (
-        "Shortlisted",
-        "Watch your email or phone for an interview invite.",
-    ),
-    ApplicationStage.interview: ("Interview", "Check your email for the details."),
-    ApplicationStage.offer: ("Offer", "The team will contact you about the offer."),
-    ApplicationStage.hired: ("Hired", None),
-    ApplicationStage.rejected: ("Not selected", None),
-    ApplicationStage.withdrawn: ("Withdrawn", None),
-}
 
 _WITHDRAWABLE = {
     ApplicationStage.new,
@@ -106,12 +80,28 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _status_copy(stage: ApplicationStage) -> tuple[str, str | None]:
-    return _STAGE_COPY.get(stage, (stage.value.replace("_", " ").capitalize(), None))
+_STAGE: dict[ApplicationStage, Stage] = {
+    ApplicationStage.new: "new",
+    ApplicationStage.shortlisted: "shortlisted",
+    ApplicationStage.interview: "interview",
+    ApplicationStage.offer: "offer",
+    ApplicationStage.hired: "hired",
+    ApplicationStage.rejected: "not_selected",
+    ApplicationStage.withdrawn: "withdrawn",
+}
+
+
+def _stage_for(stage: ApplicationStage | None) -> Stage:
+    return _STAGE.get(stage, "new") if stage else "new"
 
 
 def _public_company(company: Company) -> PublicCompany:
-    return PublicCompany.model_validate(company)
+    # Company.phone and Company.status (pending/active) arrive with the business
+    # model; until then phone is None and no business shows as verified.
+    verified = str(getattr(company, "status", "")).endswith("active")
+    return PublicCompany.model_validate(company).model_copy(
+        update={"verified": verified}
+    )
 
 
 def _job_summary(job: Job) -> PublicJobSummary:
@@ -136,7 +126,7 @@ async def _load_open_job(db: AsyncSession, slug: str) -> Job:
     job = await db.scalar(
         select(Job).options(selectinload(Job.company)).where(Job.slug == slug)
     )
-if (
+    if (
         job is None
         or not job_is_open(job)
         or not await is_publicly_visible(db, job, job.company)
@@ -206,9 +196,15 @@ async def get_careers_page(db: AsyncSession, company_slug: str) -> CareersPage:
 
 
 async def prefill_cv(file: UploadFile) -> CvPrefill:
-    data = await cv_text.read_cv_upload(file)
-    text = await cv_text.extract_text(data)
-    return CvPrefill(**cv_text.prefill_from_text(text))
+    cv = await cv_text.read_cv_upload(file)
+    if cv.is_photo:
+        return CvPrefill()  # photos are kept as they are; nothing to read quickly
+    found = cv_text.prefill_from_text(await cv_text.extract_text(cv.data))
+    return CvPrefill(
+        full_name=found["full_name"],
+        email=found["email"],
+        phone=normalize_phone(found["phone"]),
+    )
 
 
 # ---------------------------------------------------------------- apply
@@ -343,13 +339,31 @@ async def _send_status_email(
     )
 
 
+async def _send_status_link(
+    *, phone: str, email: str | None, job: Job, application_id: uuid.UUID, again: bool
+) -> bool:
+    """Status link by SMS, and by email when they gave one."""
+    token = create_status_token(application_id)
+    sent = await notify_applicant(
+        phone,
+        "received",
+        company=job.company.name,
+        job=job.title,
+        url=status_url(token),
+    )
+    if email:
+        await _send_status_email(email, job.title, job.company.name, token, again=again)
+        sent = True
+    return sent
+
+
 async def submit_guest_application(
     db: AsyncSession,
     *,
     slug: str,
     full_name: str,
+    phone: str,
     email: str | None,
-    phone: str | None,
     cv: UploadFile | None,
     answers_json: str | None,
     consent: bool,
@@ -363,31 +377,26 @@ async def submit_guest_application(
     if not consent:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Please agree to share your details with the company.",
+            detail="Please agree to share your details with the business.",
         )
     full_name = " ".join(full_name.split())
     if not full_name:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter your name."
         )
-    email = email.strip().lower() if email and email.strip() else None
     normalized_phone = normalize_phone(phone)
-    if phone and normalized_phone is None:
+    if normalized_phone is None:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Please enter a valid phone number.",
+            detail="Please enter a valid mobile number.",
         )
-    if not email and not normalized_phone:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Please enter your phone number or email.",
-        )
+    phone = normalized_phone
+    email = email.strip().lower() if email and email.strip() else None
 
     await _verify_turnstile(turnstile_token, client_ip)
     job = await _load_open_job(db, slug)
     answers = parse_answers(answers_json, list(job.questions or []))
-    cv_bytes = await cv_text.read_cv_upload(cv) if cv is not None else None
-    referrer = await _referrer_for(db, job, ref)
+    cv_file = await cv_text.read_cv_upload(cv) if cv is not None else None
 
     user = await find_or_create_person(
         db, full_name=full_name, email=email, phone=normalized_phone
@@ -398,45 +407,42 @@ async def submit_guest_application(
         )
     )
     if existing is not None:
-        if email:
-            await _send_status_email(
-                email,
-                job.title,
-                job.company.name,
-                create_status_token(existing),
-                again=True,
-            )
+        await _send_status_link(
+            phone=phone, email=email, job=job, application_id=existing, again=True
+        )
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            detail="You've already applied to this job."
-            + (" We've emailed your status link again." if email else ""),
+            detail="You've already applied. We've sent your status link again.",
         )
     await _enforce_person_rate(db, user.id)
 
-    contact = {"linkedin_url": None, "github_url": None, "portfolio_url": None}
+    suggestion = (
+        await db.scalar(
+            select(JobSuggestion).where(
+                JobSuggestion.job_id == job.id, JobSuggestion.token == ref
+            )
+        )
+        if ref
+        else None
+    )
+    referrer = await _referrer_for(db, job, ref) if not suggestion else None
+    if suggestion is not None:
+        source = "referral"
+
+    text = ""
     cv_key = None
-    resume_id = None
-    if cv_bytes is not None:
-        text = await cv_text.extract_text(cv_bytes)
-        contact = cv_text.prefill_from_text(text)
+    cv_bytes = None
+    if cv_file is not None:
+        cv_bytes = cv_file.data
+        if not cv_file.is_photo:
+            text = await cv_text.extract_text(cv_bytes)
         cv_key = await storage_service.upload_private_document(
-            cv_bytes, "cvs", extension="pdf", content_type="application/pdf"
+            cv_bytes,
+            "cvs",
+            extension=cv_file.extension,
+            content_type=cv_file.content_type,
         )
-        resume = Resume(
-            user_id=user.id,
-            resume_name=f"CV for {job.title}"[:255],
-            phone=normalized_phone,
-            linkedin_url=contact["linkedin_url"],
-            github_url=contact["github_url"],
-            portfolio_url=contact["portfolio_url"],
-            # Raw CV text until background parsing fills in structured fields;
-            # this is what the review and the injection rail read meanwhile.
-            summary=text[:6000] or None,
-            cv_file_key=cv_key,
-        )
-        db.add(resume)
-        await db.flush()
-        resume_id = resume.id
+    contact = cv_text.prefill_from_text(text)
 
     profile = await db.scalar(select(Profile).where(Profile.user_id == user.id))
     if profile is None:
@@ -449,13 +455,36 @@ async def submit_guest_application(
                 portfolio_url=contact["portfolio_url"],
             )
         )
+    resume = None
+    if cv_bytes is not None or text:
+        resume = Resume(
+            user_id=user.id,
+            resume_name=f"CV for {job.title}"[:255],
+            phone=normalized_phone,
+            linkedin_url=contact["linkedin_url"],
+            github_url=contact["github_url"],
+            portfolio_url=contact["portfolio_url"],
+            summary=text[:6000] or None,
+            cv_file_key=cv_key,
+        )
+        db.add(resume)
+        await db.flush()
+
+    photo_flag = (
+        {
+            "ai_review_status": "needs_human_review",
+            "ai_flag_reason": cv_text.PHOTO_NOT_READ,
+        }
+        if cv_file is not None and cv_file.is_photo
+        else {}
+    )
     try:
         application, sync_event = await create_application(
             db,
             job=job,
             user=user,
-            resume_id=resume_id,
-            source=ApplicationSource.referral.value if referrer else source,
+            resume_id=resume.id if resume else None,
+            source=ApplicationSource.referral.value if (referrer or suggestion) else source,
             referrer_id=referrer.id if referrer else None,
             fields={
                 "consented_at": _now(),
@@ -465,8 +494,7 @@ async def submit_guest_application(
                 "shared_email_value": email,
                 "shared_phone_value": normalized_phone,
                 "shared_linkedin_url": contact["linkedin_url"],
-                "shared_github_url": contact["github_url"],
-                "shared_portfolio_url": contact["portfolio_url"],
+                **photo_flag,
             },
         )
         await db.commit()
@@ -476,9 +504,12 @@ async def submit_guest_application(
             await storage_service.delete_key(cv_key)
         raise
 
-    if cv_bytes is not None and settings.llama_cloud_api_key:
-        # Parsing first, then the review reads the structured CV.
-        bg_tasks.add_task(enrich_guest_cv, resume_id, application.id, cv_bytes)
+    if suggestion is not None and suggestion.application_id is None:
+        suggestion.application_id = application.id
+        await db.commit()
+
+    if cv_bytes is not None and settings.llama_cloud_api_key and cv_file and not cv_file.is_photo:
+        bg_tasks.add_task(enrich_guest_cv, resume.id if resume else None, application.id, cv_bytes)
         schedule_review(None, application.id)
         if "PYTEST_CURRENT_TEST" not in os.environ:
             from app.modules.applications.sync import process_sync_event
@@ -488,20 +519,102 @@ async def submit_guest_application(
         schedule_review(bg_tasks, application.id, sync_event.id)
     await invalidate_after_new_application(job, user.id, db)
 
-    if email:
-        await _send_status_email(
-            email,
-            job.title,
-            job.company.name,
-            create_status_token(application.id),
-            again=False,
-        )
+    sent = await _send_status_link(
+        phone=phone, email=email, job=job, application_id=application.id, again=False
+    )
     return GuestApplicationCreated(
         application_id=application.id,
         job_title=job.title,
         company_name=job.company.name,
+        phone=phone,
         email=email,
-        status_link_sent=bool(email),
+        status_link_sent=sent,
+    )
+
+
+# ---------------------------------------------------------------- suggest someone
+
+
+async def recommend(db: AsyncSession, slug: str, payload: RecommendRequest) -> None:
+    """Store a suggestion and text the suggested person the job link.
+
+    Suggesting the same number twice for a job is accepted but texts once.
+    """
+    job = await _load_open_job(db, slug)
+    phone = normalize_phone(payload.phone)
+    if phone is None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Please enter their mobile number.",
+        )
+    referrer_phone = None
+    if payload.referrer_phone and payload.referrer_phone.strip():
+        referrer_phone = normalize_phone(payload.referrer_phone)
+        if referrer_phone is None:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Please check your mobile number.",
+            )
+    if referrer_phone == phone:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Their number must be different from yours.",
+        )
+    name = " ".join(payload.name.split())
+    referrer_name = " ".join(payload.referrer_name.split())
+    if not name or not referrer_name:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter both names."
+        )
+
+    already = await db.scalar(
+        select(JobSuggestion.id).where(
+            JobSuggestion.job_id == job.id, JobSuggestion.phone == phone
+        )
+    )
+    if already is not None:
+        return
+    if referrer_phone:
+        since = _now() - timedelta(days=1)
+        today = await db.scalar(
+            select(func.count(JobSuggestion.id)).where(
+                JobSuggestion.referrer_phone == referrer_phone,
+                JobSuggestion.created_at >= since,
+            )
+        )
+        if (today or 0) >= SUGGESTIONS_PER_REFERRER_PER_DAY:
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="That's a lot of suggestions today. Try again tomorrow.",
+            )
+
+    token = secrets.token_urlsafe(12)
+    db.add(
+        JobSuggestion(
+            job_id=job.id,
+            referrer_name=referrer_name[:255],
+            referrer_phone=referrer_phone,
+            referrer_ref=payload.ref,
+            name=name[:255],
+            phone=phone,
+            note=(payload.note or "").strip() or None,
+            token=token,
+        )
+    )
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()  # the same person was suggested a moment ago
+        return
+
+    url = f"{settings.frontend_url}/jobs/{job.slug}?src=referral&ref={token}"
+    await notify_applicant(
+        phone,
+        "suggested",
+        referrer=referrer_name,
+        company=job.company.name,
+        job=job.title,
+        url=url,
     )
 
 
@@ -652,18 +765,44 @@ async def _load_application_for_token(db: AsyncSession, token: str) -> Applicati
     return application
 
 
+async def _interviews_for(
+    db: AsyncSession, application_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, InterviewInfo]:
+    """The latest interview of each application."""
+    if not application_ids:
+        return {}
+    rows = (
+        await db.scalars(
+            select(Interview)
+            .where(Interview.application_id.in_(application_ids))
+            .order_by(Interview.start_time.desc())
+        )
+    ).all()
+    found: dict[uuid.UUID, InterviewInfo] = {}
+    for row in rows:
+        if row.application_id in found:
+            continue
+        link = row.location if (row.location or "").startswith("https://") else None
+        found[row.application_id] = InterviewInfo(
+            starts_at=row.start_time,
+            ends_at=row.end_time,
+            location=None if link else row.location,
+            join_url=link,
+        )
+    return found
+
+
 async def get_application_status(db: AsyncSession, token: str) -> ApplicationStatusView:
     application = await _load_application_for_token(db, token)
-    label, next_step = _status_copy(application.stage)
+    interviews = await _interviews_for(db, [application.id])
     return ApplicationStatusView(
         application_id=application.id,
         job_title=application.job.title,
         job_slug=application.job.slug,
         company_name=application.job.company.name,
         company_slug=application.job.company.slug,
-        stage=application.stage,
-        status_label=label,
-        next_step=next_step,
+        stage=_stage_for(application.stage),
+        interview=interviews.get(application.id),
         applied_at=application.created_at,
         updated_at=application.updated_at,
         can_withdraw=application.stage in _WITHDRAWABLE,
@@ -817,22 +956,20 @@ async def list_my_applications(db: AsyncSession, user: User) -> list[MyApplicati
             .order_by(Application.updated_at.desc())
         )
     ).all()
-    items = []
-    for application in rows:
-        label, next_step = _status_copy(application.stage)
-        items.append(
-            MyApplication(
-                application_id=application.id,
-                job_title=application.job.title,
-                job_slug=application.job.slug,
-                company_name=application.job.company.name,
-                company_slug=application.job.company.slug,
-                company_logo_url=application.job.company.logo_url,
-                stage=application.stage,
-                status_label=label,
-                next_step=next_step,
-                applied_at=application.created_at,
-                updated_at=application.updated_at,
-            )
+    interviews = await _interviews_for(db, [a.id for a in rows])
+    return [
+        MyApplication(
+            application_id=application.id,
+            job_title=application.job.title,
+            job_slug=application.job.slug,
+            company_name=application.job.company.name,
+            company_slug=application.job.company.slug,
+            company_logo_url=application.job.company.logo_url,
+            stage=_stage_for(application.stage),
+            interview=interviews.get(application.id),
+            applied_at=application.created_at,
+            updated_at=application.updated_at,
+            status_token=create_status_token(application.id),
         )
-    return items
+        for application in rows
+    ]

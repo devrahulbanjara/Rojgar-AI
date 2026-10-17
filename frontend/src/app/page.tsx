@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 
-import { BRAND } from '@/lib/brand'
+import { getT } from '@/lib/i18n/server'
 
 import { LandingPage } from '@/components/public/landing/LandingPage'
 
-export const metadata: Metadata = {
-  title: `${BRAND.name} — ${BRAND.tagline}`,
-  description:
-    'One apply link for every job post. Every CV is read and ranked, and you decide in one click.',
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: { absolute: t.landing.metaTitle }, description: t.landing.metaDescription }
 }
 
 export default function Home() {

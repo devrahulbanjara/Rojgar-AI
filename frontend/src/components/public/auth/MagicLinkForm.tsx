@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import Link from 'next/link'
 
+import { useT } from '@/lib/i18n/client'
 import { publicApi } from '@/lib/publicApi'
 
 import { FormField } from '@/components/app/FormField'
@@ -19,6 +20,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /** Candidates sign in with an emailed one-time link; no password. */
 export function MagicLinkForm() {
+  const t = useT()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string>()
   const [formError, setFormError] = useState<string | null>(null)
@@ -38,14 +40,14 @@ export function MagicLinkForm() {
     e.preventDefault()
     setFormError(null)
     if (!EMAIL_RE.test(email.trim())) {
-      setError('Enter a valid email.')
+      setError(t.auth.emailInvalid)
       return
     }
     try {
       await send()
       setSent(true)
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Something went wrong. Try again.')
+      setFormError(err instanceof Error ? err.message : t.common.error)
     }
   }
 
@@ -62,12 +64,12 @@ export function MagicLinkForm() {
 
   return (
     <AuthCard
-      title="See your applications"
+      title={t.auth.magic.title}
       below={
         <>
-          Hiring?{' '}
+          {t.auth.magic.hiring}{' '}
           <Link href="/login" className="font-medium text-foreground hover:underline">
-            Log in here
+            {t.auth.magic.logInHere}
           </Link>
         </>
       }
@@ -79,7 +81,7 @@ export function MagicLinkForm() {
         </Alert>
       ) : null}
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-        <FormField id="email" label="Email you applied with" error={error}>
+        <FormField id="email" label={t.auth.magic.email} error={error}>
           <Input
             id="email"
             type="email"
@@ -96,7 +98,7 @@ export function MagicLinkForm() {
           />
         </FormField>
         <Button type="submit" size="lg" className="w-full" loading={sending}>
-          Email me a sign-in link
+          {t.auth.magic.submit}
         </Button>
       </form>
     </AuthCard>

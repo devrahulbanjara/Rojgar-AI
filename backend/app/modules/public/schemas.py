@@ -13,9 +13,12 @@ from app.shared.enums import (
     QuestionType,
 )
 
-# Where a shared link was opened (UTM-like `src` on the apply link).
 ApplySource = Literal[
-    "linkedin", "facebook", "merojob", "viber", "qr", "direct", "other"
+    "linkedin", "facebook", "merojob", "viber", "qr", "referral", "direct", "other"
+]
+# What an applicant sees; the AI review is never shown.
+Stage = Literal[
+    "new", "shortlisted", "interview", "offer", "hired", "not_selected", "withdrawn"
 ]
 
 
@@ -27,6 +30,7 @@ class PublicCompany(BaseSchema):
     location: str | None = None
     industry: str | None = None
     description: str | None = None
+    phone: str | None = None
     # Approved by Rojgar AI staff ("Verified business" badge).
     verified: bool = False
 
@@ -78,9 +82,6 @@ class CvPrefill(BaseSchema):
     full_name: str | None = None
     email: str | None = None
     phone: str | None = None
-    linkedin_url: str | None = None
-    github_url: str | None = None
-    portfolio_url: str | None = None
 
 
 class ScreeningAnswer(BaseSchema):
@@ -92,26 +93,17 @@ class GuestApplicationCreated(BaseSchema):
     application_id: UUID
     job_title: str
     company_name: str
+    phone: str
     email: str | None = None
-    # The status link is only ever sent by email (proves the address is real).
+    # The status link goes by email (proves the address) and by SMS.
     status_link_sent: bool
 
 
-class RecommendRequest(BaseSchema):
-    """Someone recommends a person for the job (no account needed)."""
-
-    ref_token: str | None = Field(default=None, max_length=32)
-    referrer_name: str = Field(min_length=1, max_length=255)
-    referrer_phone: str | None = Field(default=None, max_length=30)
-    candidate_name: str = Field(min_length=1, max_length=255)
-    candidate_phone: str = Field(min_length=6, max_length=30)
-    note: str | None = Field(default=None, max_length=1000)
-
-
-class RecommendCreated(BaseSchema):
-    recommended: bool = True
-    # True when the candidate got an SMS with a link to add their details.
-    candidate_notified: bool = False
+class InterviewInfo(BaseSchema):
+    starts_at: datetime
+    ends_at: datetime
+    location: str | None = None
+    join_url: str | None = None
 
 
 class ApplicationStatusView(BaseSchema):
@@ -120,9 +112,8 @@ class ApplicationStatusView(BaseSchema):
     job_slug: str
     company_name: str
     company_slug: str
-    stage: ApplicationStage
-    status_label: str
-    next_step: str | None = None
+    stage: Stage
+    interview: InterviewInfo | None = None
     applied_at: datetime
     updated_at: datetime
     can_withdraw: bool
@@ -152,8 +143,29 @@ class MyApplication(BaseSchema):
     company_name: str
     company_slug: str
     company_logo_url: str | None = None
-    stage: ApplicationStage
-    status_label: str
-    next_step: str | None = None
+    stage: Stage
+    interview: InterviewInfo | None = None
     applied_at: datetime
     updated_at: datetime
+    # Opens the status page (details, add to calendar, withdraw).
+    status_token: str
+
+
+class RecommendRequest(BaseSchema):
+    """Someone suggests a person they know for a job."""
+
+    referrer_name: str = Field(min_length=1, max_length=255)
+    referrer_phone: str | None = Field(default=None, max_length=30)
+    name: str = Field(min_length=1, max_length=255)
+    phone: str = Field(min_length=7, max_length=30)
+    note: str | None = Field(default=None, max_length=500)
+    # Share-link token from ?ref= on the job page, when there is one.
+    ref: str | None = Field(default=None, max_length=64)
+
+
+class RecommendSent(BaseSchema):
+    sent: bool = True
+
+
+# Backwards compatibility alias
+RecommendCreated = RecommendSent

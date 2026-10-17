@@ -1,23 +1,26 @@
+'use client'
+
 import Link from 'next/link'
 
 import { BRAND } from '@/lib/brand'
+import { useT } from '@/lib/i18n/client'
 
 import { BrandMark, type NavLink } from '@/components/app/PublicNav'
 
-const DEFAULT_LINKS: NavLink[] = [
-  { href: '/privacy', label: 'Privacy' },
-  { href: '/terms', label: 'Terms' },
-  { href: '/cookies', label: 'Cookies' },
-]
-
 /** Footer for every public page: wordmark, a short row of links, copyright. */
-export function PublicFooter({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
+export function PublicFooter({ links }: { links?: NavLink[] }) {
+  const t = useT()
+  const items = links ?? [
+    { href: '/privacy', label: t.nav.privacy },
+    { href: '/terms', label: t.nav.terms },
+    { href: '/cookies', label: t.nav.cookies },
+  ]
   return (
     <footer className="border-t border-border bg-background">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <BrandMark />
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
-          {links.map((link) => (
+          {items.map((link) => (
             <Link
               key={link.href}
               href={link.href}

@@ -26,6 +26,7 @@ export {
   Link as LinkIcon,
   Copy as CopyIcon,
   QrCode as QrIcon,
+  Printer as PrinterIcon,
   DownloadSimple as DownloadIcon,
   UploadSimple as UploadIcon,
   Plus as PlusIcon,

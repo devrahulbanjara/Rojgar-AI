@@ -8,14 +8,18 @@ import { FileIcon, UploadIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 
 /**
- * Drop zone + file picker for one file. Validates type and size, shows the
- * chosen file with a Replace action. The hidden input is the only <input>.
+ * Drop zone + file picker for one file. `check` returns an error for a file
+ * that can't be used (type, size); shows the chosen file with Replace (and
+ * Remove when `onRemove` is given). The hidden input is the only <input>.
  */
 export function FileDrop({
   label,
   accept,
-  acceptLabel,
-  maxBytes,
+  hint,
+  check,
+  replaceLabel,
+  removeLabel,
+  onRemove,
   file,
   onFile,
   busy,
@@ -24,11 +28,14 @@ export function FileDrop({
   id,
 }: {
   label: string
-  /** e.g. "application/pdf,.pdf" */
+  /** e.g. "application/pdf,.pdf,image/jpeg" */
   accept: string
-  /** e.g. "PDF" */
-  acceptLabel: string
-  maxBytes: number
+  /** e.g. "PDF or photo, up to 10 MB" */
+  hint: string
+  check: (file: File) => string | undefined
+  replaceLabel: string
+  removeLabel?: string
+  onRemove?: () => void
   file: File | null
   onFile: (file: File) => void
   busy?: boolean
@@ -45,13 +52,8 @@ export function FileDrop({
 
   function take(candidate: File | undefined) {
     if (!candidate) return
-    const allowed = accept.split(',').map((s) => s.trim().toLowerCase())
-    const ext = `.${candidate.name.split('.').pop()?.toLowerCase() ?? ''}`
-    const okType = allowed.includes(candidate.type.toLowerCase()) || allowed.includes(ext)
-    if (!okType) return setLocalError(`Upload a ${acceptLabel} file.`)
-    if (candidate.size > maxBytes) {
-      return setLocalError(`Use a file under ${Math.round(maxBytes / 1024 / 1024)} MB.`)
-    }
+    const problem = check(candidate)
+    if (problem) return setLocalError(problem)
     setLocalError(undefined)
     onFile(candidate)
   }
@@ -89,8 +91,13 @@ export function FileDrop({
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={pick} disabled={busy}>
-            Replace
+            {replaceLabel}
           </Button>
+          {onRemove && removeLabel ? (
+            <Button variant="ghost" size="sm" onClick={onRemove} disabled={busy}>
+              {removeLabel}
+            </Button>
+          ) : null}
         </div>
       ) : (
         <div
@@ -110,9 +117,7 @@ export function FileDrop({
           <Button variant="outline" onClick={pick}>
             {label}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            {acceptLabel}, up to {Math.round(maxBytes / 1024 / 1024)} MB
-          </p>
+          <p className="text-xs text-muted-foreground">{hint}</p>
         </div>
       )}
       {shownError ? (

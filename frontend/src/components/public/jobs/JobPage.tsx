@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
-import { closingLabel } from '@/lib/dates'
-import { placeLabel, salaryLabel } from '@/lib/jobFormat'
+import { jobFacts } from '@/lib/jobFormat'
+import { getT } from '@/lib/i18n/server'
 import type { ApplySource, PublicJob } from '@/lib/publicApi'
 
-import { EntityAvatar } from '@/components/app/EntityAvatar'
 import { Button } from '@/components/ui/button'
 
+import { BusinessName } from '../shared/BusinessName'
 import { ApplyForm } from './ApplyForm'
 
 function List({ title, items }: { title: string; items: string[] }) {
@@ -23,31 +23,29 @@ function List({ title, items }: { title: string; items: string[] }) {
   )
 }
 
-export function JobPage({ job, source }: { job: PublicJob; source: ApplySource }) {
-  const facts = [placeLabel(job), salaryLabel(job), closingLabel(job.expires_at)].filter(Boolean)
+export async function JobPage({
+  job,
+  source,
+  refToken,
+}: {
+  job: PublicJob
+  source: ApplySource
+  refToken?: string
+}) {
+  const t = await getT()
+  const suggestHref = `/jobs/${job.slug}/suggest${refToken ? `?ref=${encodeURIComponent(refToken)}` : ''}`
 
   return (
     <div className="bg-background">
-      <div className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:px-6 lg:pt-14">
+      <div className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 lg:pt-14">
         <header className="flex flex-col gap-4">
-          <Link
-            href={`/c/${job.company.slug}`}
-            className="flex w-fit items-center gap-3 text-sm font-medium text-foreground hover:underline"
-          >
-            <EntityAvatar
-              name={job.company.name}
-              src={job.company.logo_url}
-              kind="company"
-              className="size-8"
-            />
-            {job.company.name}
-          </Link>
+          <BusinessName company={job.company} t={t} />
           <h1 className="font-heading text-3xl font-bold tracking-tight text-balance text-foreground sm:text-4xl">
             {job.title}
           </h1>
-          <p className="text-sm text-muted-foreground">{facts.join(' · ')}</p>
+          <p className="text-sm text-muted-foreground">{jobFacts(job, t).join(' · ')}</p>
           <Button asChild size="lg" className="w-full sm:w-fit lg:hidden">
-            <a href="#apply">Apply</a>
+            <a href="#apply">{t.common.apply}</a>
           </Button>
         </header>
 
@@ -58,21 +56,37 @@ export function JobPage({ job, source }: { job: PublicJob; source: ApplySource }
                 {job.overview}
               </p>
             ) : null}
-            <List title="What you will do" items={job.responsibilities} />
-            <List title="What you need" items={job.requirements} />
-            <List title="Nice to have" items={job.preferred_qualifications} />
-            <List title="Benefits" items={job.benefits} />
+            <List title={t.job.whatYouDo} items={job.responsibilities} />
+            <List title={t.job.whatYouNeed} items={job.requirements} />
+            <List title={t.job.niceToHave} items={job.preferred_qualifications} />
+            <List title={t.job.benefits} items={job.benefits} />
+
+            <section className="flex flex-col items-start gap-3 rounded-2xl border bg-card p-5">
+              <h2 className="font-heading text-base font-semibold text-foreground">
+                {t.job.knowSomeone}
+              </h2>
+              <Button asChild variant="outline">
+                <Link href={suggestHref}>{t.job.suggest}</Link>
+              </Button>
+            </section>
+            <Link
+              href={`/c/${job.company.slug}`}
+              className="w-fit text-sm font-medium text-primary hover:underline"
+            >
+              {t.job.moreJobs(job.company.name)}
+            </Link>
           </article>
 
           <aside
             id="apply"
-            className="scroll-mt-24 rounded-2xl border bg-card p-6 lg:sticky lg:top-24"
+            className="scroll-mt-24 rounded-2xl border bg-card p-5 sm:p-6 lg:sticky lg:top-24"
           >
             <ApplyForm
               slug={job.slug}
               companyName={job.company.name}
               questions={job.screening_questions.slice(0, 3)}
               source={source}
+              refToken={refToken}
             />
           </aside>
         </div>

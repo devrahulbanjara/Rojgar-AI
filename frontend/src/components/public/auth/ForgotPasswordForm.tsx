@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 import { parseApiError } from '@/lib/apiError'
+import { useT } from '@/lib/i18n/client'
 import { useForgotPasswordMutation } from '@/store/services/authApi'
 
 import { FormField } from '@/components/app/FormField'
@@ -20,6 +21,7 @@ import { CheckEmail } from './CheckEmail'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function ForgotPasswordForm() {
+  const t = useT()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [error, setError] = useState<string>()
@@ -35,7 +37,7 @@ export function ForgotPasswordForm() {
     e.preventDefault()
     setFormError(null)
     if (!EMAIL_RE.test(email.trim())) {
-      setError('Enter a valid email.')
+      setError(t.auth.emailInvalid)
       return
     }
     try {
@@ -61,10 +63,10 @@ export function ForgotPasswordForm() {
 
   return (
     <AuthCard
-      title="Reset your password"
+      title={t.auth.forgot.title}
       footer={
         <Link href="/login" className="font-medium text-primary hover:underline">
-          Back to log in
+          {t.auth.backToLogin}
         </Link>
       }
     >
@@ -75,7 +77,7 @@ export function ForgotPasswordForm() {
         </Alert>
       ) : null}
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-        <FormField id="email" label="Email" error={error}>
+        <FormField id="email" label={t.auth.email} error={error}>
           <Input
             id="email"
             type="email"
@@ -92,7 +94,7 @@ export function ForgotPasswordForm() {
           />
         </FormField>
         <Button type="submit" size="lg" className="w-full" loading={isLoading}>
-          Email me a reset link
+          {t.auth.forgot.submit}
         </Button>
       </form>
     </AuthCard>
