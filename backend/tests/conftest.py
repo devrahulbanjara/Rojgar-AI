@@ -63,17 +63,13 @@ def disable_side_effects(monkeypatch_session):
     # No live LLM/embedding calls in the default suite: they cost money and
     # fail under provider rate limits (the root cause of earlier flaky runs).
     if not RUN_LIVE_AI:
-        import hashlib
-
-        from app.infrastructures.ai.service import ai_service
+        from app.infrastructures.ai.service import _FakeEmbeddings, ai_service
         from app.infrastructures.guardrails.service import guardrails_service
 
-        async def _fake_embeddings(text: str) -> list[float]:
-            seed = hashlib.sha256(text.encode()).digest()
-            dim = settings.embedding_output_dimensionality
-            return [seed[i % len(seed)] / 255.0 for i in range(dim)]
-
-        monkeypatch_session.setattr(ai_service, "get_embeddings", _fake_embeddings)
+        # Deterministic vectors of the real size; the cache logic still runs.
+        monkeypatch_session.setattr(
+            ai_service, "_embeddings", _FakeEmbeddings(ai_service.embedding_dim)
+        )
         monkeypatch_session.setattr(guardrails_service, "_get_llm", lambda: None)
         # Paid CV parsing (LlamaExtract) is skipped when no key is configured.
         monkeypatch_session.setattr(settings, "llama_cloud_api_key", None)

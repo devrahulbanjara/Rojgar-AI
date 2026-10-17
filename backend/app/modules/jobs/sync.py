@@ -1,78 +1,82 @@
 import uuid
-from datetime import UTC, datetime
 
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
+from app.infrastructures.qdrant import outbox
 from app.infrastructures.qdrant.service import qdrant_service
 from app.modules.jobs.models import Job, JobSyncEvent
-from app.shared.enums import JobStatus, SyncAction, SyncStatus
+from app.shared.enums import SyncAction, SyncStatus
 
 
-async def process_sync_event(event_id: uuid.UUID) -> None:
-    """Processes a single outbox event: upserts or deletes from Qdrant."""
+async def process_sync_event(event_id: uuid.UUID, *, log: bool = True) -> str | None:
+    """Apply one outbox event (upsert or delete in Qdrant).
+
+    Never raises. On failure the event is retried later with backoff (see
+    `outbox`) and the short reason is returned; ``log`` writes one warning.
+    """
     async with AsyncSessionLocal() as db:
         event = await db.scalar(select(JobSyncEvent).where(JobSyncEvent.id == event_id))
         if not event or event.status == SyncStatus.COMPLETED:
-            return
+            return None
+        job_id = event.job_id
+        action = event.action
+        job = None
+        if action == SyncAction.UPSERT:
+            job = await db.scalar(
+                select(Job).options(selectinload(Job.company)).where(Job.id == job_id)
+            )
+        # No transaction stays open while the model and Qdrant work.
+        await db.commit()
 
         try:
-            if event.action == SyncAction.UPSERT:
-                job = await db.scalar(
-                    select(Job)
-                    .options(selectinload(Job.company))
-                    .where(Job.id == event.job_id)
+            # Only open jobs before their closing time belong in the vector
+            # store; drafts and closed jobs are removed from Qdrant.
+            if job is not None and qdrant_service._job_is_searchable(job):
+                await qdrant_service.upsert_job(job)
+            else:
+                await qdrant_service.delete_job(job_id)
+        except Exception as exc:
+            attempts, parked = outbox.record_failure(event, exc)
+            if log:
+                logger.warning(
+                    "Job {} search index update {} (attempt {}): {}",
+                    job_id,
+                    "gave up" if parked else "failed, will retry",
+                    attempts,
+                    event.error_message,
                 )
-
-                now = datetime.now(UTC)
-
-                # Only open jobs before their closing time belong in the vector
-                # store; drafts and closed jobs are removed from Qdrant.
-                if (
-                    job
-                    and job.status == JobStatus.open
-                    and (job.closes_at is None or job.closes_at > now)
-                ):
-                    await qdrant_service.upsert_job(job)
-                else:
-                    await qdrant_service.delete_job(event.job_id)
-
-            elif event.action == SyncAction.DELETE:
-                await qdrant_service.delete_job(event.job_id)
-
-            # Mark success
-            event.status = SyncStatus.COMPLETED
-            event.error_message = None
-
-        except Exception as e:
-            # Mark failure — will be retried by the safety-net daemon
-            event.status = SyncStatus.FAILED
-            event.error_message = str(e)
-            logger.error(
-                f"Failed to process sync event {event_id} for job {event.job_id}: {e}"
-            )
-        finally:
             await db.commit()
+            return event.error_message
+        event.status = SyncStatus.COMPLETED
+        event.error_message = None
+        await db.commit()
+        return None
 
 
 async def process_pending_events() -> None:
-    """Sweeps the DB for PENDING or FAILED events (called by the background daemon)."""
+    """Retry due PENDING/FAILED events oldest-first (background daemon)."""
     async with AsyncSessionLocal() as db:
-        events = await db.scalars(
-            select(JobSyncEvent)
-            .where(JobSyncEvent.status.in_([SyncStatus.PENDING, SyncStatus.FAILED]))
-            .order_by(JobSyncEvent.created_at.asc())
-            .limit(50)  # Process at most 50 events per sweep
-        )
-        event_ids = [e.id for e in events]
+        events = (
+            await db.scalars(
+                select(JobSyncEvent)
+                .where(outbox.retryable(JobSyncEvent))
+                .order_by(JobSyncEvent.updated_at.asc())
+                .limit(outbox.SWEEP_SCAN)
+            )
+        ).all()
+        event_ids = [e.id for e in events if outbox.is_due(e)][: outbox.SWEEP_BATCH]
 
     if not event_ids:
         return
-
-    logger.info(
-        f"Sync daemon: found {len(event_ids)} pending/failed Qdrant event(s). Processing…"
-    )
-    for event_id in event_ids:
-        await process_sync_event(event_id)
+    errors = [await process_sync_event(i, log=False) for i in event_ids]
+    failed = [e for e in errors if e]
+    if failed:
+        logger.warning(
+            "Job search index: {} of {} update(s) failed, retrying later: {}",
+            len(failed),
+            len(event_ids),
+            failed[0],
+        )

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import threading
 import uuid
 from datetime import UTC, datetime
@@ -9,7 +10,7 @@ from qdrant_client import AsyncQdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.core.config import settings
-from app.infrastructures.ai.service import ai_service
+from app.infrastructures.ai.service import EmbeddingError, ai_service, short_error
 
 QDRANT_NO_EXPIRY_TS = 32503680000  # year 3000, good enough for human nonsense
 
@@ -19,9 +20,27 @@ QDRANT_NO_EXPIRY_TS = 32503680000  # year 3000, good enough for human nonsense
 DENSE_VECTOR_NAME = "dense"
 SPARSE_VECTOR_NAME = "sparse"
 
-# Backwards-compatible aliases (other modules import the candidate-specific names).
-CANDIDATE_DENSE_NAME = DENSE_VECTOR_NAME
-CANDIDATE_SPARSE_NAME = SPARSE_VECTOR_NAME
+# BM25 vocabulary for the sparse half of hybrid search (fastembed).
+SPARSE_MODEL = "Qdrant/bm25"
+# Hits each half (dense, BM25) contributes before RRF fusion.
+PREFETCH_LIMIT = 50
+
+# multilingual-e5 squeezes cosine into a narrow band: a short query against an
+# unrelated CV scores ~0.80, a clear match ~0.86-0.92 (measured on the seed
+# data). Relevance and match scores use cosine rescaled to 0 at COSINE_UNRELATED
+# and 1 at COSINE_STRONG, clipped to [0, 1].
+COSINE_UNRELATED = 0.80
+COSINE_STRONG = 0.92
+# On the rescaled cosine: below HARD_MIN_SCORE a hit is dropped; below
+# MIN_SCORE (or RELATIVE_FLOOR x the best hit) it is "low" (behind "Show more").
+HARD_MIN_SCORE = 0.20
+MIN_SCORE = 0.35
+RELATIVE_FLOOR = 0.5
+
+
+def _rescale_cosine(score: float) -> float:
+    scaled = (score - COSINE_UNRELATED) / (COSINE_STRONG - COSINE_UNRELATED)
+    return min(1.0, max(0.0, scaled))
 
 
 def _expires_at_to_ts(value: datetime | None) -> int:
@@ -39,7 +58,7 @@ class QdrantService:
         self.candidate_collection_name = settings.qdrant_candidate_collection_name
         self.client = AsyncQdrantClient(
             url=settings.qdrant_url,
-            api_key=settings.qdrant_api_key,
+            api_key=settings.qdrant_api_key or None,
         )
         self._sparse_embedder: Any | None = None
         self._sparse_embedder_lock = threading.Lock()
@@ -56,179 +75,139 @@ class QdrantService:
                 from fastembed import SparseTextEmbedding
 
                 self._sparse_embedder = SparseTextEmbedding(
-                    model_name=settings.candidate_sparse_model
+                    model_name=SPARSE_MODEL,
+                    cache_dir=os.path.expanduser(settings.model_cache_dir),
                 )
         return self._sparse_embedder
 
-    def _build_sparse_vector(self, text: str) -> models.SparseVector:
-        """Return a `SparseVector` of raw term frequencies for `text`.
+    def _build_sparse_vectors(self, texts: list[str]) -> list[models.SparseVector]:
+        """Return `SparseVector`s of raw term frequencies for `texts`.
 
         With `Modifier.IDF` set on the collection's sparse config, Qdrant scales
         these TFs by document-frequency-derived IDF at query time, giving us
         proper BM25 ranking without manual corpus statistics.
         """
         embedder = self._get_sparse_embedder()
-        embedding = next(iter(embedder.embed([text])))
-        return models.SparseVector(
-            indices=embedding.indices.tolist(),
-            values=embedding.values.tolist(),
-        )
+        return [
+            models.SparseVector(
+                indices=embedding.indices.tolist(),
+                values=embedding.values.tolist(),
+            )
+            for embedding in embedder.embed(texts)
+        ]
+
+    async def _abuild_sparse_vectors(
+        self, texts: list[str]
+    ) -> list[models.SparseVector]:
+        """Non-blocking BM25 vectors: fastembed is CPU-bound and synchronous."""
+        return await asyncio.to_thread(self._build_sparse_vectors, texts)
 
     async def _abuild_sparse_vector(self, text: str) -> models.SparseVector:
-        """Non-blocking BM25 vector: fastembed is CPU-bound and synchronous."""
-        return await asyncio.to_thread(self._build_sparse_vector, text)
+        return (await self._abuild_sparse_vectors([text]))[0]
 
-    async def initialize(self) -> None:
-        """Robust initialization: create collections and payload indexes."""
-        if (
-            settings.candidate_hybrid_search_enabled
-            or settings.jobs_hybrid_search_enabled
-        ):
-            try:
-                # Load (and on first boot download) the BM25 model off the event
-                # loop so the first search request doesn't stall the server.
-                await asyncio.to_thread(self._get_sparse_embedder)
-            except Exception as exc:
-                logger.error("Sparse embedder preload failed: {}", exc)
+    async def initialize(self) -> list[str]:
+        """Create collections and payload indexes; preload the local models.
+
+        Returns the collections that were (re)created empty, e.g. after the
+        embedding model changed size: run `scripts/reindex_embeddings.py`.
+        """
         try:
-            await self._ensure_job_collection()
-            await self._ensure_candidate_collection()
+            # Load (and on first boot download) the BM25 model off the event
+            # loop so the first search request doesn't stall the server.
+            await asyncio.to_thread(self._get_sparse_embedder)
+        except Exception as exc:
+            logger.warning("BM25 model preload failed: {}", short_error(exc))
+        try:
+            await asyncio.to_thread(ai_service.preload_embeddings)
+        except Exception as exc:
+            logger.warning("Embedding model preload failed: {}", short_error(exc))
+        created: list[str] = []
+        try:
+            if await self._ensure_job_collection():
+                created.append(self.collection_name)
+            if await self._ensure_candidate_collection():
+                created.append(self.candidate_collection_name)
             await self._ensure_job_indexes()
             await self._ensure_candidate_indexes()
         except Exception as exc:
-            logger.error(f"Qdrant robust init failed: {exc}")
+            logger.warning("Qdrant init failed: {}", short_error(exc))
+        if created:
+            logger.warning(
+                "Qdrant collections {} are new and empty. Run "
+                "`uv run python scripts/reindex_embeddings.py` to fill them.",
+                created,
+            )
+        return created
 
-    async def _ensure_collection(self, collection_name: str) -> None:
-        """Create a collection if it does not already exist (jobs / unnamed-vector)."""
-        exists = await self.client.collection_exists(collection_name)
-        if exists:
-            return
-
-        await self.client.create_collection(
-            collection_name=collection_name,
-            vectors_config=models.VectorParams(
-                size=settings.embedding_output_dimensionality,
-                distance=models.Distance.COSINE,
-            ),
+    def _dense_params(self) -> models.VectorParams:
+        return models.VectorParams(
+            size=ai_service.embedding_dim, distance=models.Distance.COSINE
         )
-        logger.info("Qdrant collection '{}' created.", collection_name)
 
-    async def _ensure_job_collection(self) -> None:
-        """Create or migrate the jobs collection to named-vectors hybrid schema.
+    async def _schema_is_current(self, name: str, hybrid: bool) -> bool:
+        """True when the collection has the vector layout and size we write."""
+        params = (await self.client.get_collection(name)).config.params
+        vectors = getattr(params, "vectors", None)
+        sparse = getattr(params, "sparse_vectors", None) or {}
+        if hybrid:
+            if not (
+                isinstance(vectors, dict)
+                and DENSE_VECTOR_NAME in vectors
+                and SPARSE_VECTOR_NAME in sparse
+            ):
+                return False
+            dense = vectors[DENSE_VECTOR_NAME]
+        else:
+            if isinstance(vectors, dict):
+                return False
+            dense = vectors
+        return getattr(dense, "size", None) == ai_service.embedding_dim
 
-        Mirrors `_ensure_candidate_collection` — if hybrid search is enabled but
-        the existing collection still uses a single unnamed dense vector, drop +
-        recreate it. After recreation the caller must run
-        `reconcile_vectors.py --force` so every active job is re-indexed.
-        """
-        name = self.collection_name
-        exists = await self.client.collection_exists(name)
+    async def _ensure_hybrid_collection(self, name: str, *, hybrid: bool) -> bool:
+        """Create `name`, or drop and recreate it when its schema or vector size
+        no longer matches (e.g. a new embedding model). True when (re)created."""
+        if await self.client.collection_exists(name):
+            if await self._schema_is_current(name, hybrid):
+                return False
+            logger.warning(
+                "Qdrant collection '{}' was built for another embedding model "
+                "or layout; recreating it with {} dims.",
+                name,
+                ai_service.embedding_dim,
+            )
+            await self.client.delete_collection(name)
 
-        if exists and settings.jobs_hybrid_search_enabled:
-            info = await self.client.get_collection(name)
-            vectors = getattr(info.config.params, "vectors", None)
-            sparse = getattr(info.config.params, "sparse_vectors", None) or {}
-            has_named_dense = isinstance(vectors, dict) and DENSE_VECTOR_NAME in vectors
-            has_sparse = SPARSE_VECTOR_NAME in sparse
-            if not (has_named_dense and has_sparse):
-                logger.warning(
-                    "Migrating jobs collection '{}' to hybrid schema (drop + recreate). "
-                    "Run `reconcile_vectors.py --force` to repopulate.",
-                    name,
-                )
-                await self.client.delete_collection(name)
-                exists = False
-
-        if exists:
-            return
-
-        if settings.jobs_hybrid_search_enabled:
+        if hybrid:
             await self.client.create_collection(
                 collection_name=name,
-                vectors_config={
-                    DENSE_VECTOR_NAME: models.VectorParams(
-                        size=settings.embedding_output_dimensionality,
-                        distance=models.Distance.COSINE,
-                    ),
-                },
+                vectors_config={DENSE_VECTOR_NAME: self._dense_params()},
                 sparse_vectors_config={
                     SPARSE_VECTOR_NAME: models.SparseVectorParams(
                         modifier=models.Modifier.IDF,
                     ),
                 },
             )
-            logger.info(
-                "Qdrant hybrid jobs collection '{}' created (dense + BM25 sparse).",
-                name,
-            )
         else:
             await self.client.create_collection(
-                collection_name=name,
-                vectors_config=models.VectorParams(
-                    size=settings.embedding_output_dimensionality,
-                    distance=models.Distance.COSINE,
-                ),
+                collection_name=name, vectors_config=self._dense_params()
             )
-            logger.info("Qdrant dense-only jobs collection '{}' created.", name)
+        logger.info(
+            "Qdrant collection '{}' created ({} dims{}).",
+            name,
+            ai_service.embedding_dim,
+            " + BM25" if hybrid else "",
+        )
+        return True
 
-    async def _ensure_candidate_collection(self) -> None:
-        """Create or migrate the candidate collection to named-vectors hybrid schema.
+    async def _ensure_job_collection(self) -> bool:
+        return await self._ensure_hybrid_collection(
+            self.collection_name, hybrid=settings.jobs_hybrid_search_enabled
+        )
 
-        On first run with hybrid enabled, the collection already exists with a
-        single unnamed dense vector. We recreate it with `dense` + `sparse`
-        named vectors. Existing data is dropped.
-        """
-        name = self.candidate_collection_name
-        exists = await self.client.collection_exists(name)
-
-        if exists and settings.candidate_hybrid_search_enabled:
-            info = await self.client.get_collection(name)
-            vectors = getattr(info.config.params, "vectors", None)
-            sparse = getattr(info.config.params, "sparse_vectors", None) or {}
-            has_named_dense = (
-                isinstance(vectors, dict) and CANDIDATE_DENSE_NAME in vectors
-            )
-            has_sparse = CANDIDATE_SPARSE_NAME in sparse
-            if not (has_named_dense and has_sparse):
-                logger.warning(
-                    "Migrating candidate collection '{}' to hybrid schema (drop + recreate). "
-                    "Existing data is dropped.",
-                    name,
-                )
-                await self.client.delete_collection(name)
-                exists = False
-
-        if exists:
-            return
-
-        if settings.candidate_hybrid_search_enabled:
-            await self.client.create_collection(
-                collection_name=name,
-                vectors_config={
-                    CANDIDATE_DENSE_NAME: models.VectorParams(
-                        size=settings.embedding_output_dimensionality,
-                        distance=models.Distance.COSINE,
-                    ),
-                },
-                sparse_vectors_config={
-                    CANDIDATE_SPARSE_NAME: models.SparseVectorParams(
-                        modifier=models.Modifier.IDF,
-                    ),
-                },
-            )
-            logger.info(
-                "Qdrant hybrid candidate collection '{}' created (dense + BM25 sparse).",
-                name,
-            )
-        else:
-            await self.client.create_collection(
-                collection_name=name,
-                vectors_config=models.VectorParams(
-                    size=settings.embedding_output_dimensionality,
-                    distance=models.Distance.COSINE,
-                ),
-            )
-            logger.info("Qdrant dense-only candidate collection '{}' created.", name)
+    async def _ensure_candidate_collection(self) -> bool:
+        return await self._ensure_hybrid_collection(
+            self.candidate_collection_name, hybrid=True
+        )
 
     async def _ensure_payload_indexes(
         self,
@@ -372,140 +351,120 @@ class QdrantService:
         ]
         return "\n\n".join(parts)
 
-    async def upsert_job(self, job) -> None:
-        """
-        Embed a job and store it in Qdrant with filterable metadata.
+    async def _vectors(
+        self, texts: list[str], *, hybrid: bool
+    ) -> list[dict[str, Any] | list[float]]:
+        """Dense (+ BM25 sparse) vectors for documents, batched."""
+        dense = await ai_service.embed_many(texts, "passage")
+        if not hybrid:
+            return list(dense)
+        sparse = await self._abuild_sparse_vectors(texts)
+        return [
+            {DENSE_VECTOR_NAME: d, SPARSE_VECTOR_NAME: sp}
+            for d, sp in zip(dense, sparse, strict=True)
+        ]
 
-        Only open jobs whose closing time has not passed are indexed.
-        """
+    @staticmethod
+    def _job_is_searchable(job) -> bool:
         from app.shared.enums import JobStatus
 
-        try:
-            now = datetime.now(UTC)
-            if job.status != JobStatus.open or (
-                job.closes_at is not None and job.closes_at <= now
-            ):
-                logger.info(f"Skipping Qdrant upsert for job {job.id}: not open")
-                return
+        return job.status == JobStatus.open and (
+            job.closes_at is None or job.closes_at > datetime.now(UTC)
+        )
 
-            # Job is valid for search - proceed with upsert
-            text_content = self._build_job_document(job)
-            dense_vector = await ai_service.get_embeddings(text_content)
-            payload = {
-                "company_id": str(job.company_id),
-                "status": job.status.value,
-                "location": job.location or "",
-                "location_type": job.location_type.value if job.location_type else None,
-                "salary_min": job.salary_min,
-                "salary_max": job.salary_max,
-                "expires_at_ts": _expires_at_to_ts(job.closes_at),
-            }
+    async def upsert_jobs(self, jobs: list) -> int:
+        """Embed open jobs and store them with filterable metadata.
 
-            if settings.jobs_hybrid_search_enabled:
-                sparse_vector = await self._abuild_sparse_vector(text_content)
-                vector_payload: dict[str, Any] = {
-                    DENSE_VECTOR_NAME: dense_vector,
-                    SPARSE_VECTOR_NAME: sparse_vector,
-                }
-            else:
-                vector_payload = dense_vector  # type: ignore[assignment]
+        Jobs that are not open (or already past their closing time) are
+        skipped. Errors propagate so the outbox marks the event for retry.
+        Returns the number of points written.
+        """
+        jobs = [job for job in jobs if self._job_is_searchable(job)]
+        if not jobs:
+            return 0
+        vectors = await self._vectors(
+            [self._build_job_document(job) for job in jobs],
+            hybrid=settings.jobs_hybrid_search_enabled,
+        )
+        await self.client.upsert(
+            collection_name=self.collection_name,
+            points=[
+                models.PointStruct(
+                    id=str(job.id),
+                    vector=vector,
+                    payload={
+                        "company_id": str(job.company_id),
+                        "status": job.status.value,
+                        "location": job.location or "",
+                        "location_type": job.location_type.value
+                        if job.location_type
+                        else None,
+                        "salary_min": job.salary_min,
+                        "salary_max": job.salary_max,
+                        "expires_at_ts": _expires_at_to_ts(job.closes_at),
+                    },
+                )
+                for job, vector in zip(jobs, vectors, strict=True)
+            ],
+        )
+        return len(jobs)
 
-            await self.client.upsert(
-                collection_name=self.collection_name,
-                points=[
-                    models.PointStruct(
-                        id=str(job.id),
-                        vector=vector_payload,
-                        payload=payload,
-                    )
-                ],
-            )
-            logger.info(f"Job {job.id} ({job.title}) upserted to Qdrant successfully")
-        except Exception as exc:
-            logger.error(f"Qdrant upsert failed for job {job.id}: {exc}")
-            raise  # Re-raise so the outbox processor can mark the event FAILED
+    async def upsert_job(self, job) -> None:
+        await self.upsert_jobs([job])
 
     async def delete_job(self, job_id: uuid.UUID) -> None:
-        """Remove a job vector from Qdrant."""
-        try:
-            await self.client.delete(
-                collection_name=self.collection_name,
-                points_selector=models.PointIdsList(points=[str(job_id)]),
+        """Remove a job vector from Qdrant (errors propagate to the outbox)."""
+        await self.client.delete(
+            collection_name=self.collection_name,
+            points_selector=models.PointIdsList(points=[str(job_id)]),
+        )
+
+    async def upsert_applications(self, rows: list[tuple]) -> int:
+        """Embed and upsert `(application, job, review)` rows, batched.
+
+        Each point carries a named `dense` vector plus a `sparse` BM25 vector.
+        Errors propagate to the outbox.
+        """
+        if not rows:
+            return 0
+        vectors = await self._vectors(
+            [self._build_application_document(a, j, r) for a, j, r in rows],
+            hybrid=True,
+        )
+        points = []
+        for (application, job, review), vector in zip(rows, vectors, strict=True):
+            updated_at = application.updated_at or application.created_at
+            points.append(
+                models.PointStruct(
+                    id=str(application.id),
+                    vector=vector,
+                    payload={
+                        "company_id": str(job.company_id),
+                        "job_id": str(job.id),
+                        "user_id": str(application.user_id),
+                        # Key kept for existing filters; the value is the stage.
+                        "application_status": application.stage.value,
+                        "fit": review.fit if review is not None else None,
+                        "updated_at_ts": int(updated_at.timestamp())
+                        if updated_at
+                        else 0,
+                    },
+                )
             )
-            logger.info(f"Job {job_id} deleted from Qdrant.")
-        except Exception as exc:
-            logger.error(f"Qdrant delete failed for job {job_id}: {exc}")
-            raise  # Re-raise so the outbox processor can mark the event FAILED
+        await self.client.upsert(
+            collection_name=self.candidate_collection_name, points=points
+        )
+        return len(points)
 
     async def upsert_application(self, application, job, review=None) -> None:
-        """Embed and upsert one application into the candidate collection.
-
-        With hybrid search enabled the point carries a named `dense` vector
-        plus a `sparse` BM25 vector. With the flag off, falls back to the
-        legacy single-vector schema so dev environments without fastembed work.
-        """
-        try:
-            text_content = self._build_application_document(application, job, review)
-            dense_vector = await ai_service.get_embeddings(text_content)
-            updated_at = application.updated_at or application.created_at
-            updated_at_ts = int(updated_at.timestamp()) if updated_at else 0
-            payload = {
-                "company_id": str(job.company_id),
-                "job_id": str(job.id),
-                "user_id": str(application.user_id),
-                # Key kept for existing filters; the value is the v2 stage.
-                "application_status": application.stage.value,
-                "fit": review.fit if review is not None else None,
-                "updated_at_ts": updated_at_ts,
-            }
-
-            if settings.candidate_hybrid_search_enabled:
-                sparse_vector = await self._abuild_sparse_vector(text_content)
-                vector_payload: dict[str, Any] = {
-                    CANDIDATE_DENSE_NAME: dense_vector,
-                    CANDIDATE_SPARSE_NAME: sparse_vector,
-                }
-            else:
-                vector_payload = dense_vector  # type: ignore[assignment]
-
-            await self.client.upsert(
-                collection_name=self.candidate_collection_name,
-                points=[
-                    models.PointStruct(
-                        id=str(application.id),
-                        vector=vector_payload,
-                        payload=payload,
-                    )
-                ],
-            )
-            logger.info(
-                "Application {} for job {} upserted to candidate Qdrant successfully",
-                application.id,
-                job.id,
-            )
-        except Exception as exc:
-            logger.error(
-                "Qdrant application upsert failed for application {}: {}",
-                application.id,
-                exc,
-            )
-            raise
+        await self.upsert_applications([(application, job, review)])
 
     async def delete_application(self, application_id: uuid.UUID) -> None:
-        """Delete one application vector from the candidate collection."""
-        try:
-            await self.client.delete(
-                collection_name=self.candidate_collection_name,
-                points_selector=models.PointIdsList(points=[str(application_id)]),
-            )
-            logger.info("Application {} deleted from candidate Qdrant.", application_id)
-        except Exception as exc:
-            logger.error(
-                "Qdrant application delete failed for application {}: {}",
-                application_id,
-                exc,
-            )
-            raise
+        """Delete one application vector (errors propagate to the outbox)."""
+        await self.client.delete(
+            collection_name=self.candidate_collection_name,
+            points_selector=models.PointIdsList(points=[str(application_id)]),
+        )
 
     async def search_jobs(
         self,
@@ -542,7 +501,7 @@ class QdrantService:
         now_ts = int(datetime.now(UTC).timestamp())
 
         active_condition = models.FieldCondition(
-            key="status", match=models.MatchValue(value="active")
+            key="status", match=models.MatchValue(value="open")
         )
         expires_condition = models.FieldCondition(
             key="expires_at_ts",
@@ -644,7 +603,7 @@ class QdrantService:
         page: int,
     ) -> tuple[list[dict], int]:
         """Dense + BM25 prefetch fused via RRF, with strict→fallback escalation."""
-        dense_vector = await ai_service.get_embeddings(query)
+        dense_vector = await ai_service.embed_query(query)
         sparse_vector = await self._abuild_sparse_vector(query)
 
         strict_response = await self.client.query_points(
@@ -716,7 +675,7 @@ class QdrantService:
         page: int,
     ) -> tuple[list[dict], int]:
         """Legacy dense-only path used when `jobs_hybrid_search_enabled` is off."""
-        vector = await ai_service.get_embeddings(query)
+        vector = await ai_service.embed_query(query)
 
         strict_response = await self.client.query_points(
             collection_name=self.collection_name,
@@ -775,103 +734,63 @@ class QdrantService:
         statuses: list[str] | None = None,
         excluded_statuses: list[str] | None = None,
         limit: int = 10,
-        min_score: float | None = None,
     ) -> list[dict]:
-        """Run hybrid candidate search (dense + BM25 sparse fused via RRF).
+        """Hybrid applicant search: dense + BM25 sparse, fused via RRF.
 
-        Hybrid path catches exact-token queries ("tech lead", "K8s") that pure
-        Gemini dense embeddings collapse against semantically-close roles. With
-        the flag off, runs the legacy dense-only path. RRF score values are tiny
-        (≤ ~0.033 with `k=60`) so `min_score` is treated as a dense-cosine
-        threshold only and skipped on the hybrid path.
+        BM25 catches exact-token queries ("tech lead", "K8s") that dense
+        embeddings blur into semantically close roles. RRF decides the order;
+        relevance tagging uses rescaled dense cosine (see `_tag_relevance`).
+        If the embedding model is unavailable it runs on BM25 keywords alone.
         """
-        must_conditions: list[models.Condition] = [
+        must: list[models.Condition] = [
             models.FieldCondition(
-                key="company_id",
-                match=models.MatchValue(value=str(company_id)),
+                key="company_id", match=models.MatchValue(value=str(company_id))
             )
         ]
         if statuses:
-            if len(statuses) == 1:
-                must_conditions.append(
-                    models.FieldCondition(
-                        key="application_status",
-                        match=models.MatchValue(value=statuses[0]),
-                    )
+            must.append(
+                models.FieldCondition(
+                    key="application_status", match=models.MatchAny(any=statuses)
                 )
-            else:
-                must_conditions.append(
-                    models.FieldCondition(
-                        key="application_status",
-                        match=models.MatchAny(any=statuses),
-                    )
-                )
-
-        must_not_conditions: list[models.Condition] = []
+            )
+        must_not: list[models.Condition] = []
         if excluded_statuses:
-            must_not_conditions.append(
+            must_not.append(
                 models.FieldCondition(
                     key="application_status",
                     match=models.MatchAny(any=excluded_statuses),
                 )
             )
+        query_filter = models.Filter(must=must, must_not=must_not or None)
 
-        query_filter = models.Filter(
-            must=must_conditions,
-            must_not=must_not_conditions or None,
-        )
-
-        if settings.candidate_hybrid_search_enabled:
-            return await self._search_applications_hybrid(
-                query=query,
-                query_filter=query_filter,
-                limit=limit,
-            )
-
-        return await self._search_applications_dense_only(
-            query=query,
-            query_filter=query_filter,
-            limit=limit,
-            min_score=min_score,
-        )
-
-    async def _search_applications_hybrid(
-        self,
-        *,
-        query: str,
-        query_filter: models.Filter,
-        limit: int,
-    ) -> list[dict]:
-        """Dense + BM25 prefetch fused server-side via Reciprocal Rank Fusion.
-
-        RRF decides the order; relevance tagging uses dense cosine similarity
-        (see `_tag_relevance`).
-        """
-        dense_vector = await ai_service.get_embeddings(query)
         sparse_vector = await self._abuild_sparse_vector(query)
-        prefetch_limit = settings.candidate_hybrid_prefetch_limit
-        # Pull `prefetch_limit` so the relevance filter has a healthy candidate
-        # pool to truncate, even though the caller only wants `limit` final hits.
-        fused_limit = max(limit, prefetch_limit)
+        try:
+            dense_vector = await ai_service.embed_query(query)
+        except EmbeddingError as exc:
+            logger.warning("Applicant search on keywords only: {}", exc)
+            return await self._search_applications_keywords(
+                sparse_vector, query_filter, limit
+            )
 
         response = await self.client.query_points(
             collection_name=self.candidate_collection_name,
             prefetch=[
                 models.Prefetch(
                     query=dense_vector,
-                    using=CANDIDATE_DENSE_NAME,
+                    using=DENSE_VECTOR_NAME,
                     filter=query_filter,
-                    limit=prefetch_limit,
+                    limit=PREFETCH_LIMIT,
                 ),
                 models.Prefetch(
                     query=sparse_vector,
-                    using=CANDIDATE_SPARSE_NAME,
+                    using=SPARSE_VECTOR_NAME,
                     filter=query_filter,
-                    limit=prefetch_limit,
+                    limit=PREFETCH_LIMIT,
                 ),
             ],
             query=models.FusionQuery(fusion=models.Fusion.RRF),
-            limit=fused_limit,
+            # A healthy pool for the relevance cut, even when `limit` is small.
+            limit=max(limit, PREFETCH_LIMIT),
             with_payload=False,
         )
         fused_ids = [str(hit.id) for hit in response.points]
@@ -880,17 +799,18 @@ class QdrantService:
 
         # RRF scores depend only on rank, so thresholds on them cannot tell a
         # relevant hit from an irrelevant one (the top hit is always "high").
-        # Re-score the fused candidates by dense cosine similarity and apply the
-        # relevance thresholds to that real similarity signal instead.
+        # Re-score the fused hits by dense cosine and threshold that instead.
         cosine_response = await self.client.query_points(
             collection_name=self.candidate_collection_name,
             query=dense_vector,
-            using=CANDIDATE_DENSE_NAME,
+            using=DENSE_VECTOR_NAME,
             query_filter=models.Filter(must=[models.HasIdCondition(has_id=fused_ids)]),
             limit=len(fused_ids),
             with_payload=False,
         )
-        cosine_by_id = {str(hit.id): hit.score for hit in cosine_response.points}
+        cosine_by_id = {
+            str(hit.id): _rescale_cosine(hit.score) for hit in cosine_response.points
+        }
         all_hits = [
             {
                 "application_id": uuid.UUID(point_id),
@@ -898,56 +818,47 @@ class QdrantService:
             }
             for point_id in fused_ids  # keep the fused (RRF) ordering
         ]
-
         return self._tag_relevance(all_hits, limit)
 
-    @staticmethod
-    def _tag_relevance(all_hits: list[dict], limit: int) -> list[dict]:
-        """Drop irrelevant hits and tag the rest high/low by cosine similarity.
-
-        1. Hard cut-off (`candidate_search_hard_min_score`): dropped entirely.
-        2. Absolute floor (`candidate_search_min_score`) and relative floor
-           (`best * candidate_search_relative_floor`): below either is "low".
-        The frontend shows `high` by default and `low` behind "Show more".
-        """
-        hard_floor = settings.candidate_search_hard_min_score
-        all_hits = [h for h in all_hits if h["score"] >= hard_floor]
-        if not all_hits:
-            return []
-
-        best = max(h["score"] for h in all_hits)
-        threshold = max(
-            settings.candidate_search_min_score,
-            best * settings.candidate_search_relative_floor,
-        )
-        for hit in all_hits:
-            hit["relevance"] = "high" if hit["score"] >= threshold else "low"
-        return all_hits[:limit]
-
-    async def _search_applications_dense_only(
+    async def _search_applications_keywords(
         self,
-        *,
-        query: str,
+        sparse_vector: models.SparseVector,
         query_filter: models.Filter,
         limit: int,
-        min_score: float | None,
     ) -> list[dict]:
-        """Legacy dense-only search path used when hybrid is disabled."""
-        vector = await ai_service.get_embeddings(query)
+        """BM25-only fallback: keyword hits, all shown, no similarity score."""
         response = await self.client.query_points(
             collection_name=self.candidate_collection_name,
-            query=vector,
+            query=sparse_vector,
+            using=SPARSE_VECTOR_NAME,
             query_filter=query_filter,
             limit=limit,
             with_payload=False,
         )
-        hits = [
-            {"application_id": uuid.UUID(str(hit.id)), "score": hit.score}
+        return [
+            {
+                "application_id": uuid.UUID(str(hit.id)),
+                "score": 0.0,
+                "relevance": "high",
+            }
             for hit in response.points
         ]
-        if min_score is not None:
-            hits = [h for h in hits if h["score"] >= min_score]
-        return hits
+
+    @staticmethod
+    def _tag_relevance(all_hits: list[dict], limit: int) -> list[dict]:
+        """Drop irrelevant hits and tag the rest high/low by rescaled cosine.
+
+        1. Below HARD_MIN_SCORE: dropped entirely.
+        2. Below MIN_SCORE or RELATIVE_FLOOR x the best hit: "low".
+        The frontend shows `high` by default and `low` behind "Show more".
+        """
+        all_hits = [h for h in all_hits if h["score"] >= HARD_MIN_SCORE]
+        if not all_hits:
+            return []
+        threshold = max(MIN_SCORE, max(h["score"] for h in all_hits) * RELATIVE_FLOOR)
+        for hit in all_hits:
+            hit["relevance"] = "high" if hit["score"] >= threshold else "low"
+        return all_hits[:limit]
 
 
 qdrant_service = QdrantService()

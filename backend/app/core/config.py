@@ -45,8 +45,9 @@ class Settings(BaseSettings):
     mail_from: str
     send_emails: bool = True
 
-    # SMS (infrastructures/sms). Real SMS only when environment=prod and
-    # provider=sparrow; everything else logs to the console.
+    # SMS (infrastructures/sms). Off unless environment=prod, provider=sparrow
+    # and a token are all set (see `sms_enabled`); while off nothing is sent,
+    # phone codes are refused and applicants hear back by email.
     sms_provider: Literal["console", "sparrow"] = "console"
     sparrow_sms_token: str | None = None
     sparrow_sms_from: str = "RojgarAI"
@@ -79,9 +80,11 @@ class Settings(BaseSettings):
     # Redis (local test, docker-compose redis-test)
     test_redis_url: str = "redis://localhost:6380/0"
 
-    # Embeddings
-    embedding_model: str = "models/gemini-embedding-001"
-    embedding_output_dimensionality: int = 3072
+    # Local embedding + BM25 models (fastembed, CPU). Downloaded once from
+    # Hugging Face into this folder; keep it on a persistent disk.
+    model_cache_dir: str = "~/.cache/fastembed"
+    # CPU threads per embedding run (one run at a time per process).
+    embedding_threads: int = 2
 
     # Qdrant
     qdrant_url: str
@@ -95,7 +98,6 @@ class Settings(BaseSettings):
     test_qdrant_collection_name: str = "eval_jobs_test"
 
     # LLM APIs
-    google_api_key: str
     groq_api_key: str
     tavily_api_key: str
     llama_cloud_api_key: str | None = None
@@ -174,19 +176,18 @@ class Settings(BaseSettings):
     # Turns (question + answer) kept per thread and sent to the model.
     assistant_history_turns: int = 8
 
-    # Candidate hybrid search (Qdrant)
-    candidate_hybrid_search_enabled: bool = True
-    candidate_sparse_model: str = "Qdrant/bm25"
-    candidate_hybrid_prefetch_limit: int = 50
-    candidate_search_hard_min_score: float = 0.20
-    candidate_search_min_score: float = 0.45
-    # Tag results as low-relevance when RRF score is below `top_score * relative_floor`.
-    # Catches the gap from "actually relevant" to "barely related" within one query.
-    candidate_search_relative_floor: float = 0.5
-
     # Public jobs hybrid search
     jobs_hybrid_search_enabled: bool = True
     jobs_hybrid_prefetch_limit: int = 50
+
+    @property
+    def sms_enabled(self) -> bool:
+        """Real SMS only in prod with Sparrow and a token; costs money."""
+        return (
+            self.environment == "prod"
+            and self.sms_provider == "sparrow"
+            and bool(self.sparrow_sms_token)
+        )
 
     # Derived URLs
     @property

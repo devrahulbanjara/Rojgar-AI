@@ -88,7 +88,6 @@ jobs:
       LANGSMITH_PROJECT: Rojgar AI
       LLAMA_CLOUD_API_KEY: unused
       TAVILY_API_KEY: unused
-      GOOGLE_API_KEY: unused
 
     steps:
       - name: Checkout code

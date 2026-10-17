@@ -9,7 +9,10 @@ senior (older) people. So here:
   neutral constant for everyone;
 * its text inputs are blind (no institution names, no years line);
 * its output is squeezed into [0, 1) and added below the rubric's resolution
-  (see rubric.rank_score), so it only orders candidates with equal evidence.
+  (see rubric.rank_score), so it only orders candidates with equal evidence;
+* the semantic feature is the local multilingual-e5 cosine mapped onto the
+  scale the model was trained on (see `_calibrated_similarity`). Vectors from
+  another model (other size) count as missing, never as a score.
 """
 
 from __future__ import annotations
@@ -67,19 +70,41 @@ def _tfidf_similarity(text_a: str, text_b: str) -> float:
         return 0.0
 
 
+# multilingual-e5 job-vs-CV cosines sit in a narrow band. On the seed data:
+# CV vs an unrelated job p5 0.78 / median 0.83, CV vs its own job median 0.88,
+# "strong" fits median 0.90. training.py draws the feature from Beta(6, 2)
+# with decision points at 0.70 and 0.85, so the raw cosine is mapped linearly
+# (E5_UNRELATED -> 0.50, E5_MATCH -> 0.90, clipped to [0, 1]): most unrelated
+# pairs land under 0.70 and strong fits above 0.85.
+E5_UNRELATED = 0.78
+E5_MATCH = 0.90
+
+
+def _usable(vector: list[float] | None) -> bool:
+    from app.infrastructures.ai.service import EMBEDDING_DIM
+
+    return bool(vector) and len(vector) == EMBEDDING_DIM
+
+
 def _semantic_similarity(
     jd_embedding: list[float] | None,
     resume_embedding: list[float] | None,
-) -> float:
-    if not jd_embedding or not resume_embedding:
-        return 0.0
+) -> float | None:
+    """Raw cosine, or None when a vector is missing or from another model."""
+    if not (_usable(jd_embedding) and _usable(resume_embedding)):
+        return None
     a = np.array(jd_embedding)
     b = np.array(resume_embedding)
     norm_a = np.linalg.norm(a)
     norm_b = np.linalg.norm(b)
     if norm_a == 0 or norm_b == 0:
-        return 0.0
+        return None
     return float(np.dot(a, b) / (norm_a * norm_b))
+
+
+def _calibrated_similarity(cosine: float) -> float:
+    scaled = 0.5 + 0.4 * (cosine - E5_UNRELATED) / (E5_MATCH - E5_UNRELATED)
+    return float(min(1.0, max(0.0, scaled)))
 
 
 def _build_resume_text(application: Application) -> str:
@@ -119,10 +144,11 @@ def extract_features(job: Job, application: Application) -> list[float] | None:
     resume = application.resume
     if resume is None:
         return None
-    if not job.jd_embedding or not application.resume_embedding:
+    cosine = _semantic_similarity(job.jd_embedding, application.resume_embedding)
+    if cosine is None:
         return None
     tfidf_sim = _tfidf_similarity(_build_jd_text(job), _build_resume_text(application))
-    semantic_sim = _semantic_similarity(job.jd_embedding, application.resume_embedding)
+    semantic_sim = _calibrated_similarity(cosine)
     num_companies = float(len(resume.experiences or []))
     num_educations = float(len(resume.educations or []))
     num_skills = float(len(resume.skills or []))
@@ -196,3 +222,35 @@ async def compute_resume_embedding(resume) -> list[float] | None:
         return None
     text = blind_resume_text(resume)
     return await ai_service.get_embeddings(text) if text.strip() else None
+
+
+async def ensure_embeddings(db, job: Job, application: Application) -> None:
+    """Fill a missing (or other-model) job/CV vector before `ml_signal`.
+
+    Best effort: on failure the vector stays empty and the tie-break is
+    neutral. Written with a direct UPDATE that keeps updated_at (it drives
+    "last activity"); the caller commits. The resume lists must be loaded.
+    """
+    from sqlalchemy import update
+    from sqlalchemy.orm.attributes import set_committed_value
+
+    from app.infrastructures.ai.service import ai_service
+    from app.infrastructures.qdrant.service import qdrant_service
+
+    pending: list[tuple[Job | Application, str, list[float] | None]] = []
+    if not _usable(job.jd_embedding):
+        text = qdrant_service._build_job_document(job)
+        pending.append((job, "jd_embedding", await ai_service.get_embeddings(text)))
+    if not _usable(application.resume_embedding):
+        vector = await compute_resume_embedding(application.resume)
+        pending.append((application, "resume_embedding", vector))
+    for row, column, vector in pending:
+        if vector is None:
+            continue
+        model = type(row)
+        await db.execute(
+            update(model)
+            .where(model.id == row.id)
+            .values({column: vector, "updated_at": model.updated_at})
+        )
+        set_committed_value(row, column, vector)
