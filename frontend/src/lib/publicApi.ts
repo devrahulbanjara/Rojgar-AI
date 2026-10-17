@@ -130,6 +130,30 @@ export type MyApplication = Omit<ApplicationStatusView, 'can_withdraw'> & {
   status_token: string
 }
 
+/** An interview time someone can book. */
+export type ScheduleSlot = { start: string; end: string }
+
+export type BookedInterview = {
+  id: string
+  start: string
+  end: string
+  /** A video link (https://…) or a place, e.g. "Hattisar office, 3rd floor". */
+  meeting_link: string
+  status: string
+}
+
+/** The interview link from the invite email: open times and the current booking. */
+export type PublicSchedule = {
+  company_name: string
+  job_title: string
+  candidate_name: string
+  interviewer_name: string
+  timezone: string
+  interview_minutes: number
+  interview: BookedInterview | null
+  slots: ScheduleSlot[]
+}
+
 export type WithdrawResult = { withdrawn: boolean; data_deleted: boolean }
 export type RecommendSent = {
   sent: boolean
@@ -264,6 +288,23 @@ export const publicApi = {
 
   withdraw: (token: string) =>
     request<WithdrawResult>('/public/applications/withdraw', json({ token })),
+
+  schedule: (token: string) =>
+    request<PublicSchedule>(`/public/schedule/${encodeURIComponent(token)}`),
+
+  book: (token: string, start: string) =>
+    request<BookedInterview>(`/public/schedule/${encodeURIComponent(token)}/book`, json({ start })),
+
+  reschedule: (token: string, start: string) =>
+    request<BookedInterview>(
+      `/public/schedule/${encodeURIComponent(token)}/reschedule`,
+      json({ start }),
+    ),
+
+  cancelInterview: (token: string) =>
+    request<BookedInterview>(`/public/schedule/${encodeURIComponent(token)}/cancel`, {
+      method: 'POST',
+    }),
 
   magicLink: (email: string) => request<MagicLinkSent>('/public/auth/magic-link', json({ email })),
 

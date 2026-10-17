@@ -206,6 +206,27 @@ export const ne: Dict = {
     seeAll: 'मेरा सबै आवेदन हेर्नुहोस्',
   },
 
+  schedule: {
+    title: 'अन्तर्वार्ता',
+    with: (minutes: number, name: string) => `${name} सँग ${neDigits(minutes)} मिनेट`,
+    pickTime: 'समय छान्नुहोस्',
+    book: (when: string) => `${when} बुक गर्नुहोस्`,
+    bookEmpty: 'बुक गर्नुहोस्',
+    booked: 'अन्तर्वार्ता बुक भयो',
+    moved: 'अन्तर्वार्ताको समय बदलियो',
+    change: 'समय बदल्नुहोस्',
+    keepTime: 'यही समय राख्नुहोस्',
+    cancel: 'अन्तर्वार्ता रद्द गर्नुहोस्',
+    cancelConfirm: 'यो अन्तर्वार्ता रद्द गर्ने?',
+    keep: 'नगर्ने',
+    cancelled: 'अन्तर्वार्ता रद्द भयो',
+    taken: 'त्यो समय भर्खरै अरूले लिए। अर्को छान्नुहोस्।',
+    zone: (zone: string) => `समय ${zone === 'Asia/Kathmandu' ? 'नेपाल' : zone} अनुसार छ।`,
+    invalid: 'यो अन्तर्वार्ता लिंक मिलेन।',
+    closed: 'यो अन्तर्वार्ताको निम्तो अब खुला छैन।',
+    noSlots: 'अहिले खाली समय छैन। व्यवसायले तपाईंलाई सम्पर्क गर्नेछ।',
+  },
+
   me: {
     title: 'मेरा आवेदनहरू',
     needsYou: 'तपाईंको काम',

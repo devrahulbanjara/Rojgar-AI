@@ -44,40 +44,100 @@ const NE_MONTHS = [
 ]
 const NE_DAYS = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिही', 'शुक्र', 'शनि']
 
-function neTime(date: Date): string {
-  const h = date.getHours()
-  const part = h < 12 ? 'बिहान' : h < 17 ? 'दिउँसो' : 'बेलुका'
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${part} ${neDigits(h % 12 || 12)}:${neDigits(minutes)}`
+const EN_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+const EN_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+type Parts = {
+  year: number
+  month: number
+  day: number
+  weekday: number
+  hour: number
+  minute: number
+}
+
+/** Calendar parts of an instant, in `timeZone` (e.g. "Asia/Kathmandu") or the browser's zone. */
+function partsOf(iso: string, timeZone?: string): Parts {
+  const date = new Date(iso)
+  if (!timeZone) {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth(),
+      day: date.getDate(),
+      weekday: date.getDay(),
+      hour: date.getHours(),
+      minute: date.getMinutes(),
+    }
+  }
+  const get = (type: string) =>
+    new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hourCycle: 'h23',
+    })
+      .formatToParts(date)
+      .find((part) => part.type === type)?.value ?? '0'
+  const year = Number(get('year'))
+  const month = Number(get('month')) - 1
+  const day = Number(get('day'))
+  return {
+    year,
+    month,
+    day,
+    weekday: new Date(Date.UTC(year, month, day)).getUTCDay(),
+    hour: Number(get('hour')) % 24,
+    minute: Number(get('minute')),
+  }
+}
+
+/** "8:45 PM" · "बेलुका ८:४५" */
+export function formatTime(iso: string, locale: Locale, timeZone?: string): string {
+  const { hour, minute } = partsOf(iso, timeZone)
+  const h = String(hour % 12 || 12)
+  const m = String(minute).padStart(2, '0')
+  if (locale === 'ne') {
+    const part = hour < 12 ? 'बिहान' : hour < 17 ? 'दिउँसो' : 'बेलुका'
+    return `${part} ${neDigits(h)}:${neDigits(m)}`
+  }
+  return `${h}:${m} ${hour < 12 ? 'AM' : 'PM'}`
+}
+
+/** "Sun 18 Oct" · "आइत १८ अक्टोबर" */
+export function formatDay(iso: string, locale: Locale, timeZone?: string): string {
+  const { month, day, weekday } = partsOf(iso, timeZone)
+  return locale === 'ne'
+    ? `${NE_DAYS[weekday]} ${neDigits(day)} ${NE_MONTHS[month]}`
+    : `${EN_DAYS[weekday]} ${day} ${EN_MONTHS[month]}`
 }
 
 /** "17 Oct" this year, else "17 Oct 2025" · "१७ अक्टोबर" */
-export function formatDate(iso: string, locale: Locale): string {
-  const date = new Date(iso)
-  const thisYear = date.getFullYear() === new Date().getFullYear()
-  if (locale === 'ne') {
-    const day = `${neDigits(date.getDate())} ${NE_MONTHS[date.getMonth()]}`
-    return thisYear ? day : `${day} ${neDigits(date.getFullYear())}`
-  }
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: thisYear ? undefined : 'numeric',
-  }).format(date)
+export function formatDate(iso: string, locale: Locale, timeZone?: string): string {
+  const { year, month, day } = partsOf(iso, timeZone)
+  const thisYear = year === new Date().getFullYear()
+  const short =
+    locale === 'ne' ? `${neDigits(day)} ${NE_MONTHS[month]}` : `${day} ${EN_MONTHS[month]}`
+  if (thisYear) return short
+  return `${short} ${locale === 'ne' ? neDigits(year) : year}`
 }
 
 /** "Sun 18 Oct, 8:45 PM" · "आइत १८ अक्टोबर, बेलुका ८:४५" */
-export function formatDateTime(iso: string, locale: Locale): string {
-  const date = new Date(iso)
-  if (locale === 'ne') {
-    return `${NE_DAYS[date.getDay()]} ${neDigits(date.getDate())} ${NE_MONTHS[date.getMonth()]}, ${neTime(date)}`
-  }
-  const day = new Intl.DateTimeFormat('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }).format(date)
-  const h = date.getHours()
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${day}, ${h % 12 || 12}:${minutes} ${h < 12 ? 'AM' : 'PM'}`
+export function formatDateTime(iso: string, locale: Locale, timeZone?: string): string {
+  return `${formatDay(iso, locale, timeZone)}, ${formatTime(iso, locale, timeZone)}`
 }

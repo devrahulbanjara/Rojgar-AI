@@ -204,6 +204,27 @@ export const en = {
     seeAll: 'See all my applications',
   },
 
+  schedule: {
+    title: 'Interview',
+    with: (minutes: number, name: string) => `${minutes} min with ${name}`,
+    pickTime: 'Pick a time',
+    book: (when: string) => `Book ${when}`,
+    bookEmpty: 'Book',
+    booked: 'Interview booked',
+    moved: 'Interview moved',
+    change: 'Change time',
+    keepTime: 'Keep this time',
+    cancel: 'Cancel interview',
+    cancelConfirm: 'Cancel this interview?',
+    keep: 'Keep it',
+    cancelled: 'Interview cancelled',
+    taken: 'That time was just taken. Pick another.',
+    zone: (zone: string) => `Times are in ${zone === 'Asia/Kathmandu' ? 'Nepal time' : zone}.`,
+    invalid: 'This interview link is not valid.',
+    closed: 'This interview invitation is no longer open.',
+    noSlots: 'No free times right now. The business will contact you.',
+  },
+
   me: {
     title: 'My applications',
     needsYou: 'Needs you',
