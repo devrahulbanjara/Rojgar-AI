@@ -3,6 +3,7 @@ withdraw, and passwordless sign-in."""
 
 import io
 import json
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from html import escape
@@ -12,6 +13,7 @@ from fastapi import BackgroundTasks, HTTPException, Response, UploadFile, status
 from loguru import logger
 from pydantic import ValidationError
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -32,20 +34,26 @@ from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.auth.enums import UserRole
 from app.modules.auth.models import OAuthAccount, RefreshToken, User
 from app.modules.companies.models import Company
+from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.modules.profiles.models import Profile
 from app.modules.public import cv_text
-from app.modules.public.models import MagicLinkToken
+from app.modules.public.models import JobSuggestion, MagicLinkToken
+from app.modules.public.notify import notify_applicant
+from app.modules.public.phone import normalize_phone
 from app.modules.public.schemas import (
     ApplicationStatusView,
     CareersPage,
     CvPrefill,
     GuestApplicationCreated,
+    InterviewInfo,
     MyApplication,
     PublicCompany,
     PublicJob,
     PublicJobSummary,
+    RecommendRequest,
     ScreeningAnswer,
+    Stage,
     WithdrawResult,
 )
 from app.modules.public.tokens import (
@@ -59,26 +67,18 @@ from app.modules.resumes.models import Resume
 from app.shared.enums import ApplicationStatus, JobStatus, SyncAction
 
 TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+SUGGESTIONS_PER_REFERRER_PER_DAY = 20
 
-# Plain-English status for candidates; AI review state is never shown.
-_STATUS_COPY: dict[ApplicationStatus, tuple[str, str | None]] = {
-    ApplicationStatus.applied: ("Applied", "The team is reviewing applications."),
-    ApplicationStatus.shortlisted: (
-        "Shortlisted",
-        "Watch your email for an interview invite.",
-    ),
-    ApplicationStatus.interview_booked: (
-        "Interview booked",
-        "Check your email for the time and link.",
-    ),
-    ApplicationStatus.interview_completed: (
-        "Interview done",
-        "The team will get back to you.",
-    ),
-    ApplicationStatus.offer: ("Offer received", "Check your email to respond."),
-    ApplicationStatus.offer_accepted: ("Offer accepted", None),
-    ApplicationStatus.offer_declined: ("Offer declined", None),
-    ApplicationStatus.rejected: ("Not selected", None),
+# The applicant's view of a status; AI review state is never shown.
+_STAGE: dict[ApplicationStatus, Stage] = {
+    ApplicationStatus.applied: "new",
+    ApplicationStatus.shortlisted: "shortlisted",
+    ApplicationStatus.interview_booked: "interview",
+    ApplicationStatus.interview_completed: "interview",
+    ApplicationStatus.offer: "offer",
+    ApplicationStatus.offer_accepted: "hired",
+    ApplicationStatus.offer_declined: "withdrawn",
+    ApplicationStatus.rejected: "not_selected",
 }
 
 _WITHDRAWABLE = {
@@ -94,10 +94,6 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _status_copy(app_status: ApplicationStatus) -> tuple[str, str | None]:
-    return _STATUS_COPY.get(app_status, (app_status.value.replace("_", " "), None))
-
-
 def _is_open(job: Job) -> bool:
     return (
         job.status == JobStatus.active
@@ -107,7 +103,12 @@ def _is_open(job: Job) -> bool:
 
 
 def _public_company(company: Company) -> PublicCompany:
-    return PublicCompany.model_validate(company)
+    # Company.phone and Company.status (pending/active) arrive with the business
+    # model; until then phone is None and no business shows as verified.
+    verified = str(getattr(company, "status", "")).endswith("active")
+    return PublicCompany.model_validate(company).model_copy(
+        update={"verified": verified}
+    )
 
 
 def _job_summary(job: Job) -> PublicJobSummary:
@@ -178,9 +179,15 @@ async def get_careers_page(db: AsyncSession, company_slug: str) -> CareersPage:
 
 
 async def prefill_cv(file: UploadFile) -> CvPrefill:
-    data = await cv_text.read_cv_upload(file)
-    text = await cv_text.extract_text(data)
-    return CvPrefill(**cv_text.prefill_from_text(text))
+    cv = await cv_text.read_cv_upload(file)
+    if cv.is_photo:
+        return CvPrefill()  # photos are kept as they are; nothing to read quickly
+    found = cv_text.prefill_from_text(await cv_text.extract_text(cv.data))
+    return CvPrefill(
+        full_name=found["full_name"],
+        email=found["email"],
+        phone=normalize_phone(found["phone"]),
+    )
 
 
 # ---------------------------------------------------------------- apply
@@ -237,10 +244,20 @@ def _parse_answers(raw: str | None, questions: list[str]) -> list[dict] | None:
     return [{"question": q, "answer": answered[q]} for q in questions] or None
 
 
-async def _find_or_create_candidate(
-    db: AsyncSession, email: str, full_name: str
+async def _find_or_create_applicant(
+    db: AsyncSession, *, email: str | None, phone: str, full_name: str
 ) -> User:
-    user = await db.scalar(select(User).where(func.lower(User.email) == email))
+    """The applicant's person record: by email when given, else by phone."""
+    if email:
+        user = await db.scalar(select(User).where(func.lower(User.email) == email))
+    else:
+        user = await db.scalar(
+            select(User)
+            .join(Profile, Profile.user_id == User.id)
+            .where(Profile.phone == phone, User.primary_role == UserRole.candidate)
+            .order_by(User.created_at)
+            .limit(1)
+        )
     if user is None:
         user = User(
             full_name=full_name,
@@ -248,11 +265,21 @@ async def _find_or_create_candidate(
             password_hash=None,
             primary_role=UserRole.candidate,
             is_email_verified=False,
-            # Passwordless candidates never see the old onboarding wizard.
+            # Passwordless applicants never see the old onboarding wizard.
             is_onboarded=True,
         )
-        db.add(user)
-        await db.flush()
+        try:
+            async with db.begin_nested():
+                db.add(user)
+                await db.flush()
+        except IntegrityError as exc:
+            # Phone-only people need users.email to be nullable (wave/b1
+            # migration). Never invent an email to get around it.
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Please add your email to apply.",
+            ) from exc
+        db.add(Profile(user_id=user.id, phone=phone))
         return user
     if user.is_deleted or user.primary_role != UserRole.candidate:
         raise HTTPException(
@@ -320,17 +347,36 @@ async def _send_status_email(
     )
 
 
+async def _send_status_link(
+    *, phone: str, email: str | None, job: Job, application_id: uuid.UUID, again: bool
+) -> bool:
+    """Status link by SMS, and by email when they gave one."""
+    token = create_status_token(application_id)
+    sent = await notify_applicant(
+        phone,
+        "received",
+        company=job.company.name,
+        job=job.title,
+        url=status_url(token),
+    )
+    if email:
+        await _send_status_email(email, job.title, job.company.name, token, again=again)
+        sent = True
+    return sent
+
+
 async def submit_guest_application(
     db: AsyncSession,
     *,
     slug: str,
     full_name: str,
-    email: str,
-    phone: str | None,
-    cv: UploadFile,
+    phone: str,
+    email: str | None,
+    cv: UploadFile | None,
     answers_json: str | None,
     consent: bool,
     source: str,
+    ref: str | None,
     turnstile_token: str | None,
     client_ip: str,
     bg_tasks: BackgroundTasks,
@@ -338,21 +384,30 @@ async def submit_guest_application(
     if not consent:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Please agree to share your details with the company.",
+            detail="Please agree to share your details with the business.",
         )
     full_name = " ".join(full_name.split())
     if not full_name:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter your name."
         )
-    email = email.strip().lower()
+    normalized = normalize_phone(phone)
+    if normalized is None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Please enter a valid mobile number.",
+        )
+    phone = normalized
+    email = (email or "").strip().lower() or None
 
     await _verify_turnstile(turnstile_token, client_ip)
     job = await _load_open_job(db, slug)
     answers = _parse_answers(answers_json, job.screening_questions or [])
-    cv_bytes = await cv_text.read_cv_upload(cv)
+    cv_file = await cv_text.read_cv_upload(cv) if cv is not None else None
 
-    user = await _find_or_create_candidate(db, email, full_name)
+    user = await _find_or_create_applicant(
+        db, email=email, phone=phone, full_name=full_name
+    )
 
     existing = await db.scalar(
         select(Application.id).where(
@@ -360,43 +415,52 @@ async def submit_guest_application(
         )
     )
     if existing is not None:
-        await _send_status_email(
-            email,
-            job.title,
-            job.company.name,
-            create_status_token(existing),
-            again=True,
+        await _send_status_link(
+            phone=phone, email=email, job=job, application_id=existing, again=True
         )
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            detail="You've already applied. We've emailed your status link again.",
+            detail="You've already applied. We've sent your status link again.",
         )
     await _enforce_email_rate(db, user.id)
 
-    text = await cv_text.extract_text(cv_bytes)
-    contact = cv_text.prefill_from_text(text)
-    cv_key = await storage_service.upload_private_document(
-        cv_bytes, "cvs", extension="pdf", content_type="application/pdf"
+    suggestion = (
+        await db.scalar(
+            select(JobSuggestion).where(
+                JobSuggestion.job_id == job.id, JobSuggestion.token == ref
+            )
+        )
+        if ref
+        else None
     )
+    if suggestion is not None:
+        source = "referral"
+
+    text = ""
+    cv_key = None
+    if cv_file is not None:
+        if not cv_file.is_photo:
+            text = await cv_text.extract_text(cv_file.data)
+        cv_key = await storage_service.upload_private_document(
+            cv_file.data,
+            "cvs",
+            extension=cv_file.extension,
+            content_type=cv_file.content_type,
+        )
+    contact = cv_text.prefill_from_text(text)
 
     profile = await db.scalar(select(Profile).where(Profile.user_id == user.id))
     if profile is None:
         db.add(
-            Profile(
-                user_id=user.id,
-                phone=phone,
-                linkedin_url=contact["linkedin_url"],
-                github_url=contact["github_url"],
-                portfolio_url=contact["portfolio_url"],
-            )
+            Profile(user_id=user.id, phone=phone, linkedin_url=contact["linkedin_url"])
         )
+    # Until applications can exist without a CV (wave/b1), every application
+    # gets a resume row; it has no file when the applicant sent none.
     resume = Resume(
         user_id=user.id,
         resume_name=f"CV for {job.title}"[:255],
         phone=phone,
         linkedin_url=contact["linkedin_url"],
-        github_url=contact["github_url"],
-        portfolio_url=contact["portfolio_url"],
         # Raw CV text until background parsing fills in structured fields;
         # this is what screening and the injection rail read meanwhile.
         summary=text[:6000] or None,
@@ -405,6 +469,14 @@ async def submit_guest_application(
     db.add(resume)
     await db.flush()
 
+    photo_flag = (
+        {
+            "ai_review_status": "needs_human_review",
+            "ai_flag_reason": cv_text.PHOTO_NOT_READ,
+        }
+        if cv_file is not None and cv_file.is_photo
+        else {}
+    )
     try:
         created = await apply_to_job(
             db,
@@ -413,7 +485,7 @@ async def submit_guest_application(
                 job_id=job.id,
                 resume_id=resume.id,
                 share_profile_all=True,
-                share_phone=bool(phone),
+                share_phone=True,
             ),
             bg_tasks,
             extra_fields={
@@ -424,26 +496,117 @@ async def submit_guest_application(
                 "shared_email_value": email,
                 "shared_phone_value": phone,
                 "shared_linkedin_url": contact["linkedin_url"],
-                "shared_github_url": contact["github_url"],
-                "shared_portfolio_url": contact["portfolio_url"],
+                **photo_flag,
             },
         )
     except Exception:
-        await storage_service.delete_key(cv_key)
+        if cv_key:
+            await storage_service.delete_key(cv_key)
         raise
 
-    if settings.llama_cloud_api_key:
-        bg_tasks.add_task(enrich_guest_cv, resume.id, created.id, cv_bytes)
+    if suggestion is not None and suggestion.application_id is None:
+        suggestion.application_id = created.id
+        await db.commit()
 
-    await _send_status_email(
-        email, job.title, job.company.name, create_status_token(created.id), again=False
+    if settings.llama_cloud_api_key and cv_file is not None and not cv_file.is_photo:
+        bg_tasks.add_task(enrich_guest_cv, resume.id, created.id, cv_file.data)
+
+    sent = await _send_status_link(
+        phone=phone, email=email, job=job, application_id=created.id, again=False
     )
     return GuestApplicationCreated(
         application_id=created.id,
         job_title=job.title,
         company_name=job.company.name,
+        phone=phone,
         email=email,
-        status_link_sent=True,
+        status_link_sent=sent,
+    )
+
+
+# ---------------------------------------------------------------- suggest someone
+
+
+async def recommend(db: AsyncSession, slug: str, payload: RecommendRequest) -> None:
+    """Store a suggestion and text the suggested person the job link.
+
+    Suggesting the same number twice for a job is accepted but texts once.
+    """
+    job = await _load_open_job(db, slug)
+    phone = normalize_phone(payload.phone)
+    if phone is None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Please enter their mobile number.",
+        )
+    referrer_phone = None
+    if payload.referrer_phone and payload.referrer_phone.strip():
+        referrer_phone = normalize_phone(payload.referrer_phone)
+        if referrer_phone is None:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Please check your mobile number.",
+            )
+    if referrer_phone == phone:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Their number must be different from yours.",
+        )
+    name = " ".join(payload.name.split())
+    referrer_name = " ".join(payload.referrer_name.split())
+    if not name or not referrer_name:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter both names."
+        )
+
+    already = await db.scalar(
+        select(JobSuggestion.id).where(
+            JobSuggestion.job_id == job.id, JobSuggestion.phone == phone
+        )
+    )
+    if already is not None:
+        return
+    if referrer_phone:
+        since = _now() - timedelta(days=1)
+        today = await db.scalar(
+            select(func.count(JobSuggestion.id)).where(
+                JobSuggestion.referrer_phone == referrer_phone,
+                JobSuggestion.created_at >= since,
+            )
+        )
+        if (today or 0) >= SUGGESTIONS_PER_REFERRER_PER_DAY:
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="That's a lot of suggestions today. Try again tomorrow.",
+            )
+
+    token = secrets.token_urlsafe(12)
+    db.add(
+        JobSuggestion(
+            job_id=job.id,
+            referrer_name=referrer_name[:255],
+            referrer_phone=referrer_phone,
+            referrer_ref=payload.ref,
+            name=name[:255],
+            phone=phone,
+            note=(payload.note or "").strip() or None,
+            token=token,
+        )
+    )
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()  # the same person was suggested a moment ago
+        return
+
+    url = f"{settings.frontend_url}/jobs/{job.slug}?src=referral&ref={token}"
+    await notify_applicant(
+        phone,
+        "suggested",
+        referrer=referrer_name,
+        company=job.company.name,
+        job=job.title,
+        url=url,
     )
 
 
@@ -523,18 +686,44 @@ async def _load_application_for_token(db: AsyncSession, token: str) -> Applicati
     return application
 
 
+async def _interviews_for(
+    db: AsyncSession, application_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, InterviewInfo]:
+    """The latest interview of each application."""
+    if not application_ids:
+        return {}
+    rows = (
+        await db.scalars(
+            select(Interview)
+            .where(Interview.application_id.in_(application_ids))
+            .order_by(Interview.start_time.desc())
+        )
+    ).all()
+    found: dict[uuid.UUID, InterviewInfo] = {}
+    for row in rows:
+        if row.application_id in found:
+            continue
+        link = row.location if (row.location or "").startswith("https://") else None
+        found[row.application_id] = InterviewInfo(
+            starts_at=row.start_time,
+            ends_at=row.end_time,
+            location=None if link else row.location,
+            join_url=link,
+        )
+    return found
+
+
 async def get_application_status(db: AsyncSession, token: str) -> ApplicationStatusView:
     application = await _load_application_for_token(db, token)
-    label, next_step = _status_copy(application.status)
+    interviews = await _interviews_for(db, [application.id])
     return ApplicationStatusView(
         application_id=application.id,
         job_title=application.job.title,
         job_slug=application.job.slug,
         company_name=application.job.company.name,
         company_slug=application.job.company.slug,
-        status=application.status,
-        status_label=label,
-        next_step=next_step,
+        stage=_STAGE[application.status],
+        interview=interviews.get(application.id),
         applied_at=application.created_at,
         updated_at=application.updated_at,
         can_withdraw=application.status in _WITHDRAWABLE,
@@ -691,22 +880,20 @@ async def list_my_applications(db: AsyncSession, user: User) -> list[MyApplicati
             .order_by(Application.updated_at.desc())
         )
     ).all()
-    items = []
-    for application in rows:
-        label, next_step = _status_copy(application.status)
-        items.append(
-            MyApplication(
-                application_id=application.id,
-                job_title=application.job.title,
-                job_slug=application.job.slug,
-                company_name=application.job.company.name,
-                company_slug=application.job.company.slug,
-                company_logo_url=application.job.company.logo_url,
-                status=application.status,
-                status_label=label,
-                next_step=next_step,
-                applied_at=application.created_at,
-                updated_at=application.updated_at,
-            )
+    interviews = await _interviews_for(db, [a.id for a in rows])
+    return [
+        MyApplication(
+            application_id=application.id,
+            job_title=application.job.title,
+            job_slug=application.job.slug,
+            company_name=application.job.company.name,
+            company_slug=application.job.company.slug,
+            company_logo_url=application.job.company.logo_url,
+            stage=_STAGE[application.status],
+            interview=interviews.get(application.id),
+            applied_at=application.created_at,
+            updated_at=application.updated_at,
+            status_token=create_status_token(application.id),
         )
-    return items
+        for application in rows
+    ]

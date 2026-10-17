@@ -1,13 +1,16 @@
 """Fast, local CV reading for the public apply form.
 
-Prefill must answer while the candidate is still on the form, so it never
-calls a paid extraction API: pypdf text + a few regexes. Structured parsing
-(experience, skills) happens later in the background.
+A CV is a PDF or a phone photo of a paper CV (JPG, PNG or WebP). Prefill must
+answer while the applicant is still on the form, so it never calls a paid
+extraction API: pypdf text + a few regexes. Photos are stored as they are and
+marked "CV photo — text not read" for the business (there is no vision model
+client yet). Structured parsing of PDFs happens later in the background.
 """
 
 import asyncio
 import io
 import re
+from dataclasses import dataclass
 
 from fastapi import HTTPException, UploadFile, status
 from pypdf import PdfReader
@@ -17,6 +20,9 @@ from app.core.config import settings
 
 PDF_MAGIC = b"%PDF-"
 MAX_PAGES = 6
+PHOTO_NOT_READ = "CV photo — text not read"
+# ISO-BMFF brands used by iPhone HEIC/HEIF photos.
+_HEIF_BRANDS = {b"heic", b"heix", b"hevc", b"hevx", b"heim", b"heis", b"mif1", b"msf1"}
 
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _PHONE = re.compile(
@@ -30,8 +36,32 @@ _NOT_A_NAME = re.compile(
 )
 
 
-async def read_cv_upload(file: UploadFile) -> bytes:
-    """Read an uploaded CV, enforcing size and real-PDF content (not the filename)."""
+@dataclass(frozen=True)
+class CvFile:
+    data: bytes
+    extension: str  # pdf | jpg | png | webp
+    content_type: str
+
+    @property
+    def is_photo(self) -> bool:
+        return self.extension != "pdf"
+
+
+def _sniff(data: bytes) -> tuple[str, str] | None:
+    """(extension, content type) from the file's bytes, never its name."""
+    if data.startswith(PDF_MAGIC):
+        return "pdf", "application/pdf"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpg", "image/jpeg"
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png", "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp", "image/webp"
+    return None
+
+
+async def read_cv_upload(file: UploadFile) -> CvFile:
+    """Read an uploaded CV (PDF or photo), checking size and real content."""
     data = await file.read()
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="The CV file is empty.")
@@ -40,11 +70,18 @@ async def read_cv_upload(file: UploadFile) -> bytes:
             status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="The CV must be 10 MB or smaller.",
         )
-    if not data.startswith(PDF_MAGIC):
+    if data[4:8] == b"ftyp" and data[8:12] in _HEIF_BRANDS:
         raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, detail="Please upload your CV as a PDF."
+            status.HTTP_400_BAD_REQUEST,
+            detail="iPhone HEIC photos can't be read. Upload a screenshot of the photo, or a PDF.",
         )
-    return data
+    kind = _sniff(data)
+    if kind is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Please upload a PDF or a photo (JPG or PNG) of your CV.",
+        )
+    return CvFile(data, *kind)
 
 
 def _extract_text_sync(data: bytes) -> str:
