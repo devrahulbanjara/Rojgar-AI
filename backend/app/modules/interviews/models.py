@@ -117,7 +117,8 @@ class Interview(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     candidate_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    candidate_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    # NULL for phone-only applicants (they get SMS instead).
+    candidate_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     start_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )

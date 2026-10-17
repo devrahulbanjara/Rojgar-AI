@@ -271,6 +271,26 @@ async def test_book_reschedule_cancel_flow(client, db, outbox):
     assert rebook.status_code == 200
 
 
+async def test_phone_only_applicant_can_book(client, db, outbox):
+    admin, _, _, application = await _shortlisted(db)
+    application.shared_email_value = None
+    from app.modules.auth.models import User
+
+    (await db.get(User, application.user_id)).email = None
+    await db.flush()
+    token = await _invite(client, admin, application, notify=False)
+    slots = (await client.get(f"/public/schedule/{token}")).json()["data"]["slots"]
+    booked = await client.post(
+        f"/public/schedule/{token}/book", json={"start": slots[0]["start"]}
+    )
+    assert booked.status_code == 200, booked.text
+    interview = await db.scalar(
+        select(Interview).where(Interview.application_id == application.id)
+    )
+    assert interview.candidate_email is None
+    assert {m["to"] for m in outbox} == {"admin1@test.dev"}
+
+
 async def test_rejected_candidate_link_is_closed(client, db):
     admin, _, _, application = await _shortlisted(db)
     token = await _invite(client, admin, application, notify=False)

@@ -60,7 +60,9 @@ def _summary(msg: InterviewMessage) -> str:
 
 
 def _ics(msg: InterviewMessage, method: Literal["REQUEST", "CANCEL"]) -> str:
-    attendees = [(msg.candidate_name, msg.candidate_email)]
+    attendees = []
+    if msg.candidate_email:
+        attendees.append((msg.candidate_name, msg.candidate_email))
     if msg.interviewer_email:
         attendees.append((msg.interviewer_name, msg.interviewer_email))
     return build_ics(

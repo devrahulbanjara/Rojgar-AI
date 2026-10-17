@@ -112,7 +112,7 @@ class AgendaItem(BaseSchema):
     job_id: UUID
     job_title: str
     candidate_name: str
-    candidate_email: str
+    candidate_email: str | None = None
     interviewer_name: str | None
     start: datetime
     end: datetime

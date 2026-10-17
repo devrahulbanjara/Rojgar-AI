@@ -98,7 +98,7 @@ class TodayInterview(BaseSchema):
     interview_id: UUID
     application_id: UUID
     candidate_name: str
-    candidate_email: str
+    candidate_email: str | None = None
     job_title: str
     start_time: datetime
     application_status: ApplicationStage
