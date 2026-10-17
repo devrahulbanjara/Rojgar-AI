@@ -20,6 +20,7 @@ from app.modules.activity.service import create_activity_event
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
+from app.modules.entitlements.service import ensure_can_add_member
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
 from app.modules.companies.schemas import (
@@ -326,6 +327,11 @@ async def update_recruiter_status(
         )
 
     membership, recruiter_user = row
+    if (
+        payload.status == MembershipStatus.active
+        and membership.status != MembershipStatus.active
+    ):
+        await ensure_can_add_member(db, company.id)
     membership.status = payload.status
     action_label = (
         "approved" if payload.status == MembershipStatus.active else "rejected"

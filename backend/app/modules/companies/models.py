@@ -40,6 +40,10 @@ class Company(Base):
     company_size: Mapped[str | None] = mapped_column(String(50))
     location: Mapped[str | None] = mapped_column(String(255))
     description: Mapped[str | None]
+    # Billing plan id (entitlements/plans.py): free | team | business.
+    plan: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="free", server_default="free"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

@@ -185,3 +185,15 @@ async def client(db):
     ) as ac:
         yield ac
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def committed(engine):
+    """Sessions whose writes really commit, for race tests across connections.
+
+    Every table is truncated afterwards so other tests still see an empty DB.
+    """
+    yield async_sessionmaker(engine, expire_on_commit=False)
+    tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
+    async with engine.begin() as conn:
+        await conn.execute(text(f"TRUNCATE {tables} CASCADE"))

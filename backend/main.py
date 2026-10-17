@@ -27,6 +27,7 @@ from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.companies.router import router as companies_router
 from app.modules.dashboards.router import router as dash_router
+from app.modules.entitlements.router import router as entitlements_router
 from app.modules.interviews.evaluation_router import router as evaluation_router
 from app.modules.interviews.recording_router import router as recording_router
 from app.modules.interviews.router import router as interviews_router
@@ -134,6 +135,7 @@ app.include_router(audit_router)
 app.include_router(activity_router)
 app.include_router(dash_router)
 app.include_router(companies_router)
+app.include_router(entitlements_router)
 app.include_router(profiles_router)
 app.include_router(public_router)
 app.include_router(resumes_router)
