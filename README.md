@@ -20,6 +20,10 @@ Hiring for every kind of job in Nepal: shop, hotel, clinic, school, bank, factor
   <img alt="Qdrant" src="https://img.shields.io/badge/Qdrant-DC244C?logo=qdrant&logoColor=white">
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/08-job-applicants.jpg" alt="A job's applicants, best fit first, with one applicant open: the reason, each must-have with a quote from the CV, and Shortlist or Reject" width="100%">
+</p>
+
 ---
 
 ## What it is
@@ -68,6 +72,116 @@ A person shortlists, rejects, invites and hires. Each decision waits through a s
 - **Interviews.** Applicants pick a time from a signed booking link. Video links use Jitsi Meet (no account needed). `.ics` invites in Nepal time, reschedule and cancel, reminders 24 hours and 1 hour before, and "How did it go?" notes.
 - **Everything in one place.** Today page, a job page with a side panel for each applicant, insights, notifications and an activity feed.
 - **English and नेपाली** across the public pages and the applicant side, with Noto Sans Devanagari for Nepali text.
+
+## A quick tour
+
+The job page above is where most of the work happens: applicants best fit first, and one click to see why and decide.
+
+### For applicants
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/01-landing.jpg" alt="Landing page" width="100%"><br>
+      <b>Landing page</b><br>
+      <sub>What it does, how it works and the prices, for a small business owner.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/02-job-public.jpg" alt="A job's apply page" width="100%"><br>
+      <b>A job's apply page</b><br>
+      <sub>One link for LinkedIn, Facebook, Viber or Merojob. Name, phone, CV if the job needs one, and the job's questions. No account.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/03-apply-mobile.jpg" alt="On a phone" width="70%"><br>
+      <b>On a phone</b><br>
+      <sub>Built phone-first, in English or Nepali.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/04-poster.jpg" alt="QR poster" width="100%"><br>
+      <b>QR poster</b><br>
+      <sub>Print it for the shop door or a notice board; people scan to apply.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/05-careers.jpg" alt="Careers page" width="100%"><br>
+      <b>Careers page</b><br>
+      <sub>Every open job of one business on one page.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/16-my-applications.jpg" alt="My applications" width="100%"><br>
+      <b>My applications</b><br>
+      <sub>Applicants sign in with a magic link and see where each application stands.</sub>
+    </td>
+  </tr>
+</table>
+
+### For the hiring team
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/06-today.jpg" alt="Today" width="100%"><br>
+      <b>Today</b><br>
+      <sub>What needs you now: interviews today, and per job who is waiting to be reviewed, called or decided.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/07-jobs.jpg" alt="Jobs" width="100%"><br>
+      <b>Jobs</b><br>
+      <sub>Every job with its applicants and how many are waiting.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/09-ask-ai.jpg" alt="Ask AI about an applicant" width="100%"><br>
+      <b>Ask AI about an applicant</b><br>
+      <sub>Answers come only from the applicant's data, with quotes, plus interview questions.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/12-builder-ai.jpg" alt="Post a job with AI" width="100%"><br>
+      <b>Post a job with AI</b><br>
+      <sub>One sentence in, a full job post out: title, category, salary, description, must-haves. Edit anything.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/10-get-applicants.jpg" alt="Get applicants" width="100%"><br>
+      <b>Get applicants</b><br>
+      <sub>Ask people you know, print a poster, or post online.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/11-share-online.jpg" alt="Post online" width="100%"><br>
+      <b>Post online</b><br>
+      <sub>The apply link and ready text for LinkedIn, Facebook and Merojob, plus a QR code.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/13-interviews.jpg" alt="Interviews" width="100%"><br>
+      <b>Interviews</b><br>
+      <sub>Applicants pick a time from a link; video by Jitsi; “How did it go?” notes afterwards.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/14-insights.jpg" alt="Insights" width="100%"><br>
+      <b>Insights</b><br>
+      <sub>Hiring progress, where applicants come from, and how fast everyone hears back.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/15-team.jpg" alt="Team" width="100%"><br>
+      <b>Team</b><br>
+      <sub>Owner, Manager and Interviewer roles, invite links and an audit log.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/17-admin.jpg" alt="Platform admin" width="100%"><br>
+      <b>Platform admin</b><br>
+      <sub>New businesses are checked before their jobs go public.</sub>
+    </td>
+  </tr>
+</table>
 
 ## How AI is used
 
