@@ -91,9 +91,9 @@ class Instrumented:
 
 
 async def embed_job(job: SimpleNamespace) -> None:
-    from app.modules.jobs.service import _compute_and_store_jd_embedding
+    from app.modules.review.ml_rank import compute_job_embedding
 
-    await _compute_and_store_jd_embedding(job)
+    job.jd_embedding = await compute_job_embedding(job)
 
 
 async def embed_application(app: SimpleNamespace, inst: Instrumented) -> str | None:

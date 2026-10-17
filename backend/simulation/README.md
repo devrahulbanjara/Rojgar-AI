@@ -15,7 +15,7 @@ Nothing here re-implements the review. The harness hands production functions
 (`review.blind.build_blind_text`, `review.service._evaluate` — knockouts, cheap
 pass, full evidence review, quote verification, deterministic fit —
 `review.ml_rank.score_applications`, `review.ml_rank.compute_resume_embedding`,
-`jobs.service._compute_and_store_jd_embedding`, `guardrails_service.check_input`)
+`review.ml_rank.compute_job_embedding`, `guardrails_service.check_input`)
 attribute-compatible stand-in objects, and hashes every reviewer and ML input so
 "the attribute never reached the model" is provable, not assumed. Without
 `--with-llm` the review uses the deterministic `FakeReviewer` (same triage and
@@ -50,11 +50,11 @@ uv run python -m simulation redteam --repeats 2 --yes
 uv run python -m simulation load --personas 25
 
 # Heavy load: run your OWN backend on an isolated DB + Qdrant collection first
-export DB_NAME=convexhire_test_sim QDRANT_COLLECTION_NAME=sim_convexhire \
+export DB_NAME=convexhire_test_sim \
        QDRANT_CANDIDATE_COLLECTION_NAME=sim_candidate_applications REDIS_ENABLED=false
 uv run alembic upgrade head && uv run python seed_data.py && uv run python scripts/seed_e2e.py
 git checkout -- credentials.json            # seed_data.py rewrites this tracked file
-uv run python reconcile_vectors.py --force
+uv run python scripts/reindex_embeddings.py
 uv run uvicorn main:app --port 8002 &
 uv run python -m simulation load --base-url http://localhost:8002 --db-name convexhire_test_sim \
     --personas 200 --ramp-seconds 10 --mutate   # --mutate: decide + undo (no email sent)
