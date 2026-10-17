@@ -97,6 +97,7 @@ export async function JobPage({
               jobTitle={job.title}
               companyName={job.company.name}
               questions={job.questions}
+              cvRequired={job.cv_required}
               source={source}
               refToken={refToken}
             />

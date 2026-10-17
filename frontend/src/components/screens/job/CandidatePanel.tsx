@@ -331,7 +331,9 @@ function Cv({ candidate }: { candidate: Panel }) {
   }
   const resume = candidate.resume
   if (!hasOutline(resume)) {
-    return <p className="text-sm text-muted-foreground">No CV. Applied with answers only.</p>
+    // The review line may already say so ("No CV or answers yet").
+    if (candidate.review.summary?.startsWith('No CV')) return null
+    return <p className="text-sm text-muted-foreground">No CV</p>
   }
   return (
     <Section title="CV">

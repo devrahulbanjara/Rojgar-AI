@@ -79,6 +79,8 @@ export type PublicJob = PublicJobSummary & {
   must_haves: string[]
   nice_to_haves: string[]
   questions: PublicQuestion[]
+  /** Applying needs a CV (a PDF or a photo of a paper CV). */
+  cv_required: boolean
   /** Name of the person whose share link was opened (?ref=). */
   shared_by?: string | null
 }

@@ -80,6 +80,8 @@ export interface PipelineItem {
   fit: Fit | null
   review_state: ReviewState
   flagged: boolean
+  /** false when the person applied with answers only. */
+  has_cv: boolean
   stage: Stage
   source: Source
   referred_by: ReferrerRef | null

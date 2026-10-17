@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 
 import { AiText } from '@/components/app/Ai'
 import { EntityAvatar } from '@/components/app/EntityAvatar'
-import { FitPill } from '@/components/app/StatusPill'
+import { FitPill, Tag } from '@/components/app/StatusPill'
 import { PhoneIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -24,7 +24,8 @@ import { FlagLine } from './parts'
 
 function Review({ item }: { item: PipelineItem }) {
   if (item.flagged) return <FlagLine />
-  if (item.review_state === 'pending') return <AiText className="text-xs">Reading CV…</AiText>
+  if (item.review_state === 'pending')
+    return <AiText className="text-xs">{item.has_cv ? 'Reading CV…' : 'Reading answers…'}</AiText>
   if (item.summary)
     return <p className="line-clamp-2 text-sm text-muted-foreground">{item.summary}</p>
   return null
@@ -91,8 +92,10 @@ export function CandidateCard({
             </span>
           ) : null}
           <Review item={item} />
-          <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+          <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
             {SOURCE_LABEL[item.source]} · {ago(item.applied_at)}
+            {/* The review line may already say so ("No CV or answers yet"). */}
+            {item.has_cv || item.summary?.startsWith('No CV') ? null : <Tag>No CV</Tag>}
           </span>
         </Link>
       </div>

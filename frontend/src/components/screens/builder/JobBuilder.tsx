@@ -12,7 +12,13 @@ import {
   refusalMessage,
   streamJobDraft,
 } from '@/lib/api/recruiter'
-import { EMPLOYMENT_TYPES, JOB_CATEGORIES, LOCATION_TYPES } from '@/lib/jobHelpers'
+import {
+  EMPLOYMENT_TYPES,
+  JOB_CATEGORIES,
+  LOCATION_TYPES,
+  cvRequiredFor,
+  maxQuestions,
+} from '@/lib/jobHelpers'
 import { notify } from '@/lib/notify'
 import {
   type EmploymentType,
@@ -40,6 +46,7 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { PlusIcon, XIcon } from '@/components/icons'
 import { Button, IconButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -48,17 +55,25 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 
 import { GetApplicantsSheet } from '../job/GetApplicantsSheet'
 import { PLAN_LIMIT, isPlanLimit } from '../job/JobLifecycle'
 import { MustHaveChips, SuggestButton } from './MustHaveChips'
 
-/** The builder fields; category stays empty until someone picks one. */
-type Form = Omit<JobFields, 'category' | 'location'> & {
+/**
+ * The builder fields; category stays empty until someone picks one, and
+ * cv_required stays null (follows the category) until someone flips it.
+ */
+type Form = Omit<JobFields, 'category' | 'location' | 'cv_required'> & {
   category: JobCategory | null
   location: string
+  cv_required: boolean | null
 }
+
+const cvRequiredOf = (form: Pick<Form, 'category' | 'cv_required'>) =>
+  form.cv_required ?? cvRequiredFor(form.category)
 
 const EMPTY: Form = {
   title: '',
@@ -73,6 +88,7 @@ const EMPTY: Form = {
   must_haves: [],
   nice_to_haves: [],
   questions: [],
+  cv_required: null,
   closes_at: null,
 }
 
@@ -105,6 +121,7 @@ function fromJob(job: JobDetail): Form {
     must_haves: job.must_haves,
     nice_to_haves: job.nice_to_haves,
     questions: job.questions,
+    cv_required: job.cv_required,
     closes_at: job.closes_at,
   }
 }
@@ -115,6 +132,7 @@ function toPayload(form: Form): Partial<JobFields> & { title: string } {
   return {
     ...rest,
     ...(category ? { category } : {}),
+    cv_required: cvRequiredOf(form),
     title: form.title.trim() || 'Untitled job',
     location: form.location.trim() || null,
     currency: form.currency || 'NPR',
@@ -274,16 +292,20 @@ export function JobBuilder({
     [createJob, form, jobId, updateJob],
   )
 
+  const cvRequired = cvRequiredOf(form)
+  const questionLimit = maxQuestions(cvRequired)
+  const extraQuestions = form.questions.length - questionLimit
+
   // Autosave drafts a moment after typing stops.
   useEffect(() => {
-    if (!dirty || status !== 'draft' || drafting) return
+    if (!dirty || status !== 'draft' || drafting || extraQuestions > 0) return
     if (!form.title.trim() && !form.description.trim()) return
     const timer = window.setTimeout(() => {
       setDirty(false)
       save().catch(() => notify.error("Couldn't save the draft. Check your connection."))
     }, 1200)
     return () => window.clearTimeout(timer)
-  }, [dirty, drafting, form, save, status])
+  }, [dirty, drafting, extraQuestions, form, save, status])
 
   // Highlight the section in view.
   useEffect(() => {
@@ -348,7 +370,10 @@ export function JobBuilder({
       description: f.description.trim() ? f.description : template.description,
       must_haves: template.must_haves.slice(0, 6),
       nice_to_haves: template.nice_to_haves.slice(0, 6),
-      questions: template.questions.slice(0, 3),
+      questions: template.questions.slice(
+        0,
+        maxQuestions(cvRequiredOf({ ...f, category: f.category ?? template.category })),
+      ),
     }))
     setDirty(true)
   }
@@ -384,6 +409,10 @@ export function JobBuilder({
     setErrors(next)
     if (Object.keys(next).length) {
       document.getElementById('describe')?.scrollIntoView({ behavior: 'smooth' })
+      return false
+    }
+    if (extraQuestions > 0) {
+      document.getElementById('questions')?.scrollIntoView({ behavior: 'smooth' })
       return false
     }
     return true
@@ -685,10 +714,27 @@ export function JobBuilder({
             Questions{' '}
             <span className="font-sans text-sm font-normal text-muted-foreground">optional</span>
           </h2>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="cv-required"
+              checked={cvRequired}
+              onCheckedChange={(value) => update('cv_required', value)}
+            />
+            <Label htmlFor="cv-required" className="font-normal text-foreground">
+              CV required
+            </Label>
+          </div>
           <QuestionsEditor
             value={form.questions}
+            limit={questionLimit}
             onChange={(value) => update('questions', value)}
           />
+          {extraQuestions > 0 ? (
+            <p className="text-sm text-destructive">
+              Up to {questionLimit} questions when a CV is required. Remove {extraQuestions} or turn
+              off CV required.
+            </p>
+          ) : null}
         </section>
 
         <section id="publish" className="flex scroll-mt-24 flex-col gap-3 border-t pt-6">
@@ -723,9 +769,11 @@ export function JobBuilder({
 
 function QuestionsEditor({
   value,
+  limit,
   onChange,
 }: {
   value: JobQuestion[]
+  limit: number
   onChange: (value: JobQuestion[]) => void
 }) {
   return (
@@ -766,7 +814,7 @@ function QuestionsEditor({
           </IconButton>
         </div>
       ))}
-      {value.length < 3 ? (
+      {value.length < limit ? (
         <Button
           variant="outline"
           size="sm"

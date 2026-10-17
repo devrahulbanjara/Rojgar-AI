@@ -98,6 +98,8 @@ export interface JobDetail {
   must_haves: string[]
   nice_to_haves: string[]
   questions: JobQuestion[]
+  /** Applying needs a CV. Defaults from the category when not sent. */
+  cv_required: boolean
   applications_count: number
   source_counts: Record<string, number> | null
   has_applied: boolean
@@ -122,6 +124,7 @@ export type JobFields = Pick<
   | 'must_haves'
   | 'nice_to_haves'
   | 'questions'
+  | 'cv_required'
 >
 
 export type JobCreate = Partial<JobFields> & { title: string; status?: 'draft' | 'open' }

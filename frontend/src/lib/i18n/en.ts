@@ -129,6 +129,7 @@ export const en = {
     yes: 'Yes',
     no: 'No',
     cvWrongType: 'Upload a PDF or a photo (JPG or PNG).',
+    cvRequired: 'This job needs a CV. A clear photo of a paper CV is fine.',
     cvHeic:
       'iPhone HEIC photos can’t be read. Take a screenshot of the photo and upload that, or send a PDF.',
     cvTooBig: (mb: number) => `Use a file under ${mb} MB.`,

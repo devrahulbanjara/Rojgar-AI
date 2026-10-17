@@ -6,21 +6,29 @@ import type {
   LocationType,
 } from '@/store/services/jobsApi'
 
-export const JOB_CATEGORIES: { value: JobCategory; label: string }[] = [
-  { value: 'banking_finance', label: 'Banking & Finance' },
-  { value: 'healthcare', label: 'Healthcare' },
-  { value: 'education', label: 'Education' },
-  { value: 'hospitality_tourism', label: 'Hospitality & Tourism' },
-  { value: 'sales_retail', label: 'Sales & Retail' },
-  { value: 'manufacturing', label: 'Manufacturing' },
-  { value: 'logistics_driving', label: 'Logistics & Driving' },
-  { value: 'it_software', label: 'IT & Software' },
-  { value: 'ngo_ingo', label: 'NGO/INGO' },
-  { value: 'government_public', label: 'Government & Public' },
-  { value: 'office_admin', label: 'Office & Admin' },
-  { value: 'construction_engineering', label: 'Construction & Engineering' },
-  { value: 'other', label: 'Other' },
+/** cvRequired mirrors CV_REQUIRED_CATEGORIES in backend/app/shared/enums.py. */
+export const JOB_CATEGORIES: { value: JobCategory; label: string; cvRequired: boolean }[] = [
+  { value: 'banking_finance', label: 'Banking & Finance', cvRequired: true },
+  { value: 'healthcare', label: 'Healthcare', cvRequired: true },
+  { value: 'education', label: 'Education', cvRequired: true },
+  { value: 'hospitality_tourism', label: 'Hospitality & Tourism', cvRequired: false },
+  { value: 'sales_retail', label: 'Sales & Retail', cvRequired: false },
+  { value: 'manufacturing', label: 'Manufacturing', cvRequired: false },
+  { value: 'logistics_driving', label: 'Logistics & Driving', cvRequired: false },
+  { value: 'it_software', label: 'IT & Software', cvRequired: true },
+  { value: 'ngo_ingo', label: 'NGO/INGO', cvRequired: true },
+  { value: 'government_public', label: 'Government & Public', cvRequired: true },
+  { value: 'office_admin', label: 'Office & Admin', cvRequired: true },
+  { value: 'construction_engineering', label: 'Construction & Engineering', cvRequired: false },
+  { value: 'other', label: 'Other', cvRequired: false },
 ]
+
+/** Whether a new job in this category asks for a CV (no category counts as Other). */
+export const cvRequiredFor = (category: JobCategory | null) =>
+  JOB_CATEGORIES.find((c) => c.value === (category ?? 'other'))?.cvRequired ?? false
+
+/** Questions on the apply form: 3 with a CV, 5 without (backend MAX_QUESTIONS*). */
+export const maxQuestions = (cvRequired: boolean) => (cvRequired ? 3 : 5)
 
 export const EMPLOYMENT_TYPES: { value: EmploymentType; label: string }[] = [
   { value: 'full_time', label: 'Full time' },

@@ -28,12 +28,13 @@ const ext = (file: File) => file.name.split('.').pop()?.toLowerCase() ?? ''
 type Errors = Partial<Record<'cv' | 'fullName' | 'phone' | 'email' | `q${number}`, string>>
 type Sent = { email?: string | null; again: boolean; statusUrl?: string | null }
 
-/** Phone-first apply: name, mobile, optional CV (PDF or photo), job questions, optional email. */
+/** Phone-first apply: name, mobile, CV (PDF or photo; some jobs need one), job questions, optional email. */
 export function ApplyForm({
   slug,
   jobTitle,
   companyName,
   questions,
+  cvRequired,
   source,
   refToken,
 }: {
@@ -41,6 +42,7 @@ export function ApplyForm({
   jobTitle: string
   companyName: string
   questions: PublicQuestion[]
+  cvRequired: boolean
   source: ApplySource
   refToken?: string
 }) {
@@ -97,6 +99,7 @@ export function ApplyForm({
     if (!fullName.trim()) next.fullName = t.apply.nameRequired
     if (!phone.trim()) next.phone = t.apply.phoneRequired
     else if (!toE164(phone)) next.phone = t.apply.phoneInvalid
+    if (cvRequired && !cv) next.cv = t.apply.cvRequired
     if (email.trim() && !EMAIL_RE.test(email.trim())) next.email = t.apply.emailInvalid
     questions.forEach((question, i) => {
       if (question.required && !answers[i]?.trim()) next[`q${i}`] = t.apply.answerRequired
@@ -132,6 +135,9 @@ export function ApplyForm({
     } catch (err) {
       if (err instanceof PublicApiError && err.status === 409) {
         setSent({ email: email.trim() || null, again: true })
+      } else if (err instanceof PublicApiError && err.code === 'cv_required') {
+        setErrors((prev) => ({ ...prev, cv: t.apply.cvRequired }))
+        document.getElementById('cv')?.focus()
       } else {
         setFormError(err instanceof Error ? err.message : t.common.error)
       }
@@ -219,7 +225,10 @@ export function ApplyForm({
 
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">
-          {t.apply.cv} <span className="font-normal text-muted-foreground">({t.common.optional})</span>
+          {t.apply.cv}
+          {cvRequired ? null : (
+            <span className="font-normal text-muted-foreground"> ({t.common.optional})</span>
+          )}
         </p>
         <FileDrop
           id="cv"
