@@ -1,11 +1,11 @@
 from app.core.security import create_tokens, hash_password
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, Review
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
-from app.shared.enums import ApplicationStatus, JobStatus, LocationType
+from app.shared.enums import ApplicationStage, JobStatus, LocationType
 
 TEST_PASSWORD = "TestPass@123"
 
@@ -100,12 +100,11 @@ async def make_active_job(db, company_id, **overrides) -> Job:
         title="Backend Engineer",
         location="Remote",
         location_type=LocationType.remote,
-        status=JobStatus.active,
-        overview="Test job overview",
-        responsibilities=[],
-        requirements=[],
-        preferred_qualifications=[],
-        benefits=[],
+        status=JobStatus.open,
+        description="Test job description",
+        must_haves=[],
+        nice_to_haves=[],
+        questions=[],
     )
     defaults.update(overrides)
     job = Job(company_id=company_id, **defaults)
@@ -119,15 +118,22 @@ async def make_application(
     user_id,
     job_id,
     resume_id,
-    status: ApplicationStatus = ApplicationStatus.applied,
+    stage: ApplicationStage = ApplicationStage.new,
+    *,
+    review: dict | None = None,
+    **fields,
 ) -> Application:
+    """Application with a Review row (pending unless `review` gives fields)."""
     application = Application(
         job_id=job_id,
         user_id=user_id,
         resume_id=resume_id,
-        status=status,
+        stage=stage,
+        **fields,
     )
     db.add(application)
+    await db.flush()
+    db.add(Review(application_id=application.id, **(review or {"state": "pending"})))
     await db.flush()
     return application
 

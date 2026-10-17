@@ -1,5 +1,4 @@
-from app.modules.applications.service import _status_email_html
-from app.shared.enums import ApplicationStatus
+from app.modules.outreach.templates import render
 
 
 async def test_oversized_request_id_replaced(client):
@@ -15,13 +14,12 @@ async def test_safe_request_id_echoed(client):
 
 
 def test_status_email_escapes_recruiter_controlled_values():
-    _, body = _status_email_html(
-        ApplicationStatus.shortlisted,
-        applicant_name="Sita",
+    body = render(
+        "shortlist",
+        candidate_name="Sita",
         job_title='<a href="https://phish.example">Click to claim offer</a>',
         company_name="<script>alert(1)</script>",
-        app_href="/candidate/applications/1",
-    )
+    ).html
 
     assert "<script>" not in body
     assert 'href="https://phish.example"' not in body
