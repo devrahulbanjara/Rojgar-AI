@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { notify } from '@/lib/notify'
+import { useAppSelector } from '@/store/hooks'
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
   useUpdateApplicationStatusMutation,
 } from '@/store/services/applicationsApi'
+import { useGetMyCompanyQuery } from '@/store/services/companyApi'
 import {
   type EmailDraftRecord,
   useApproveDraftMutation,
@@ -306,6 +309,15 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     }
   }, [visibleApplications, draftByApp])
 
+  // Shortlist emails include the company's booking link; the backend rejects
+  // them without one, so say so up front instead of failing after the click.
+  const isAdmin = useAppSelector((s) => s.auth.user?.primary_role === 'recruiter_admin')
+  const { data: companyResp } = useGetMyCompanyQuery(undefined, {
+    skip: activeStage !== 'shortlist',
+  })
+  const missingBookingLink =
+    activeStage === 'shortlist' && Boolean(companyResp?.data) && !companyResp?.data?.cal_booking_url
+
   const sendable = outreachStats.drafted + outreachStats.approved
   const allOutreachComplete =
     outreachStats.cohort > 0 && outreachStats.sent === outreachStats.cohort
@@ -545,7 +557,23 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         </div>
       ) : null}
 
-      {isPostShortlistStage && outreachStats.cohort > 0 ? (
+      {missingBookingLink && outreachStats.cohort > 0 ? (
+        <div className={styles.evaluationBar} role="status">
+          <span className={styles.evaluationBarText}>
+            Add an interview booking link before emailing shortlisted candidates.
+          </span>
+          <span className={styles.evaluationBarSpacer} />
+          {isAdmin ? (
+            <Link href="/recruiter/company/settings" className="btn btn--primary btn--sm">
+              Add booking link
+            </Link>
+          ) : (
+            <span className={styles.evaluationBarText}>Ask your company admin.</span>
+          )}
+        </div>
+      ) : null}
+
+      {isPostShortlistStage && outreachStats.cohort > 0 && !missingBookingLink ? (
         <div
           className={styles.evaluationBar}
           title={
