@@ -8,17 +8,22 @@ import { useRouter } from 'next/navigation'
 import { parseApiError } from '@/lib/apiError'
 import { useT } from '@/lib/i18n/client'
 import { notify } from '@/lib/notify'
-import { homePathFor } from '@/lib/roleRoutes'
+import { homePathFor, rememberPostAuthRedirect } from '@/lib/roleRoutes'
 import { useMounted } from '@/lib/useMounted'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { useLazyGetMeQuery, useUpdateMeMutation } from '@/store/services/authApi'
+import {
+  initiateGoogleOAuth,
+  useAuthOptions,
+  useLazyGetMeQuery,
+  useUpdateMeMutation,
+} from '@/store/services/authApi'
 import { baseApi } from '@/store/services/baseApi'
 import { useAcceptInviteMutation, useGetInvitePreviewQuery } from '@/store/services/companyApi'
 
 import { Spinner } from '@/components/app/Ai'
 import { FormField } from '@/components/app/FormField'
-import { AlertIcon } from '@/components/icons'
-import { AuthCard } from '@/components/public/auth/AuthCard'
+import { AlertIcon, GoogleIcon } from '@/components/icons'
+import { AuthCard, AuthDivider } from '@/components/public/auth/AuthCard'
 import { PhoneCodeForm } from '@/components/public/auth/PhoneCodeForm'
 import { SignedInAs } from '@/components/public/auth/SignedInAs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -42,6 +47,7 @@ export function JoinBusiness({ token }: { token: string }) {
   const [formError, setFormError] = useState<string | null>(null)
 
   const invite = data?.data
+  const { sms, google } = useAuthOptions()
 
   async function join(needsName: boolean) {
     setFormError(null)
@@ -101,26 +107,55 @@ export function JoinBusiness({ token }: { token: string }) {
   ) : null
 
   if (!user) {
+    const here = `/invite/${token}`
+    const next = `?next=${encodeURIComponent(here)}`
     return (
       <AuthCard
         title={title}
         below={
-          <Link
-            href={`/login?next=${encodeURIComponent(`/invite/${token}`)}`}
-            className="font-medium text-foreground hover:underline"
-          >
-            {t.auth.phone.useEmail}
-          </Link>
+          sms ? (
+            <Link href={`/login${next}`} className="font-medium text-foreground hover:underline">
+              {t.auth.phone.useEmail}
+            </Link>
+          ) : undefined
         }
       >
         <p className="text-sm text-foreground">{t.auth.invite.as(role, invite.invited_by)}</p>
         {alert}
-        <PhoneCodeForm
-          onSignedIn={(signedIn) => {
-            // New numbers have no name yet: the next screen asks for it before joining.
-            if (signedIn.user.full_name) void join(false)
-          }}
-        />
+        {sms ? (
+          <PhoneCodeForm
+            onSignedIn={(signedIn) => {
+              // New numbers have no name yet: the next screen asks for it before joining.
+              if (signedIn.user.full_name) void join(false)
+            }}
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            <Button asChild size="lg" className="w-full">
+              <Link href={`/signup${next}`}>{t.auth.signup.create}</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="w-full">
+              <Link href={`/login${next}`}>{t.auth.login.submit}</Link>
+            </Button>
+            {google ? (
+              <>
+                <AuthDivider />
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    rememberPostAuthRedirect(here)
+                    initiateGoogleOAuth()
+                  }}
+                >
+                  <GoogleIcon className="size-4" />
+                  {t.auth.google}
+                </Button>
+              </>
+            ) : null}
+          </div>
+        )}
       </AuthCard>
     )
   }

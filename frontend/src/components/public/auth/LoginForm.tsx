@@ -8,17 +8,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { apiErrorCode } from '@/lib/apiErrorCode'
 import { parseApiError } from '@/lib/apiError'
 import { useT } from '@/lib/i18n/client'
+import { publicApi } from '@/lib/publicApi'
 import {
   consumePostAuthRedirect,
   getSafeRedirect,
   homePathFor,
   rememberPostAuthRedirect,
 } from '@/lib/roleRoutes'
+import type { BaseUser } from '@/lib/types/user'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { initiateGoogleOAuth, useAuthOptions, useLoginMutation } from '@/store/services/authApi'
 import { clearCredentials } from '@/store/slices/authSlice'
-
-import type { BaseUser } from '@/lib/types/user'
 
 import { FormField } from '@/components/app/FormField'
 import { PasswordInput } from '@/components/app/PasswordInput'
@@ -28,11 +28,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 import { AuthCard, AuthDivider } from './AuthCard'
+import { CheckEmail } from './CheckEmail'
 import { PhoneCodeForm } from './PhoneCodeForm'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 type Errors = { email?: string; password?: string }
+type Method = 'link' | 'password' | 'phone'
 
 /** Where to go once signed in: the remembered page, ?next=, or the person's home. */
 export function useAfterSignIn(nextUrl: string | null) {
@@ -41,44 +43,35 @@ export function useAfterSignIn(nextUrl: string | null) {
     router.push(consumePostAuthRedirect() ?? nextUrl ?? homePathFor(user))
 }
 
-/**
- * Under the form: switch to the mobile code (only while SMS is on) and
- * Continue with Google (only while Google sign-in is on).
- */
-export function OtherWays({
-  method,
-  onSwitch,
-}: {
-  method: 'phone' | 'email'
-  onSwitch: () => void
-}) {
+/** Continue with Google and the "or" line under it, while Google sign-in is on. */
+export function GoogleFirst() {
   const t = useT()
-  const { sms, google } = useAuthOptions()
+  const { google } = useAuthOptions()
+  if (!google) return null
   return (
     <>
-      {sms ? (
-        <Button type="button" variant="link" className="h-auto self-center p-0" onClick={onSwitch}>
-          {method === 'phone' ? t.auth.phone.useEmail : t.auth.phone.usePhone}
-        </Button>
-      ) : null}
-      {google ? (
-        <>
-          <AuthDivider />
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full"
-            onClick={() => initiateGoogleOAuth()}
-          >
-            <GoogleIcon className="size-4" />
-            {t.auth.google}
-          </Button>
-        </>
-      ) : null}
+      <Button variant="outline" size="lg" className="w-full" onClick={() => initiateGoogleOAuth()}>
+        <GoogleIcon className="size-4" />
+        {t.auth.google}
+      </Button>
+      <AuthDivider />
     </>
   )
 }
 
+/** A quiet text button under a form ("Use password instead"). */
+function QuietLink({ children, onClick }: { children: string; onClick: () => void }) {
+  return (
+    <Button type="button" variant="link" className="h-auto self-center p-0" onClick={onClick}>
+      {children}
+    </Button>
+  )
+}
+
+/**
+ * The one sign-in page for everyone (business teams, applicants, staff):
+ * Google, or an emailed sign-in link, or email + password.
+ */
 export function LoginForm() {
   const t = useT()
   // Messages for ?error= values that other flows redirect here with.
@@ -94,17 +87,19 @@ export function LoginForm() {
   const [login, { isLoading }] = useLoginMutation()
   const afterSignIn = useAfterSignIn(nextUrl)
   const { sms } = useAuthOptions()
-  const [method, setMethod] = useState<'phone' | 'email'>('email')
 
+  const [method, setMethod] = useState<Method>('link')
   const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string | null>(
     errorParams[searchParams.get('error') ?? ''] ?? null,
   )
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
   const [unverified, setUnverified] = useState(false)
 
-  // Keep the destination through signup, verification and OAuth.
+  // Keep the destination through the emailed link, verification and Google.
   useEffect(() => {
     rememberPostAuthRedirect(nextUrl)
   }, [nextUrl])
@@ -124,17 +119,23 @@ export function LoginForm() {
     const next: Errors = {}
     if (!email.trim()) next.email = t.auth.emailRequired
     else if (!EMAIL_RE.test(email.trim())) next.email = t.auth.emailInvalid
-    if (!password) next.password = t.auth.passwordRequired
+    if (method === 'password' && !password) next.password = t.auth.passwordRequired
     return next
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setFormError(null)
-    const found = validate()
-    setErrors(found)
-    if (Object.keys(found).length) return
+  async function sendLink() {
+    setSending(true)
+    try {
+      await publicApi.magicLink(email.trim().toLowerCase())
+      setSent(true)
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : t.common.error)
+    } finally {
+      setSending(false)
+    }
+  }
 
+  async function signInWithPassword() {
     try {
       const result = await login({
         email: email.trim().toLowerCase(),
@@ -167,6 +168,27 @@ export function LoginForm() {
     }
   }
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setFormError(null)
+    const found = validate()
+    setErrors(found)
+    if (Object.keys(found).length) return
+    if (method === 'link') await sendLink()
+    else await signInWithPassword()
+  }
+
+  if (sent) {
+    return (
+      <CheckEmail
+        email={email.trim()}
+        onResend={sendLink}
+        resending={sending}
+        onChangeEmail={() => setSent(false)}
+      />
+    )
+  }
+
   if (unverified) {
     return (
       <AuthCard title={t.auth.login.verifyTitle}>
@@ -189,15 +211,7 @@ export function LoginForm() {
         <>
           {t.auth.login.newHere}{' '}
           <Link href="/signup" className="font-medium text-primary hover:underline">
-            {t.auth.login.createAccount}
-          </Link>
-        </>
-      }
-      below={
-        <>
-          {t.auth.login.applied}{' '}
-          <Link href="/signin" className="font-medium text-foreground hover:underline">
-            {t.auth.login.getLink}
+            {t.auth.login.startHiring}
           </Link>
         </>
       }
@@ -212,62 +226,79 @@ export function LoginForm() {
       {sms && method === 'phone' ? (
         <PhoneCodeForm onSignedIn={(data) => afterSignIn(data.user)} />
       ) : (
-            <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-        <FormField id="email" label={t.auth.email} error={errors.email}>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            className="h-10"
-            value={email}
-            maxLength={254}
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-            onChange={(e) => {
-              setEmail(e.target.value)
-              if (errors.email) setErrors((p) => ({ ...p, email: undefined }))
-            }}
-          />
-        </FormField>
+        <>
+          <GoogleFirst />
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+            <FormField id="email" label={t.auth.email} error={errors.email}>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                className="h-10"
+                value={email}
+                maxLength={254}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (errors.email) setErrors((p) => ({ ...p, email: undefined }))
+                }}
+              />
+            </FormField>
 
-        <FormField
-          id="password"
-          label={t.auth.password}
-          error={errors.password}
-          aside={
-            <Link href={forgotHref} className="text-sm text-primary hover:underline">
-              {t.auth.login.forgot}
-            </Link>
-          }
-        >
-          <PasswordInput
-            id="password"
-            autoComplete="current-password"
-            className="h-10"
-            value={password}
-            aria-invalid={!!errors.password}
-            aria-describedby={errors.password ? 'password-error' : undefined}
-            onChange={(e) => {
-              setPassword(e.target.value)
-              if (errors.password) setErrors((p) => ({ ...p, password: undefined }))
-            }}
-          />
-        </FormField>
+            {method === 'password' ? (
+              <FormField id="password" label={t.auth.password} error={errors.password}>
+                <PasswordInput
+                  id="password"
+                  autoComplete="current-password"
+                  className="h-10"
+                  autoFocus
+                  value={password}
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    if (errors.password) setErrors((p) => ({ ...p, password: undefined }))
+                  }}
+                />
+                <Link href={forgotHref} className="self-end text-sm text-primary hover:underline">
+                  {t.auth.login.forgot}
+                </Link>
+              </FormField>
+            ) : null}
 
-        <Button type="submit" size="lg" className="w-full" loading={isLoading}>
-          {t.auth.login.submit}
-        </Button>
-      </form>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              loading={method === 'link' ? sending : isLoading}
+            >
+              {method === 'link' ? t.auth.login.sendLink : t.auth.login.submit}
+            </Button>
+          </form>
+        </>
       )}
 
-      <OtherWays
-        method={method}
-        onSwitch={() => {
+      <QuietLink
+        onClick={() => {
           setFormError(null)
-          setMethod(method === 'phone' ? 'email' : 'phone')
+          setErrors({})
+          setMethod(method === 'link' ? 'password' : 'link')
         }}
-      />
+      >
+        {method === 'link' ? t.auth.login.usePassword : t.auth.login.useLink}
+      </QuietLink>
+      {sms ? (
+        <QuietLink
+          onClick={() => {
+            setFormError(null)
+            setMethod(method === 'phone' ? 'link' : 'phone')
+          }}
+        >
+          {method === 'phone' ? t.auth.phone.useEmail : t.auth.phone.usePhone}
+        </QuietLink>
+      ) : null}
     </AuthCard>
   )
 }

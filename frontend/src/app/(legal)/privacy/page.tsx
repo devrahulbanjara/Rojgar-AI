@@ -134,7 +134,7 @@ export default function PrivacyPage() {
         <ul>
           <li>
             <strong>See your applications:</strong> open the status link you saved after applying or
-            the one in your email, or <Link href="/signin">sign in with your email</Link>.
+            the one in your email, or <Link href="/login">sign in with your email</Link>.
           </li>
           <li>
             <strong>Withdraw and delete:</strong> use &quot;Withdraw application&quot; on the status

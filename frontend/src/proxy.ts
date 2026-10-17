@@ -5,6 +5,8 @@ const PROTECTED_PREFIXES = ['/recruiter', '/notifications', '/admin', '/start']
 
 /** Old URLs that moved, matched as a path prefix. The query string is kept. */
 const MOVED: { from: string; to: string }[] = [
+  // One sign-in page for everyone.
+  { from: '/signin', to: '/login' },
   // Candidates no longer have a dashboard: everything goes to their applications.
   { from: '/candidate/notifications', to: '/notifications' },
   { from: '/candidate', to: '/me/applications' },
@@ -42,7 +44,7 @@ export function proxy(request: NextRequest) {
   if (target) {
     const url = request.nextUrl.clone()
     url.pathname = target
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(url, 308)
   }
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
@@ -63,6 +65,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/signin',
     '/candidate/:path*',
     '/onboarding/:path*',
     '/interviews/:path*',

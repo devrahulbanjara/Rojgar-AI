@@ -167,7 +167,7 @@ export function ApplyForm({
         <div className="flex flex-col gap-2">
           {sent.email ? (
             <Button asChild variant="outline" className="w-full">
-              <Link href="/signin">{t.apply.seeAll}</Link>
+              <Link href="/login">{t.apply.seeAll}</Link>
             </Button>
           ) : null}
           <Button asChild variant="ghost" className="w-full">

@@ -89,7 +89,7 @@ export function StatusView({ token }: { token: string | null }) {
       <AuthCard title={t.status.invalidTitle}>
         <p className="text-sm text-foreground">{state.message}</p>
         <Button asChild variant="outline" size="lg" className="w-full">
-          <Link href="/signin">{t.status.getLink}</Link>
+          <Link href="/login">{t.status.getLink}</Link>
         </Button>
       </AuthCard>
     )

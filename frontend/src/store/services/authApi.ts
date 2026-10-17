@@ -67,6 +67,18 @@ export interface AuthOptions {
   email_link: boolean
 }
 
+const FALLBACK_OPTIONS: AuthOptions = { sms: false, google: true, email_link: false }
+const OPTIONS_KEY = 'rojgarai:authOptions'
+
+function readCachedOptions(): AuthOptions | null {
+  try {
+    const raw = window.sessionStorage.getItem(OPTIONS_KEY)
+    return raw ? (JSON.parse(raw) as AuthOptions) : null
+  } catch {
+    return null
+  }
+}
+
 export interface RefreshData {
   access_token: string
   token_type: 'bearer'
@@ -127,8 +139,23 @@ export const authApi = baseApi.injectEndpoints({
     }),
 
     /** GET /auth/options — sign-in methods that work right now. */
-    getAuthOptions: builder.query<ApiResponse<AuthOptions>, void>({
-      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/options`,
+    getAuthOptions: builder.query<AuthOptions, void>({
+      // Asked once per browser session; if the server can't say, email and Google only.
+      async queryFn(_arg, _api, _extra, baseQuery) {
+        const cached = readCachedOptions()
+        if (cached) return { data: cached }
+        const result = await baseQuery(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/options`)
+        const options = {
+          ...FALLBACK_OPTIONS,
+          ...((result.data as ApiResponse<Partial<AuthOptions>> | undefined)?.data ?? {}),
+        }
+        try {
+          window.sessionStorage.setItem(OPTIONS_KEY, JSON.stringify(options))
+        } catch {
+          // Storage unavailable: ask again next time.
+        }
+        return { data: options }
+      },
       keepUnusedDataFor: 3600,
     }),
 
@@ -346,13 +373,7 @@ export const {
  * email and Google: the phone code shows only when SMS is switched on.
  */
 export function useAuthOptions(): AuthOptions {
-  const { data } = useGetAuthOptionsQuery()
-  const options = data?.data
-  return {
-    sms: options?.sms ?? false,
-    google: options?.google ?? true,
-    email_link: options?.email_link ?? false,
-  }
+  return useGetAuthOptionsQuery().data ?? FALLBACK_OPTIONS
 }
 
 // ---------------------------------------------------------------------------

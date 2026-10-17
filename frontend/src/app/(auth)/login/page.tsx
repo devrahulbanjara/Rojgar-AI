@@ -6,7 +6,7 @@ import { BRAND } from '@/lib/brand'
 
 import { LoginForm } from '@/components/public/auth/LoginForm'
 
-export const metadata: Metadata = { title: `Log in · ${BRAND.name}` }
+export const metadata: Metadata = { title: `Sign in · ${BRAND.name}` }
 
 export default function LoginPage() {
   return (

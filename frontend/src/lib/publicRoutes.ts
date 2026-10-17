@@ -2,7 +2,6 @@
 const AUTH_PATHS = [
   '/login',
   '/signup',
-  '/signin',
   '/forgot-password',
   '/reset-password',
   '/verify-email',
@@ -10,6 +9,7 @@ const AUTH_PATHS = [
   '/start',
   '/invite',
   '/applications/status',
+  '/schedule',
 ]
 
 export function isAuthPath(pathname: string | null): boolean {

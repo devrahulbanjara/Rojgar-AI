@@ -8,7 +8,7 @@ import { useSearchParams } from 'next/navigation'
 import { parseApiError } from '@/lib/apiError'
 import { useT } from '@/lib/i18n/client'
 import { getSafeRedirect, rememberPostAuthRedirect } from '@/lib/roleRoutes'
-import { useAuthOptions, useSignupMutation } from '@/store/services/authApi'
+import { useSignupMutation } from '@/store/services/authApi'
 
 import { FormField } from '@/components/app/FormField'
 import { PasswordInput } from '@/components/app/PasswordInput'
@@ -20,8 +20,7 @@ import { Input } from '@/components/ui/input'
 
 import { AuthCard } from './AuthCard'
 import { CheckEmail } from './CheckEmail'
-import { OtherWays, useAfterSignIn } from './LoginForm'
-import { PhoneCodeForm } from './PhoneCodeForm'
+import { GoogleFirst } from './LoginForm'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -33,9 +32,6 @@ export function SignupForm() {
   const nextUrl = getSafeRedirect(searchParams.get('next'))
 
   const [signup, { isLoading }] = useSignupMutation()
-  const afterSignIn = useAfterSignIn(nextUrl)
-  const { sms } = useAuthOptions()
-  const [method, setMethod] = useState<'phone' | 'email'>('email')
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -98,8 +94,6 @@ export function SignupForm() {
     return (
       <CheckEmail
         email={email.trim()}
-        title={t.auth.checkEmail}
-        line={t.auth.sentLink(email.trim())}
         onResend={resend}
         resending={isLoading}
         onChangeEmail={() => setDone(false)}
@@ -118,14 +112,6 @@ export function SignupForm() {
           </Link>
         </>
       }
-      below={
-        <>
-          {t.auth.signup.applying}{' '}
-          <Link href="/signin" className="font-medium text-foreground hover:underline">
-            {t.auth.signup.noAccount}
-          </Link>
-        </>
-      }
     >
       {formError ? (
         <Alert variant="destructive">
@@ -134,9 +120,7 @@ export function SignupForm() {
         </Alert>
       ) : null}
 
-      {sms && method === 'phone' ? (
-        <PhoneCodeForm onSignedIn={(data) => afterSignIn(data.user)} />
-      ) : (
+      <GoogleFirst />
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
         <FormField id="fullName" label={t.auth.fullName} error={errors.fullName}>
           <Input
@@ -187,15 +171,6 @@ export function SignupForm() {
           <span className="truncate">{t.auth.signup.create}</span>
         </Button>
       </form>
-      )}
-
-      <OtherWays
-        method={method}
-        onSwitch={() => {
-          setFormError(null)
-          setMethod(method === 'phone' ? 'email' : 'phone')
-        }}
-      />
 
       <p className="text-center text-xs text-muted-foreground">
         {t.auth.signup.agree}{' '}
