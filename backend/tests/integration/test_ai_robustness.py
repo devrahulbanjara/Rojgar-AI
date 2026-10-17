@@ -109,3 +109,18 @@ async def test_chat_rate_limit_key_ignores_forwarded_for():
     a = await _chat_rate_limit_identifier(req("1.1.1.1"))
     b = await _chat_rate_limit_identifier(req("2.2.2.2"))
     assert a == b and a.startswith("user:11111111")
+
+
+def test_interview_final_score_requires_a_human_score():
+    from types import SimpleNamespace
+
+    from app.modules.interviews.evaluation_service import (
+        HumanAggregate,
+        _compute_final_score,
+    )
+
+    schema = SimpleNamespace(human_weight=0.7, llm_weight=0.3)
+    llm = SimpleNamespace(weighted_total=90.0)
+    assert _compute_final_score(None, llm, schema) is None
+    humans = HumanAggregate(per_criterion={}, weighted_total=60.0, evaluator_count=1)
+    assert _compute_final_score(humans, llm, schema) == 69.0
