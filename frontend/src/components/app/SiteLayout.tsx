@@ -19,7 +19,7 @@ import { PublicFooter } from './PublicFooter'
 import { PublicNav } from './PublicNav'
 
 /** Signed-in app routes bring their own shell (sidebar + top bar). */
-export const APP_PREFIXES = ['/recruiter', '/notifications']
+export const APP_PREFIXES = ['/recruiter', '/notifications', '/admin']
 
 const matches = (pathname: string | null, prefixes: string[]) =>
   !!pathname && prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))

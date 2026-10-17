@@ -10,6 +10,8 @@ import { useAppDispatch } from '@/store/hooks'
 import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
 import { clearCredentials, setCredentials } from '@/store/slices/authSlice'
 
+import { Spinner } from '@/components/app/Ai'
+
 /**
  * Google OAuth landing page.
  *
@@ -60,30 +62,11 @@ function OAuthCallbackInner() {
 
   return (
     <div
-      style={{
-        minHeight: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1rem',
-        fontFamily: 'inherit',
-      }}
+      className="flex min-h-dvh items-center justify-center bg-background"
       aria-live="polite"
+      aria-label="Signing you in"
     >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          border: '3px solid #e5e7eb',
-          borderTopColor: '#6366f1',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-        }}
-        aria-hidden="true"
-      />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>Completing sign-in…</p>
+      <Spinner />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const PROTECTED_PREFIXES = ['/recruiter', '/notifications']
+/** Need a session: business teams, platform staff, and creating a business. */
+const PROTECTED_PREFIXES = ['/recruiter', '/notifications', '/admin', '/start']
 
 /** Old URLs that moved, matched as a path prefix. The query string is kept. */
 const MOVED: { from: string; to: string }[] = [
@@ -44,7 +45,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
   if (
     isProtected &&
     !request.cookies.has('auth_present') &&
@@ -67,5 +68,7 @@ export const config = {
     '/interviews/:path*',
     '/notifications/:path*',
     '/recruiter/:path*',
+    '/admin/:path*',
+    '/start/:path*',
   ],
 }

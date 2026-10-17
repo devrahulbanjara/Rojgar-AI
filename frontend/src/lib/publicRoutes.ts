@@ -1,4 +1,4 @@
-/** Routes that render a standalone card (auth, application status) and skip the site header/footer. */
+/** Routes that render a standalone card (auth, create a business, invites, application status) and skip the site header/footer. */
 const AUTH_PATHS = [
   '/login',
   '/signup',
@@ -6,8 +6,9 @@ const AUTH_PATHS = [
   '/forgot-password',
   '/reset-password',
   '/verify-email',
-  '/oauth-callback',
   '/auth/oauth-callback',
+  '/start',
+  '/invite',
   '/applications/status',
 ]
 
