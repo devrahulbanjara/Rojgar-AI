@@ -31,6 +31,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 type Errors = { email?: string; password?: string }
 
+/** Messages for ?error= values that other flows redirect here with. */
+const ERROR_PARAM_MESSAGES: Record<string, string> = {
+  oauth_failed: 'Google sign-in did not finish. Try again.',
+  link_invalid: 'That sign-in link has expired. Ask for a new one.',
+}
+
 export function LoginForm() {
   const searchParams = useSearchParams()
   const nextUrl = getSafeRedirect(searchParams.get('next'))
@@ -43,7 +49,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string | null>(
-    searchParams.get('error') ? 'Google sign-in did not finish. Try again.' : null,
+    ERROR_PARAM_MESSAGES[searchParams.get('error') ?? ''] ?? null,
   )
   const [unverified, setUnverified] = useState(false)
 
