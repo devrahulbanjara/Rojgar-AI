@@ -2,17 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-import { useApplyFlow } from '@/hooks/useApplyFlow'
+import { usePathname } from 'next/navigation'
+
+import { readLastResumeId, useApplyFlow } from '@/hooks/useApplyFlow'
 import { notify } from '@/lib/notify'
-import { useGetMyResumesQuery } from '@/store/services/resumeApi'
+import { useCreateResumeMutation, useGetMyResumesQuery } from '@/store/services/resumeApi'
 import { X } from 'lucide-react'
 
 import StepAnalyzing from './StepAnalyzing'
-import StepGapChoice from './StepGapChoice'
 import StepGapResults from './StepGapResults'
 import StepPatching from './StepPatching'
-import StepSelectResume from './StepSelectResume'
-import StepShareProfile from './StepShareProfile'
+import StepReview from './StepReview'
 import styles from './applyModal.module.scss'
 
 interface ApplyModalProps {
@@ -23,28 +23,12 @@ interface ApplyModalProps {
   onSuccess?: () => void
 }
 
-const STEP_ORDER = ['select_resume', 'gap_choice', 'gap_results', 'share_profile'] as const
+const STEP_ORDER = ['review', 'gap_results', 'patch_preview'] as const
 
 function resolveStepTitle(step: string, jobTitle: string) {
-  if (step === 'select_resume') {
-    return {
-      eyebrow: 'Step 1',
-      title: `Apply to ${jobTitle}`,
-      subtitle: 'Choose your resume first, then decide whether you want a quick AI gap check.',
-    }
-  }
-
-  if (step === 'gap_choice') {
-    return {
-      eyebrow: 'Step 2',
-      title: 'Before you apply',
-      subtitle: 'You can submit immediately, or check how well your selected resume fits this job.',
-    }
-  }
-
   if (step === 'analyzing') {
     return {
-      eyebrow: 'Step 2',
+      eyebrow: 'Fit check',
       title: 'Analyzing your resume',
       subtitle: 'We are comparing your resume with the job requirements right now.',
     }
@@ -52,15 +36,15 @@ function resolveStepTitle(step: string, jobTitle: string) {
 
   if (step === 'gap_results') {
     return {
-      eyebrow: 'Step 3',
+      eyebrow: 'Fit check',
       title: 'Resume gap analysis',
-      subtitle: 'Review the suggestions, improve your resume if you want, or apply as-is.',
+      subtitle: 'Submit now, or let AI suggest safe improvements first.',
     }
   }
 
   if (step === 'patching') {
     return {
-      eyebrow: 'Step 3',
+      eyebrow: 'Fit check',
       title: 'Preparing proposed changes',
       subtitle: 'Drafting safe AI suggestions for you to review before anything is saved.',
     }
@@ -68,51 +52,32 @@ function resolveStepTitle(step: string, jobTitle: string) {
 
   if (step === 'patch_preview') {
     return {
-      eyebrow: 'Step 3',
+      eyebrow: 'Fit check',
       title: 'Review proposed changes',
-      subtitle:
-        'Nothing has been saved yet. Confirm to apply these updates to your resume, or cancel to keep it as-is.',
+      subtitle: 'Nothing is saved until you choose. Apply with these changes in one click.',
     }
   }
 
   if (step === 'committing_patch') {
     return {
-      eyebrow: 'Step 3',
+      eyebrow: 'Fit check',
       title: 'Updating your resume',
       subtitle: 'Saving the confirmed AI suggestions to your resume.',
     }
   }
 
-  if (step === 'patch_committed') {
-    return {
-      eyebrow: 'Step 3',
-      title: 'Resume updated',
-      subtitle:
-        'Your resume has been updated. Apply to this job now, or cancel to keep the changes for later.',
-    }
-  }
-
-  if (step === 'share_profile') {
-    return {
-      eyebrow: 'Step 4',
-      title: 'Choose what to share',
-      subtitle:
-        'Your selected resume goes with the application. Here you can control which extra profile details recruiters can see.',
-    }
-  }
-
   if (step === 'submitting') {
     return {
-      eyebrow: 'Step 4',
+      eyebrow: 'Submitting',
       title: 'Applying to the job',
       subtitle: 'Submitting your application and selected resume to the recruiter.',
     }
   }
 
   return {
-    eyebrow: 'Step 4',
-    title: 'Ready to submit',
-    subtitle: 'Your selected resume is set. Submit the application when you are ready.',
+    eyebrow: 'Apply',
+    title: `Apply to ${jobTitle}`,
+    subtitle: 'Submit now, or check your fit with AI first.',
   }
 }
 
@@ -126,7 +91,9 @@ export default function ApplyModal({
   const { data: resumesResponse, isLoading: loadingResumes } = useGetMyResumesQuery(undefined, {
     skip: !isOpen,
   })
-  const resumes = resumesResponse?.data ?? []
+  const resumes = useMemo(() => resumesResponse?.data ?? [], [resumesResponse])
+  const pathname = usePathname()
+  const [createResume, { isLoading: creatingResume }] = useCreateResumeMutation()
 
   const flow = useApplyFlow({
     jobId,
@@ -137,21 +104,45 @@ export default function ApplyModal({
     },
   })
 
-  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
+  const { selectResume, selectedResumeId } = flow
+
+  // Pre-select the resume used last time, falling back to the most recent one,
+  // so a repeat application is a single "Submit" click.
+  useEffect(() => {
+    if (!isOpen || resumes.length === 0) return
+    if (selectedResumeId && resumes.some((resume) => resume.id === selectedResumeId)) return
+    const lastId = readLastResumeId()
+    const remembered = resumes.find((resume) => resume.id === lastId)
+    const newest = [...resumes].sort(
+      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+    )[0]
+    selectResume((remembered ?? newest).id)
+  }, [isOpen, resumes, selectResume, selectedResumeId])
+
+  const handleCreateFromProfile = async () => {
+    try {
+      const response = await createResume({
+        resume_name: 'My Resume',
+        fork_from_profile: true,
+      }).unwrap()
+      selectResume(response.data.id)
+    } catch {
+      notify.error('Could not create a resume from your profile. Try importing a PDF.')
+    }
+  }
 
   const stepMeta = useMemo(() => resolveStepTitle(flow.step, jobTitle), [flow.step, jobTitle])
   const activeStepIndex = STEP_ORDER.findIndex((step) => step === flow.step)
-  const isScrollableStep = flow.step === 'share_profile'
   const isWideStep = [
     'analyzing',
     'patching',
     'patch_preview',
     'committing_patch',
-    'patch_committed',
-    'share_profile',
     'submitting',
   ].includes(flow.step)
   const isResultsStep = flow.step === 'gap_results'
+  const isScrollableStep = flow.step === 'review'
+  const canSubmit = Boolean(selectedResumeId) && resumes.length > 0
 
   useEffect(() => {
     if (!isOpen) return
@@ -225,25 +216,20 @@ export default function ApplyModal({
           <div className={styles.applyModal__shell}>
             {flow.error ? <div className={styles.applyModal__alert}>{flow.error}</div> : null}
 
-            {flow.step === 'select_resume' ? (
-              <StepSelectResume
+            {flow.step === 'review' ? (
+              <StepReview
+                creatingFromProfile={creatingResume}
+                hasPendingPatch={flow.hasPendingPatch}
+                importHref={`/candidate/profile?import=1&next=${encodeURIComponent(
+                  `${pathname}?apply=1`,
+                )}`}
                 loading={loadingResumes}
-                onCancel={onClose}
-                onConfirm={() => {
-                  if (selectedResumeId) {
-                    flow.handleResumeConfirmed(selectedResumeId)
-                  }
-                }}
-                onSelect={setSelectedResumeId}
+                onCreateFromProfile={() => void handleCreateFromProfile()}
+                onSelect={selectResume}
+                onToggleShare={flow.updateShareSetting}
                 resumes={resumes}
                 selectedResumeId={selectedResumeId}
-              />
-            ) : null}
-
-            {flow.step === 'gap_choice' ? (
-              <StepGapChoice
-                onAnalyze={flow.handleAnalyze}
-                onSkip={() => flow.handleOpenShareStep('gap_choice')}
+                shareSettings={flow.shareSettings}
               />
             ) : null}
 
@@ -265,18 +251,6 @@ export default function ApplyModal({
 
             {flow.step === 'committing_patch' ? <StepPatching mode="committing" /> : null}
 
-            {flow.step === 'patch_committed' ? (
-              <StepPatching
-                mode="committed"
-                message={flow.patchMessage}
-                patchedDiffs={flow.patchedDiffs}
-              />
-            ) : null}
-
-            {flow.step === 'share_profile' ? (
-              <StepShareProfile onToggle={flow.updateShareSetting} settings={flow.shareSettings} />
-            ) : null}
-
             {flow.step === 'submitting' ? (
               <StepAnalyzing
                 title="Submitting your application"
@@ -286,23 +260,42 @@ export default function ApplyModal({
           </div>
         </div>
 
+        {flow.step === 'review' && canSubmit ? (
+          <div className={styles.applyModal__footer}>
+            <button
+              className="btn btn--primary btn--full"
+              onClick={() => void flow.handleSubmit()}
+              type="button"
+            >
+              Submit application
+            </button>
+            <button
+              className="btn btn--secondary btn--full"
+              onClick={() => void flow.handleAnalyze()}
+              type="button"
+            >
+              Check my fit first (AI)
+            </button>
+          </div>
+        ) : null}
+
         {flow.step === 'gap_results' && flow.gapResult ? (
           <div className={styles.applyModal__footer}>
             <button
               className="btn btn--primary btn--full"
-              onClick={flow.handleAutoPatch}
+              onClick={() => void flow.handleSubmit()}
               type="button"
             >
-              Let AI update my resume
+              Submit with current resume
             </button>
             <button
               className="btn btn--secondary btn--full"
-              onClick={() => flow.handleOpenShareStep('gap_results')}
+              onClick={() => void flow.handleAutoPatch()}
               type="button"
             >
-              Apply with current resume
+              Let AI improve my resume
             </button>
-            <button className="btn btn--ghost" onClick={flow.handleBackToChoice} type="button">
+            <button className="btn btn--ghost" onClick={flow.handleBackToReview} type="button">
               Back
             </button>
           </div>
@@ -312,52 +305,26 @@ export default function ApplyModal({
           <div className={styles.applyModal__footer}>
             <button
               className="btn btn--primary btn--full"
+              onClick={() => void flow.handleSubmit()}
+              type="button"
+              disabled={flow.patchedDiffs.length === 0}
+            >
+              Apply with these changes
+            </button>
+            <button
+              className="btn btn--secondary btn--full"
               onClick={() => void flow.handleConfirmPatch()}
               type="button"
               disabled={flow.patchedDiffs.length === 0}
             >
-              Confirm update
+              Save to resume only
             </button>
             <button
               className="btn btn--ghost btn--full"
               onClick={() => void flow.handleCancelPatch()}
               type="button"
             >
-              Cancel
-            </button>
-          </div>
-        ) : null}
-
-        {flow.step === 'patch_committed' ? (
-          <div className={styles.applyModal__footer}>
-            <button
-              className="btn btn--primary btn--full"
-              onClick={() => flow.handleOpenShareStep('patch_committed')}
-              type="button"
-            >
-              Apply now
-            </button>
-            <button className="btn btn--ghost btn--full" onClick={onClose} type="button">
-              Cancel
-            </button>
-          </div>
-        ) : null}
-
-        {flow.step === 'share_profile' ? (
-          <div className={styles.applyModal__footer}>
-            <button
-              className="btn btn--primary btn--full"
-              onClick={flow.handleSubmit}
-              type="button"
-            >
-              Submit application
-            </button>
-            <button
-              className="btn btn--secondary btn--full"
-              onClick={flow.handleBackFromShare}
-              type="button"
-            >
-              Back
+              Discard changes
             </button>
           </div>
         ) : null}
