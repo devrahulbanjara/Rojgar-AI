@@ -1,4 +1,3 @@
-import type { ApplicationStatus } from './applicationsApi'
 import { type ApiResponse, baseApi } from './baseApi'
 import type { JobStatus } from './jobsApi'
 
