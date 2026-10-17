@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useLogoutMutation } from '@/store/services/authApi'
 import { baseApi } from '@/store/services/baseApi'
-import { Building2, ClipboardList, LogOut, User as UserIcon } from 'lucide-react'
 
+import { AuditIcon, CompanyIcon, SignOutIcon, UserIcon } from '@/components/icons'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,9 +50,9 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex items-center gap-2.5 rounded-full p-0.5 pr-1 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        <Button
+          variant="ghost"
+          className="h-auto gap-2.5 p-0.5 pr-2 text-left font-normal"
           aria-label="Account menu"
         >
           <EntityAvatar name={user?.full_name ?? 'You'} src={user?.avatar_url} className="size-8" />
@@ -61,7 +62,7 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
               <span className="text-xs text-muted-foreground">{role ? ROLE_LABEL[role] : ''}</span>
             </span>
           ) : null}
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem asChild>
@@ -74,13 +75,13 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
           <>
             <DropdownMenuItem asChild>
               <Link href="/recruiter/company/settings">
-                <Building2 />
+                <CompanyIcon />
                 Company
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/recruiter/team?tab=audit">
-                <ClipboardList />
+                <AuditIcon />
                 Audit log
               </Link>
             </DropdownMenuItem>
@@ -88,7 +89,7 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
         ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={() => void handleLogout()}>
-          <LogOut />
+          <SignOutIcon />
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

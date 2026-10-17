@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
-import { Briefcase, Search } from 'lucide-react'
 
+import { JobsIcon, SearchIcon } from '@/components/icons'
+import { Button } from '@/components/ui/button'
 import {
   CommandDialog,
   CommandEmpty,
@@ -43,17 +44,17 @@ export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <>
-      <button
-        type="button"
+      <Button
+        variant="outline"
         onClick={() => setOpen(true)}
-        className="flex h-9 w-full max-w-sm items-center gap-2 rounded-full border bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent"
+        className="w-full max-w-sm justify-start bg-background font-normal text-muted-foreground"
       >
-        <Search className="size-4" />
-        <span className="flex-1 text-left">Search</span>
+        <SearchIcon className="size-4" />
+        <span className="flex-1 text-left">SearchIcon</span>
         <kbd className="hidden rounded border bg-card px-1.5 text-[10px] font-medium sm:inline">
           ⌘K
         </kbd>
-      </button>
+      </Button>
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
@@ -79,7 +80,7 @@ export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
                   value={`${job.title} ${job.id}`}
                   onSelect={() => go(`/recruiter/jobs/${job.id}`)}
                 >
-                  <Briefcase />
+                  <JobsIcon />
                   {job.title}
                 </CommandItem>
               ))}

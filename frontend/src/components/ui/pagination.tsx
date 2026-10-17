@@ -1,8 +1,8 @@
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react'
 
+import { ChevronLeftIcon, ChevronRightIcon, MoreIcon } from '@/components/icons'
 import { type Button, buttonVariants } from '@/components/ui/button'
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
@@ -90,7 +90,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<'span'
       className={cn('flex size-9 items-center justify-center', className)}
       {...props}
     >
-      <MoreHorizontalIcon className="size-4" />
+      <MoreIcon className="size-4" />
       <span className="sr-only">More pages</span>
     </span>
   )

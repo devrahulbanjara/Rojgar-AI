@@ -11,7 +11,6 @@ import {
   useGetRecruiterHomeQuery,
 } from '@/store/services/dashboardApi'
 import { format } from 'date-fns'
-import { Plus, Video } from 'lucide-react'
 
 import { PageContainer } from '@/components/app/AppShell'
 import { EmptyState } from '@/components/app/EmptyState'
@@ -20,6 +19,7 @@ import { StatStrip } from '@/components/app/Numbers'
 import { PageHeader } from '@/components/app/PageHeader'
 import { RoleCard } from '@/components/app/RoleCard'
 import { Section } from '@/components/app/Section'
+import { PlusIcon, VideoIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -46,7 +46,7 @@ function InterviewRow({ interview }: { interview: RecruiterHomeInterview }) {
       {isUrl(interview.location) ? (
         <Button asChild size="sm">
           <a href={interview.location!} target="_blank" rel="noreferrer">
-            <Video />
+            <VideoIcon />
             Join
           </a>
         </Button>
@@ -162,7 +162,7 @@ export function TodayView() {
         primaryAction={
           <Button asChild>
             <Link href="/recruiter/jobs/new">
-              <Plus />
+              <PlusIcon />
               Post a job
             </Link>
           </Button>

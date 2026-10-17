@@ -29,6 +29,7 @@
     "@dicebear/collection": "^9.4.2",
     "@dicebear/core": "^9.4.2",
     "@hookform/resolvers": "5.9.1",
+    "@phosphor-icons/react": "2.1.10",
     "@reduxjs/toolkit": "^2.11.2",
     "@tanstack/react-table": "8.21.3",
     "@types/html2pdf.js": "^0.10.0",

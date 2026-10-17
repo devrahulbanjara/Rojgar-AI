@@ -2,12 +2,13 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 import { type VariantProps, cva } from 'class-variance-authority'
-import { Loader2 } from 'lucide-react'
 import { Slot } from 'radix-ui'
+
+import { SpinnerIcon } from '@/components/icons'
 
 /**
  * The one button. See docs/DESIGN_SYSTEM.md → "Buttons" for which variant to use.
- * Icons go in children (lucide, auto-sized to 16px): <Button><Plus />Post a job</Button>.
+ * Icons go in children (from @/components/icons, auto-sized to 16px): <Button><PlusIcon />Post a job</Button>.
  */
 const buttonVariants = cva(
   [
@@ -114,7 +115,7 @@ function Button({
         <>
           <span className="invisible inline-flex items-center gap-2">{children}</span>
           <span className="absolute inset-0 inline-flex items-center justify-center">
-            <Loader2 className="animate-spin" aria-hidden="true" />
+            <SpinnerIcon className="animate-spin" aria-hidden="true" />
             <span className="sr-only">Loading</span>
           </span>
         </>

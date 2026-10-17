@@ -52,7 +52,15 @@ function TabsList({
   )
 }
 
-function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+function TabsTrigger({
+  className,
+  count,
+  children,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Trigger> & {
+  /** Shown after the label: "Applicants (48)". */
+  count?: number
+}) {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
@@ -64,7 +72,14 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {count !== undefined ? (
+        <span className="rounded-full bg-muted px-1.5 text-xs text-muted-foreground tabular-nums">
+          {count}
+        </span>
+      ) : null}
+    </TabsPrimitive.Trigger>
   )
 }
 
