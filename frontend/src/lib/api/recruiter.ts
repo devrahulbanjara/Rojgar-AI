@@ -9,7 +9,10 @@
  */
 import { formatSalary } from '@/lib/jobHelpers'
 import { store } from '@/store'
-import type { ApplicationStatus, RecruiterCandidateDetailView } from '@/store/services/applicationsApi'
+import type {
+  ApplicationStatus,
+  RecruiterCandidateDetailView,
+} from '@/store/services/applicationsApi'
 import { type ApiResponse, baseApi } from '@/store/services/baseApi'
 import { type JobAIDraftPayload, jobAiApi } from '@/store/services/jobAiApi'
 import type { JobDetail, JobStatus as LegacyJobStatus } from '@/store/services/jobsApi'
@@ -47,7 +50,14 @@ export const UNDO_WINDOW_MS = 10_000
 // Shapes
 // ---------------------------------------------------------------------------
 
-export type Stage = 'new' | 'shortlisted' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
+export type Stage =
+  | 'new'
+  | 'shortlisted'
+  | 'interview'
+  | 'offer'
+  | 'hired'
+  | 'rejected'
+  | 'withdrawn'
 export type CountedStage = Exclude<Stage, 'withdrawn'>
 export type Fit = 'strong' | 'possible' | 'weak'
 export type ReviewState = 'pending' | 'done' | 'failed' | 'needs_person'
@@ -362,7 +372,10 @@ const NEXT_STAGE: Record<DecisionAction, Stage> = {
 }
 
 /** Status PATCHes the current backend needs for an action, given the current status. */
-function legacyChain(action: DecisionAction, current: ApplicationStatus | undefined): ApplicationStatus[] {
+function legacyChain(
+  action: DecisionAction,
+  current: ApplicationStatus | undefined,
+): ApplicationStatus[] {
   switch (action) {
     case 'shortlist':
     case 'move_back':
@@ -385,9 +398,15 @@ export function actionsFor(stage: Stage): { primary: DecisionAction[]; more: Dec
     case 'new':
       return { primary: ['reject', 'shortlist'], more: [] }
     case 'shortlisted':
-      return { primary: ['invite'], more: ['reject', ...(CAPABILITIES.withdraw ? (['withdraw'] as const) : [])] }
+      return {
+        primary: ['invite'],
+        more: ['reject', ...(CAPABILITIES.withdraw ? (['withdraw'] as const) : [])],
+      }
     case 'interview':
-      return { primary: ['offer'], more: ['reject', ...(CAPABILITIES.withdraw ? (['withdraw'] as const) : [])] }
+      return {
+        primary: ['offer'],
+        more: ['reject', ...(CAPABILITIES.withdraw ? (['withdraw'] as const) : [])],
+      }
     case 'offer':
       return {
         primary: CAPABILITIES.markHired ? ['hire'] : [],
@@ -517,7 +536,9 @@ function section(title: string, items: string[]): string | null {
 }
 
 /** overview + arrays → one description with headed sections. */
-function descriptionFromLegacy(detail: Pick<JobDetail, 'overview' | 'responsibilities' | 'benefits'>): string {
+function descriptionFromLegacy(
+  detail: Pick<JobDetail, 'overview' | 'responsibilities' | 'benefits'>,
+): string {
   return [
     detail.overview?.trim() || null,
     section('Responsibilities', detail.responsibilities ?? []),
@@ -556,7 +577,11 @@ function toJob(detail: JobDetail & { slug?: string | null; screening_questions?:
       required: true,
     })),
     status: jobState(detail.status),
-    closed_reason: detail.hiring_completed ? 'hired' : detail.status === 'expired' ? 'expired' : null,
+    closed_reason: detail.hiring_completed
+      ? 'hired'
+      : detail.status === 'expired'
+        ? 'expired'
+        : null,
     closes_at: detail.expires_at,
     applicants: detail.applications_count,
     updated_at: detail.updated_at,
@@ -580,15 +605,21 @@ function toLegacyJobBody(input: Partial<JobInput>) {
   if (input.nice_to_haves !== undefined)
     body.preferred_qualifications = input.nice_to_haves.filter((s) => s.trim())
   if (input.questions !== undefined)
-    body.screening_questions = input.questions.map((q) => q.label.trim()).filter(Boolean).slice(0, 3)
+    body.screening_questions = input.questions
+      .map((q) => q.label.trim())
+      .filter(Boolean)
+      .slice(0, 3)
   if (input.status !== undefined)
-    body.status = input.status === 'open' ? 'active' : input.status === 'closed' ? 'expired' : 'draft'
+    body.status =
+      input.status === 'open' ? 'active' : input.status === 'closed' ? 'expired' : 'draft'
   if (input.closes_at !== undefined) body.expires_at = input.closes_at
   return body
 }
 
 /** One line of facts for a job: "Kathmandu · Hybrid · NPR 145,000 – 215,000 · Closes 30 Oct". */
-export function jobFacts(job: Pick<Job, 'location' | 'work_type' | 'salary_min' | 'salary_max' | 'currency'>) {
+export function jobFacts(
+  job: Pick<Job, 'location' | 'work_type' | 'salary_min' | 'salary_max' | 'currency'>,
+) {
   return [
     job.location,
     WORK_TYPES.find((w) => w.value === job.work_type)?.label,
@@ -681,7 +712,12 @@ type CandidateDetailLegacy = RecruiterCandidateDetailView & {
 
 type CompanyPeople = {
   candidate_id: string
-  applications: { application_id: string; job_id: string; job_title: string; status: ApplicationStatus }[]
+  applications: {
+    application_id: string
+    job_id: string
+    job_title: string
+    status: ApplicationStatus
+  }[]
 }[]
 
 const EMPTY_COUNTS: Record<CountedStage, number> = {
@@ -699,14 +735,20 @@ function toPipelineItem(row: LegacyAppRow): PipelineItem {
   const flagged = state === 'needs_person' || !!row.ai_flag_reason
   return {
     application_id: row.id,
-    person: { name: row.applicant_name, email: row.applicant_email, avatar_url: row.applicant_avatar_url },
+    person: {
+      name: row.applicant_name,
+      email: row.applicant_email,
+      avatar_url: row.applicant_avatar_url,
+    },
     fit: flagged ? null : fitFromScore(row.score),
     summary: flagged ? null : summaryFrom(row.strengths),
     stage: STATUS_TO_STAGE[row.status],
     source: toSource(row.source),
     applied_at: row.created_at,
     flagged,
-    flag_reason: flagged ? row.ai_flag_reason || 'Something in this CV needs a person to check it.' : null,
+    flag_reason: flagged
+      ? row.ai_flag_reason || 'Something in this CV needs a person to check it.'
+      : null,
     review_state: state,
     referred_by: row.referred_by ?? null,
     // The current review has no per-must-have checks.
@@ -724,7 +766,10 @@ function loadPeople(
 ): Promise<CompanyPeople> {
   if (peopleCache && Date.now() - peopleCache.at < 30_000) return peopleCache.data
   const data = Promise.resolve(
-    fetchWithBQ({ url: `${API}/applications/company/me/candidates`, params: { page: 1, size: 200 } }),
+    fetchWithBQ({
+      url: `${API}/applications/company/me/candidates`,
+      params: { page: 1, size: 200 },
+    }),
   ).then((r) => (r.error ? [] : ((r.data as ApiResponse<CompanyPeople>).data ?? [])))
   peopleCache = { at: Date.now(), data }
   return data
@@ -757,10 +802,12 @@ const EVENT_MAP: Record<string, { type: CandidateEvent['type']; text: string } |
   candidate_offer_declined: { type: 'stage_changed', text: 'Declined the offer' },
 }
 
-
 export const recruiterApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getPipeline: builder.query<Pipeline, { jobId: string; stage: CountedStage; sort: PipelineSort }>({
+    getPipeline: builder.query<
+      Pipeline,
+      { jobId: string; stage: CountedStage; sort: PipelineSort }
+    >({
       async queryFn({ jobId, stage, sort }, _api, _extra, fetchWithBQ) {
         const rows: LegacyAppRow[] = []
         for (let page = 1; page <= 20; page += 1) {
@@ -826,7 +873,9 @@ export const recruiterApi = baseApi.injectEndpoints({
 
         let cvUrl: string | null = null
         if (d.has_cv_file) {
-          const cv = await fetchWithBQ(`${API}/applications/company/me/candidates/${applicationId}/cv`)
+          const cv = await fetchWithBQ(
+            `${API}/applications/company/me/candidates/${applicationId}/cv`,
+          )
           cvUrl = cv.error ? null : ((cv.data as ApiResponse<{ url: string }>).data?.url ?? null)
         }
 
@@ -960,7 +1009,8 @@ export const recruiterApi = baseApi.injectEndpoints({
                 if (item.stage !== 'withdrawn') draft.counts[item.stage] -= 1
                 if (stage !== 'withdrawn') draft.counts[stage] += 1
               }
-              if (stage !== args.stage) draft.items = draft.items.filter((i) => !ids.has(i.application_id))
+              if (stage !== args.stage)
+                draft.items = draft.items.filter((i) => !ids.has(i.application_id))
             }),
           )
         }
@@ -1018,7 +1068,9 @@ export const recruiterApi = baseApi.injectEndpoints({
           writeLocalMeta(saved.id, {
             category: input.category !== undefined ? input.category : previous.category,
             employment_type:
-              input.employment_type !== undefined ? input.employment_type : previous.employment_type,
+              input.employment_type !== undefined
+                ? input.employment_type
+                : previous.employment_type,
           })
         }
         return { data: { ...saved, ...readLocalMeta(saved.id) } }
@@ -1040,7 +1092,12 @@ export const recruiterApi = baseApi.injectEndpoints({
           ? { url: `${API}/jobs/${id}/complete-hiring`, method: 'POST' }
           : { url: `${API}/jobs/${id}`, method: 'PATCH', body: { status: 'expired' } },
       transformResponse: () => null,
-      invalidatesTags: (_r, _e, { id }) => [{ type: 'Jobs', id }, 'Jobs', 'Applications', 'Candidates'],
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Jobs', id },
+        'Jobs',
+        'Applications',
+        'Candidates',
+      ],
     }),
 
     reopenJob: builder.mutation<null, { id: string; closes_at: string }>({
@@ -1087,7 +1144,11 @@ export const undo = (eventId: string) =>
 
 type StreamHandlers = { onToken?: (text: string) => void; signal?: AbortSignal }
 
-async function streamSse<T>(url: string, body: unknown, { onToken, signal }: StreamHandlers): Promise<T> {
+async function streamSse<T>(
+  url: string,
+  body: unknown,
+  { onToken, signal }: StreamHandlers,
+): Promise<T> {
   const response = await authedFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
@@ -1144,20 +1205,29 @@ export async function streamJobDraft(
   handlers: StreamHandlers = {},
 ): Promise<{ draft: JobDraft }> {
   if (CAPABILITIES.assistant) {
-    return streamSse<{ draft: JobDraft }>(`${API}/assistant/job-draft`, { message, draft_id }, handlers)
+    return streamSse<{ draft: JobDraft }>(
+      `${API}/assistant/job-draft`,
+      { message, draft_id },
+      handlers,
+    )
   }
   const created = await store
-    .dispatch(jobAiApi.endpoints.createJobAIDraft.initiate({ rough_description: message, mode: 'create' }))
+    .dispatch(
+      jobAiApi.endpoints.createJobAIDraft.initiate({ rough_description: message, mode: 'create' }),
+    )
     .unwrap()
   const id = created.data.id
   try {
     for (let attempt = 0; attempt < 90; attempt += 1) {
       const record = await store
-        .dispatch(jobAiApi.endpoints.getJobAIDraft.initiate(id, { forceRefetch: true, subscribe: false }))
+        .dispatch(
+          jobAiApi.endpoints.getJobAIDraft.initiate(id, { forceRefetch: true, subscribe: false }),
+        )
         .unwrap()
       const data = record.data
       if (data.status === 'failed') throw new Error('Drafting failed')
-      if (data.latest_draft && data.status !== 'drafting') return { draft: draftFromLegacy(data.latest_draft) }
+      if (data.latest_draft && data.status !== 'drafting')
+        return { draft: draftFromLegacy(data.latest_draft) }
       await sleep(1500, handlers.signal)
     }
     throw new Error('Drafting took too long')
@@ -1224,7 +1294,10 @@ const LOCAL_TEMPLATES: JobTemplate[] = [
       '1+ year of ward experience',
       'Can work night shifts',
     ],
-    questions: [q('Is your Nursing Council registration valid?', 'yes_no'), q('Where did you work last?')],
+    questions: [
+      q('Is your Nursing Council registration valid?', 'yes_no'),
+      q('Where did you work last?'),
+    ],
   },
   {
     id: 'accountant',
@@ -1260,14 +1333,23 @@ const LOCAL_TEMPLATES: JobTemplate[] = [
     id: 'hotel-receptionist',
     title: 'Hotel receptionist',
     category: 'hospitality_tourism',
-    must_haves: ['Speaks English with guests', 'Front desk or guest service experience', 'Basic computer use', 'Can work shifts'],
+    must_haves: [
+      'Speaks English with guests',
+      'Front desk or guest service experience',
+      'Basic computer use',
+      'Can work shifts',
+    ],
     questions: [q('Which languages do you speak?')],
   },
   {
     id: 'cook',
     title: 'Cook',
     category: 'hospitality_tourism',
-    must_haves: ['2+ years in a hotel or restaurant kitchen', 'Cooks Nepali and continental dishes', 'Keeps the kitchen clean and safe'],
+    must_haves: [
+      '2+ years in a hotel or restaurant kitchen',
+      'Cooks Nepali and continental dishes',
+      'Keeps the kitchen clean and safe',
+    ],
     questions: [q('Which dishes or cuisines can you cook?')],
   },
   {
@@ -1281,14 +1363,22 @@ const LOCAL_TEMPLATES: JobTemplate[] = [
     id: 'driver',
     title: 'Driver',
     category: 'logistics_driving',
-    must_haves: ['Valid driving licence for the vehicle', '3+ years of driving', 'Clean driving record'],
+    must_haves: [
+      'Valid driving licence for the vehicle',
+      '3+ years of driving',
+      'Clean driving record',
+    ],
     questions: [q('Which licence category do you hold?')],
   },
   {
     id: 'security-guard',
     title: 'Security guard',
     category: 'other',
-    must_haves: ['Security training or service background', 'Can work night shifts', 'Physically able to patrol'],
+    must_haves: [
+      'Security training or service background',
+      'Can work night shifts',
+      'Physically able to patrol',
+    ],
     questions: [q('Can you work night shifts?', 'yes_no')],
   },
   {
@@ -1309,14 +1399,23 @@ const LOCAL_TEMPLATES: JobTemplate[] = [
     id: 'field-officer',
     title: 'NGO field officer',
     category: 'ngo_ingo',
-    must_haves: ["Bachelor's degree", '1+ year of community or field work', 'Can travel to districts', 'Writes short reports'],
+    must_haves: [
+      "Bachelor's degree",
+      '1+ year of community or field work',
+      'Can travel to districts',
+      'Writes short reports',
+    ],
     questions: [q('Which districts have you worked in?')],
   },
   {
     id: 'software-developer',
     title: 'Software developer',
     category: 'it_software',
-    must_haves: ['2+ years building software in production', 'Uses Git', 'Writes clear code others can read'],
+    must_haves: [
+      '2+ years building software in production',
+      'Uses Git',
+      'Writes clear code others can read',
+    ],
     questions: [q('Link to your work (GitHub, portfolio or app)')],
   },
 ]
@@ -1350,7 +1449,8 @@ export async function getJobTemplates(category?: JobCategory | null): Promise<Jo
 const PROTECTED =
   /\b(male|female|man|woman|men|women|girls?|boys?|gender|sex|age[ds]?\s*\d|\d+\s*(-|to|–)\s*\d+\s*(years|yrs)\s*(old|of age)|under\s*\d+|below\s*\d+\s*years|above\s*\d+\s*years|years old|unmarried|married|single|marital|religio\w*|hindu|muslim|christian|buddhist|caste|brahmin|chhetri|newar|janajati|dalit|ethnic\w*|pregnan\w*|good[- ]looking|attractive|fair (skin|complexion)|height|disab\w*|hiv|political|party member)\b|पुरुष|महिला|केटी|केटा|उमेर|अविवाहित|विवाहित|जात|धर्म/i
 
-export const PROTECTED_WARNING = 'This may be discrimination under the Labour Act — remove or reword'
+export const PROTECTED_WARNING =
+  'This may be discrimination under the Labour Act — remove or reword'
 
 export function protectedGroundWarning(criterion: string): string | null {
   return PROTECTED.test(criterion) ? PROTECTED_WARNING : null
@@ -1376,20 +1476,23 @@ export async function exportPipelineCsv(jobId: string, jobTitle: string): Promis
     if (data.length < 100) break
   }
   const header = ['Name', 'Email', 'Stage', 'Fit', 'Summary', 'Source', 'Applied', 'Flag']
-  const lines = rows.map(toPipelineItem).map(overlay).map((item) =>
-    [
-      item.person.name,
-      item.person.email,
-      STAGE_LABEL[item.stage],
-      item.fit ? FIT_LABEL[item.fit] : '',
-      item.summary,
-      SOURCE_LABEL[item.source],
-      item.applied_at.slice(0, 10),
-      item.flag_reason,
-    ]
-      .map(csvCell)
-      .join(','),
-  )
+  const lines = rows
+    .map(toPipelineItem)
+    .map(overlay)
+    .map((item) =>
+      [
+        item.person.name,
+        item.person.email,
+        STAGE_LABEL[item.stage],
+        item.fit ? FIT_LABEL[item.fit] : '',
+        item.summary,
+        SOURCE_LABEL[item.source],
+        item.applied_at.slice(0, 10),
+        item.flag_reason,
+      ]
+        .map(csvCell)
+        .join(','),
+    )
   const blob = new Blob([`﻿${[header.join(','), ...lines].join('\n')}`], {
     type: 'text/csv;charset=utf-8',
   })
@@ -1418,7 +1521,10 @@ export async function addCandidate(input: QuickAddInput): Promise<{ application_
   form.set('source', input.source)
   if (input.referred_by) form.set('referred_by', input.referred_by)
   if (input.cv) form.set('cv', input.cv)
-  const response = await authedFetch(`${API}/jobs/${input.jobId}/candidates`, { method: 'POST', body: form })
+  const response = await authedFetch(`${API}/jobs/${input.jobId}/candidates`, {
+    method: 'POST',
+    body: form,
+  })
   if (!response.ok) throw new Error(String(response.status))
   store.dispatch(baseApi.util.invalidateTags(['Applications', 'Candidates']))
   return ((await response.json()) as ApiResponse<{ application_id: string }>).data

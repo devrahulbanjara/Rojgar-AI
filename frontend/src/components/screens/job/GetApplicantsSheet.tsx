@@ -146,9 +146,7 @@ function AskPeople({ job }: { job: Job & { slug: string } }) {
           </p>
           <div className="grid grid-cols-2 gap-2">
             <Button asChild size="lg">
-              <a href={contactLinks.viberText(message)}>
-                Viber
-              </a>
+              <a href={contactLinks.viberText(message)}>Viber</a>
             </Button>
             <Button asChild size="lg" variant="outline">
               <a
@@ -269,7 +267,10 @@ export function GetApplicantsSheet({
                   locationType: job.work_type,
                 }}
                 trigger={
-                  <Button variant="outline" className="h-auto w-full justify-start gap-4 rounded-2xl px-4 py-4">
+                  <Button
+                    variant="outline"
+                    className="h-auto w-full justify-start gap-4 rounded-2xl px-4 py-4"
+                  >
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary [&_svg]:size-5">
                       <LinkIcon />
                     </span>

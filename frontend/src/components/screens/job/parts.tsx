@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { type Fit, FIT_LABEL, contactLinks } from '@/lib/api/recruiter'
+import { FIT_LABEL, type Fit, contactLinks } from '@/lib/api/recruiter'
 import { cn } from '@/lib/utils'
 
 import { StatusPill, type Tone } from '@/components/app/StatusPill'

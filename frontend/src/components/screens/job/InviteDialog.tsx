@@ -92,10 +92,13 @@ export function InviteDialog({
         </div>
         <DialogFooter>
           {CAPABILITIES.editInviteEmail && !editing ? (
-            <Button variant="outline" onClick={() => {
+            <Button
+              variant="outline"
+              onClick={() => {
                 setBody(defaultBody)
                 setEditing(true)
-              }}>
+              }}
+            >
               Edit
             </Button>
           ) : null}

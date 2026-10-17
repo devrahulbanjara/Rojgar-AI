@@ -3892,310 +3892,45 @@
   }
 }
 
-.job-editor-page {
-  display: flex;
-  flex-direction: column;
-  gap: $space-6;
-}
 
-.job-editor-page__header {
-  display: flex;
-  align-items: center;
-}
 
-.job-editor-page__back {
-  display: inline-flex;
-  align-items: center;
-  gap: $space-2;
-  color: $color-gray-600;
-  text-decoration: none;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
 
-  &:hover {
-    color: $color-primary;
-  }
-}
 
-.job-editor-form {
-  display: flex;
-  flex-direction: column;
-  gap: $space-6;
-}
 
-.job-ai-field--manual {
-  gap: $space-3;
-}
 
-.job-editor-form__sections {
-  display: flex;
-  flex-direction: column;
-  gap: $space-5;
-}
 
-.job-editor-form__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $space-4;
 
-  &--salary {
-    grid-template-columns: 1fr 1fr 0.7fr;
-  }
-}
 
-.job-editor-form__toggle-field {
-  height: 100%;
-}
 
-.job-editor-form__field {
-  min-width: 0;
-}
 
-.job-editor-form__field--full {
-  grid-column: 1 / -1;
-}
 
-.job-editor-form__salary-field,
-.job-editor-form__toggle-field {
-  height: 100%;
-}
 
-.job-editor-form__footer {
-  padding-top: $space-5;
-  border-top: 1px solid $color-gray-200;
-}
 
-.job-editor-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $space-5;
-  width: 100%;
-  height: 100%;
-  padding: $space-4 $space-5;
-  border: 1px solid $color-border;
-  border-radius: $radius-xl;
-  background: $color-white;
-  cursor: pointer;
-  transition:
-    border-color $transition-fast,
-    box-shadow $transition-fast;
 
-  &:hover {
-    border-color: $color-border;
-    box-shadow: none;
-  }
-}
 
-.job-editor-toggle__copy {
-  display: flex;
-  flex-direction: column;
-  gap: $space-1;
-  min-width: 0;
-}
 
-.job-editor-toggle__title {
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $color-gray-900;
-}
 
-.job-editor-toggle__description {
-  font-size: $font-size-sm;
-  line-height: $line-height-loose;
-  color: $color-gray-600;
-}
 
-.job-editor-toggle__control {
-  display: inline-flex;
-  align-items: center;
-  gap: $space-3;
-  flex-shrink: 0;
-}
 
-.job-editor-toggle__state {
-  min-width: 2rem;
-  text-align: right;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $color-gray-700;
-}
 
-.job-editor-toggle__switch {
-  position: relative;
-  display: inline-flex;
-}
 
-.job-editor-toggle__input {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
 
-  &:focus-visible + .job-editor-toggle__track {
-    box-shadow: 0 0 0 4px rgba($color-primary, 0.14);
-  }
 
-  &:checked + .job-editor-toggle__track {
-    background: linear-gradient(135deg, $color-primary, rgba($color-primary, 0.78));
-    border-color: rgba($color-primary, 0.3);
 
-    .job-editor-toggle__thumb {
-      transform: translateX(1.45rem);
-    }
-  }
 
-  &:disabled + .job-editor-toggle__track {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
 
-.job-editor-toggle__track {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  width: 3.5rem;
-  height: 2rem;
-  padding: 0.2rem;
-  border: 1px solid rgba($color-gray-400, 0.5);
-  border-radius: $radius-full;
-  background: $color-gray-300;
-  transition:
-    background $transition-fast,
-    border-color $transition-fast,
-    box-shadow $transition-fast,
-    opacity $transition-fast;
-}
 
-.job-editor-toggle__thumb {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: $radius-full;
-  background: $color-white;
-  box-shadow: 0 4px 10px rgba($color-gray-900, 0.16);
-  transition: transform $transition-fast;
-}
 
-.job-editor-list {
-  list-style: none;
-  padding: 0;
-  margin: $space-3 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: $space-3;
-}
 
-.job-editor-list__composer {
-  display: flex;
-  align-items: center;
-  gap: $space-3;
-  padding: $space-3;
-  border: 1px dashed rgba($color-primary, 0.28);
-  border-radius: $radius-xl;
-  background:
-    linear-gradient(135deg, rgba($color-primary, 0.05), rgba($color-primary, 0.02)), $color-white;
 
-  .job-ai-input {
-    flex: 1;
-  }
-}
 
-.job-editor-list__item {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-  gap: $space-3;
-}
 
-.job-editor-list__input {
-  padding-right: 2.75rem;
-}
 
-.job-editor-list__composer-input {
-  border-style: dashed;
-  border-color: rgba($color-primary, 0.22);
-  background: rgba($color-white, 0.92);
-}
 
-.job-editor-list__remove {
-  position: absolute;
-  top: 50%;
-  right: $space-3;
-  transform: translateY(-50%);
-}
 
-.recruiter-job-editor-modal {
-  max-width: 760px;
-  width: 100%;
-}
 
-.company-job-skeleton__top-row {
-  align-items: center;
-}
 
-.company-job-skeleton__status {
-  width: 5.25rem;
-  height: 1.75rem;
-  border-radius: $radius-full;
-}
 
-.company-job-skeleton__title {
-  width: min(78%, 18rem);
-  height: 1.25rem;
-  border-radius: $radius-md;
-}
-
-.company-job-skeleton__meta-row {
-  gap: $space-2;
-}
-
-.company-job-skeleton__icon {
-  width: 0.875rem;
-  height: 0.875rem;
-  border-radius: $radius-full;
-  flex-shrink: 0;
-}
-
-.company-job-skeleton__line {
-  height: 0.875rem;
-  border-radius: $radius-sm;
-
-  &--mid {
-    width: min(62%, 12rem);
-  }
-
-  &--long {
-    width: min(74%, 15rem);
-  }
-}
-
-.company-job-skeleton__footer {
-  align-items: center;
-}
-
-.company-job-skeleton__footer-meta {
-  gap: $space-4;
-}
-
-.company-job-skeleton__link {
-  width: 7.5rem;
-  height: 0.875rem;
-  border-radius: $radius-sm;
-}
-
-.company-job-skeleton__date {
-  width: 6.75rem;
-  height: 0.875rem;
-  border-radius: $radius-sm;
-}
-
-.company-job-skeleton__action {
-  width: 2rem;
-  height: 2rem;
-  border-radius: $radius-full;
-}
 
 .jd-detail-skeleton {
   &__logo {

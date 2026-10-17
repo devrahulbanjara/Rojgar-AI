@@ -29,7 +29,13 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { StatusPill } from '@/components/app/StatusPill'
 import { EditIcon, PlusIcon, ShareIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 import { AddCandidateDialog } from './AddCandidateDialog'
 import { CandidateCard } from './CandidateCard'
@@ -91,7 +97,8 @@ export function JobPage({ jobId }: { jobId: string }) {
 
   const rawStage = params.get('stage') ?? 'new'
   const stage: CountedStage =
-    LEGACY_STAGE[rawStage] ?? (STAGES.includes(rawStage as CountedStage) ? (rawStage as CountedStage) : 'new')
+    LEGACY_STAGE[rawStage] ??
+    (STAGES.includes(rawStage as CountedStage) ? (rawStage as CountedStage) : 'new')
   const sort: PipelineSort = params.get('sort') === 'newest' ? 'newest' : 'best_fit'
   const activeId = params.get('app')
 
@@ -144,7 +151,9 @@ export function JobPage({ jobId }: { jobId: string }) {
       if (index < 0) return null
       const decided = new Set(ids)
       const after = items.slice(index + 1).find((i) => !decided.has(i.application_id))
-      const before = [...items.slice(0, index)].reverse().find((i) => !decided.has(i.application_id))
+      const before = [...items.slice(0, index)]
+        .reverse()
+        .find((i) => !decided.has(i.application_id))
       return (after ?? before)?.application_id ?? null
     },
     [activeId, items],
@@ -164,7 +173,7 @@ export function JobPage({ jobId }: { jobId: string }) {
       if (action === 'shortlist') setInvite({ ids, recipients: people })
       else run(ids, action, people)
     },
-    [run],
+    [run, setInvite],
   )
 
   const fromItem = (item: PipelineItem): InviteRecipient => ({
@@ -178,7 +187,9 @@ export function JobPage({ jobId }: { jobId: string }) {
 
   // Keyboard: J/K move, S shortlist, N or R not now, X select.
   const keyState = useRef({ items, activeId, request, setParams, selected })
-  keyState.current = { items, activeId, request, setParams, selected }
+  useEffect(() => {
+    keyState.current = { items, activeId, request, setParams, selected }
+  })
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return
@@ -219,9 +230,6 @@ export function JobPage({ jobId }: { jobId: string }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
-
-  // Selection only makes sense within the visible stage.
-  useEffect(() => setSelected(new Set()), [stage])
 
   if (job.isLoading) return <JobPageSkeleton />
   if (job.isError || !job.data) {
@@ -290,7 +298,10 @@ export function JobPage({ jobId }: { jobId: string }) {
           <FilterChips<CountedStage>
             label="Stage"
             value={stage}
-            onChange={(value) => setParams({ stage: value, app: null })}
+            onChange={(value) => {
+              setSelected(new Set())
+              setParams({ stage: value, app: null })
+            }}
             options={STAGES.map((value) => ({
               value,
               label: STAGE_LABEL[value],
@@ -310,7 +321,12 @@ export function JobPage({ jobId }: { jobId: string }) {
                 <SelectItem value="newest">Newest first</SelectItem>
               </SelectContent>
             </Select>
-            <Button size="sm" variant="outline" className="ml-auto sm:ml-0" onClick={() => setAddOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto sm:ml-0"
+              onClick={() => setAddOpen(true)}
+            >
               <PlusIcon />
               Add candidate
             </Button>

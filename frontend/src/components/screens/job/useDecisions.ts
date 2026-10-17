@@ -43,9 +43,7 @@ export function useDecisions(jobId?: string) {
       const email = EMAIL[action]
       notify.undoable(DONE[action](who), {
         description:
-          sendsEmail(action) && email
-            ? `${email} sends in ${UNDO_WINDOW_MS / 1000} s`
-            : undefined,
+          sendsEmail(action) && email ? `${email} sends in ${UNDO_WINDOW_MS / 1000} s` : undefined,
         duration: UNDO_WINDOW_MS,
         onUndo: () => {
           for (const id of event_ids) void undoMutation(id)

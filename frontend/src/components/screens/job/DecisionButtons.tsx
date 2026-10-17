@@ -55,7 +55,11 @@ export function DecisionButtons({
       {more.length ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <IconButton label={`More for ${name}`} variant="outline" size={size === 'sm' ? 'sm' : 'md'}>
+            <IconButton
+              label={`More for ${name}`}
+              variant="outline"
+              size={size === 'sm' ? 'sm' : 'md'}
+            >
               <MoreIcon weight="bold" />
             </IconButton>
           </DropdownMenuTrigger>

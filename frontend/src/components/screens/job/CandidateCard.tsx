@@ -24,7 +24,8 @@ import { FitPill, FlagLine } from './parts'
 function Review({ item }: { item: PipelineItem }) {
   if (item.flagged && item.flag_reason) return <FlagLine reason={item.flag_reason} />
   if (item.review_state === 'pending') return <AiText className="text-xs">Reading CV…</AiText>
-  if (item.summary) return <p className="line-clamp-2 text-sm text-muted-foreground">{item.summary}</p>
+  if (item.summary)
+    return <p className="line-clamp-2 text-sm text-muted-foreground">{item.summary}</p>
   return null
 }
 

@@ -19,13 +19,7 @@ import { ago, shortDate } from '@/lib/dates'
 import { AiGlow, AiSpark, AiText } from '@/components/app/Ai'
 import { ErrorState } from '@/components/app/Feedback'
 import { Section } from '@/components/app/Section'
-import {
-  ArrowLeftIcon,
-  CheckIcon,
-  DownloadIcon,
-  MinusIcon,
-  XIcon,
-} from '@/components/icons'
+import { ArrowLeftIcon, CheckIcon, DownloadIcon, MinusIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,7 +37,11 @@ function ContactLine({ person }: { person: Candidate['person'] }) {
   const parts: ReactNode[] = []
   if (person.phone) {
     parts.push(
-      <a key="tel" href={contactLinks.call(person.phone)} className="text-foreground hover:underline">
+      <a
+        key="tel"
+        href={contactLinks.call(person.phone)}
+        className="text-foreground hover:underline"
+      >
         {person.phone}
       </a>,
       <a key="viber" href={contactLinks.viber(person.phone)} className="hover:underline">
@@ -69,7 +67,13 @@ function ContactLine({ person }: { person: Candidate['person'] }) {
   if (person.location) parts.push(<span key="loc">{person.location}</span>)
   if (person.linkedin_url)
     parts.push(
-      <a key="li" href={person.linkedin_url} target="_blank" rel="noreferrer" className="hover:underline">
+      <a
+        key="li"
+        href={person.linkedin_url}
+        target="_blank"
+        rel="noreferrer"
+        className="hover:underline"
+      >
         LinkedIn
       </a>,
     )
@@ -131,7 +135,9 @@ function Why({
             <div className="flex flex-wrap items-center gap-2">
               <FitPill fit={review.fit} />
               {review.checks.length ? (
-                <span className="text-xs text-muted-foreground">Checked against your must-haves</span>
+                <span className="text-xs text-muted-foreground">
+                  Checked against your must-haves
+                </span>
               ) : null}
             </div>
             {review.summary ? <p className="text-sm">{review.summary}</p> : null}
@@ -217,7 +223,9 @@ function Cv({ candidate }: { candidate: Candidate }) {
             {outline.educations.map((item) => (
               <li key={`${item.title}-${item.period}`}>
                 {item.title}
-                {item.period ? <span className="text-muted-foreground"> · {item.period}</span> : null}
+                {item.period ? (
+                  <span className="text-muted-foreground"> · {item.period}</span>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -236,7 +244,11 @@ function OtherRoles({ others }: { others: Candidate['other_applications'] }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="link" size="sm" className="h-auto p-0 text-sm font-normal text-muted-foreground">
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-sm font-normal text-muted-foreground"
+        >
           Also applied to {others.length} other role{others.length === 1 ? '' : 's'}
         </Button>
       </PopoverTrigger>
@@ -249,7 +261,9 @@ function OtherRoles({ others }: { others: Candidate['other_applications'] }) {
                 className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
               >
                 <span className="truncate">{other.job_title}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">{STAGE_LABEL[other.stage]}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {STAGE_LABEL[other.stage]}
+                </span>
               </Link>
             </li>
           ))}
@@ -319,8 +333,13 @@ export function CandidatePanel({
   onDecide: (candidate: Candidate, action: DecisionAction) => void
   onBack?: () => void
 }) {
-  const { data: candidate, isLoading, isError, refetch, isFetching } =
-    useGetCandidateQuery(applicationId)
+  const {
+    data: candidate,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useGetCandidateQuery(applicationId)
 
   if (isLoading) return <CandidatePanelSkeleton />
   if (isError || !candidate) {
@@ -356,11 +375,7 @@ export function CandidatePanel({
             ) : null}
             <ContactLine person={candidate.person} />
           </div>
-          <DecisionButtons
-            stage={candidate.stage}
-            name={candidate.person.name}
-            onDecide={decide}
-          />
+          <DecisionButtons stage={candidate.stage} name={candidate.person.name} onDecide={decide} />
         </div>
         {phoneFirst && candidate.person.phone ? (
           <CallButtons phone={candidate.person.phone} size="lg" className="sm:hidden" />
