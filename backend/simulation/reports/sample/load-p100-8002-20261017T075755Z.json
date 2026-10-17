@@ -1,0 +1,157 @@
+{
+  "mode": "load",
+  "config": {
+    "base_url": "http://localhost:8002",
+    "personas": 100,
+    "roles": {
+      "candidate": 75,
+      "recruiter": 25
+    },
+    "ramp_seconds": 10.0,
+    "max_rps": 200.0,
+    "include_ai": false,
+    "mutate": false,
+    "auth": "access tokens minted in-process via app.core.security.create_tokens",
+    "login_sample": 0,
+    "db_name": "convexhire_test_sim",
+    "accounts": {
+      "candidate": 14,
+      "recruiter": 12
+    }
+  },
+  "overall": {
+    "requests": 551,
+    "wall_seconds": 10.4,
+    "throughput_rps": 53.1,
+    "p50_ms": 170.7,
+    "p95_ms": 804.9,
+    "server_errors": 2,
+    "error_rate": 0.004,
+    "rate_limited_429": 0
+  },
+  "endpoints": {
+    "GET /applications/company/me/candidates": {
+      "n": 25,
+      "p50_ms": 106.4,
+      "p95_ms": 323.3,
+      "max_ms": 341.6,
+      "status_codes": {
+        "200": 25
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /applications/company/me/candidates/{id}": {
+      "n": 25,
+      "p50_ms": 139.7,
+      "p95_ms": 398.3,
+      "max_ms": 417.5,
+      "status_codes": {
+        "200": 25
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /applications/me": {
+      "n": 75,
+      "p50_ms": 133.1,
+      "p95_ms": 407.4,
+      "max_ms": 475.1,
+      "status_codes": {
+        "200": 75
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /dashboards/candidate": {
+      "n": 75,
+      "p50_ms": 131.7,
+      "p95_ms": 333.7,
+      "max_ms": 406.7,
+      "status_codes": {
+        "200": 75
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /dashboards/recruiter": {
+      "n": 25,
+      "p50_ms": 223.8,
+      "p95_ms": 395.3,
+      "max_ms": 413.5,
+      "status_codes": {
+        "200": 25
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /jobs/ (browse)": {
+      "n": 76,
+      "p50_ms": 769.0,
+      "p95_ms": 1030.6,
+      "max_ms": 1121.3,
+      "status_codes": {
+        "200": 74,
+        "500": 2
+      },
+      "error_rate": 0.026,
+      "rate_limited": 0
+    },
+    "GET /jobs/company/me": {
+      "n": 25,
+      "p50_ms": 136.0,
+      "p95_ms": 357.8,
+      "max_ms": 406.5,
+      "status_codes": {
+        "200": 25
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /jobs/{id}": {
+      "n": 75,
+      "p50_ms": 167.8,
+      "p95_ms": 431.7,
+      "max_ms": 487.3,
+      "status_codes": {
+        "200": 75
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /notifications": {
+      "n": 75,
+      "p50_ms": 131.8,
+      "p95_ms": 337.2,
+      "max_ms": 403.0,
+      "status_codes": {
+        "200": 75
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    },
+    "GET /resumes/me": {
+      "n": 75,
+      "p50_ms": 143.8,
+      "p95_ms": 413.1,
+      "max_ms": 470.8,
+      "status_codes": {
+        "200": 75
+      },
+      "error_rate": 0.0,
+      "rate_limited": 0
+    }
+  },
+  "samples_5xx": [
+    {
+      "endpoint": "GET /jobs/ (browse)",
+      "status": 500,
+      "body": "{\"success\":false,\"message\":\"An internal server error occurred.\",\"data\":null,\"errors\":null,\"meta\":{\"timestamp\":\"2026-10-17T07:57:54.202744+00:00\",\"requestId\":null}}"
+    },
+    {
+      "endpoint": "GET /jobs/ (browse)",
+      "status": 500,
+      "body": "{\"success\":false,\"message\":\"An internal server error occurred.\",\"data\":null,\"errors\":null,\"meta\":{\"timestamp\":\"2026-10-17T07:57:54.938012+00:00\",\"requestId\":null}}"
+    }
+  ]
+}
