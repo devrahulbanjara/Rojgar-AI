@@ -1,25 +1,7 @@
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
-export const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'] as const
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'] as const
 
-export function getInitials(value: string | null | undefined, fallback = 'U'): string {
-  if (!value?.trim()) return fallback
-
-  return (
-    value
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || fallback
-  )
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
+/** Plain error for an image that can't be used as a logo or photo, else null. */
 export function validateImageFile(file: File): string | null {
   const extension = file.name.includes('.') ? (file.name.split('.').pop()?.toLowerCase() ?? '') : ''
 
@@ -32,7 +14,7 @@ export function validateImageFile(file: File): string | null {
   }
 
   if (file.size > MAX_IMAGE_BYTES) {
-    return `Image must be ${formatBytes(MAX_IMAGE_BYTES)} or smaller.`
+    return 'Image must be 5 MB or smaller.'
   }
 
   return null
