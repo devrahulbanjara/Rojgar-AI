@@ -319,12 +319,11 @@ function toSource(source: string | null | undefined): Source {
   return source in SOURCE_LABEL ? (source as Source) : 'other'
 }
 
-/** First sentence of the first strength, ≤140 chars. */
+/** The first strength, ≤140 chars. */
 function summaryFrom(strengths: string[] | null | undefined): string | null {
   const first = strengths?.find((s) => s.trim())?.trim()
   if (!first) return null
-  const sentence = first.split(/(?<=[.!?])\s/)[0] ?? first
-  return sentence.length > 140 ? `${sentence.slice(0, 137).trimEnd()}…` : sentence
+  return first.length > 140 ? `${first.slice(0, 137).trimEnd()}…` : first
 }
 
 const rawStatus = new Map<string, ApplicationStatus>()
@@ -790,7 +789,24 @@ export const recruiterApi = baseApi.injectEndpoints({
             }
             return b.applied_at.localeCompare(a.applied_at)
           })
-        return { data: { counts, items } }
+        // The list endpoint has no phone; the owner's phone view calls people
+        // straight from the list, so fill it in from each person's detail.
+        const withPhones = await Promise.all(
+          items.map(async (item, index) => {
+            if (index >= 40) return item
+            const result = await fetchWithBQ(
+              `${API}/applications/company/me/candidates/${item.application_id}`,
+            )
+            if (result.error) return item
+            const detail = (result.data as ApiResponse<CandidateDetailLegacy>).data
+            return {
+              ...item,
+              person: { ...item.person, phone: detail.candidate_phone },
+              referred_by: item.referred_by ?? detail.referred_by ?? null,
+            }
+          }),
+        )
+        return { data: { counts, items: withPhones } }
       },
       providesTags: (_r, _e, { jobId }) => [
         'Applications',
