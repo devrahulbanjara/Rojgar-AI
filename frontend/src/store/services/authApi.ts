@@ -314,5 +314,7 @@ export function initiateGoogleOAuth(): void {
     return
   }
 
+  // Absolute backend URL (full-page redirect to Google), not an internal route.
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
   window.location.href = `${apiUrl}/auth/google`
 }
