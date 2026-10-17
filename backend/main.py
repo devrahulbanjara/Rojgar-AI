@@ -38,6 +38,7 @@ from app.modules.notifications.router import router as notifications_router
 from app.modules.outreach.router import router as outreach_router
 from app.modules.profiles.router import router as profiles_router
 from app.modules.public.router import router as public_router
+from app.infrastructures.storage.router import router as files_router
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
@@ -136,6 +137,7 @@ app.include_router(dash_router)
 app.include_router(companies_router)
 app.include_router(profiles_router)
 app.include_router(public_router)
+app.include_router(files_router)
 app.include_router(resumes_router)
 app.include_router(job_ai_router)
 app.include_router(recruiter_chat_router)

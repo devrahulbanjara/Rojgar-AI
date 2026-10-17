@@ -99,6 +99,10 @@ class Settings(BaseSettings):
     aws_region: str = "us-east-1"
 
     # S3
+    # "local" keeps uploads on disk (dev/test); "s3" uses the bucket. Empty = local
+    # everywhere except prod, so a laptop can never write to the real bucket.
+    storage_backend: Literal["", "local", "s3"] = ""
+    local_storage_dir: str = ".local-storage"
     s3_bucket_name: str | None = None
     s3_upload_acl: str | None = "public-read"
     s3_max_upload_bytes: int = 5 * 1024 * 1024
@@ -187,6 +191,12 @@ class Settings(BaseSettings):
     cal_webhook_secret: str | None = None
 
     # Derived URLs
+    @property
+    def effective_storage_backend(self) -> str:
+        if self.storage_backend:
+            return self.storage_backend
+        return "s3" if self.environment == "prod" else "local"
+
     @property
     def database_url(self) -> str:
         """Async SQLAlchemy URL for the primary database."""

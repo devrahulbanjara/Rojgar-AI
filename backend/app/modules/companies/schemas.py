@@ -16,8 +16,8 @@ class RegisterCompanyRequest(BaseSchema):
 
     setup_token: str
     company_name: str = Field(min_length=1, max_length=255)
-    industry: str = Field(min_length=1, max_length=100)
-    company_size: str = Field(min_length=1, max_length=50)
+    industry: str | None = Field(default=None, max_length=100)
+    company_size: str | None = Field(default=None, max_length=50)
     website: str | None = Field(default=None, max_length=255)
     location: str | None = Field(default=None, max_length=255)
     description: str | None = None
