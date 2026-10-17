@@ -8,7 +8,7 @@ from sqlalchemy import select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.enums import MembershipStatus, UserRole
+from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 from app.modules.notifications.models import Notification
@@ -29,9 +29,6 @@ async def _user_allows_in_app_notifications(
     user = await db.scalar(select(User).where(User.id == user_id))
     if user is None:
         return False
-
-    if user.primary_role == UserRole.candidate:
-        return True
 
     preference = await db.scalar(
         select(RecruiterPreference).where(RecruiterPreference.user_id == user_id)

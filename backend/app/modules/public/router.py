@@ -16,7 +16,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import EmailStr, TypeAdapter, ValidationError
 
 from app.core.config import settings
-from app.core.dependencies import CandidateUser, DbSession
+from app.core.dependencies import CurrentUser, DbSession
 from app.core.rate_limit import RateLimit, client_ip
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.public import service
@@ -166,6 +166,6 @@ async def open_magic_link(
 
 @router.get("/me/applications", summary="Signed-in candidate: all my applications")
 async def my_applications(
-    user: CandidateUser, db: DbSession
+    user: CurrentUser, db: DbSession
 ) -> UnifiedResponse[list[MyApplication]]:
     return ResponseBuilder.success(data=await service.list_my_applications(db, user))

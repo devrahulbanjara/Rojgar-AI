@@ -88,11 +88,11 @@ class TestListApplications:
 
         assert resp.status_code == 200
 
-    async def test_list_my_applications_requires_candidate_role(self, client, db):
+    async def test_business_members_are_people_too(self, client, db):
         admin, _ = await make_recruiter_admin(db, email="admin_block@test.com")
 
         resp = await client.get("/applications/me", headers=auth_headers(admin.id))
-        assert resp.status_code == 403
+        assert resp.status_code == 200
 
 
 class TestStatusTransitions:

@@ -1,7 +1,8 @@
+from app.modules.auth.enums import MembershipRole
 from tests.integration.helpers import (
     auth_headers,
     make_candidate,
-    make_pending_recruiter,
+    make_member,
     make_recruiter_admin,
 )
 
@@ -21,12 +22,15 @@ class TestCompanyRead:
         resp = await client.get("/companies/me", headers=auth_headers(candidate.id))
         assert resp.status_code == 403
 
-    async def test_pending_recruiter_blocked_403(self, client, db):
-        admin, company = await make_recruiter_admin(db, email="admin_pend@test.com")
-        pending = await make_pending_recruiter(db, company.id)
+    async def test_interviewer_reads_company(self, client, db):
+        _, company = await make_recruiter_admin(db, email="admin_int@test.com")
+        interviewer = await make_member(
+            db, company.id, email="int@test.com", role=MembershipRole.interviewer
+        )
 
-        resp = await client.get("/companies/me", headers=auth_headers(pending.id))
-        assert resp.status_code == 403
+        resp = await client.get("/companies/me", headers=auth_headers(interviewer.id))
+        assert resp.status_code == 200
+        assert resp.json()["data"]["verified"] is True
 
     async def test_get_company_no_auth_401(self, client):
         resp = await client.get("/companies/me")
@@ -46,30 +50,14 @@ class TestCompanyUpdate:
         assert resp.status_code == 200
         assert resp.json()["data"]["name"] == "New Corp Name"
 
-    async def test_non_admin_cannot_update_company_403(self, client, db):
+    async def test_manager_cannot_update_company_403(self, client, db):
         admin, company = await make_recruiter_admin(db, email="admin_notupd@test.com")
-        pending = await make_pending_recruiter(
-            db, company.id, email="recruiter_notupd@test.com"
-        )
+        manager = await make_member(db, company.id, email="manager_notupd@test.com")
 
         resp = await client.patch(
             "/companies/me",
             json={"name": "Hacked Corp"},
-            headers=auth_headers(pending.id),
+            headers=auth_headers(manager.id),
         )
         assert resp.status_code == 403
-
-
-class TestRecruiterManagement:
-    async def test_admin_lists_recruiters(self, client, db):
-        admin, company = await make_recruiter_admin(db, email="admin_recs@test.com")
-        await make_pending_recruiter(db, company.id, email="rec1@test.com")
-
-        resp = await client.get(
-            "/companies/me/recruiters", headers=auth_headers(admin.id)
-        )
-
-        assert resp.status_code == 200
-        members = resp.json()["data"]
-        # admin + pending recruiter
-        assert len(members) >= 1
+        assert resp.json()["message"] == "Only the business owner can do this."

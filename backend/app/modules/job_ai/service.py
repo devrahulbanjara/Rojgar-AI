@@ -8,7 +8,6 @@ from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.enums import UserRole
 from app.modules.auth.models import User
 from app.modules.job_ai.graph import JobAgentState
 from app.modules.job_ai.models import JobAIDraft
@@ -28,16 +27,6 @@ from app.modules.job_ai.tools import (
 from app.modules.jobs import service as jobs_service
 from app.modules.jobs.schemas import JobCreate
 from app.shared.enums import JobStatus, LocationType
-
-
-def _ensure_recruiting_user(user: User) -> None:
-    """Raise when the user lacks recruiter privileges for job drafting."""
-
-    if user.primary_role not in {UserRole.recruiter, UserRole.recruiter_admin}:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Recruiter or recruiter admin role required.",
-        )
 
 
 def _new_thread_id() -> str:
@@ -110,8 +99,6 @@ async def create_draft(
     run_background: bool = False,
 ) -> JobAIDraftResponse:
     """Create a new AI job draft and persist its first review state."""
-
-    _ensure_recruiting_user(user)
 
     company_id = await get_recruiter_company_id(db, user.id)
 
@@ -404,8 +391,6 @@ async def get_draft(
 ) -> JobAIDraftResponse:
     """Fetch one AI draft owned by the current recruiter."""
 
-    _ensure_recruiting_user(user)
-
     draft = await db.scalar(
         select(JobAIDraft).where(
             JobAIDraft.id == draft_id,
@@ -424,8 +409,6 @@ async def list_drafts(
     user: User,
 ) -> list[JobAIDraftResponse]:
     """List non-terminal AI drafts owned by the current recruiter."""
-
-    _ensure_recruiting_user(user)
 
     drafts = await db.scalars(
         select(JobAIDraft)
@@ -447,8 +430,6 @@ async def respond_to_draft(
     decision: HumanDecision,
 ) -> JobAIDraftResponse:
     """Resume a paused draft workflow with a recruiter decision."""
-
-    _ensure_recruiting_user(user)
 
     draft = await db.scalar(
         select(JobAIDraft).where(
@@ -549,8 +530,6 @@ async def commit_draft(
 ):
     """Commit an approved AI draft through the standard job creation flow."""
 
-    _ensure_recruiting_user(user)
-
     draft = await db.scalar(
         select(JobAIDraft).where(
             JobAIDraft.id == draft_id,
@@ -599,7 +578,6 @@ async def delete_draft(
     draft_id: uuid.UUID,
 ) -> None:
     """Delete an AI draft."""
-    _ensure_recruiting_user(user)
 
     draft = await db.scalar(
         select(JobAIDraft).where(

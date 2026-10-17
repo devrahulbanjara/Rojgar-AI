@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import ActiveMember, CandidateUser, DbSession
+from app.core.dependencies import ActiveMember, CurrentUser, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.interviews import service
 from app.modules.interviews.schemas import CandidateInterviewView, InterviewResponse
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/interviews", tags=["Interviews"])
     summary="List all interviews for the authenticated candidate",
 )
 async def list_my_interviews(
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[list[CandidateInterviewView]]:
     """List interviews for the authenticated candidate."""

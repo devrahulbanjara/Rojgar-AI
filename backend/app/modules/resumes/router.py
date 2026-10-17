@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from app.core.dependencies import CandidateUser, DbSession, UUIDPath
+from app.core.dependencies import CurrentUser, DbSession, UUIDPath
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.resumes import service
 from app.modules.resumes.schemas import (
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/resumes", tags=["Resumes"])
     summary="List all resumes belonging to the authenticated candidate",
 )
 async def list_my_resumes(
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[list[ResumeListItem]]:
     """List resumes belonging to the authenticated candidate."""
@@ -33,7 +33,7 @@ async def list_my_resumes(
 )
 async def create_resume(
     payload: ResumeCreate,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ResumeResponse]:
     """Create a new resume, optionally pre-filled from the candidate profile."""
@@ -53,7 +53,7 @@ async def create_resume(
 )
 async def get_resume(
     resume_id: UUIDPath,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ResumeResponse]:
     """Fetch one resume owned by the authenticated candidate."""
@@ -68,7 +68,7 @@ async def get_resume(
 async def update_resume(
     resume_id: UUIDPath,
     payload: ResumeUpdate,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ResumeResponse]:
     """Update one resume owned by the authenticated candidate."""
@@ -82,7 +82,7 @@ async def update_resume(
 )
 async def delete_resume(
     resume_id: UUIDPath,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[None]:
     """Delete one resume owned by the authenticated candidate."""

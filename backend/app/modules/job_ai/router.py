@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Response, status
 
-from app.core.dependencies import CurrentUser, DbSession
+from app.core.dependencies import ActiveMember, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.job_ai.schemas import (
     CommitDraftRequest,
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/jobs/ai", tags=["jobs-ai"])
 )
 async def create_ai_job_draft(
     payload: GenerateJobDraftRequest,
-    user: CurrentUser,
+    user: ActiveMember,
     db: DbSession,
     background_tasks: BackgroundTasks,
 ) -> UnifiedResponse[JobAIDraftResponse]:
@@ -56,7 +56,7 @@ async def create_ai_job_draft(
     summary="List AI job drafts for the current recruiter",
 )
 async def list_ai_job_drafts(
-    user: CurrentUser,
+    user: ActiveMember,
     db: DbSession,
 ) -> UnifiedResponse[list[JobAIDraftResponse]]:
     """List AI job drafts owned by the current recruiter."""
@@ -70,7 +70,7 @@ async def list_ai_job_drafts(
 )
 async def get_ai_job_draft(
     draft_id: uuid.UUID,
-    user: CurrentUser,
+    user: ActiveMember,
     db: DbSession,
 ) -> UnifiedResponse[JobAIDraftResponse]:
     """Fetch one AI job draft."""
@@ -85,7 +85,7 @@ async def get_ai_job_draft(
 async def respond_to_ai_job_draft(
     draft_id: uuid.UUID,
     payload: RespondToDraftRequest,
-    user: CurrentUser,
+    user: ActiveMember,
     db: DbSession,
 ) -> UnifiedResponse[JobAIDraftResponse]:
     """Submit a recruiter decision for an AI draft review checkpoint."""
@@ -101,7 +101,7 @@ async def commit_ai_job_draft(
     draft_id: uuid.UUID,
     payload: CommitDraftRequest,
     bg_tasks: BackgroundTasks,
-    user: CurrentUser,
+    user: ActiveMember,
     db: DbSession,
 ) -> UnifiedResponse[dict]:
     """Commit an approved AI draft into a persisted job."""
@@ -116,7 +116,7 @@ async def commit_ai_job_draft(
 )
 async def delete_ai_job_draft(
     draft_id: uuid.UUID,
-    user: CurrentUser,
+    user: ActiveMember,
     db: DbSession,
 ) -> Response:
     """Delete an AI draft."""

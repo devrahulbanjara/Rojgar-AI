@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import CurrentUser, DbSession, RecruiterAdmin
+from app.core.dependencies import CurrentUser, DbSession, OwnerUser
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.audit import service
 from app.modules.audit.schemas import AuditLogResponse
@@ -21,10 +21,10 @@ async def get_company_audit_logs(
     actor_user_id: Annotated[UUID | None, Query()] = None,
     start_at: Annotated[datetime | None, Query()] = None,
     end_at: Annotated[datetime | None, Query()] = None,
-    current_user: RecruiterAdmin = None,
+    current_user: OwnerUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[list[AuditLogResponse]]:
-    """Return company audit logs for a recruiter admin."""
+    """Return company audit logs for the business owner."""
     data = await service.list_company_audit_logs(
         db,
         current_user,

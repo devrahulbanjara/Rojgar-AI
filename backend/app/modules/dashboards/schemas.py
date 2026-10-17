@@ -2,7 +2,6 @@ from datetime import date, datetime
 from uuid import UUID
 
 from app.core.schemas import BaseSchema
-from app.modules.auth.enums import MembershipStatus
 from app.shared.enums import ApplicationStatus, JobStatus, LocationType
 
 
@@ -125,37 +124,6 @@ class RecruiterDashboardResponse(BaseSchema):
     pending_drafts: list[PendingDraftItem]
 
 
-class JoinRequestItem(BaseSchema):
-    membership_id: UUID
-    recruiter_name: str
-    recruiter_email: str
-    requested_at: datetime
-
-
-class TeamMemberActivity(BaseSchema):
-    membership_id: UUID
-    recruiter_name: str
-    membership_status: MembershipStatus
-    active_jobs: int = 0
-    shortlisted_this_month: int
-    interviews_this_month: int
-
-
-class RecruiterAdminStats(RecruiterStats):
-    pending_join_requests: int
-
-
-class RecruiterAdminDashboardResponse(BaseSchema):
-    company_name: str
-    recruiter_name: str
-    stats: RecruiterAdminStats
-    active_jobs: list[JobPipelineItem]
-    todays_interviews: list[TodayInterview]
-    pending_drafts: list[PendingDraftItem]
-    join_requests: list[JoinRequestItem]
-    team_activity: list[TeamMemberActivity]
-
-
 class RecruiterAnalyticsStats(BaseSchema):
     active_jobs: int
     applications: int
@@ -216,43 +184,6 @@ class RecruiterDashboardAnalyticsResponse(BaseSchema):
     velocity: RecruiterAnalyticsVelocity
 
 
-class MembershipBreakdownPoint(BaseSchema):
-    status: MembershipStatus
-    count: int
-
-
-class JoinRequestTimeseriesPoint(BaseSchema):
-    date: date
-    requested: int
-    approved: int
-    rejected: int
-
-
-class RecruiterAdminAnalyticsStats(BaseSchema):
-    active_jobs: int
-    applications: int
-    shortlisted: int
-    interviews: int
-    offers: int
-    pending_join_requests: int
-    active_recruiters: int
-
-
-class RecruiterAdminDashboardAnalyticsResponse(BaseSchema):
-    range_key: str
-    stats: RecruiterAdminAnalyticsStats
-    company_funnel: list[StageCountPoint]
-    join_request_timeseries: list[JoinRequestTimeseriesPoint]
-    membership_breakdown: list[MembershipBreakdownPoint]
-    team_activity: list[TeamMemberActivity]
-    velocity: RecruiterAnalyticsVelocity
-
-
-# ---------------------------------------------------------------------------
-# Recruiter "Today" home
-# ---------------------------------------------------------------------------
-
-
 class HomeInterview(BaseSchema):
     interview_id: UUID
     application_id: UUID
@@ -303,4 +234,3 @@ class RecruiterHomeResponse(BaseSchema):
     next_interview: HomeInterview | None = None
     roles: list[RoleCard]
     drafts: list[DraftRole]
-    join_requests: list[JoinRequestItem]

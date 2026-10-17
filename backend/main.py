@@ -25,6 +25,9 @@ from app.modules.activity.router import router as activity_router
 from app.modules.applications.router import router as applications_router
 from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
+from app.modules.admin.router import router as admin_router
+from app.modules.companies.router import businesses as businesses_router
+from app.modules.companies.router import invites as invites_router
 from app.modules.companies.router import router as companies_router
 from app.modules.dashboards.router import router as dash_router
 from app.modules.interviews.evaluation_router import router as evaluation_router
@@ -135,6 +138,9 @@ app.include_router(audit_router)
 app.include_router(activity_router)
 app.include_router(dash_router)
 app.include_router(companies_router)
+app.include_router(businesses_router)
+app.include_router(invites_router)
+app.include_router(admin_router)
 app.include_router(profiles_router)
 app.include_router(public_router)
 app.include_router(files_router)

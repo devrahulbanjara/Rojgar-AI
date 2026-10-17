@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 from app.core.dependencies import (
     ActiveMember,
-    CandidateUser,
     CurrentUser,
     DbSession,
     UUIDPath,
@@ -39,7 +38,7 @@ router = APIRouter(prefix="/applications", tags=["Applications"])
 async def apply_to_job(
     payload: ApplyRequest,
     bg_tasks: BackgroundTasks,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ApplicationResponse]:
     """Submit a candidate application for a job."""
@@ -58,7 +57,7 @@ async def apply_to_job(
 async def list_my_applications(
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=100)] = 20,
-    user: CandidateUser = None,
+    user: CurrentUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[list[CandidateApplicationView]]:
     """List the authenticated candidate's applications."""
@@ -282,7 +281,7 @@ class OfferResponsePayload(BaseModel):
 async def respond_to_offer(
     application_id: uuid.UUID,
     payload: OfferResponsePayload,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[None]:
     """Record the candidate's response to an offer."""

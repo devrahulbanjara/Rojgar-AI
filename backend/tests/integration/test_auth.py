@@ -13,7 +13,6 @@ class TestSignup:
                 "full_name": "Alice",
                 "email": "alice@example.com",
                 "password": "Password@123",
-                "primary_role": "candidate",
             },
         )
         assert resp.status_code == 201
@@ -28,7 +27,6 @@ class TestSignup:
                 "full_name": "Bob",
                 "email": "dup@example.com",
                 "password": "Password@123",
-                "primary_role": "candidate",
             },
         )
         assert resp.status_code == 409
@@ -56,7 +54,6 @@ class TestLogin:
         assert resp.status_code == 401
 
     async def test_unverified_email_403(self, client, db):
-        from app.modules.auth.enums import UserRole
         from app.modules.auth.models import User
         from app.core.security import hash_password
 
@@ -64,7 +61,6 @@ class TestLogin:
             email="unverified@example.com",
             full_name="Unverified",
             password_hash=hash_password(TEST_PASSWORD),
-            primary_role=UserRole.candidate,
             is_email_verified=False,
         )
         db.add(user)

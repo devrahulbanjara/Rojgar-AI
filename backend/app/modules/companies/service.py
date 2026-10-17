@@ -1,9 +1,8 @@
-from fastapi import BackgroundTasks, HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from loguru import logger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.shared.normalize import normalize_email, normalize_company_name
 from app.core.cache import (
     get_company_applicant_user_ids,
     invalidate_candidate_read_caches_for_users,
@@ -11,36 +10,26 @@ from app.core.cache import (
     invalidate_company_detail_caches,
     invalidate_job_detail_caches,
 )
-from app.core.security import create_pending_signup_token, decode_pending_signup_token
 from app.core.swr_cache import swr_get
 from app.infrastructures.redis.service import redis_service
-
-from app.infrastructures.email.service import EmailService
-from app.modules.activity.service import create_activity_event
+from app.infrastructures.storage.service import storage_service
 from app.modules.audit.service import create_custom_audit_log
-from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
+from app.modules.auth.enums import BusinessStatus, MembershipRole, MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
+from app.modules.companies.schemas import CompanyResponse, UpdateCompanyRequest
+from app.modules.companies.team import activate_membership
+from app.modules.companies.utils import get_member_company
 from app.modules.jobs.models import Job
-from app.modules.companies.schemas import (
-    CompanyResponse,
-    JoinCompanyRequest,
-    RecruiterMemberResponse,
-    RegisterCompanyRequest,
-    UpdateCompanyRequest,
-    UpdateRecruiterStatusRequest,
-)
-from app.modules.companies.utils import get_admin_company, get_member_company
+
+DOC_MAX_BYTES = 10 * 1024 * 1024
 
 
-def _company_to_response(company: Company) -> CompanyResponse:
+def company_response(company: Company) -> CompanyResponse:
     """Convert a company ORM instance into its response schema."""
-    return CompanyResponse.model_validate(company)
-
-
-def _company_recruiters_cache_key(company_id: str) -> str:
-    """Build the recruiter-list cache key for a company."""
-    return f"company:recruiters:{company_id}"
+    return CompanyResponse.model_validate(company).model_copy(
+        update={"has_registration_doc": bool(company.registration_doc_key)}
+    )
 
 
 async def _get_company_job_ids(db: AsyncSession, company_id: str) -> list[str]:
@@ -53,10 +42,7 @@ async def invalidate_company_content_caches(db: AsyncSession, company_id: str) -
     """Invalidate company, job, dashboard, and candidate caches for a company."""
     await invalidate_company_detail_caches(db, company_id)
     await invalidate_company_dashboard_caches(db, company_id)
-    await redis_service.delete_many(
-        f"jobs:company:{company_id}",
-        _company_recruiters_cache_key(company_id),
-    )
+    await redis_service.delete(f"jobs:company:{company_id}")
 
     job_ids = await _get_company_job_ids(db, company_id)
     for job_id in job_ids:
@@ -72,18 +58,16 @@ async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
 
     async def _load() -> dict:
         company = await get_member_company(db, user)
-        response = _company_to_response(company)
-        return response.model_dump(mode="json")
+        return company_response(company).model_dump(mode="json")
 
     payload = await swr_get(cache_key, _load, soft_ttl=600, hard_ttl=3600)
     return CompanyResponse.model_validate(payload)
 
 
 async def update_my_company(
-    db: AsyncSession, user: User, payload: UpdateCompanyRequest
+    db: AsyncSession, company: Company, user: User, payload: UpdateCompanyRequest
 ) -> CompanyResponse:
-    """Update the authenticated admin's company profile and invalidate caches."""
-    company = await get_admin_company(db, user)
+    """Update the business profile (owner only) and invalidate caches."""
     update_data = payload.model_dump(exclude_unset=True)
 
     organizer_email = update_data.get("cal_organizer_email")
@@ -115,7 +99,7 @@ async def update_my_company(
 
     await db.commit()
     await db.refresh(company)
-    response = _company_to_response(company)
+    response = company_response(company)
 
     await invalidate_company_content_caches(db, str(company.id))
 
@@ -123,356 +107,129 @@ async def update_my_company(
     return response
 
 
-async def register_company(
-    db: AsyncSession,
-    payload: RegisterCompanyRequest,
-    bg_tasks: BackgroundTasks,
-) -> None:
-    """Decode token, validate company role, bundle company details, and resend verification email."""
-    data = decode_pending_signup_token(payload.setup_token)
-    if not data or data.get("type") != "setup":
+def _sniff_document(head: bytes) -> tuple[str, str] | None:
+    if head.startswith(b"%PDF-"):
+        return "pdf", "application/pdf"
+    if head.startswith(b"\xff\xd8\xff"):
+        return "jpg", "image/jpeg"
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png", "image/png"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "webp", "image/webp"
+    return None
+
+
+async def store_registration_doc(file: UploadFile) -> str:
+    """Validate a certificate photo or PDF and store it privately; returns its key."""
+    data = await file.read(DOC_MAX_BYTES + 1)
+    if len(data) > DOC_MAX_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid session for company registration.",
+            status.HTTP_400_BAD_REQUEST,
+            detail="The file is over 10 MB. Try a smaller photo.",
         )
-
-    if data.get("primary_role") != UserRole.recruiter_admin:
+    kind = _sniff_document(data[:16])
+    if kind is None:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only users with the 'recruiter_admin' role can register a company.",
+            status.HTTP_400_BAD_REQUEST, detail="Upload a photo (JPG or PNG) or a PDF."
         )
-
-    email: str = data["email"]
-
-    # Guard: if the user somehow already verified before finishing setup
-    existing = await db.execute(
-        select(User).where(func.lower(User.email) == normalize_email(email))
-    )
-    if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This email has already been verified. Please log in.",
-        )
-
-    company_name = " ".join(payload.company_name.split())
-    name_taken = await db.scalar(
-        select(Company.id).where(
-            func.lower(Company.name) == normalize_company_name(company_name)
-        )
-    )
-    if name_taken:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                f"A company named '{company_name}' already exists on Rojgar AI. "
-                "Ask its admin to approve you as a recruiter instead."
-            ),
-        )
-
-    # Build a new pending token that carries the company details
-    company_pending_token = create_pending_signup_token(
-        {
-            "type": "pending_company",
-            "full_name": data["full_name"],
-            "email": email,
-            "password_hash": data["password_hash"],
-            "primary_role": data["primary_role"],
-            "company_name": company_name,
-            "industry": payload.industry,
-            "company_size": payload.company_size,
-            "website": payload.website,
-            "location": payload.location,
-            "description": payload.description,
-        }
+    extension, content_type = kind
+    return await storage_service.upload_private_document(
+        data, "business-docs", extension=extension, content_type=content_type
     )
 
-    bg_tasks.add_task(EmailService.send_verification, email, company_pending_token)
-    logger.info(f"Company signup verification email sent to {email}")
 
-
-async def request_join_company(
-    db: AsyncSession,
-    payload: JoinCompanyRequest,
-    bg_tasks: BackgroundTasks,
-) -> None:
-    """Validate company exists, bundle join request details, and resend verification email."""
-    data = decode_pending_signup_token(payload.setup_token)
-    if not data or data.get("type") != "setup":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid session for join request.",
-        )
-
-    if data.get("primary_role") != UserRole.recruiter:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only users with the 'recruiter' role can request to join a company.",
-        )
-
-    email: str = data["email"]
-
-    # Verify the company exists now so the user gets immediate feedback
-    result = await db.execute(
-        select(Company).where(
-            func.lower(Company.name) == normalize_company_name(payload.company_name)
-        )
-    )
-    if not result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No company named '{payload.company_name}' was found on Rojgar AI.",
-        )
-
-    # Guard: email already verified
-    existing = await db.execute(
-        select(User).where(func.lower(User.email) == normalize_email(email))
-    )
-    if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This email has already been verified. Please log in.",
-        )
-
-    recruiter_pending_token = create_pending_signup_token(
-        {
-            "type": "pending_recruiter",
-            "full_name": data["full_name"],
-            "email": email,
-            "password_hash": data["password_hash"],
-            "primary_role": data["primary_role"],
-            "join_company_name": payload.company_name,
-            "message": payload.message,
-        }
-    )
-
-    bg_tasks.add_task(EmailService.send_verification, email, recruiter_pending_token)
-    logger.info(f"Recruiter join-request verification email sent to {email}")
-
-
-async def _build_company_recruiters(
-    db: AsyncSession, company_id
-) -> list[RecruiterMemberResponse]:
-    """Run the queries that produce the recruiter list for a company."""
-    result = await db.execute(
-        select(CompanyMembership, User)
-        .join(User, CompanyMembership.user_id == User.id)
-        .where(
-            CompanyMembership.company_id == company_id,
-            CompanyMembership.role == MembershipRole.recruiter,
-        )
-        .order_by(CompanyMembership.created_at.desc())
-    )
-    rows = result.all()
-    return [
-        RecruiterMemberResponse(
-            membership_id=m.id,
-            user_id=u.id,
-            full_name=u.full_name,
-            email=u.email,
-            avatar_url=u.avatar_url,
-            status=m.status,
-            joined_at=m.created_at,
-        )
-        for m, u in rows
-    ]
-
-
-async def list_company_recruiters(
-    db: AsyncSession, user: User
-) -> list[RecruiterMemberResponse]:
-    """List all recruiters for the admin's company (SWR-cached)."""
-    company = await get_admin_company(db, user)
-    cache_key = _company_recruiters_cache_key(str(company.id))
-
-    company_id = company.id
-
-    async def _load(db: AsyncSession = db) -> list:
-        items = await _build_company_recruiters(db, company_id)
-        return [item.model_dump(mode="json") for item in items]
-
-    payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
-    return [RecruiterMemberResponse.model_validate(item) for item in payload]
-
-
-async def update_recruiter_status(
+async def create_business(
     db: AsyncSession,
     user: User,
-    membership_id: str,
-    payload: UpdateRecruiterStatusRequest,
-) -> RecruiterMemberResponse:
-    """Update recruiter membership status (approve or reject)."""
-    company = await get_admin_company(db, user)
-
-    if payload.status not in (MembershipStatus.active, MembershipStatus.rejected):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Status must be 'active' (approve) or 'rejected' (reject).",
-        )
-
-    result = await db.execute(
-        select(CompanyMembership, User)
-        .join(User, CompanyMembership.user_id == User.id)
-        .where(
-            CompanyMembership.id == membership_id,
-            CompanyMembership.company_id == company.id,
-            CompanyMembership.role == MembershipRole.recruiter,
-        )
+    *,
+    name: str,
+    business_type: str,
+    district: str,
+    phone: str,
+    pan_number: str | None,
+    registration_doc: UploadFile | None,
+) -> CompanyResponse:
+    """Create a pending business; the creator becomes its owner and works in it."""
+    doc_key = (
+        await store_registration_doc(registration_doc) if registration_doc else None
     )
-    row = result.one_or_none()
-    if not row:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recruiter membership not found.",
-        )
-
-    membership, recruiter_user = row
-    membership.status = payload.status
-    action_label = (
-        "approved" if payload.status == MembershipStatus.active else "rejected"
+    company = Company(
+        name=name,
+        industry=business_type,
+        district=district,
+        location=district,
+        phone=phone,
+        pan_number=pan_number,
+        registration_doc_key=doc_key,
+        status=BusinessStatus.pending,
+        created_by_user_id=user.id,
     )
+    db.add(company)
+    await db.flush()
+    membership = CompanyMembership(
+        user_id=user.id,
+        company_id=company.id,
+        role=MembershipRole.owner,
+        status=MembershipStatus.inactive,
+    )
+    db.add(membership)
+    await db.flush()
+    await activate_membership(db, membership)
     await create_custom_audit_log(
         db,
-        entity_type="membership",
-        action_type=f"recruiter_{action_label}",
-        category="auth",
-        message=(f"Admin {action_label} {recruiter_user.full_name}"),
-        entity_id=membership.id,
+        entity_type="company",
+        action_type="business_created",
+        category="business",
+        message=f"{name} was created and is waiting for approval",
+        entity_id=company.id,
         company_id=company.id,
-        target_user_id=recruiter_user.id,
-        metadata={
-            "recruiter_name": recruiter_user.full_name,
-            "recruiter_email": recruiter_user.email,
-            "action": action_label,
-        },
-    )
-    await create_activity_event(
-        db,
-        event_type=(
-            "join_request_approved"
-            if payload.status == MembershipStatus.active
-            else "join_request_rejected"
-        ),
-        audience="admin",
-        title=f"{recruiter_user.full_name} request {payload.status.value}",
-        description=f"{recruiter_user.full_name}'s recruiter request was marked {payload.status.value}.",
-        href="/recruiter/recruiters",
-        user_id=recruiter_user.id,
-        company_id=company.id,
-        actor_user_id=user.id,
-        metadata={"membership_id": str(membership.id)},
-    )
-    await create_activity_event(
-        db,
-        event_type=(
-            "membership_activated"
-            if payload.status == MembershipStatus.active
-            else "membership_rejected"
-        ),
-        audience="recruiter",
-        title=(
-            f"Access approved for {company.name}"
-            if payload.status == MembershipStatus.active
-            else f"Access request declined for {company.name}"
-        ),
-        description=(
-            f"Your recruiter access to {company.name} is now active."
-            if payload.status == MembershipStatus.active
-            else f"Your recruiter access request to {company.name} was declined."
-        ),
-        href="/recruiter",
-        user_id=recruiter_user.id,
-        company_id=company.id,
-        actor_user_id=user.id,
-        metadata={"membership_id": str(membership.id)},
+        target_user_id=user.id,
+        metadata={"district": district, "type": business_type},
     )
     await db.commit()
-    await db.refresh(membership)
-    await redis_service.delete_many(
-        f"company:detail:{recruiter_user.id}",
-        f"dashboard:recruiter:{recruiter_user.id}",
-        f"dashboard:recruiter-admin:{recruiter_user.id}",
-        _company_recruiters_cache_key(str(company.id)),
-    )
-    await redis_service.invalidate_patterns(
-        f"dashboard:recruiter:{recruiter_user.id}:analytics:*",
-        f"dashboard:recruiter-admin:{recruiter_user.id}:analytics:*",
-    )
-    await invalidate_company_dashboard_caches(db, str(company.id))
-
-    logger.info(
-        f"Company {company.name}: recruiter {recruiter_user.email} status → {payload.status}"
-    )
-    return RecruiterMemberResponse(
-        membership_id=membership.id,
-        user_id=recruiter_user.id,
-        full_name=recruiter_user.full_name,
-        email=recruiter_user.email,
-        avatar_url=recruiter_user.avatar_url,
-        status=membership.status,
-        joined_at=membership.created_at,
-    )
+    await db.refresh(company)
+    logger.info("Business {} created by {}", company.id, user.id)
+    return company_response(company)
 
 
-async def remove_recruiter(db: AsyncSession, user: User, membership_id: str) -> None:
-    """Delete recruiter membership from company."""
-    company = await get_admin_company(db, user)
-
-    result = await db.execute(
-        select(CompanyMembership).where(
-            CompanyMembership.id == membership_id,
-            CompanyMembership.company_id == company.id,
-            CompanyMembership.role == MembershipRole.recruiter,
-        )
-    )
-    membership = result.scalar_one_or_none()
-    if not membership:
+async def update_verification_details(
+    db: AsyncSession,
+    company: Company,
+    *,
+    pan_number: str | None,
+    registration_doc: UploadFile | None,
+) -> CompanyResponse:
+    """Owner adds PAN or the certificate; a rejected business goes back to review."""
+    if company.status == BusinessStatus.suspended:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recruiter membership not found.",
+            status.HTTP_403_FORBIDDEN,
+            detail="Your business is suspended. Contact Rojgar AI support.",
         )
-
-    removed_user_result = await db.execute(
-        select(User).where(User.id == membership.user_id)
-    )
-    removed_user = removed_user_result.scalar_one_or_none()
-    removed_name = removed_user.full_name if removed_user else str(membership.user_id)
+    old_key = company.registration_doc_key
+    if registration_doc is not None:
+        company.registration_doc_key = await store_registration_doc(registration_doc)
+    if pan_number is not None:
+        company.pan_number = pan_number or None
+    if company.status == BusinessStatus.rejected:
+        company.status = BusinessStatus.pending
+    if company.status == BusinessStatus.pending:
+        company.status_reason = None
     await create_custom_audit_log(
         db,
-        entity_type="membership",
-        action_type="recruiter_removed",
-        category="auth",
-        message=f"Admin removed {removed_name} from team",
-        entity_id=membership.id,
+        entity_type="company",
+        action_type="business_details_added",
+        category="business",
+        message="Verification details updated",
+        entity_id=company.id,
         company_id=company.id,
-        target_user_id=membership.user_id,
         metadata={
-            "recruiter_name": removed_name,
-            "membership_id": membership_id,
+            "pan_number": bool(company.pan_number),
+            "document": registration_doc is not None,
         },
     )
-    await create_activity_event(
-        db,
-        event_type="membership_removed",
-        audience="recruiter",
-        title=f"Access removed from {company.name}",
-        description=f"Your recruiter access to {company.name} was removed.",
-        href="/recruiter",
-        user_id=membership.user_id,
-        company_id=company.id,
-        actor_user_id=user.id,
-        metadata={"membership_id": membership_id},
-    )
-    await db.delete(membership)
     await db.commit()
-    await redis_service.delete_many(
-        f"company:detail:{membership.user_id}",
-        f"dashboard:recruiter:{membership.user_id}",
-        f"dashboard:recruiter-admin:{membership.user_id}",
-        _company_recruiters_cache_key(str(company.id)),
-    )
-    await redis_service.invalidate_patterns(
-        f"dashboard:recruiter:{membership.user_id}:analytics:*",
-        f"dashboard:recruiter-admin:{membership.user_id}:analytics:*",
-    )
-    await invalidate_company_dashboard_caches(db, str(company.id))
-    logger.info(f"Company {company.name}: recruiter membership {membership_id} removed")
+    await db.refresh(company)
+    if old_key and old_key != company.registration_doc_key:
+        await storage_service.delete_key(old_key)
+    await invalidate_company_detail_caches(db, str(company.id))
+    return company_response(company)

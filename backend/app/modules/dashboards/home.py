@@ -14,15 +14,16 @@ from sqlalchemy import and_, case, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.applications.models import Application
-from app.modules.auth.enums import UserRole
+from app.modules.auth.enums import MembershipRole, MembershipStatus
 from app.modules.auth.models import User
+from app.modules.companies.models import CompanyMembership
 from app.modules.dashboards.schemas import (
     DraftRole,
     HomeInterview,
     RecruiterHomeResponse,
     RoleCard,
 )
-from app.modules.dashboards.service import _get_company_context, _get_join_requests
+from app.modules.dashboards.service import _get_company_context
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStatus, JobStatus
@@ -169,10 +170,20 @@ async def _draft_roles(db: AsyncSession, company_id: uuid.UUID) -> list[DraftRol
     return [DraftRole.model_validate(row._mapping) for row in rows.all()]
 
 
+async def _is_owner(db: AsyncSession, user_id: uuid.UUID) -> bool:
+    role = await db.scalar(
+        select(CompanyMembership.role).where(
+            CompanyMembership.user_id == user_id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+    return role == MembershipRole.owner
+
+
 async def get_recruiter_home(
     db: AsyncSession, current_user: User, tz: str | None = None
 ) -> RecruiterHomeResponse:
-    is_admin = current_user.primary_role == UserRole.recruiter_admin
+    is_admin = await _is_owner(db, current_user.id)
     company_id, company_name = await _get_company_context(db, current_user.id)
     first_name = _first_name(current_user.full_name)
 
@@ -184,7 +195,6 @@ async def get_recruiter_home(
             interviews_today=[],
             roles=[],
             drafts=[],
-            join_requests=[],
         )
 
     zone = _resolve_tz(tz)
@@ -211,7 +221,6 @@ async def get_recruiter_home(
         next_interview=next_interview,
         roles=await _role_cards(db, company_id, now),
         drafts=await _draft_roles(db, company_id),
-        join_requests=(await _get_join_requests(db, company_id)) if is_admin else [],
     )
 
 

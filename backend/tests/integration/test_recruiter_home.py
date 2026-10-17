@@ -7,7 +7,7 @@ from tests.integration.helpers import (
     make_active_job,
     make_application,
     make_candidate_with_resume,
-    make_pending_recruiter,
+    make_member,
     make_recruiter_admin,
 )
 
@@ -134,17 +134,19 @@ async def test_todays_interviews_use_the_viewer_timezone(client, db):
     assert bogus_tz.status_code == 200
 
 
-async def test_join_requests_only_for_admins(client, db):
+async def test_is_admin_only_for_owners(client, db):
     admin, company = await make_recruiter_admin(db)
-    await make_pending_recruiter(db, company.id, email="waiting@test.com")
+    manager = await make_member(db, company.id, email="manager@test.com")
 
-    response = await client.get(
+    owner_view = await client.get(
         "/dashboards/recruiter/home", headers=auth_headers(admin.id)
     )
+    manager_view = await client.get(
+        "/dashboards/recruiter/home", headers=auth_headers(manager.id)
+    )
 
-    data = response.json()["data"]
-    assert data["is_admin"] is True
-    assert [r["recruiter_email"] for r in data["join_requests"]] == ["waiting@test.com"]
+    assert owner_view.json()["data"]["is_admin"] is True
+    assert manager_view.json()["data"]["is_admin"] is False
 
 
 async def test_candidates_cannot_open_recruiter_home(client, db):

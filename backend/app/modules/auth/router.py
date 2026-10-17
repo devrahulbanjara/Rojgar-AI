@@ -26,14 +26,16 @@ from app.modules.auth.oauth import (
     get_google_auth_url,
     google_oauth_callback,
 )
+from app.modules.auth import otp
 from app.modules.auth.schemas import (
+    ActiveBusinessRequest,
     ChangePasswordRequest,
     ForgotPasswordRequest,
-    GoogleRegisterRequest,
     LoginRequest,
     LoginResponse,
+    OtpRequest,
+    OtpVerifyRequest,
     ResetPasswordRequest,
-    SignupData,
     SignupRequest,
     TokenResponse,
     UpdateMeRequest,
@@ -47,21 +49,46 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post(
     "/signup",
     status_code=status.HTTP_201_CREATED,
-    summary="Stage 1 of local signup: validates credentials and sends verification email",
+    summary="Email sign-up: sends the verification link",
     dependencies=[Depends(RateLimit("auth.signup", 5, 300, per_email=3))],
 )
 async def signup(
     payload: SignupRequest,
     bg_tasks: BackgroundTasks,
     db: DbSession,
-) -> UnifiedResponse[SignupData]:
-    """Start the local signup flow for a new user."""
-    data = await service.signup(db, payload, bg_tasks)
+) -> UnifiedResponse[None]:
+    """Start the email sign-up flow."""
+    await service.signup(db, payload, bg_tasks)
     return ResponseBuilder.success(
-        data=data,
-        message="Account created. Please verify your email.",
+        message="Please verify your email.",
         status_code=status.HTTP_201_CREATED,
     )
+
+
+@router.post(
+    "/otp/request",
+    summary="Text a 6-digit sign-in code to a Nepali mobile number",
+    dependencies=[Depends(RateLimit("auth.otp_request", 10, 600))],
+)
+async def request_phone_code(
+    payload: OtpRequest, db: DbSession
+) -> UnifiedResponse[None]:
+    """Send a sign-in code by SMS (works for new and existing people)."""
+    await otp.request_code(db, payload.phone)
+    return ResponseBuilder.success(message="Code sent.")
+
+
+@router.post(
+    "/otp/verify",
+    summary="Sign in or sign up with the SMS code; sets the session cookie",
+    dependencies=[Depends(RateLimit("auth.otp_verify", 20, 600))],
+)
+async def verify_phone_code(
+    payload: OtpVerifyRequest, response: Response, db: DbSession
+) -> UnifiedResponse[LoginResponse]:
+    """Check the code and start a session."""
+    result = await service.verify_phone_code(db, payload, response)
+    return ResponseBuilder.success(data=result, message="Signed in", response=response)
 
 
 @router.post(
@@ -189,6 +216,20 @@ async def get_me(
     return ResponseBuilder.success(data=data, message="Profile retrieved")
 
 
+@router.post(
+    "/me/active-business",
+    summary="Switch the business the signed-in person is working in",
+)
+async def set_active_business(
+    payload: ActiveBusinessRequest,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> UnifiedResponse[UserResponse]:
+    """Make one of the person's businesses the active one."""
+    data = await service.set_active_business(db, current_user, payload.business_id)
+    return ResponseBuilder.success(data=data, message="Business switched")
+
+
 @router.patch(
     "/me",
     summary="Update authenticated user's basic profile information",
@@ -308,7 +349,7 @@ async def google_login():
 
 @router.get(
     "/google/callback",
-    summary="Handle Google OAuth callback: creates or logs in user",
+    summary="Handle Google OAuth callback: signs the person in (creates them if new)",
 )
 async def google_callback(
     code: str,
@@ -317,65 +358,19 @@ async def google_callback(
     db: DbSession = None,
 ):
     """Handle the Google OAuth callback and redirect the frontend."""
-    import json
-    from urllib.parse import urlencode
-
     # 1. state IS the raw CSRF token — compare directly
     if not oauth_state or state != oauth_state:
         return RedirectResponse(f"{settings.frontend_url}/login?error=invalid_state")
 
-    # Create the redirect response object first so oauth logic can set cookies on it
-    redirect_resp = RedirectResponse(url="/")
-
-    # 2. Clean up the CSRF cookie immediately
+    redirect_resp = RedirectResponse(url=f"{settings.frontend_url}/auth/oauth-callback")
     redirect_resp.delete_cookie("oauth_state", path="/")
-
-    # 3. Run the OAuth callback logic (new users receive a signup_token; existing users are logged in)
+    # The HttpOnly refresh cookie is set on redirect_resp. Never put the access
+    # token in the URL; the frontend calls /auth/refresh and then /auth/me.
     try:
-        result = await google_oauth_callback(db, code, redirect_resp)
+        await google_oauth_callback(db, code, redirect_resp)
     except Exception:
         logger.exception("Google OAuth callback error")
         redirect_resp.headers["location"] = (
             f"{settings.frontend_url}/login?error=oauth_failed"
         )
-        return redirect_resp
-
-    params = {}
-    if result["action"] == "login":
-        # The HttpOnly refresh cookie is already set on redirect_resp. Never put
-        # the access token or user in the URL (history, Referer, proxy logs);
-        # the frontend calls /auth/refresh and then /auth/me.
-        redirect_resp.headers["location"] = (
-            f"{settings.frontend_url}/auth/oauth-callback"
-        )
-        return redirect_resp
-    else:
-        params["setup_token"] = result["signup_token"]
-        params["user_info"] = json.dumps(result["user_info"])
-        params["action"] = "requires_setup"
-
-    redirect_resp.headers["location"] = (
-        f"{settings.frontend_url}/auth/oauth-callback?{urlencode(params)}"
-    )
     return redirect_resp
-
-
-@router.post(
-    "/google/register",
-    status_code=status.HTTP_201_CREATED,
-    summary="Complete two-phase Google signup: consume signup_token and create account",
-    dependencies=[Depends(RateLimit("auth.google_register", 5, 300))],
-)
-async def google_register(
-    payload: GoogleRegisterRequest,
-    response: Response,
-    db: DbSession,
-) -> UnifiedResponse[LoginResponse | SignupData]:
-    """Complete a Google signup flow after role selection."""
-    result = await service.google_register(db, payload, response)
-    return ResponseBuilder.success(
-        data=result,
-        message="Account created successfully",
-        status_code=status.HTTP_201_CREATED,
-        response=response,
-    )

@@ -10,7 +10,7 @@ from sqlalchemy import and_, or_, select
 from app.core.request_context import get_request_context
 from app.modules.audit.models import AuditLog
 from app.modules.audit.schemas import AuditLogResponse
-from app.modules.auth.enums import MembershipStatus, UserRole
+from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 
@@ -154,27 +154,29 @@ async def get_entity_audit_timeline(
     if not items:
         return []
 
-    if user.primary_role == UserRole.candidate:
-        visible = [
-            item
-            for item in items
-            if item.target_user_id == user.id or item.actor_user_id == user.id
-        ]
-        if not visible:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have access to this audit trail.",
-            )
-        return [_candidate_safe(item, user.id) for item in visible]
+    membership = await db.scalar(
+        select(CompanyMembership).where(
+            CompanyMembership.user_id == user.id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+    if membership is not None:
+        company_rows = [i for i in items if i.company_id == membership.company_id]
+        if company_rows:
+            return [AuditLogResponse.model_validate(item) for item in company_rows]
 
-    membership = await _get_active_company_membership(db, user.id)
-    visible = [item for item in items if item.company_id == membership.company_id]
+    # A person sees only rows about themselves, with staff details removed.
+    visible = [
+        item
+        for item in items
+        if item.target_user_id == user.id or item.actor_user_id == user.id
+    ]
     if not visible:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this audit trail.",
         )
-    return [AuditLogResponse.model_validate(item) for item in visible]
+    return [_candidate_safe(item, user.id) for item in visible]
 
 
 # Fields describing who acted and how (recruiter identity, IP, device, request
