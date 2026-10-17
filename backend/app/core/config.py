@@ -9,6 +9,8 @@ load_dotenv()
 class Settings(BaseSettings):
     # App
     app_name: str = "ConvexHire API"
+    # Name shown to candidates in emails; rename the product with one env var.
+    product_name: str = "ConvexHire"
     app_version: str = "1.0.0"
     debug: bool = False
     # Defaults to prod so a missing ENVIRONMENT never exposes /docs or drops the
@@ -16,6 +18,8 @@ class Settings(BaseSettings):
     environment: Literal["dev", "prod", "test"] = "prod"
     allowed_origins: list[str] = ["http://localhost:3000"]
     frontend_url: str = "http://localhost:3000"
+    # Public base URL of this API (used in emailed sign-in links).
+    backend_url: str = "http://localhost:8000"
     # Number of reverse proxies in front of the API that append to
     # X-Forwarded-For (e.g. 1 on Render). 0 = trust only the socket peer.
     trusted_proxy_hops: int = 0
@@ -130,6 +134,13 @@ class Settings(BaseSettings):
 
     # Resume import
     resume_import_max_upload_bytes: int = 10 * 1024 * 1024
+
+    # Public apply (no account)
+    turnstile_secret: str | None = None
+    public_status_token_days: int = 180
+    magic_link_ttl_minutes: int = 15
+    guest_applications_per_email_per_hour: int = 10
+    magic_links_per_email_per_15_min: int = 3
     resume_import_allowed_extensions: tuple[str, ...] = ("pdf",)
 
     # ML bouncer

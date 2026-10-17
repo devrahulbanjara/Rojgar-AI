@@ -14,6 +14,7 @@ import app.modules.jobs.models  # noqa: F401
 import app.modules.notifications.models  # noqa: F401
 import app.modules.outreach.models  # noqa: F401
 import app.modules.profiles.models  # noqa: F401
+import app.modules.public.models  # noqa: F401
 import app.modules.recruiter_chat.models  # noqa: F401
 import app.modules.recruiter_preferences.models  # noqa: F401
 import app.modules.resumes.models  # noqa: F401

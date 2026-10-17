@@ -28,6 +28,8 @@ class Resume(Base):
     github_url: Mapped[str | None] = mapped_column(String(500))
     portfolio_url: Mapped[str | None] = mapped_column(String(500))
     years_of_experience: Mapped[int | None] = mapped_column(Integer)
+    # Private storage key of the uploaded CV PDF (guest applications).
+    cv_file_key: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

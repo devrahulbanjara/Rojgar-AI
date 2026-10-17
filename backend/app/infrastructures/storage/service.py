@@ -196,6 +196,40 @@ class StorageService:
         logger.info("Storage: Uploaded audio {}", url)
         return url, file_key
 
+    async def upload_private_document(
+        self, data: bytes, folder: str, *, extension: str, content_type: str
+    ) -> str:
+        """Upload bytes under a private prefix and return the S3 key.
+
+        Callers validate the content first; the stored ContentType is always
+        server-chosen. Private objects are only served via presigned URLs.
+        """
+        file_key = f"private/{folder}/{uuid.uuid4()}.{extension}"
+        try:
+            await asyncio.to_thread(
+                self.client.put_object,
+                Bucket=self.bucket,
+                Key=file_key,
+                Body=data,
+                ContentType=content_type,
+            )
+        except Exception as exc:
+            logger.exception("Document upload failed for key {}: {}", file_key, exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Upload failed. Please try again later.",
+            ) from exc
+        return file_key
+
+    async def delete_key(self, file_key: str) -> None:
+        """Best-effort delete of one object by key."""
+        try:
+            await asyncio.to_thread(
+                self.client.delete_object, Bucket=self.bucket, Key=file_key
+            )
+        except Exception as exc:
+            logger.warning("Failed to delete object {}: {}", file_key, exc)
+
     async def generate_presigned_url(
         self, file_key: str, expires_in: int = 3600
     ) -> str:

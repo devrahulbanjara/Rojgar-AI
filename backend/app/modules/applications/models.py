@@ -10,6 +10,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    String,
     Text,
     UniqueConstraint,
     Uuid,
@@ -89,6 +90,16 @@ class Application(Base):
     shared_linkedin_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     shared_github_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     shared_portfolio_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Where the candidate came from: linkedin | facebook | merojob | direct |
+    # other | platform (applied while signed in).
+    source: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="platform", server_default="platform"
+    )
+    consented_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # [{"question": str, "answer": str}] for the job's screening questions.
+    screening_answers: Mapped[list[dict] | None] = mapped_column(JSONB, nullable=True)
     status: Mapped[ApplicationStatus] = mapped_column(
         SAEnum(ApplicationStatus, name="applicationstatus"),
         nullable=False,

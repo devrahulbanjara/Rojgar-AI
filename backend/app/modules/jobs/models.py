@@ -10,13 +10,16 @@ from sqlalchemy import (
     String,
     Text,
     Uuid,
+    event,
     func,
+    select,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.companies.models import Company
+from app.shared.slugs import job_slug
 from app.shared.enums import (
     JobStatus,
     LocationType,
@@ -37,6 +40,8 @@ class Job(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Public URL id for the shareable apply link (/jobs/{slug}).
+    slug: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     location: Mapped[str | None] = mapped_column(String(255))
     location_type: Mapped[LocationType] = mapped_column(
         nullable=False, server_default="onsite"
@@ -81,6 +86,10 @@ class Job(Base):
         ARRAY(String), server_default="{}"
     )
     benefits: Mapped[list[str]] = mapped_column(ARRAY(String), server_default="{}")
+    # Up to 3 short questions shown on the public apply page.
+    screening_questions: Mapped[list[str]] = mapped_column(
+        ARRAY(String), server_default="{}", nullable=False, default=list
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -105,3 +114,19 @@ class JobSyncEvent(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+@event.listens_for(Job, "before_insert")
+def _assign_job_slug(_mapper, connection, target: Job) -> None:
+    """Give every new job a readable, unique public slug."""
+    if target.slug:
+        return
+    company_name = connection.execute(
+        select(Company.name).where(Company.id == target.company_id)
+    ).scalar()
+    while True:
+        candidate = job_slug(target.title or "job", company_name)
+        taken = connection.execute(select(Job.id).where(Job.slug == candidate)).first()
+        if taken is None:
+            target.slug = candidate
+            return

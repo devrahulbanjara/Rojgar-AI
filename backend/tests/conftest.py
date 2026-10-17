@@ -75,6 +75,8 @@ def disable_side_effects(monkeypatch_session):
 
         monkeypatch_session.setattr(ai_service, "get_embeddings", _fake_embeddings)
         monkeypatch_session.setattr(guardrails_service, "_get_llm", lambda: None)
+        # Paid CV parsing (LlamaExtract) is skipped when no key is configured.
+        monkeypatch_session.setattr(settings, "llama_cloud_api_key", None)
 
     # Bypass in-memory rate limiter so tests don't hit per-IP request caps.
     # Must match the original signature (self, request, response) so FastAPI

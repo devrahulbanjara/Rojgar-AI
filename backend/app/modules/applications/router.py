@@ -165,6 +165,19 @@ async def get_company_candidate_detail(
 
 
 @router.get(
+    "/company/me/candidates/{application_id}/cv",
+    summary="Short-lived download link for the uploaded CV",
+)
+async def get_company_candidate_cv(
+    application_id: UUIDPath,
+    user: ActiveMember,
+    db: DbSession,
+) -> UnifiedResponse[dict]:
+    url = await service.get_company_application_cv_url(db, user, application_id)
+    return ResponseBuilder.success(data={"url": url})
+
+
+@router.get(
     "/job/{job_id}",
     summary="List all applications for a specific job (company/recruiter only)",
 )
