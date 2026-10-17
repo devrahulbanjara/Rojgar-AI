@@ -91,3 +91,27 @@ class EmailService:
     ) -> None:
         """Send a generic HTML email through the shared SMTP transport."""
         await cls._send(subject, to_email, html_body)
+
+    @classmethod
+    async def send_generic_email_or_raise(
+        cls, to_email: str, subject: str, html_body: str
+    ) -> None:
+        """Send an HTML email and raise on delivery failure.
+
+        Used where the caller records delivery (e.g. outreach `is_sent`), so a
+        failed SMTP call is never reported as a sent email.
+        """
+        message = EmailMessage()
+        message["From"] = f"{settings.app_name} <{settings.mail_from}>"
+        message["To"] = to_email
+        message["Subject"] = subject
+        message.add_alternative(html_body, subtype="html")
+        await aiosmtplib.send(
+            message,
+            hostname=settings.smtp_host,
+            port=settings.smtp_port,
+            username=settings.smtp_user,
+            password=settings.smtp_password,
+            start_tls=True,
+            timeout=30,
+        )

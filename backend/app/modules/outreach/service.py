@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -21,7 +21,6 @@ from app.infrastructures.email.service import EmailService
 from app.modules.activity.service import create_activity_event
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.applications.models import Application
-from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
@@ -36,12 +35,24 @@ from app.modules.outreach.schemas import (
     UpdateDraftRequest,
 )
 from app.modules.auth.models import User
-from app.shared.enums import ApplicationStatus, SyncAction
+from app.shared.enums import ApplicationStatus
 
 
 def _utcnow() -> datetime:
     """Return the current UTC datetime."""
     return datetime.now(timezone.utc)
+
+
+def _background_database_url(db: AsyncSession) -> str | None:
+    """URL for a background session, with the real password.
+
+    `str(engine.url)` masks the password as '***' (SQLAlchemy 2.x), which made
+    every background send fail to authenticate and silently send nothing.
+    """
+    bind = db.bind
+    if bind is None or not hasattr(bind, "engine"):
+        return None
+    return bind.engine.url.render_as_string(hide_password=False)
 
 
 def _build_footer(recruiter_name: str, company_name: str) -> str:
@@ -129,18 +140,9 @@ def _resolve_outreach_status(
     if application.status == ApplicationStatus.rejected:
         return ApplicationStatus.rejected
 
-    if (
-        application.status == ApplicationStatus.applied
-        and job.final_shortlist_completed
-        and application.score is not None
-        and (application.strengths is not None or application.weaknesses is not None)
-    ):
-        return (
-            ApplicationStatus.shortlisted
-            if application.score >= job.shortlist_threshold
-            else ApplicationStatus.rejected
-        )
-
+    # Applications still in `applied` have no human decision yet; outreach never
+    # infers one from the AI score (decisions are confirmed by a recruiter).
+    del job
     return None
 
 
@@ -212,20 +214,8 @@ def _compose_draft(
             "<p>After reviewing your application, we will not be moving forward at this time.</p>"
         )
 
-    review_parts: list[str] = []
-    if strengths:
-        review_parts.append(
-            "<strong>Strengths:</strong> "
-            + ", ".join(html.escape(s) for s in strengths)
-        )
-    if weaknesses:
-        review_parts.append(
-            "<strong>Areas of concern:</strong> "
-            + ", ".join(html.escape(w) for w in weaknesses)
-        )
-    if review_parts:
-        body += "<p>" + "<br />".join(review_parts) + "</p>"
-
+    # Internal AI review notes are recruiter-facing and never quoted to candidates.
+    del strengths, weaknesses
     body += (
         "<p>We appreciate the time you invested in applying and wish you the best.</p>"
     )
@@ -300,10 +290,6 @@ async def _upsert_generated_draft(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only shortlisted or rejected candidates can receive outreach drafts.",
         )
-
-    if application.status == ApplicationStatus.applied:
-        application.status = outreach_status
-        enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
 
     draft = await db.scalar(
         select(EmailDraft).where(EmailDraft.application_id == application.id)
@@ -395,34 +381,10 @@ async def prepare_drafts(
     existing_ids = {row[0] for row in existing_result.fetchall()}
 
     new_drafts = 0
-    status_updated_ids: list[uuid.UUID] = []
     for application in outreach_ready_applications:
         outreach_status = _resolve_outreach_status(job, application)
         if outreach_status is None:
             continue
-
-        if application.status == ApplicationStatus.applied:
-            application.status = outreach_status
-            status_updated_ids.append(application.id)
-            await create_activity_event(
-                db,
-                event_type=f"application_{outreach_status.value}",
-                audience="candidate",
-                title=(
-                    f"Shortlisted for {job.title}"
-                    if outreach_status == ApplicationStatus.shortlisted
-                    else f"Application closed for {job.title}"
-                ),
-                description=(
-                    f"{company.name if company else 'The recruiter'} updated your application after review."
-                ),
-                href=f"/candidate/applications/{application.id}",
-                user_id=application.user_id,
-                company_id=company_id,
-                application_id=application.id,
-                job_id=job.id,
-                actor_user_id=user_id,
-            )
 
         if application.id in existing_ids:
             continue
@@ -459,9 +421,6 @@ async def prepare_drafts(
             metadata={"direct_send": direct_send},
         )
 
-    if status_updated_ids:
-        enqueue_application_sync_events(db, status_updated_ids, SyncAction.UPSERT)
-
     await db.commit()
     await invalidate_company_dashboard_caches(db, str(company_id))
     for application in outreach_ready_applications:
@@ -471,12 +430,7 @@ async def prepare_drafts(
         )
 
     if direct_send:
-        bind = db.bind
-        database_url = (
-            str(bind.engine.url)
-            if bind is not None and hasattr(bind, "engine")
-            else None
-        )
+        database_url = _background_database_url(db)
         background_tasks.add_task(
             _send_all_for_job, job_id, database_url, user_id, company_id
         )
@@ -631,11 +585,46 @@ async def approve_draft(
         )
 
     if payload.approved:
+        # Claim the draft atomically so a double click cannot send it twice.
+        claimed = await db.execute(
+            update(EmailDraft)
+            .where(
+                EmailDraft.id == draft.id,
+                EmailDraft.is_sent.is_(False),
+                EmailDraft.sent_at.is_(None),
+            )
+            .values(sent_at=_utcnow())
+            .returning(EmailDraft.id)
+            .execution_options(synchronize_session=False)
+        )
+        if claimed.scalar_one_or_none() is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This draft is already being sent.",
+            )
+        await db.commit()
+        try:
+            await _send_single_draft(draft)
+        except Exception as exc:
+            await db.execute(
+                update(EmailDraft)
+                .where(EmailDraft.id == draft.id)
+                .values(sent_at=None)
+                .execution_options(synchronize_session=False)
+            )
+            await db.commit()
+            logger.warning("Outreach send failed for draft {}: {}", draft.id, exc)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="The email could not be sent. The draft was kept; please retry.",
+            ) from exc
+
+        await db.refresh(draft)
         draft.is_approved = True
+        draft.is_sent = True
         draft.approved_by_user_id = user_id
         draft.approved_at = _utcnow()
         draft.sent_by_user_id = user_id
-        draft.sent_at = _utcnow()
         _draft_job = await db.scalar(
             select(Job).where(Job.id == draft.application.job_id)
         )
@@ -687,10 +676,6 @@ async def approve_draft(
             job_id=draft.application.job_id,
             actor_user_id=user_id,
         )
-        await db.commit()
-        await db.refresh(draft)
-        await _send_single_draft(draft)
-        draft.is_sent = True
     else:
         draft.is_discarded = True
         draft.discarded_by_user_id = user_id
@@ -803,10 +788,7 @@ async def send_all_drafts(
             message="No drafts are ready to send.",
         )
 
-    bind = db.bind
-    database_url = (
-        str(bind.engine.url) if bind is not None and hasattr(bind, "engine") else None
-    )
+    database_url = _background_database_url(db)
     background_tasks.add_task(
         _send_all_for_job, job_id, database_url, user_id, company_id
     )
@@ -826,7 +808,7 @@ async def _send_single_draft(draft: EmailDraft) -> None:
         )
         return
 
-    await EmailService.send_generic_email(
+    await EmailService.send_generic_email_or_raise(
         to_email=draft.application.user.email,
         subject=draft.subject or "Application update",
         html_body=draft.body or "",
@@ -841,49 +823,68 @@ async def _send_all_for_job(
 ) -> None:
     """Send all pending drafts for a job in a background session."""
     if database_url is None:
-        database_url = str(AsyncSessionLocal.kw["bind"].url)
+        database_url = AsyncSessionLocal.kw["bind"].url.render_as_string(
+            hide_password=False
+        )
 
     engine = create_async_engine(database_url, poolclass=NullPool)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as db:
-        result = await db.execute(
-            select(EmailDraft)
-            .join(Application, Application.id == EmailDraft.application_id)
+        # Atomically claim unsent drafts (sent_at as the claim marker) so two
+        # concurrent "send all" runs never email the same candidate twice.
+        claim = await db.execute(
+            update(EmailDraft)
             .where(
-                Application.job_id == job_id,
+                EmailDraft.application_id.in_(
+                    select(Application.id).where(Application.job_id == job_id)
+                ),
                 EmailDraft.is_sent.is_(False),
                 EmailDraft.is_discarded.is_(False),
+                EmailDraft.sent_at.is_(None),
             )
+            .values(sent_at=_utcnow())
+            .returning(EmailDraft.id)
+            .execution_options(synchronize_session=False)
         )
-        drafts = result.scalars().all()
+        claimed_ids = [row[0] for row in claim.fetchall()]
+        await db.commit()
+        if not claimed_ids:
+            await engine.dispose()
+            return
+        drafts = (
+            (await db.execute(select(EmailDraft).where(EmailDraft.id.in_(claimed_ids))))
+            .scalars()
+            .all()
+        )
 
         for draft in drafts:
             try:
                 await _send_single_draft(draft)
-                draft.is_approved = True
-                draft.is_sent = True
-                if initiated_by_user_id is not None:
-                    draft.approved_by_user_id = initiated_by_user_id
-                    draft.sent_by_user_id = initiated_by_user_id
-                draft.approved_at = _utcnow()
-                draft.sent_at = _utcnow()
-                await create_activity_event(
-                    db,
-                    event_type="outreach_email_sent",
-                    audience="candidate",
-                    title="Application update sent",
-                    description="The recruiter sent an update related to your application.",
-                    href=f"/candidate/applications/{draft.application_id}",
-                    user_id=draft.application.user_id,
-                    company_id=company_id,
-                    application_id=draft.application_id,
-                    draft_id=draft.id,
-                    job_id=draft.application.job_id,
-                    actor_user_id=initiated_by_user_id,
-                )
             except Exception as exc:
-                logger.exception("Failed to send draft {}: {}", draft.id, exc)
+                draft.sent_at = None  # release the claim; draft stays unsent
+                logger.warning("Failed to send draft {}: {}", draft.id, exc)
+                continue
+            draft.is_approved = True
+            draft.is_sent = True
+            if initiated_by_user_id is not None:
+                draft.approved_by_user_id = initiated_by_user_id
+                draft.sent_by_user_id = initiated_by_user_id
+            draft.approved_at = _utcnow()
+            await create_activity_event(
+                db,
+                event_type="outreach_email_sent",
+                audience="candidate",
+                title="Application update sent",
+                description="The recruiter sent an update related to your application.",
+                href=f"/candidate/applications/{draft.application_id}",
+                user_id=draft.application.user_id,
+                company_id=company_id,
+                application_id=draft.application_id,
+                draft_id=draft.id,
+                job_id=draft.application.job_id,
+                actor_user_id=initiated_by_user_id,
+            )
 
         await db.commit()
     await engine.dispose()
