@@ -21,6 +21,19 @@ interface StepReviewProps {
   hasPendingPatch: boolean
 }
 
+function describeSharing(settings: ShareSettingsDraft): string {
+  if (settings.share_profile_all) return 'full profile'
+  const shared = [
+    settings.share_headline_summary && 'profile summary',
+    'email',
+    settings.share_links && 'links',
+    settings.share_avatar && 'photo',
+    settings.share_phone && 'phone',
+    settings.share_location && 'location',
+  ].filter(Boolean)
+  return shared.join(', ')
+}
+
 export default function StepReview({
   resumes,
   loading,
@@ -120,13 +133,7 @@ export default function StepReview({
       ) : null}
 
       <p className={styles.applyModal__intro}>
-        Sharing:{' '}
-        {shareSettings.share_profile_all
-          ? 'full profile'
-          : shareSettings.share_phone || shareSettings.share_location
-            ? 'custom'
-            : 'profile, email and links (not phone or location)'}{' '}
-        ·{' '}
+        Sharing: {describeSharing(shareSettings)} ·{' '}
         <button
           aria-expanded={showSharing}
           className={styles.applyModal__inlineLink}
