@@ -49,7 +49,7 @@ export function BuilderLayout({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-      <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+      <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">
             {title} {pct}%
