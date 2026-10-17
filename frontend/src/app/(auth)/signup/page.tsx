@@ -337,7 +337,10 @@ function SignupContent() {
     description: '',
   })
 
-  const [joinCompanyName, setJoinCompanyName] = useState('')
+  // Invite links (/signup?join=<company>) prefill the company and skip the
+  // "who are you" and "create or join" steps.
+  const invitedCompany = (searchParams.get('join') ?? '').trim().slice(0, 200)
+  const [joinCompanyName, setJoinCompanyName] = useState(invitedCompany)
   const [errors, setErrors] = useState<FormErrors>({})
   const passwordStrength = getPasswordStrength(creds.password)
   const [resendCooldown, setResendCooldown] = useState(0)
@@ -393,7 +396,7 @@ function SignupContent() {
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
     } else {
-      setStep('intent')
+      setStep(invitedCompany ? 'join-company' : 'intent')
     }
   }
 

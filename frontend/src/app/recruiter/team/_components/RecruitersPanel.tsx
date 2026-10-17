@@ -63,7 +63,12 @@ export default function RecruitersPanel() {
   const router = useRouter()
   const { user } = useAppSelector((s) => s.auth)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | RecruiterMember['status']>('all')
+  // null = not chosen yet: show pending requests first when there are any.
+  const [chosenStatusFilter, setStatusFilter] = useState<'all' | RecruiterMember['status'] | null>(
+    null,
+  )
+  // Removal waits a few seconds behind an Undo toast before it is sent.
+  const [pendingRemovalIds, setPendingRemovalIds] = useState<Set<string>>(() => new Set())
 
   useEffect(() => {
     if (user && user.primary_role !== 'recruiter_admin') {
@@ -84,7 +89,12 @@ export default function RecruitersPanel() {
   const [updateStatus, { isLoading: isUpdating }] = useUpdateRecruiterStatusMutation()
   const [removeRecruiter, { isLoading: isRemoving }] = useRemoveRecruiterMutation()
 
-  const recruiters: RecruiterMember[] = useMemo(() => response?.data ?? [], [response?.data])
+  const recruiters: RecruiterMember[] = useMemo(
+    () => (response?.data ?? []).filter((r) => !pendingRemovalIds.has(r.membership_id)),
+    [response?.data, pendingRemovalIds],
+  )
+  const statusFilter =
+    chosenStatusFilter ?? (recruiters.some((r) => r.status === 'pending') ? 'pending' : 'all')
 
   const filteredRecruiters = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -116,13 +126,42 @@ export default function RecruitersPanel() {
     }
   }
 
-  async function handleRemove(membershipId: string) {
-    try {
-      await removeRecruiter(membershipId).unwrap()
-      notify.success('Recruiter removed.')
-    } catch {
-      notify.error('Failed to remove recruiter.')
-    }
+  function handleRemove(membershipId: string) {
+    let undone = false
+    const restore = () =>
+      setPendingRemovalIds((previous) => {
+        const next = new Set(previous)
+        next.delete(membershipId)
+        return next
+      })
+    setPendingRemovalIds((previous) => new Set(previous).add(membershipId))
+    const toastId = notify.success(
+      <span>
+        Recruiter removed.{' '}
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={() => {
+            undone = true
+            restore()
+            notify.dismiss(toastId)
+          }}
+        >
+          Undo
+        </button>
+      </span>,
+      { autoClose: 5000 },
+    )
+    window.setTimeout(async () => {
+      if (undone) return
+      try {
+        await removeRecruiter(membershipId).unwrap()
+      } catch {
+        notify.error('Failed to remove recruiter.')
+      } finally {
+        restore()
+      }
+    }, 5000)
   }
 
   return (

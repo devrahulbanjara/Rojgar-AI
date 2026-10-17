@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 
@@ -21,6 +23,16 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
   const { user } = useAppSelector((s) => s.auth)
   const [triggerGetMe, { isFetching }] = useLazyGetMeQuery()
   const [logout] = useLogoutMutation()
+
+  // While waiting for approval, check every 15 s so the dashboard opens on its
+  // own the moment the admin approves (no manual "Refresh Status").
+  const isPendingApproval =
+    user?.primary_role === 'recruiter' && user.membership_status === 'pending'
+  useEffect(() => {
+    if (!isPendingApproval) return
+    const interval = window.setInterval(() => void triggerGetMe(), 15_000)
+    return () => window.clearInterval(interval)
+  }, [isPendingApproval, triggerGetMe])
 
   if (user?.primary_role === 'recruiter') {
     const ms = user.membership_status
