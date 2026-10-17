@@ -19,47 +19,28 @@ test.describe('Form validation guards', () => {
   test('signup: weak password blocked client-side', async ({ page }) => {
     await page.goto('/signup')
     await page.getByLabel(/full name/i).fill('Tester X')
-    await page.getByLabel(/email/i).fill('weakpw.test@test.dev')
+    await page.getByLabel(/work email/i).fill('weakpw.test@test.dev')
     await page.getByLabel(/^password$/i).fill('weak')
-    await page.getByLabel(/confirm password/i).fill('weak')
-    await page
-      .getByRole('checkbox')
-      .first()
-      .check()
-      .catch(() => {})
-    await page.getByRole('button', { name: /^continue$/i }).click()
-    await expect(
-      page.locator('text=/at least 8|uppercase|lowercase|password.*number/i').first(),
-    ).toBeVisible({ timeout: 3_000 })
+    await page.getByLabel(/company name/i).fill('Weak Password Co')
+    await expect(page.getByLabel('Password rules')).toBeVisible()
+    await page.getByRole('button', { name: /^create account$/i }).click()
+    await expect(page.getByText('Use a stronger password.')).toBeVisible({ timeout: 3_000 })
   })
 
-  test('signup: password mismatch blocked', async ({ page }) => {
+  test('signup: company name required', async ({ page }) => {
     await page.goto('/signup')
     await page.getByLabel(/full name/i).fill('Tester Y')
-    await page.getByLabel(/email/i).fill('mismatch.test@test.dev')
+    await page.getByLabel(/work email/i).fill('nocompany.test@test.dev')
     await page.getByLabel(/^password$/i).fill('Password123')
-    await page.getByLabel(/confirm password/i).fill('Password456')
-    await page
-      .getByRole('checkbox')
-      .first()
-      .check()
-      .catch(() => {})
-    await page.getByRole('button', { name: /^continue$/i }).click()
-    await expect(page.locator('text=/match|do not match/i').first()).toBeVisible({
-      timeout: 3_000,
-    })
+    await page.getByRole('button', { name: /^create account$/i }).click()
+    await expect(page.getByText('Enter your company name.')).toBeVisible({ timeout: 3_000 })
   })
 
-  test('signup: terms required', async ({ page }) => {
-    await page.goto('/signup')
-    await page.getByLabel(/full name/i).fill('Tester Z')
-    await page.getByLabel(/email/i).fill('terms.test@test.dev')
-    await page.getByLabel(/^password$/i).fill('Password123')
-    await page.getByLabel(/confirm password/i).fill('Password123')
-    await page.getByRole('button', { name: /^continue$/i }).click()
-    await expect(page.locator('text=/terms|accept|agree/i').first()).toBeVisible({
-      timeout: 3_000,
-    })
+  test('signup: invite link locks the company', async ({ page }) => {
+    await page.goto('/signup?join=Acme%20Labs')
+    await expect(page.getByRole('heading', { name: 'Join Acme Labs' })).toBeVisible()
+    await expect(page.getByLabel(/company name/i)).toHaveAttribute('readonly', '')
+    await expect(page.getByRole('button', { name: /ask to join acme labs/i })).toBeVisible()
   })
 
   test('forgot-password: invalid email blocked', async ({ page }) => {
