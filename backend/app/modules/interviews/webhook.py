@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from loguru import logger
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +16,7 @@ from app.core.cache import (
     invalidate_company_dashboard_caches,
     invalidate_interview_list_caches,
 )
+from app.core.config import settings
 from app.core.database import get_db
 from app.modules.activity.service import create_activity_event
 from app.modules.applications.models import Application
@@ -25,6 +28,33 @@ from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStatus
 
 router = APIRouter(tags=["Webhooks"])
+
+SIGNATURE_HEADER = "X-Cal-Signature-256"
+
+# Every non-error outcome returns the same body so callers cannot probe which
+# candidate emails are shortlisted at which company.
+_RECEIVED = {"status": "received"}
+
+
+def verify_cal_signature(raw_body: bytes, signature: str | None) -> None:
+    """Reject requests whose HMAC-SHA256 signature does not match the secret."""
+    secret = settings.cal_webhook_secret
+    if not secret:
+        if settings.environment == "prod":
+            logger.error("Cal webhook rejected: CAL_WEBHOOK_SECRET is not configured")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Webhook not configured",
+            )
+        logger.warning("Cal webhook accepted without signature check (non-prod)")
+        return
+
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    provided = (signature or "").strip().removeprefix("sha256=")
+    if not hmac.compare_digest(expected, provided):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature"
+        )
 
 
 class CalWebhookBody(BaseModel):
@@ -48,12 +78,23 @@ class CalWebhookBody(BaseModel):
 
 @router.post("/webhook/cal/interview-booking")
 async def cal_webhook_handler(
-    body: CalWebhookBody,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """Record interview bookings received from the Cal webhook."""
+    raw_body = await request.body()
+    verify_cal_signature(raw_body, request.headers.get(SIGNATURE_HEADER))
+
+    try:
+        body = CalWebhookBody.model_validate_json(raw_body)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Invalid webhook payload",
+        ) from exc
+
     if body.triggerEvent != "BOOKING_CREATED":
-        return {"status": "ignored"}
+        return _RECEIVED
 
     organizer_email = str(body.organizer_email).lower().strip()
     attendee_email = str(body.attendee_email).lower().strip()
@@ -68,7 +109,7 @@ async def cal_webhook_handler(
             "Cal webhook: no company configured for organizer email {}",
             organizer_email,
         )
-        return {"status": "no matching company"}
+        return _RECEIVED
 
     result = await db.execute(
         select(Application)
@@ -89,7 +130,7 @@ async def cal_webhook_handler(
             "Cal webhook: no shortlisted application for email {}",
             attendee_email,
         )
-        return {"status": "no matching application"}
+        return _RECEIVED
 
     job = await db.scalar(select(Job).where(Job.id == application.job_id))
 
@@ -97,7 +138,7 @@ async def cal_webhook_handler(
         select(Interview).where(Interview.cal_booking_uid == body.uid)
     )
     if existing is not None:
-        return {"status": "already recorded"}
+        return _RECEIVED
 
     start_dt = datetime.fromisoformat(body.startTime.replace("Z", "+00:00"))
     end_dt = datetime.fromisoformat(body.endTime.replace("Z", "+00:00"))
@@ -114,6 +155,8 @@ async def cal_webhook_handler(
         title=body.title,
     )
     db.add(interview)
+    # Activity events reference interview.id; insert the interview first.
+    await db.flush()
 
     application.status = ApplicationStatus.interview_booked
     await create_activity_event(
@@ -157,4 +200,4 @@ async def cal_webhook_handler(
         attendee_email,
         start_dt,
     )
-    return {"status": "success"}
+    return _RECEIVED

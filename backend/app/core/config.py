@@ -160,6 +160,9 @@ class Settings(BaseSettings):
     hf_whisper_retry_delays: tuple[int, ...] = (5, 15, 30, 60)
     hf_whisper_token: str | None = None
 
+    # Cal.com webhook: HMAC-SHA256 secret configured on the Cal webhook.
+    cal_webhook_secret: str | None = None
+
     # Derived URLs
     @property
     def database_url(self) -> str:
