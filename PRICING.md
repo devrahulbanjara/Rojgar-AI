@@ -1,51 +1,48 @@
-## Candidate
+# Pricing
 
-**Free**
-- Create profile
-- AI resume import (1 time)
-- Up to 2 resumes, PDF download
-- Browse all jobs
-- Up to 5 active applications
-- Basic application tracking + see your AI score & feedback
+Applying is always free. Candidates never pay anything, for any reason. If anyone asks a candidate for money to apply or to get an interview through Rojgar AI, it is a scam.
 
-**Pro — NPR 199 one-time** *(per job hunt cycle, not recurring)*
-- Everything in Free
-- Unlimited applications
-- AI resume import (3 uses)
-- Up to 5 resumes
-- Resume Gap Analysis (5 uses)
-- Resume AI patch suggestions (3 uses)
+Companies pay only for the AI that reads and ranks applications. Every application is always received and listed, on every plan. When a company runs out of AI reviews, new applications keep arriving and stay in the list; they are reviewed as soon as reviews are available again (next month, a top-up, or a pass), and the company sees how many are waiting.
 
-**Credit Top-ups** *(buy when you need)*
-- Gap Analysis — NPR 49 per use
-- Resume AI Patch — NPR 69 per use
-- AI Resume Import — NPR 49 per use
+All prices are in Nepali rupees and exclude 13% VAT.
 
-> No monthly lock-in. Buy Pro when you're actively hunting. Top up if you run out. Cancel nothing.
+## Plans
 
----
+| | Price | Active jobs | AI reviews | Recruiters | Also |
+|---|---|---|---|---|---|
+| **Free** | NPR 0 | Your first job is free (45 days, 100 reviews). After that, 1 active job | 25 a month | 1 | |
+| **Job Pass** | NPR 999 per job | That job, for 45 days | 100 for that job | Your team | SMS updates to candidates |
+| **Job Pass Plus** | NPR 2,499 per job | That job, for 60 days | 300 for that job | Your team | SMS updates, invite many candidates at once |
+| **Team** | NPR 3,499 a month, or NPR 34,990 a year (2 months free) | 5 | 400 a month | 5 | SMS updates, invite many at once |
+| **Business** | NPR 9,999 a month | No limit | 1,200 a month | 15 | SMS updates, invite many at once, branches |
 
-## Companies
+**Extra reviews:** NPR 1,000 for 100. They never expire.
 
-**Free**
-- 1 admin, up to 2 recruiters
-- 2 active jobs
-- Manual pipeline management
-- AI job draft assistant (3/month)
-- Outreach email drafting (10/month)
+**Hiring drives:** NPR 8 per review, minimum NPR 10,000, paid by invoice. Good for walk-in drives, bank and hospital intakes, and seasonal hiring.
 
-**Growth — NPR 3,999/month** *(up to 5 recruiters)*
-- Up to 8 active jobs
-- AI evaluation on all applications (auto-score)
-- Unlimited job draft assistant
-- Unlimited outreach email drafting
-- Recruiter AI Chat (candidate search, salary research, job lookup, job edits)
-- Full team management
+### How the limits work
 
-**Scale — NPR 9,999/month** *(up to 15 recruiters)*
-- Unlimited active jobs
-- Everything in Growth
-- Semantic search across all historical applicants (not just current job)
-- Bulk shortlisting suggestions across full applicant pool
-- Custom branding on candidate-facing emails
-- Priority support
+- A job with a pass does not count toward your plan's active jobs.
+- AI reviews are used in this order: the job's pass, then your monthly reviews, then extra reviews.
+- Monthly reviews reset on the 1st of each month (Nepal time). Unused monthly reviews do not carry over; extra reviews do.
+- A recruiter seat is anyone on your team who can sign in, admins included.
+- Closing a job frees its slot straight away.
+
+## Why this is not looting
+
+- **NPR 999 is about 1.3 working days of minimum wage** (NPR 19,550 a month ÷ 26 working days ≈ NPR 752 a day). One hire usually saves that in the first hour of not reading CVs by hand.
+- **It costs less than a job-board listing.** A single paid post on the big Nepali job boards costs about NPR 6,000–12,000 and only shows your ad. A Job Pass shows your ad on your own link, reads every CV, ranks them with a reason, books interviews and keeps every candidate informed.
+- **You can start for nothing.** Your first job is free with 100 reviews, and you keep 1 free active job after that.
+- **You never pay for applications.** You pay for AI reading time only. If you would rather read CVs yourself, you can, at no cost.
+- **Candidates never pay.** No "processing fee", no "interview fee", ever.
+- **No lock-in.** Passes are per job. Monthly plans can be stopped at any time and keep working until the end of the paid month.
+
+## Paying
+
+Online payment is not live yet. For now a plan, pass or top-up is added by our team after payment by bank transfer, and we send a VAT bill.
+
+Next step (planned):
+
+1. Pay in the app with **eSewa**, **Khalti** or **Fonepay** QR. The payment confirmation adds the pass, plan or reviews automatically.
+2. Every payment gets an **IRD-compliant VAT bill** (company PAN, 13% VAT shown separately), emailed and downloadable.
+3. Hiring drives keep invoice billing with bank transfer.
