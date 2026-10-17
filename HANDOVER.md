@@ -172,4 +172,7 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
     - Finish the `CandidatePanel` rewrite (fixes the broken `CallButtons` import): header + facts line, must-have accordion, CV summary + "Show CV", skills +N, answers 2 + "Show all", Activity footer, sticky mobile bar.
     - `CandidateCard` one-line rows; move the keyboard hint into a tooltip.
     - Gates and screenshots (`scratchpad/pw/shot.cjs` is temporary — write a new one).
-- **wave/b1:** check `git log`; its report hadn't arrived at stop time. Run the full suite before merging.
+- **wave/b1 (HEAD d2437e28, about 30 commits, stopped before its final report):**
+  - Done, with tests: data model v2 (migration 2017037b521a with up/down tests), rolling review (verified quotes, deterministic fit, triage, retries), the employer v2 API (pipeline, panel, decide/undo/bulk, notes, flags, quick add, referrers, export, recommend), job v2 fields, protected-ground warnings, templates, and v2 seeds (non-tech employers, Nepali answers, phone-only applicants, referrers).
+  - Last commit is WIP: the simulation update; red-team not run.
+  - **Warning:** b1 branched before the b2/b3 merges. It edits `recruiter_chat`/`job_ai` (deleted on main — keep them deleted) and touches interviews, dashboards and public. Expect conflicts in `main.py`, `seed_data.py`, `interviews/*`, `dashboards/*`, `public/*` and the alembic chain. Merge b1 first, run the full suite, and fix forward.
