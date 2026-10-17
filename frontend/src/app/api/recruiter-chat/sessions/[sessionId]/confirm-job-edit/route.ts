@@ -2,6 +2,8 @@ import type { NextRequest } from 'next/server'
 
 import {
   getRecruiterChatBackendBaseUrl,
+  invalidSessionIdResponse,
+  isValidSessionId,
   recruiterChatMisconfiguredResponse,
   recruiterChatUnavailableResponse,
 } from '../../../routeUtils'
@@ -19,13 +21,14 @@ export async function POST(
   }
 
   const { sessionId } = await params
+  if (!isValidSessionId(sessionId)) return invalidSessionIdResponse()
   const authorization = req.headers.get('authorization')
   const cookie = req.headers.get('cookie')
   const body = await req.text()
 
   try {
     const response = await fetch(
-      `${backendBaseUrl}/recruiter-chat/sessions/${sessionId}/confirm-job-edit`,
+      `${backendBaseUrl}/recruiter-chat/sessions/${encodeURIComponent(sessionId)}/confirm-job-edit`,
       {
         method: 'POST',
         headers: {

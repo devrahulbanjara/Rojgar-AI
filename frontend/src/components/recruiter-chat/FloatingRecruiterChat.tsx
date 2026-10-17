@@ -1,7 +1,7 @@
 'use client'
 
 import type { WheelEvent } from 'react'
-import { useCallback, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import Image from 'next/image'
 
@@ -29,6 +29,15 @@ export default function FloatingRecruiterChat() {
   } = useRecruiterChatSessions()
 
   const [historyOpen, setHistoryOpen] = useState(false)
+
+  // Opening the chat with no conversations starts one: no "New Chat" click.
+  const autoCreatedRef = useRef(false)
+  useEffect(() => {
+    if (!isOpen || isLoading || activeSession || sessions.length > 0) return
+    if (autoCreatedRef.current) return
+    autoCreatedRef.current = true
+    void createSession()
+  }, [isOpen, isLoading, activeSession, sessions.length, createSession])
 
   // Trap wheel events inside panel so page behind never scrolls
   const handlePanelWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {

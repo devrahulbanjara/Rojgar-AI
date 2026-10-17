@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
     <div className="legal">
       {/* Background decorations */}
       <Image
-        src="/bg/bg-ui-v4.svg"
+        src="/bg/bg-ui-v4.webp"
         alt=""
         width={700}
         height={700}
@@ -38,7 +38,7 @@ export default function PrivacyPolicyPage() {
         aria-hidden="true"
       />
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={640}
         height={640}
@@ -197,25 +197,26 @@ export default function PrivacyPolicyPage() {
                 research, and candidate search
               </li>
               <li>To transcribe and evaluate interview recordings uploaded by recruiters</li>
-              <li>To process payments for subscriptions</li>
+              <li>To invoice companies on paid plans</li>
               <li>
                 To send you transactional notifications (application updates, password resets)
               </li>
               <li>To send you optional job-alert emails where you have opted in</li>
-              <li>To improve and personalise the Service through analytics</li>
               <li>To prevent fraud, abuse, and security incidents</li>
               <li>To comply with legal obligations under Nepal law</li>
             </ul>
             <p className="legal__text">
               <strong>AI processing:</strong> Your resume and application data may be processed by
-              AI models to generate scores, feedback, and suggestions. PII redaction is applied
-              before data reaches AI models in applicable pipelines. Prompt injection guardrails
-              protect all AI interactions. All consequential AI-assisted decisions (shortlisting,
-              outreach, job edits) require explicit human confirmation before taking effect.
+              AI models to generate scores, feedback, and suggestions. Contact details (email,
+              phone, links) are removed before your resume reaches screening models. AI output is a{' '}
+              <strong>recommendation only</strong>: a recruiter reviews and confirms every
+              shortlisting or rejection decision, and every outreach email and job edit, before it
+              takes effect.
             </p>
             <p className="legal__text">
-              We do <strong>not</strong> use your data for automated decision-making that produces
-              legal or similarly significant effects without your explicit prior consent.
+              We do <strong>not</strong> make solely automated decisions about your application. You
+              can ask the hiring company for a human review of any decision by replying to their
+              email or contacting us.
             </p>
           </section>
 
@@ -263,8 +264,10 @@ export default function PrivacyPolicyPage() {
                 recommend reviewing them before applying.
               </li>
               <li>
-                <strong>Service providers:</strong> Trusted sub-processors (hosting, email delivery,
-                payment gateway, analytics) under strict data-processing agreements.
+                <strong>Service providers:</strong> Sub-processors for hosting, storage, email
+                delivery and AI processing (Amazon Web Services, Supabase, Upstash, Qdrant, Groq,
+                Google Gemini, Anthropic via AWS Bedrock, LlamaIndex, Tavily), some of which process
+                data outside Nepal.
               </li>
               <li>
                 <strong>Legal requirements:</strong> When required by a court order, regulatory
@@ -304,8 +307,8 @@ export default function PrivacyPolicyPage() {
                 <strong>Value Added Tax Act 2052 (1995)</strong> of Nepal.
               </li>
               <li>
-                Server logs and analytics data are retained for no more than{' '}
-                <strong>90 days</strong> in anonymised or aggregated form.
+                Server logs are retained for no more than <strong>90 days</strong> in anonymised or
+                aggregated form.
               </li>
             </ul>
           </section>

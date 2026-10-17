@@ -104,6 +104,19 @@ export type CandidateDrawerProps = {
   onClose: () => void
   onTabChange?: (tab: DrawerTab) => void
   onApplicationChange?: (applicationId: string) => void
+  /** Ordered application ids the recruiter is triaging; enables J/K and auto-advance. */
+  queue?: string[]
+  /** Parent-owned decision handler (optimistic). Falls back to a direct status update. */
+  onDecide?: (applicationId: string, status: 'shortlisted' | 'rejected') => void | Promise<void>
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  return (
+    target.isContentEditable ||
+    ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+    target.getAttribute('role') === 'combobox'
+  )
 }
 
 export default function CandidateDrawer({
@@ -112,6 +125,8 @@ export default function CandidateDrawer({
   onClose,
   onTabChange,
   onApplicationChange,
+  queue,
+  onDecide,
 }: CandidateDrawerProps) {
   const isOpen = Boolean(applicationId)
 
@@ -137,22 +152,6 @@ export default function CandidateDrawer({
 
   const renderedResume = useMemo(() => mapRecruiterCandidateResume(candidate), [candidate])
 
-  useEffect(() => {
-    if (!isOpen) return
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [isOpen, onClose])
-
-  if (!isOpen) return null
-
   const handleStatusChange = async (next: ApplicationStatus) => {
     if (!candidate || !next || next === candidate.status) return
     try {
@@ -166,6 +165,51 @@ export default function CandidateDrawer({
       notify.error('Could not update application status.')
     }
   }
+  const queueIndex = applicationId && queue ? queue.indexOf(applicationId) : -1
+  const nextInQueue = queueIndex >= 0 ? (queue?.[queueIndex + 1] ?? null) : null
+  const prevInQueue = queueIndex > 0 ? (queue?.[queueIndex - 1] ?? null) : null
+  const canDecide = candidate
+    ? ['applied', 'shortlisted', 'rejected'].includes(candidate.status)
+    : false
+
+  const decide = async (status: 'shortlisted' | 'rejected') => {
+    if (!candidate || candidate.status === status) return
+    // Advance first so triage feels instant; the decision is applied optimistically.
+    const advanceTo = nextInQueue ?? prevInQueue
+    if (advanceTo && onApplicationChange) onApplicationChange(advanceTo)
+    if (onDecide) {
+      await onDecide(candidate.id, status)
+    } else {
+      await handleStatusChange(status)
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen) return
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return
+      const key = event.key.toLowerCase()
+      if (key === 'j' && nextInQueue && onApplicationChange) onApplicationChange(nextInQueue)
+      else if (key === 'k' && prevInQueue && onApplicationChange) onApplicationChange(prevInQueue)
+      else if (key === 's' && canDecide) void decide('shortlisted')
+      else if (key === 'r' && canDecide) void decide('rejected')
+      else return
+      event.preventDefault()
+    }
+    document.addEventListener('keydown', onKey)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = previousOverflow
+    }
+  })
+
+  if (!isOpen) return null
 
   return (
     <>
@@ -197,6 +241,29 @@ export default function CandidateDrawer({
               ) : null}
             </div>
           </div>
+
+          {candidate && canDecide ? (
+            <div className={styles.decideButtons}>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                disabled={isUpdating || candidate.status === 'rejected'}
+                onClick={() => void decide('rejected')}
+                title="Reject (R)"
+              >
+                <X size={14} aria-hidden="true" /> Reject
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                disabled={isUpdating || candidate.status === 'shortlisted'}
+                onClick={() => void decide('shortlisted')}
+                title="Shortlist (S)"
+              >
+                <Check size={14} aria-hidden="true" /> Shortlist
+              </button>
+            </div>
+          ) : null}
 
           {candidate ? (
             <div className={styles.statusSelectWrap}>
@@ -282,7 +349,12 @@ export default function CandidateDrawer({
               </button>
             </div>
           ) : activeTab === 'profile' ? (
-            <ProfileTab candidate={candidate} />
+            <ProfileTab
+              candidate={candidate}
+              queuePosition={
+                queue && queueIndex >= 0 ? `${queueIndex + 1} of ${queue.length}` : null
+              }
+            />
           ) : activeTab === 'interview' ? (
             <>
               <InterviewBookingSection interview={interview ?? null} />
@@ -310,9 +382,68 @@ export default function CandidateDrawer({
 
 type Candidate = RecruiterCandidateDetailView
 
-function ProfileTab({ candidate }: { candidate: Candidate }) {
+function ProfileTab({
+  candidate,
+  queuePosition,
+}: {
+  candidate: Candidate
+  queuePosition: string | null
+}) {
+  const [isEditingReview, setIsEditingReview] = useState(false)
+  const hasReview =
+    candidate.score !== null ||
+    (candidate.strengths?.length ?? 0) > 0 ||
+    (candidate.weaknesses?.length ?? 0) > 0
+
   return (
     <>
+      {/* The AI's reasons come first: they are what the recruiter decides on. */}
+      {isEditingReview ? (
+        <>
+          <ShortlistingEvaluationEditor key={candidate.id} candidate={candidate} />
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setIsEditingReview(false)}
+          >
+            Done editing
+          </button>
+        </>
+      ) : (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
+            AI assessment
+            {candidate.score !== null ? ` · ${candidate.score}/100` : ''}
+            {queuePosition ? (
+              <span className={styles.queuePosition}> · {queuePosition}</span>
+            ) : null}
+          </h3>
+          {hasReview ? (
+            <>
+              {(candidate.strengths ?? []).map((item) => (
+                <p key={`s-${item}`} className={styles.listItem}>
+                  <Check size={14} className={styles.strengthIcon} aria-hidden="true" /> {item}
+                </p>
+              ))}
+              {(candidate.weaknesses ?? []).map((item) => (
+                <p key={`w-${item}`} className={styles.listItem}>
+                  <X size={14} className={styles.weaknessIcon} aria-hidden="true" /> {item}
+                </p>
+              ))}
+            </>
+          ) : (
+            <p className={styles.muted}>Not evaluated yet.</p>
+          )}
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setIsEditingReview(true)}
+          >
+            Edit assessment
+          </button>
+        </div>
+      )}
+
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Applied for</h3>
         <p className={styles.headline}>{candidate.job_title}</p>
@@ -391,8 +522,6 @@ function ProfileTab({ candidate }: { candidate: Candidate }) {
           <p className={styles.summary}>{candidate.candidate_summary}</p>
         ) : null}
       </div>
-
-      <ShortlistingEvaluationEditor key={candidate.id} candidate={candidate} />
 
       {candidate.timeline.length > 0 ? (
         <div className={styles.section}>

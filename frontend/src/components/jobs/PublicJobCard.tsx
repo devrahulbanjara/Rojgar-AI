@@ -15,7 +15,7 @@ export default function PublicJobCard({ job }: { job: JobListItem }) {
 
   return (
     <Link
-      href={`/login?next=/candidate/jobs/${job.id}`}
+      href={`/login?next=${encodeURIComponent(`/candidate/jobs/${job.id}?apply=1`)}`}
       className="pub-job-card job-card"
       style={{ textDecoration: 'none' }}
     >

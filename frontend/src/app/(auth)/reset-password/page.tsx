@@ -107,7 +107,7 @@ function ResetPasswordInner() {
     <main className="auth">
       {/* Background decorations */}
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={700}
         height={700}
@@ -116,7 +116,7 @@ function ResetPasswordInner() {
         priority={false}
       />
       <Image
-        src="/bg/bg-ui-v5.svg"
+        src="/bg/bg-ui-v5.webp"
         alt=""
         width={650}
         height={650}

@@ -33,7 +33,7 @@ export default function TermsPage() {
   return (
     <div className="legal">
       <Image
-        src="/bg/bg-ui-v4.svg"
+        src="/bg/bg-ui-v4.webp"
         alt=""
         width={700}
         height={700}
@@ -41,7 +41,7 @@ export default function TermsPage() {
         aria-hidden="true"
       />
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={640}
         height={640}
@@ -302,8 +302,8 @@ export default function TermsPage() {
                 <strong>Value Added Tax Act 2052 (1995)</strong>
               </li>
               <li>
-                Payments are processed securely via Stripe or eSewa/Khalti (Nepal-based gateway
-                options)
+                Paid plans are not yet self-serve. Until online payments launch, plans are arranged
+                directly with our team and invoiced with VAT
               </li>
               <li>
                 Subscriptions auto-renew unless cancelled at least <strong>24 hours</strong> before

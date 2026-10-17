@@ -15,11 +15,14 @@ import {
   useLazyGetResumeImportTaskStatusQuery,
   useStartResumeImportMutation,
 } from '@/store/services/profileApi'
+import { useCreateResumeMutation } from '@/store/services/resumeApi'
 import { ArrowRight, FileUp, GitCompare, LoaderCircle, RefreshCw, X } from 'lucide-react'
 
 type ResumeImportModalProps = {
   currentProfile: CandidateProfileData | null
   onClose: () => void
+  /** Called after a successful commit, before the modal closes. */
+  onCommitted?: () => void
 }
 
 function cleanText(value: string | null | undefined) {
@@ -67,12 +70,17 @@ function diffEntries(current: string[], next: string[]) {
   }
 }
 
-export default function ResumeImportModal({ currentProfile, onClose }: ResumeImportModalProps) {
+export default function ResumeImportModal({
+  currentProfile,
+  onClose,
+  onCommitted,
+}: ResumeImportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pollSequenceRef = useRef(0)
   const [previewFileName, setPreviewFileName] = useState('')
   const [draft, setDraft] = useState<ResumeImportProfileData | null>(null)
   const [targets, setTargets] = useState<Array<{ id: string; resume_name: string }>>([])
+  const [createResume] = useCreateResumeMutation()
   const [action, setAction] = useState<ResumeImportAction>('update_profile')
   const [resumeName, setResumeName] = useState('')
   const [selectedResumeId, setSelectedResumeId] = useState('')
@@ -262,11 +270,22 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
         data: draft,
       }).unwrap()
 
+      // A candidate with no resume yet needs one to apply: create it from the
+      // freshly imported profile instead of sending them to build it by hand.
+      if (action === 'update_profile' && targets.length === 0) {
+        try {
+          await createResume({ resume_name: 'My Resume', fork_from_profile: true }).unwrap()
+        } catch {
+          // Profile import still succeeded; the resume can be created later.
+        }
+      }
+
       notify.success(
         action === 'update_profile'
           ? 'Your profile was updated from the imported resume.'
           : 'Resume import applied successfully.',
       )
+      onCommitted?.()
       handleClose()
     } catch (commitError) {
       const parsed = parseApiError(commitError, {}, 'We could not apply that import right now.')

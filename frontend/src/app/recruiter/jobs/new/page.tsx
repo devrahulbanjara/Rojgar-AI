@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -91,7 +91,7 @@ const EMPTY_MANUAL_DRAFT: JobAIDraftPayload = {
   location_type: 'onsite',
   salary_min: null,
   salary_max: null,
-  currency: 'USD',
+  currency: 'NPR',
   status: 'draft',
   auto_shortlist: false,
   shortlist_threshold: 70,
@@ -282,12 +282,29 @@ export default function RecruiterJobAIDraftPage() {
     })
   }, [pageState.draft, pageState.draftId, pageState.dirtyFields, pageState.lockedFields])
 
+  // Poll every 2 s (the draft usually lands in 5-15 s), give up after 3 min,
+  // and ignore responses for a draft the user has already left.
+  const activeDraftIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    activeDraftIdRef.current = pageState.draftId
+  }, [pageState.draftId])
   useEffect(() => {
     if (pageState.status !== 'drafting' || !pageState.draftId) return
 
+    const pollingDraftId = pageState.draftId
+    let attempts = 0
+    let cancelled = false
     const interval = setInterval(async () => {
+      attempts += 1
+      if (attempts > 90) {
+        clearInterval(interval)
+        setPageState((prev) => ({ ...prev, loading: false, saving: false }))
+        notify.error('The AI draft is taking too long. Please try again.')
+        return
+      }
       try {
-        const response = await fetchDraft(pageState.draftId!).unwrap()
+        const response = await fetchDraft(pollingDraftId).unwrap()
+        if (cancelled || activeDraftIdRef.current !== pollingDraftId) return
         if (response.data.status === 'failed') {
           setPageState((prev) => ({ ...prev, loading: false, saving: false }))
           notify.error('AI draft generation failed. Please try again.')
@@ -298,11 +315,14 @@ export default function RecruiterJobAIDraftPage() {
           clearInterval(interval)
         }
       } catch {
-        // ignore polling errors
+        // transient polling errors: try again on the next tick
       }
-    }, 10000)
+    }, 2000)
 
-    return () => clearInterval(interval)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [pageState.draftId, pageState.status, fetchDraft, syncRouteWithDraftId])
 
   function handleFieldChange<K extends DraftField>(field: K, value: JobAIDraftPayload[K]) {
@@ -534,7 +554,7 @@ export default function RecruiterJobAIDraftPage() {
       }
 
       notify.success(`"${response.data.job.title}" was posted successfully.`)
-      router.push('/recruiter/jobs')
+      router.push(`/recruiter/jobs/${response.data.job.id}`)
     } catch (error) {
       setPageState((prev) => ({ ...prev, saving: false }))
       showApiToast(error, 'Unable to post this job right now.')
@@ -568,14 +588,18 @@ export default function RecruiterJobAIDraftPage() {
     }
   }
 
+  // "Write it myself" goes straight to an empty form: no extra "create" click.
+  const startedBlankRef = useRef(false)
+  useEffect(() => {
+    if (!isManualMode || draftIdFromUrl || pageState.draftId || startedBlankRef.current) return
+    startedBlankRef.current = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot draft creation
+    void handleStartBlank()
+  })
+
   const pageTitle = pageState.draftId
     ? pageState.draft?.title?.trim() || 'Untitled job'
     : 'New job posting'
-  const pageSubtitle = pageState.draftId
-    ? 'Edit any field, lock what should stay, then publish when it looks right.'
-    : isManualMode
-      ? 'Start a blank draft and write the job description yourself.'
-      : 'Describe the role and AI will draft the job posting for you.'
 
   return (
     <div className={`dash-content container container--app-shell ${styles.page}`}>
@@ -587,11 +611,10 @@ export default function RecruiterJobAIDraftPage() {
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">{pageTitle}</h2>
-          <p className="dash-page-header__subtitle">{pageSubtitle}</p>
         </div>
         <div className="dash-page-header__actions">
           <span className="page-header-hint">
-            {pageState.draftId ? 'Draft saved' : isBusy ? 'Working…' : 'Not started'}
+            {pageState.draftId ? 'Draft saved' : isBusy ? 'Working…' : null}
           </span>
         </div>
       </div>
@@ -663,10 +686,6 @@ export default function RecruiterJobAIDraftPage() {
       ) : !isThinking && !pageState.draftId ? (
         <section className={styles.startBlank}>
           <h2 className={styles.startBlankTitle}>Start a blank draft</h2>
-          <p className={styles.startBlankCopy}>
-            We&apos;ll create an empty draft so you can fill in the title, description, and
-            requirements field by field. You can switch to AI assistance any time.
-          </p>
           <button
             type="button"
             className="btn btn--primary"

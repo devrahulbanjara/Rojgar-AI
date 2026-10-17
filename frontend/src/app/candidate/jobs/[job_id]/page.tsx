@@ -140,6 +140,11 @@ export default function JobDetailPage() {
   const params = useParams()
   const jobId = params.job_id as string
   const [applying, setApplying] = useState(false)
+  // `?apply=1` (from a public job link, preserved through login/signup) opens
+  // the apply modal straight away so the candidate never re-finds the button.
+  const [autoApply, setAutoApply] = useState(
+    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('apply'),
+  )
 
   const { data: resp, isLoading, isError, refetch } = useGetJobByIdQuery(jobId)
   const job: JobDetail | undefined = resp?.data
@@ -468,11 +473,14 @@ export default function JobDetailPage() {
         )}
       </div>
 
-      {applying && (
+      {(applying || (autoApply && isActive && !hasApplied)) && (
         <ApplyModal
           jobId={job.id}
           jobTitle={job.title}
-          onClose={() => setApplying(false)}
+          onClose={() => {
+            setApplying(false)
+            setAutoApply(false)
+          }}
           onSuccess={() => {
             void refetch()
           }}

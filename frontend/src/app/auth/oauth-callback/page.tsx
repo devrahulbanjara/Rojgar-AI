@@ -5,15 +5,25 @@ import { Suspense, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { notify } from '@/lib/notify'
-import { getRoleDashboard } from '@/lib/roleRoutes'
+import { consumePostAuthRedirect, getRoleDashboard } from '@/lib/roleRoutes'
 import { useAppDispatch } from '@/store/hooks'
-import { setCredentials } from '@/store/slices/authSlice'
-import type { AuthUser } from '@/store/slices/authSlice'
+import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
+import { clearCredentials, setCredentials } from '@/store/slices/authSlice'
 
+/**
+ * Google OAuth landing page.
+ *
+ * The backend sets the HttpOnly refresh cookie and redirects here. Tokens or
+ * user objects in the URL are deliberately ignored: trusting them allows login
+ * CSRF (an attacker's token planted in a victim's browser) and leaks tokens via
+ * history and Referer. The session is established from the cookie instead.
+ */
 function OAuthCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useAppDispatch()
+  const [refreshToken] = useRefreshMutation()
+  const [triggerGetMe] = useLazyGetMeQuery()
   const handled = useRef(false) // prevent double-fire in React Strict Mode
 
   useEffect(() => {
@@ -21,7 +31,6 @@ function OAuthCallbackInner() {
     handled.current = true
 
     async function handleCallback() {
-      const accessToken = searchParams.get('access_token')
       const errorParam = searchParams.get('error')
       const actionParam = searchParams.get('action')
       const setupToken = searchParams.get('setup_token')
@@ -37,54 +46,34 @@ function OAuthCallbackInner() {
         return
       }
 
-      if (errorParam || !accessToken) {
-        notify.error('Google sign-in failed. Please try again.')
-        router.replace(`/login?error=${errorParam ?? 'oauth_failed'}`)
+      if (errorParam) {
+        router.replace(`/login?error=${encodeURIComponent(errorParam)}`)
         return
       }
 
       try {
-        const userParam = searchParams.get('user')
-        let user: AuthUser | null = null
-        if (userParam) {
-          try {
-            user = JSON.parse(decodeURIComponent(userParam)) as AuthUser
-          } catch {
-            /* ignore malformed param, will fetch below */
-          }
-        }
+        const refreshed = await refreshToken().unwrap()
+        const accessToken = refreshed.data?.access_token
+        if (!refreshed.success || !accessToken) throw new Error('no session')
 
-        if (!user) {
-          const res = await fetch('/api/auth/me', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          })
-          const json = await res.json()
-          if (json?.success && json?.data) {
-            user = json.data as AuthUser
-          }
-        }
-
-        if (!user) {
-          notify.error('Could not load your profile. Please try again.')
-          router.replace('/login?error=oauth_failed')
-          return
-        }
+        const me = await triggerGetMe().unwrap()
+        const user = me.data
+        if (!me.success || !user) throw new Error('no user')
 
         dispatch(setCredentials({ accessToken, user }))
-
         notify.success(`Welcome, ${user.full_name}!`)
-        router.replace(getRoleDashboard(user.primary_role))
+        router.replace(consumePostAuthRedirect() ?? getRoleDashboard(user.primary_role))
       } catch {
-        notify.error('Something went wrong during sign-in. Please try again.')
+        dispatch(clearCredentials())
         router.replace('/login?error=oauth_failed')
       }
     }
 
-    handleCallback()
-  }, [searchParams, dispatch, router])
+    void handleCallback()
+  }, [searchParams, dispatch, router, refreshToken, triggerGetMe])
 
   return (
-    <main
+    <div
       style={{
         minHeight: '100dvh',
         display: 'flex',
@@ -109,7 +98,7 @@ function OAuthCallbackInner() {
       />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>Completing sign-in…</p>
-    </main>
+    </div>
   )
 }
 

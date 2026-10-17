@@ -2,8 +2,10 @@
 
 import { useCallback } from 'react'
 
-import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+
+import { notify } from '@/lib/notify'
+import { useGetMyCompanyQuery } from '@/store/services/companyApi'
 
 import AuditPanel from './_components/AuditPanel'
 import RecruitersPanel from './_components/RecruitersPanel'
@@ -25,6 +27,20 @@ export default function RecruiterTeamPage() {
     ? (param as TeamTab)
     : 'recruiters'
 
+  const { data: companyResp } = useGetMyCompanyQuery()
+  const companyName = companyResp?.data?.name
+
+  async function copyInviteLink() {
+    if (!companyName) return
+    const link = `${window.location.origin}/signup?join=${encodeURIComponent(companyName)}`
+    try {
+      await navigator.clipboard.writeText(link)
+      notify.success('Invite link copied.')
+    } catch {
+      window.prompt('Copy this invite link:', link)
+    }
+  }
+
   const setTab = useCallback(
     (tab: TeamTab) => {
       const params = new URLSearchParams(searchParams.toString())
@@ -39,15 +55,17 @@ export default function RecruiterTeamPage() {
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Team</h2>
-          <p className="dash-page-header__subtitle">
-            Manage recruiters in your company and review the activity log.
-          </p>
         </div>
         {activeTab === 'recruiters' ? (
           <div className="dash-page-header__actions">
-            <Link href="/recruiter/company/settings" className="btn btn--primary btn--sm">
-              Invite recruiter
-            </Link>
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              disabled={!companyName}
+              onClick={() => void copyInviteLink()}
+            >
+              Copy invite link
+            </button>
           </div>
         ) : null}
       </div>

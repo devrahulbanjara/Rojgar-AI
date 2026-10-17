@@ -9,6 +9,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { applyFieldErrors, parseApiError } from '@/lib/apiError'
 import { notify } from '@/lib/notify'
 import {
+  consumePostAuthRedirect,
+  getSafeRedirect,
+  rememberPostAuthRedirect,
+} from '@/lib/roleRoutes'
+import {
   initiateGoogleOAuth,
   useGoogleRegisterMutation,
   useSignupMutation,
@@ -290,6 +295,7 @@ function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isOAuth = searchParams.get('oauth') === 'true'
+  const nextUrl = getSafeRedirect(searchParams.get('next'))
   const setupToken = searchParams.get('setup_token') || ''
   let userInfo: { email?: string; full_name?: string } = {}
   try {
@@ -331,17 +337,32 @@ function SignupContent() {
     description: '',
   })
 
-  const [joinCompanyName, setJoinCompanyName] = useState('')
+  // Invite links (/signup?join=<company>) prefill the company and skip the
+  // "who are you" and "create or join" steps.
+  const invitedCompany = (searchParams.get('join') ?? '').trim().slice(0, 200)
+  // Pricing CTAs (/signup?role=company) skip the job-seeker/hiring choice.
+  const isCompanySignup = searchParams.get('role') === 'company'
+  const [joinCompanyName, setJoinCompanyName] = useState(invitedCompany)
   const [errors, setErrors] = useState<FormErrors>({})
   const passwordStrength = getPasswordStrength(creds.password)
   const [resendCooldown, setResendCooldown] = useState(0)
   const resendTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // The account is created before the company step. If that step fails (e.g.
+  // name taken), a retry must reuse the setup token instead of signing up
+  // again, which would fail with "email already registered" and strand them.
+  const pendingSetupTokenRef = useRef<{ role: string; token: string } | null>(null)
 
   useEffect(() => {
     return () => {
       if (resendTimerRef.current) clearInterval(resendTimerRef.current)
     }
   }, [])
+
+  // Keep the job the visitor clicked through email verification (new tab) and
+  // the first login, so they land back on it instead of a generic dashboard.
+  useEffect(() => {
+    rememberPostAuthRedirect(nextUrl)
+  }, [nextUrl])
 
   function startResendCooldown() {
     setResendCooldown(60)
@@ -377,7 +398,7 @@ function SignupContent() {
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
     } else {
-      setStep('intent')
+      setStep(invitedCompany ? 'join-company' : isCompanySignup ? 'company-choice' : 'intent')
     }
   }
 
@@ -390,7 +411,7 @@ function SignupContent() {
         }).unwrap()
 
         if (result.success) {
-          router.push('/candidate')
+          router.push(consumePostAuthRedirect() ?? '/candidate')
         } else {
           notify.error(result.message ?? 'Something went wrong. Please try again.')
         }
@@ -440,8 +461,13 @@ function SignupContent() {
     }
 
     try {
-      let finalSetupToken = ''
-      if (isOAuth) {
+      let finalSetupToken =
+        pendingSetupTokenRef.current?.role === 'recruiter_admin'
+          ? pendingSetupTokenRef.current.token
+          : ''
+      if (finalSetupToken) {
+        // Account already created on a previous attempt.
+      } else if (isOAuth) {
         const signupResult = await googleRegister({
           signup_token: setupToken,
           primary_role: 'recruiter_admin',
@@ -475,6 +501,7 @@ function SignupContent() {
         }
         finalSetupToken = signupResult.data.setup_token
       }
+      pendingSetupTokenRef.current = { role: 'recruiter_admin', token: finalSetupToken }
 
       await registerCompany({
         setup_token: finalSetupToken,
@@ -513,8 +540,11 @@ function SignupContent() {
     }
 
     try {
-      let finalSetupToken = ''
-      if (isOAuth) {
+      let finalSetupToken =
+        pendingSetupTokenRef.current?.role === 'recruiter' ? pendingSetupTokenRef.current.token : ''
+      if (finalSetupToken) {
+        // Account already created on a previous attempt.
+      } else if (isOAuth) {
         const signupResult = await googleRegister({
           signup_token: setupToken,
           primary_role: 'recruiter',
@@ -541,6 +571,7 @@ function SignupContent() {
         }
         finalSetupToken = (data as { setup_token: string }).setup_token
       }
+      pendingSetupTokenRef.current = { role: 'recruiter', token: finalSetupToken }
 
       await requestJoinCompany({
         setup_token: finalSetupToken,
@@ -599,7 +630,7 @@ function SignupContent() {
   return (
     <main className="auth">
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={700}
         height={700}
@@ -608,7 +639,7 @@ function SignupContent() {
         priority={false}
       />
       <Image
-        src="/bg/bg-ui-v5.svg"
+        src="/bg/bg-ui-v5.webp"
         alt=""
         width={650}
         height={650}
@@ -1166,7 +1197,10 @@ function SignupContent() {
         {/* Switch to login */}
         {(step === 'credentials' || step === 'intent') && (
           <p className="auth__switch">
-            Already have an account? <Link href="/login">Sign in</Link>
+            Already have an account?{' '}
+            <Link href={nextUrl ? `/login?next=${encodeURIComponent(nextUrl)}` : '/login'}>
+              Sign in
+            </Link>
           </p>
         )}
       </div>
