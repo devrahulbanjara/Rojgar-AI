@@ -11,24 +11,26 @@ LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 # Rough public list prices (USD). Used for pre-run estimates and the running
 # budget; real provider invoices are the source of truth.
 PRICE = {
-    # Groq openai/gpt-oss-120b, per token
+    # Groq openai/gpt-oss-120b, per token (guardrail + full review)
     "groq_in": 0.15 / 1_000_000,
     "groq_out": 0.60 / 1_000_000,
+    # Groq openai/gpt-oss-20b, per token (cheap review pass)
+    "groq_small_in": 0.075 / 1_000_000,
+    "groq_small_out": 0.30 / 1_000_000,
     # Gemini embedding, per token
     "embed_in": 0.15 / 1_000_000,
-    # Bedrock Claude Sonnet 4.6 / Haiku 4.5, per token
-    "sonnet_in": 3.0 / 1_000_000,
-    "sonnet_out": 15.0 / 1_000_000,
-    "haiku_in": 1.0 / 1_000_000,
-    "haiku_out": 5.0 / 1_000_000,
 }
 
 # Per-call estimates (USD) used before we have real usage numbers.
 EST = {
     "embedding": 700 * PRICE["embed_in"],
     "guardrail": 1_400 * PRICE["groq_in"] + 600 * PRICE["groq_out"],
-    "gap_analysis": 2_600 * PRICE["groq_in"] + 1_500 * PRICE["groq_out"],
-    "shortlisting": 0.07,
+    # Cheap pass + full evidence review (upper bound; implausible applicants
+    # stop after the cheap pass).
+    "review": 2_500 * PRICE["groq_small_in"]
+    + 400 * PRICE["groq_small_out"]
+    + 2_500 * PRICE["groq_in"]
+    + 600 * PRICE["groq_out"],
 }
 
 CONFIRM_ABOVE_USD = 0.50

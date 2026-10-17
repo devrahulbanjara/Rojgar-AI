@@ -43,15 +43,20 @@ def main(argv: list[str] | None = None) -> None:
         "--no-cross", action="store_true", help="skip off-target (borderline) pairings"
     )
     f.add_argument(
-        "--with-llm", action="store_true", help="also run gap-analysis + stage-2 review"
+        "--nontech",
+        type=int,
+        default=5,
+        help="non-tech base cases (nurse, cashier, driver, teller, Nepali-answers cook)",
     )
-    f.add_argument("--llm-bases", type=int, default=2)
-    f.add_argument("--review-bases", type=int, default=1)
+    f.add_argument(
+        "--with-llm", action="store_true", help="also run the live Groq review"
+    )
+    f.add_argument("--llm-bases", type=int, default=1)
     f.add_argument("--repeats", type=int, default=2)
     common_cost(f)
 
     r = sub.add_parser(
-        "redteam", help="adversarial resumes vs guardrail + ML (in-process)"
+        "redteam", help="adversarial CVs vs injection rail + review (in-process)"
     )
     r.add_argument("--repeats", type=int, default=2)
     r.add_argument("--with-llm", action="store_true")
@@ -71,7 +76,7 @@ def main(argv: list[str] | None = None) -> None:
     ld.add_argument(
         "--mutate",
         action="store_true",
-        help="recruiters change+restore an application status",
+        help="recruiters decide + undo (shortlist then undo) on applications",
     )
     ld.add_argument(
         "--login-sample",
@@ -163,9 +168,9 @@ def main(argv: list[str] | None = None) -> None:
                 fairness.run(
                     bases=args.bases,
                     cross=not args.no_cross,
+                    nontech=args.nontech,
                     with_llm=args.with_llm,
                     llm_bases=args.llm_bases,
-                    review_bases=args.review_bases,
                     repeats=args.repeats,
                     yes=args.yes,
                     max_cost=args.max_cost,

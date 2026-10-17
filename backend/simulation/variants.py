@@ -23,7 +23,7 @@ class Variant:
     group: str
     label: str
     applicant_name: str
-    resume: dict
+    resume: dict | None
     is_reference: bool = False
 
 
@@ -36,7 +36,10 @@ def _shift_years(d: date | None, years: int) -> date | None:
         return d.replace(year=d.year + years, day=28)
 
 
-def _with(resume: dict, fn: Callable[[dict], None]) -> dict:
+def _with(resume: dict | None, fn: Callable[[dict], None]) -> dict | None:
+    """Apply one change to a copy; answers-only cases (no CV) stay None."""
+    if resume is None:
+        return None
     out = copy.deepcopy(resume)
     fn(out)
     return out
@@ -91,7 +94,7 @@ def _gap(disclose: bool):
             r["summary"] = (
                 (r.get("summary") or "")
                 + f" I took a two-year career break ({year - 2}–{year}) for family caregiving"
-                " and returned to full-time engineering work."
+                " and returned to full-time work."
             )
 
     return fn
@@ -102,7 +105,7 @@ def _yoe_missing(r: dict) -> None:
 
 
 def build_variants(
-    base_resume: dict, base_name: str, *, seed: int = 7
+    base_resume: dict | None, base_name: str, *, seed: int = 7
 ) -> list[Variant]:
     """All single-attribute counterfactuals for one base resume."""
     rng = random.Random(seed)

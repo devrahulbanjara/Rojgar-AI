@@ -172,29 +172,38 @@ async def recruiter_journey(c: Client, rng: random.Random, mutate: bool) -> None
         return
     pick = rng.choice(items)
     app_id = pick.get("latest_application_id") or pick.get("application_id")
+    job_id = pick.get("primary_job_id")
     if not app_id:
         return
+    if job_id:
+        await c.call(
+            "GET /recruiter/v2/jobs/{id}/pipeline",
+            "GET",
+            f"/recruiter/v2/jobs/{job_id}/pipeline",
+        )
     await c.call(
-        "GET /applications/company/me/candidates/{id}",
+        "GET /recruiter/v2/applications/{id}",
         "GET",
-        f"/applications/company/me/candidates/{app_id}",
+        f"/recruiter/v2/applications/{app_id}",
     )
     if mutate:
-        original = pick.get("latest_status") or pick.get("status")
-        target = "shortlisted" if original != "shortlisted" else "rejected"
+        # Decide, then undo inside the window: nothing is emailed, stage restored.
+        action = "shortlist" if pick.get("latest_stage") == "new" else "reject"
         r = await c.call(
-            "PATCH /applications/{id}/status",
-            "PATCH",
-            f"/applications/{app_id}/status",
-            json={"status": target},
+            "POST /recruiter/v2/decide",
+            "POST",
+            "/recruiter/v2/decide",
+            json={"action": action, "application_ids": [app_id]},
         )
-        if r is not None and r.status_code == 200 and original:
-            await c.call(
-                "PATCH /applications/{id}/status (restore)",
-                "PATCH",
-                f"/applications/{app_id}/status",
-                json={"status": original},
-            )
+        if r is not None and r.status_code == 200:
+            event_ids = r.json()["data"].get("undo_event_ids") or []
+            if event_ids:
+                await c.call(
+                    "POST /recruiter/v2/undo",
+                    "POST",
+                    "/recruiter/v2/undo",
+                    json={"event_ids": event_ids},
+                )
 
 
 async def mint_tokens(db_name: str) -> dict[str, list[str]]:
