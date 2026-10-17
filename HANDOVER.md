@@ -1,0 +1,175 @@
+# Rojgar AI — handover (2026-10-17)
+
+Everything below is what was asked for in the revamp session, what is done, what is in flight, and exactly how to finish it.
+
+## Where things are
+
+- **Main code:** `~/Documents/Rojgar-AI`, branch `production-hardening`, pushed to `github.com/devrahulbanjara/Rojgar-AI`. `main` is untouched (it is probably what Vercel deploys).
+- **Unfinished work** sits on 4 branches, each with its own folder next to the main one. The agents were told to commit their WIP before stopping.
+
+| Folder / branch | What it is | State |
+|---|---|---|
+| `ConvexHire-wt-b1` / `wave/b1` | Data model v2: stages (new, shortlisted, interview, offer, hired, rejected, withdrawn), Review table with must-have checks + verified quotes, Event timeline, referrers ("suggest someone"), sector templates, quick add, CSV export, protected-ground filter, cheap triage review, non-tech Nepal seed data | In progress; check `git log` + run tests before merging |
+| `ConvexHire-wt-b4` / `wave/b4` | People without global roles; business roles Owner / Manager / Interviewer; phone OTP sign-up; create business → pending → platform approval; invite-only teams; `/admin` panel (approvals, businesses, reports, payments) | In progress |
+| `ConvexHire-wt-f4` / `wave/f4` | Public side: Nepali/English toggle, phone-first apply, photo CVs, "suggest someone" page, QR poster, careers page, landing + pricing for small businesses, `/me/applications` shell fix | In progress |
+| `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | In progress |
+
+To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline production-hardening..HEAD` (same for b4, f4, f5).
+
+## How to merge the rest (in this order)
+
+1. `wave/b1` first: it changes the core tables everything else reads.
+2. Then `wave/b4`, `wave/f4`, `wave/f5`.
+3. For each: `cd ~/Documents/Rojgar-AI && git merge --no-ff wave/<name>`. Resolve conflicts by keeping both sides' intent. Deleted modules stay deleted (`recruiter_chat`, `job_ai`, recordings, Cal.com, resume gap).
+4. **Alembic:** after every merge run `cd backend && uv run alembic heads`. If there are two heads, set the newer branch's first migration's `down_revision` to the other head (that's how the earlier merges were done), then `uv run alembic upgrade head`.
+5. Run the gates (see Commands). Then push: `git push origin production-hardening`.
+6. After b1 merges, switch the adapters to the new API in one place each:
+   - `frontend/src/lib/api/recruiter.ts`: `CAPABILITIES` lists features waiting on b1 (notes, mark hired, withdraw, add candidate, referrers, templates, must-have checks).
+   - `backend/app/modules/assistant/context.py`: reads application status/score/strengths. Switch to `stage` / `Review.checks`; the docstring lists every field.
+   - `backend/app/modules/interviews/stage.py`: maps interview events to stages; switch to `stage` + Event.
+   - `backend/app/modules/dashboards/insights.py`: `_status_rank`, `_event_ranks`, `_first_decisions`, `WAITING_STATUSES`.
+7. Reseed the local demo: `cd backend && uv run python seed_data.py && uv run python scripts/seed_demo_refresh.py` (local-only; both refuse to touch production).
+
+## Small changes the owner asked for that are not done yet
+
+- **"Not now" → "Reject"** on the employer side: button label, keyboard R, bulk bar, stage chip "Rejected". Applicant-facing emails and SMS stay kind ("Not selected this time"). Files:
+  - `frontend/src/lib/api/recruiter.ts` (lines with `'Not now'`)
+  - `components/screens/job/useDecisions.ts`, `JobPage.tsx`, `DecisionButtons.tsx`
+  - `components/public/landing/ApplicantsPreview.tsx`
+  - The `wave/f5` branch also edits the job screens, so do this after merging f5.
+- **Jargon sweep** across UI, emails, SMS and backend notification titles. Banned words: outreach, scorecard, candidate, recruiter, organization, pipeline, AI screening, evaluation, ATS. Use the words in `docs/AGENT_BRIEF.md`. Find them with: `grep -rniE "outreach|scorecard|candidate|recruiter|pipeline|screening|evaluation" frontend/src backend/app --include=*.tsx --include=*.py` — check only user-visible strings, not identifiers.
+- **Repetition audit** on every page: no one-crumb breadcrumbs, no facts line repeating chips/tiles, no subtitle repeating the title, no card titled like its page.
+- **Persona audit after the fixes:** `cd backend && uv run python -m simulation fairness` and `... redteam`, then `load` against your own backend on port 8002. Compare with the baseline (before) numbers below.
+
+## Bigger items still to do
+
+1. **Dead-code sweep.** Run `npx knip` in `frontend/` and `uvx vulture app --min-confidence 80` in `backend/`. Delete what's truly unused. Remove the unused Python deps `langgraph-checkpoint-postgres`, `psycopg[binary]`, and `fastapi-limiter` if nothing imports it. Shrink `frontend/eslint.legacy.mjs` to empty by migrating the last legacy pages (legal pages, profile/settings partials) and delete their SCSS. Size now: 677 files, 8.5 MB (started at 956 files, 113 MB).
+2. **Docs.** `DESIGN.md` is done (Google design.md format; `npx @google/design.md@0.4.0 lint DESIGN.md` → 0 warnings). Still to write:
+   - `README.md` (what it is, local setup, commands, architecture)
+   - `AGENTS.md` (merge `docs/AGENT_BRIEF.md` into it: rules, voice, design system, async rule, commands)
+   - `CLAUDE.md` containing just `See AGENTS.md`
+   - Then delete `docs/AGENT_BRIEF.md`, `DOCUMENTATION.md`, `backend/README.md` and `frontend/AGENTS.md`. Fold `docs/RECRUITER_FLOW.md` and `docs/DESIGN_SYSTEM.md` into `AGENTS.md`/`DESIGN.md`, or keep them as the only two docs.
+3. **Payments.** eSewa / Khalti / Fonepay plus an IRD-format VAT bill (13%). Entitlements (plans, job passes, quotas) already exist; payments are recorded manually from `/admin` for now.
+4. **SMS in production:** set `SMS_PROVIDER=sparrow` plus the Sparrow token and sender. Locally SMS is only logged.
+5. **Pricing margin.** Prices give about NPR 8–10 revenue per reviewed applicant; worst-case cost is NPR 11–12. Make the triage review (b1) the default and cap SMS at 3 per applicant, so the average cost stays under about NPR 6.
+6. **Council report.** The critique as an expert debate, with evidence (findings are below). Publish it as a page once the merges are done.
+7. **Talk to 20 employers** (5 sectors × 4) before launch. Applicants per post, who decides and what they'd pay are not public anywhere.
+
+## Owner actions (only you can do these)
+
+- **Rotate every secret** pasted in chat: AWS (both keys), Supabase DB password, Gmail app password, Google OAuth secret, Groq, Gemini, Tavily, LlamaCloud, LangSmith, Upstash Redis, Qdrant.
+- **Dead keys:** the Bedrock shortlisting key is invalid (`InvalidClientTokenId`), and the LangSmith key returns 403.
+- **Groq:** the free tier (8k tokens/min, daily cap) is too small; AI features fail under light load. Move to Groq Dev tier or another provider.
+- **Vercel:** set `NEXT_PUBLIC_BACKEND_URL` (the deployed site called `http://localhost:8000`) and add the DNS record for the custom domain.
+- **Production env:**
+  - `TRUSTED_PROXY_HOPS=1` (behind Render)
+  - `ENVIRONMENT=prod`
+  - `STORAGE_BACKEND` empty (prod uses S3)
+  - the new scheduling, SMS and plan settings in `backend/.env.example`
+  - `CAL_WEBHOOK_SECRET` is no longer needed
+- **Git history:** `backend/credentials.json` (seeded accounts, password `Password@123`) is in old history. Purge it with `git filter-repo --path backend/credentials.json --invert-paths`, then force-push. This rewrites history, so do it consciously. Also delete or re-password any seeded accounts that exist in production.
+- **Before merging to `main`:** run migrations against production carefully. Two of them abort if emails or company names differ only by case.
+
+## Local setup (this machine)
+
+- No Docker access (user not in the `docker` group), so the session ran portable services. They were temporary and live in the session scratchpad, so they'll be gone. Alternatives:
+  - add yourself to the docker group and run `docker compose up -d` (test stack on 5433 / 6335 / 6380); or
+  - install Postgres 16 and Redis locally; Qdrant has a single binary on GitHub releases.
+- `backend/.env` must point at **local** stores (`DB_HOST=localhost`, `DB_PORT=5433`, `QDRANT_URL=http://localhost:6335`, `REDIS_ENABLED=false` or local Redis). Never use the production Supabase/Qdrant/Upstash for seeding or tests.
+- Run:
+  - backend: `cd backend && uv run alembic upgrade head && uv run uvicorn main:app --port 8000 --reload --reload-dir app`
+  - frontend: `cd frontend && npx -y pnpm@10 dev` (port 3000)
+- Logins (local seed, password `Password@123`):
+  - business member: `priya.maharjan@f1soft.com`
+  - business owner: `bikash.shrestha@f1soft.com`
+  - applicant: `aashish.basnet@gmail.com`
+  - after b4 merges, platform admin: `admin@rojgarai.app`
+- If Today looks empty on a later day: `cd backend && uv run python scripts/seed_demo_refresh.py`.
+
+## Commands (gates before every push)
+
+- Backend: `cd backend && REDIS_ENABLED=true uv run pytest -p no:cacheprovider -o addopts="" -q` (217 passing at handover), `uvx ruff@0.14.10 check` and `uvx ruff@0.14.10 format`.
+- Frontend: `cd frontend && npx tsc --noEmit && npx -y pnpm@10 lint && npx -y pnpm@10 build`.
+- Design file: `npx @google/design.md@0.4.0 lint DESIGN.md`.
+
+## Product decisions made in this session (keep them)
+
+- **Who it's for:** small and medium NON-tech businesses in Nepal (hotels, clinics, schools, shops, banks, factories), often with no online presence, hiring through people they know. All job types, not just IT.
+- **Hybrid model:** one apply link per job (LinkedIn "apply on external site", Facebook, Viber, Merojob, QR poster). Applicants need no account (CV optional, phone-first) and can sign in with a magic link to see their applications. No job board, no resume builder, no gap analysis, no candidate pricing. Job seekers never pay.
+- **"AI assists. You decide."** AI reviews against the job's must-haves with quotes; it never rejects or moves anyone. No AI interview scoring and no recordings (Whisper removed). Interviews are judged by people ("How did it go?" notes).
+- **Words:** Business, Team (Owner, Manager, Interviewer), Job, Applicant, "Suggest someone you know". Nepali equivalents are in `docs/AGENT_BRIEF.md`. Avoid "सिफारिस".
+- **Pricing (+13% VAT):** first job free · Job Pass NPR 999 per job · Job Pass Plus NPR 2,499 · Team NPR 3,499/month · Business NPR 9,999/month · volume hiring NPR 8 per review · top-up NPR 1,000 per 100 reviews. Later: paid "Boost" (SMS a job to matched job seekers) as the growth engine.
+- **Design:**
+  - Manrope (headings and numbers) + DM Sans (text) + Noto Sans Devanagari fallback.
+  - Indigo `#4338CA` on cool neutrals.
+  - The AI gradient (indigo → blue → cyan → teal) only while AI works: glow, sparkle, shimmer, asymmetric spinner.
+  - Phosphor icons through `src/components/icons.ts` only.
+  - shadcn/ui + Tailwind v4.
+  - Every UI piece is built once, and lint enforces it.
+  - No filler text, no repetition, fewest steps.
+  - Logo: `components/app/Logo` (`mark` / `full`) and `public/brand/*.svg`.
+
+## Evidence for the council report
+
+- **Persona audit, baseline (before fixes).** Raw reports are not in the repo; rerun the harness to regenerate them.
+  - An ML score cliff at similarity 0.70: changing only the college name flipped 19 → 78.
+  - Blank years of experience flipped 75% of shortlisted applicants to rejected.
+  - Senior (20+ years) applicants lost about 15 points.
+  - Zero-width hidden text passed the guardrail.
+  - Guardrail failed open on Groq 429.
+  - 33% errors at 200 users (5-connection DB pool).
+  - The login rate limit was one global bucket.
+- **Chatbot, before:**
+  - 78 s, then a raw 429 error.
+  - "Below 50" read as age.
+  - Listed all interviews as "today".
+  - Hallucinated a rejection reason.
+  - "What should I do today?" → "unprofessional request".
+  - Rebuilt: 6,076 → 1,342 lines, about 1 s per answer, quotes verified in code.
+- **Security fixes merged:**
+  - Unauthenticated Cal webhook.
+  - Email-verification bypass for business accounts.
+  - Profile IDOR.
+  - Audit log leaking IPs.
+  - Deleted accounts could still log in.
+  - The model file was missing from the Docker image, so production likely shortlisted everyone.
+  - OAuth token in the URL.
+  - Next.js critical CVEs.
+  - 13 MB background images.
+  - Fabricated "12,000+ job seekers" stats and fake partner logos.
+  - CI that skipped all tests.
+- **Market:**
+  - 73–75% of Nepali establishments have 1–2 people.
+  - Referrals ("afno manchhe") dominate.
+  - Merojob, Kumari Job, RigoJobs and Fusemachines all launched AI screening in 2024–26, so differentiate on all job types, phone/SMS, per-job price, evidence quotes and any channel.
+  - Facebook was blocked in Sept 2025, so don't depend on one channel.
+  - Sources are in the research notes (Kathmandu Post, DataReportal 2026, NEC2018, Nepal Labour Act s.6, Privacy Act 2075).
+
+## Agent status at stop (exact)
+
+- **wave/b4 (HEAD 4da446e3):**
+  - Backend done, 247 tests passing: migration 448c86788f39 (roles), OTP, businesses, invites, `/admin` API, reports, verified flag, admin seed + `scripts/make_platform_admin.py`.
+  - Frontend about half done; **tsc fails**. Next:
+    - LoginForm/SignupForm with phone code first; route with `homePathFor`.
+    - Rebuild TeamView (members, roles, remove with undo, invite links).
+    - AuditView should use `useGetTeamQuery(active_business.business_id)`.
+    - Remove join requests from TodayView and `dashboardApi`.
+    - ProfileSettings: `user.email ?? ''`.
+    - New pages `/start`, `/invite/[token]`, `/admin` (Approvals, Businesses, Reports, Payments).
+    - Verified badge + "Report this job" on the public job page; add `/admin` and `/start` to `proxy.ts`.
+    - Gates.
+- **wave/f4 (HEAD a83def6a):**
+  - Done: i18n EN/नेपाली (`lib/i18n`), `/me` frame fix, landing rewrite (Unsplash-licence portraits), phone-first apply with photo CVs, suggest-someone, A4 QR poster, careers, status. Backend 218 passing; tsc and lint pass; **`next build` not run**.
+  - Before merging:
+    - Phone-only apply needs b1's nullable `users.email`.
+    - `job_suggestions` overlaps b1's `JobReferrer` — keep one.
+    - Switch `notify_applicant` to b2's `send_sms`.
+    - Move the public module from `status` to b1's `stage`/Review.
+    - The SMS status link needs a short link (the current token takes 3+ SMS).
+- **wave/f5 (HEAD 6663ec04, WIP, does not build):**
+  - Done: Viber/WhatsApp marks in `icons.ts`, `Hint` tooltip, `ContactButtons`, collapsible `AskBox`.
+  - Next:
+    - Finish the `CandidatePanel` rewrite (fixes the broken `CallButtons` import): header + facts line, must-have accordion, CV summary + "Show CV", skills +N, answers 2 + "Show all", Activity footer, sticky mobile bar.
+    - `CandidateCard` one-line rows; move the keyboard hint into a tooltip.
+    - Gates and screenshots (`scratchpad/pw/shot.cjs` is temporary — write a new one).
+- **wave/b1:** check `git log`; its report hadn't arrived at stop time. Run the full suite before merging.
