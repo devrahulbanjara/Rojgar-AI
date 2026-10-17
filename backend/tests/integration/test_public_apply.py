@@ -11,10 +11,11 @@ from sqlalchemy import func, select
 
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.storage.service import storage_service
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, Review
 from app.modules.auth.models import User
 from app.modules.public import notify
 from app.modules.public.cv_text import PHOTO_NOT_READ
+from app.modules.jobs.models import JobReferrer
 from app.modules.public.models import JobSuggestion, MagicLinkToken
 from app.modules.public.tokens import hash_magic_token
 from app.modules.resumes.models import Resume
@@ -273,7 +274,11 @@ class TestGuestApply:
         application = await db.scalar(
             select(Application).where(Application.job_id == job.id)
         )
-        assert application.ai_flag_reason == PHOTO_NOT_READ
+        review = await db.scalar(
+            select(Review).where(Review.application_id == application.id)
+        )
+        assert review.state == "needs_person"
+        assert review.flag_reason == PHOTO_NOT_READ
         resume = await db.get(Resume, application.resume_id)
         assert resume.cv_file_key == "private/cvs/test.png"
         assert resume.summary is None
@@ -289,8 +294,7 @@ class TestGuestApply:
         application = await db.scalar(
             select(Application).where(Application.job_id == job.id)
         )
-        resume = await db.get(Resume, application.resume_id)
-        assert resume.cv_file_key is None
+        assert application.resume_id is None
         assert texts[0]["to"] == "+9779812345678"
         assert "/applications/status?token=" in texts[0]["text"]
 
@@ -304,14 +308,11 @@ class TestGuestApply:
         _, company = await make_recruiter_admin(db, email="a15@test.com")
         job = await make_active_job(db, company.id)
         resp = await _apply(client, job.slug, email=None)
-        if User.__table__.c.email.nullable:
-            assert resp.status_code == 201, resp.text
-            assert resp.json()["data"]["email"] is None
-            assert outbox == [] and len(texts) == 1
-        else:
-            # Until users.email is nullable (wave/b1), ask for an email instead.
-            assert resp.status_code == 422
-            assert "email" in resp.text
+        assert resp.status_code == 201, resp.text
+        assert resp.json()["data"]["email"] is None
+        assert outbox == [] and len(texts) == 1
+        user = await db.scalar(select(User).where(User.phone == "+9779812345678"))
+        assert user.email is None
 
     async def test_consent_is_required(self, client, db, outbox):
         _, company = await make_recruiter_admin(db, email="a5@test.com")
@@ -365,7 +366,6 @@ class TestGuestApply:
 
     async def test_flagged_cv_is_quarantined_not_blocked(self, client, db, outbox):
         from app.infrastructures.guardrails.service import GuardrailResult
-        from app.modules.applications.models import Review
         from app.modules.review.reviewer import FakeReviewer
         from app.modules.review.service import review_application
 
@@ -390,7 +390,7 @@ class TestGuestApply:
         await db.refresh(application)
         assert application.stage.value == "new"
 
-    async def test_apply_with_phone_only_and_no_cv(self, client, db, outbox):
+    async def test_apply_with_phone_only_and_no_cv(self, client, db, outbox, texts):
         _, company = await make_recruiter_admin(db, email="a12@test.com")
         job = await make_active_job(
             db,
@@ -416,7 +416,9 @@ class TestGuestApply:
             },
         )
         assert resp.status_code == 201, resp.text
-        assert resp.json()["data"]["status_link_sent"] is False
+        # No email: the status link goes by SMS only.
+        assert resp.json()["data"]["status_link_sent"] is True
+        assert [t["to"] for t in texts] == ["+9779841234567"]
         application = await db.scalar(
             select(Application).where(Application.job_id == job.id)
         )
@@ -427,18 +429,20 @@ class TestGuestApply:
         ]
         assert outbox == []
 
-    async def test_phone_or_email_is_required(self, client, db, outbox):
+    async def test_phone_is_required(self, client, db, outbox):
         _, company = await make_recruiter_admin(db, email="a13@test.com")
         job = await make_active_job(db, company.id)
         resp = await client.post(
             f"/public/jobs/{job.slug}/applications",
-            data={"full_name": "No Contact", "consent": "true"},
+            data={
+                "full_name": "No Phone",
+                "email": "no.phone@example.com",
+                "consent": "true",
+            },
         )
-        assert resp.status_code == 422
+        assert resp.status_code == 400  # missing form field
 
     async def test_referral_link_marks_the_source(self, client, db, outbox):
-        from app.modules.jobs.models import JobReferrer
-
         _, company = await make_recruiter_admin(db, email="a14@test.com")
         job = await make_active_job(db, company.id)
         referrer = JobReferrer(job_id=job.id, name="Sita didi", token="sitadidi01")
@@ -615,6 +619,8 @@ class TestSuggestSomeone:
         assert application.source == "referral"
         await db.refresh(suggestion)
         assert suggestion.application_id == application.id
+        referrer = await db.get(JobReferrer, application.referrer_id)
+        assert referrer.name == "Ram Shrestha"
 
     async def test_own_number_and_bad_numbers_are_rejected(self, client, db, texts):
         _, company = await make_recruiter_admin(db, email="c2@test.com")

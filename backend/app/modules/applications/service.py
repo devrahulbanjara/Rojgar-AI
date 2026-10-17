@@ -216,12 +216,14 @@ async def create_application(
     fields: dict[str, Any] | None = None,
     actor_user_id: uuid.UUID | None = None,
     referrer_id: uuid.UUID | None = None,
+    flag_reason: str | None = None,
 ) -> tuple[Application, ApplicationSyncEvent]:
     """Insert an application with its pending review and `applied` event.
 
     Every entry path uses this (signed-in apply, guest apply, recruiter quick
-    add, public recommendation). Caller commits, then schedules the review
-    with `schedule_review`.
+    add). Caller commits, then schedules the review with `schedule_review`.
+    ``flag_reason`` hands the review straight to a person (e.g. a CV photo
+    that can't be read).
     """
     application = Application(
         job_id=job.id,
@@ -234,7 +236,10 @@ async def create_application(
     )
     db.add(application)
     await db.flush()
-    ensure_review(db, application.id)
+    review = ensure_review(db, application.id)
+    if flag_reason:
+        review.state = ReviewState.needs_person.value
+        review.flag_reason = flag_reason
     payload: dict[str, Any] = {"source": source}
     if referrer_id is not None:
         payload["referrer_id"] = str(referrer_id)
@@ -265,18 +270,25 @@ async def create_application(
 
 
 def schedule_review(
-    bg_tasks: BackgroundTasks | None,
+    bg_tasks: BackgroundTasks,
     application_id: uuid.UUID,
     sync_event_id: uuid.UUID | None = None,
+    *,
+    review: bool = True,
 ) -> None:
-    """Queue the rolling review (and vector sync) after the response is sent."""
-    if bg_tasks is None or _in_tests():
+    """Queue the rolling review (and vector sync) after the response is sent.
+
+    ``review=False`` when another task runs the review itself (CV parsing
+    first, then the review).
+    """
+    if _in_tests():
         return
     from app.modules.review.service import review_application
 
     if sync_event_id is not None:
         bg_tasks.add_task(process_application_sync_event, sync_event_id)
-    bg_tasks.add_task(review_application, application_id)
+    if review:
+        bg_tasks.add_task(review_application, application_id)
 
 
 async def invalidate_after_new_application(job: Job, user_id: uuid.UUID, db) -> None:

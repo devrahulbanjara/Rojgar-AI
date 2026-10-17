@@ -164,7 +164,3 @@ class RecommendRequest(BaseSchema):
 
 class RecommendSent(BaseSchema):
     sent: bool = True
-
-
-# Backwards compatibility alias
-RecommendCreated = RecommendSent

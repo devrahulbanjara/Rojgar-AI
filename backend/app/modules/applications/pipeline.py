@@ -66,7 +66,7 @@ from app.modules.applications.service import (
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.models import User
-from app.modules.companies.models import Company
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job, JobReferrer
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeResponse
@@ -657,11 +657,17 @@ async def clear_flag(
 
 
 async def find_or_create_person(
-    db: AsyncSession, *, full_name: str, email: str | None, phone: str | None
+    db: AsyncSession,
+    *,
+    full_name: str,
+    email: str | None,
+    phone: str | None,
+    company_id: uuid.UUID,
 ) -> User:
-    """Person = User row. Matched by email, else by E.164 phone."""
-    from app.modules.auth.enums import UserRole
+    """Person = User row. Matched by email, else by E.164 phone.
 
+    The business's own team can't be added to (or apply for) its own jobs.
+    """
     user = None
     if email:
         user = await db.scalar(select(User).where(func.lower(User.email) == email))
@@ -673,17 +679,22 @@ async def find_or_create_person(
             email=email,
             phone=phone,
             password_hash=None,
-            primary_role=UserRole.candidate,
             is_email_verified=False,
             is_onboarded=True,
         )
         db.add(user)
         await db.flush()
         return user
-    if user.is_deleted or user.primary_role != UserRole.candidate:
+    is_member = await db.scalar(
+        select(CompanyMembership.id).where(
+            CompanyMembership.user_id == user.id,
+            CompanyMembership.company_id == company_id,
+        )
+    )
+    if user.is_deleted or is_member:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail="This contact belongs to a staff account. Use another email or phone.",
+            detail="Please use a different email or phone number.",
         )
     if phone and not user.phone:
         clash = await db.scalar(select(User.id).where(User.phone == phone))
@@ -718,7 +729,11 @@ async def quick_add(
 
     _company_id, job = await _company_job(db, user, job_id)
     person = await find_or_create_person(
-        db, full_name=form.full_name, email=email, phone=phone
+        db,
+        full_name=form.full_name,
+        email=email,
+        phone=phone,
+        company_id=job.company_id,
     )
     existing = await db.scalar(
         select(Application.id).where(
