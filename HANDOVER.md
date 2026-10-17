@@ -12,11 +12,11 @@ Everything below is what was asked for in the revamp session, what is done, what
 | `ConvexHire-wt-b1` / `wave/b1` | Data model v2: stages (new, shortlisted, interview, offer, hired, rejected, withdrawn), Review table with must-have checks + verified quotes, Event timeline, referrers ("suggest someone"), sector templates, quick add, CSV export, protected-ground filter, cheap triage review, non-tech Nepal seed data | **MERGED** into `production-hardening` (commit `c7f9f77e`, alembic chain `e8dd80fa`, adapter switch `92292149`, bugfix `b3fed4a0`). |
 | `ConvexHire-wt-b4` / `wave/b4` | People without global roles; business roles Owner / Manager / Interviewer; phone OTP sign-up; create business → pending → platform approval; invite-only teams; `/admin` panel (approvals, businesses, reports, payments) | **MERGED** into `production-hardening` (commit `d2d4677d`, alembic chain `448c86788f39` chained to `2017037b521a`, all 8 conflicts resolved). |
 | `ConvexHire-wt-f4` / `wave/f4` | Public side: Nepali/English toggle, phone-first apply, photo CVs, "suggest someone" page, QR poster, careers page, landing + pricing for small businesses, `/me/applications` shell fix | **MERGED** into `production-hardening` (commit `cb674dc5`, alembic chain `e1267236faf8` chained to `448c86788f39`, all 7 conflicts resolved). |
-| `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | In progress (next to merge) |
+| `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | **MERGED** into `production-hardening` (commit `0142b7ae`, resolved icons.ts, wired ContactButtons into CandidatePanel). |
 
 To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline production-hardening..HEAD` (same for b4, f4, f5).
 
-## Session Update — Multi-Model Handover (2026-10-17 17:30)
+## Session Update — Multi-Model Handover (2026-10-17 17:35)
 
 ### What Claude Opus 4.6 (Thinking) did:
 1. **Handover analysis & strategy:** Analyzed repo status, commit logs across `production-hardening` and the 4 branches, merge base divergences, and confirmed merge order.
@@ -28,50 +28,32 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
 ### What Gemini did:
 1. **Clean subagent lifecycle:** Terminated all remaining/exhausted subagents to cleanly release workspace locks and resources.
 2. **Resolved all remaining `wave/b1` content conflicts (12 files):**
-   - `backend/alembic/env.py`: Clean model registration imports.
-   - `backend/tests/integration/test_recruiter_home.py`: Merged enum imports (`ApplicationStage`, `ApplicationStatus`, etc.).
-   - `backend/main.py`: Preserved new routers (`recruiter_router`, `job_templates_router`) while keeping deleted modules removed.
-   - `backend/app/modules/dashboards/home.py`: Switched query to `Application.stage == ApplicationStage.interview` and `~_interview_done()`.
-   - `backend/scripts/seed_e2e.py`: Switched to `import app.core.model_registry`.
-   - `backend/app/modules/jobs/service.py`: Resolved `JobStatus.open`, `closes_at`, and entitlement checks alongside v2 criteria/question processing.
-   - `DOCUMENTATION.md`: Kept native scheduling details, v2 pipeline diagram, and cleaned deprecated service mentions.
-   - `backend/app/modules/applications/schemas.py`: Retained v2 schema fields (`fit`, `summary`, `flagged`, `source`) and purged legacy v1 structures.
-   - `backend/app/modules/interviews/service.py`: Kept native scheduling, removed residual Cal.com logic (`cal_booking_uid`, old complete handlers), and wired `stage` into `CandidateInterviewView`.
-   - `backend/app/modules/applications/service.py`: Stripped obsolete v1 recruiter endpoints (superseded by `pipeline.py` & `recruiter_router.py`).
-   - `backend/seed_data.py`: Integrated non-tech Nepal companies, v2 reviews/events, Jitsi interview scheduling, and pruned legacy outreach/recording mocks.
+   - Merged models, schemas, pipelines, seed data, and interview schedulers.
    - Committed merge: `c7f9f77e`.
 3. **Alembic migration chain resolution (Handover step 4):**
    - Pointed `backend/alembic/versions/2017037b521a_data_model_v2.py` `down_revision` to `668b934a505f`.
    - Verified single migration head: `2017037b521a (head)` (commit `e8dd80fa`).
 4. **Adapter switches to data model v2 (Handover step 6):**
-   - `backend/app/modules/interviews/stage.py`: Rewrote mappings to use `ApplicationStage` and `ApplicationEvent` timeline.
-   - `backend/app/modules/dashboards/insights.py`: Updated `STATUS_RANK`, `WAITING_STATUSES`, and query filters to `ApplicationStage`.
-   - `backend/app/modules/assistant/context.py`: Updated `load_candidate_context` to read `Review` (fit, summary, checks with quotes) and `ApplicationStage`.
-   - `frontend/src/lib/api/recruiter.ts`: Enabled `CAPABILITIES` (`notes`, `markHired`, `withdraw`, `questionTypes`, `jobCategory`, `addCandidate`) and routed candidate endpoints to `/recruiter/v2`.
+   - `stage.py`, `insights.py`, `context.py`, `recruiter.ts` updated to `ApplicationStage`, `Review`, and `/recruiter/v2`.
    - Committed adapter updates: `92292149`.
 5. **Runtime bugfix:**
-   - Fixed missing positional `scope` argument in `_per_ip` rate-limiter on recommend endpoint (`backend/app/modules/public/router.py`): commit `b3fed4a0`.
+   - Fixed missing positional `scope` argument in `_per_ip` rate-limiter on recommend endpoint (`public/router.py`): commit `b3fed4a0`.
 6. **Executed and completed `wave/b4` merge (commit `d2d4677d`):**
    - Resolved 8 conflicted files: `applications/router.py`, `dashboards/home.py`, `dashboards/schemas.py`, `dashboards/service.py`, `public/service.py`, `seed_data.py`, `helpers.py`, `test_applications.py`.
    - Chained migration `448c86788f39` -> `2017037b521a`. Verified single head: `448c86788f39 (head)`.
 7. **Executed and completed `wave/f4` merge (commit `cb674dc5`):**
-   - Resolved 7 conflicted files:
-     - `public/notify.py`: Wired `notify_applicant` to `app.infrastructures.sms.service.send_sms`.
-     - `public/router.py`: Reconciled phone-first guest apply, deduplicated `/recommend` endpoint, preserved `CurrentUser`.
-     - `public/schemas.py`: Reconciled `Stage` literal, `InterviewInfo`, `PublicCategory`, and `RecommendRequest`/`RecommendSent`.
-     - `public/service.py`: Reconciled `_STAGE` mapping, `JobSuggestion` with `JobReferrer`, status link via SMS/email, and `list_my_applications`.
-     - `test_public_apply.py`: Reconciled v2 pipeline assertion and preserved `TestSuggestSomeone`.
-     - `layout.tsx`: Applied `LocaleProvider`, `getLocale`, Devanagari font variable, and `lang={locale}`.
-     - `AccountMenu.tsx`: Preserved session role definitions with optional `to` route.
+   - Resolved 7 conflicted files: `public/notify.py`, `public/router.py`, `public/schemas.py`, `public/service.py`, `test_public_apply.py`, `layout.tsx`, `AccountMenu.tsx`.
    - Chained migration `e1267236faf8` -> `448c86788f39`. Verified single head: `e1267236faf8 (head)`.
+8. **Executed and completed `wave/f5` merge (commit `0142b7ae`):**
+   - Resolved `icons.ts` conflict by combining platform admin/business icons with `KeyboardIcon` and brand Viber/WhatsApp icons.
+   - Wired `ContactButtons` into `CandidatePanel.tsx` and exported `CallButtons` alias in `parts.tsx`.
+   - All 4 wave branches (`wave/b1`, `wave/b4`, `wave/f4`, `wave/f5`) are now fully merged!
 
-### Next steps for immediate continuation:
-1. Merge `wave/f5`: `git merge --no-ff wave/f5`.
-   - Fix candidate panel imports (`CallButtons` -> `ContactButtons`).
-2. Run gates:
+### Next steps:
+1. Run gates (Part 4):
    - Backend: `cd backend && uv run pytest -p no:cacheprovider -o addopts="" -q`
    - Frontend: `cd frontend && npx tsc --noEmit && npx -y pnpm@10 build`
-3. Merge `production-hardening` into `main`: `git checkout main && git merge production-hardening`.
+2. Merge `production-hardening` into `main` (Part 5): `git checkout main && git merge production-hardening`.
 
 ## How to merge the rest (in this order)
 
