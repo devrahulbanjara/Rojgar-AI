@@ -24,7 +24,6 @@ from app.modules.interviews.evaluation_models import (
 )
 from app.modules.interviews.models import Interview
 from app.modules.interviews.recording_model import InterviewRecording
-from app.modules.job_ai.models import JobAIDraft
 from app.modules.jobs.models import Job, JobSyncEvent
 from app.modules.notifications.models import Notification
 from app.modules.outreach.models import EmailDraft
@@ -35,7 +34,6 @@ from app.modules.profiles.models import (
     ProfileSkill,
     ResumeImportTask,
 )
-from app.modules.recruiter_chat.models import RecruiterChatSession
 from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.modules.resumes.models import (
     Resume,
@@ -4164,316 +4162,6 @@ LIVE_APPLICATIONS = [
     },
 ]
 
-AI_DRAFT_BLUEPRINTS = [
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "job-ai-platform-observability",
-        "status": "awaiting_human",
-        "mode": "create",
-        "source_prompt": "Create a backend platform reliability role focused on observability, internal tooling, and developer enablement.",
-        "locked_fields": ["location", "currency"],
-        "latest_draft": {
-            "title": "Senior Platform Reliability Engineer",
-            "location": "Kathmandu",
-            "location_type": LocationType.hybrid,
-            "salary_min": 130000,
-            "salary_max": 190000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 68,
-            "overview": "Own reliability tooling, internal platform APIs, and observability for high-throughput engineering teams.",
-            "responsibilities": [
-                "Improve production diagnostics and alerting quality",
-                "Build internal APIs and automation for developer teams",
-                "Partner with DevOps and backend leads on reliability goals",
-            ],
-            "requirements": [
-                "Strong Python backend experience",
-                "Hands-on observability and production support experience",
-                "Solid SQL and systems-debugging fundamentals",
-            ],
-            "preferred_qualifications": ["Experience in fintech or regulated products"],
-            "benefits": ["Hybrid work", "Health insurance", "Learning budget"],
-            "auto_shortlist": True,
-            "assumptions": [
-                "The role will work closely with the core payments team",
-                "The team prefers Kathmandu-based collaboration for at least part of the week",
-            ],
-            "missing_fields": [],
-            "warnings": ["On-call expectations should be confirmed before publishing."],
-        },
-        "salary_research": {
-            "role": "Senior Platform Reliability Engineer",
-            "country": "Nepal",
-            "currency": "NPR",
-            "recommended_min": 130000,
-            "recommended_max": 190000,
-            "confidence": "medium",
-            "rationale": "Comparable Kathmandu senior backend and DevOps roles cluster in the 1.3L to 1.9L NPR range.",
-            "sources": [
-                {
-                    "source_name": "Local hiring benchmark",
-                    "url": "https://example.com/salary-benchmark/platform-reliability",
-                    "country": "Nepal",
-                    "currency": "NPR",
-                    "quoted_min": 120000,
-                    "quoted_max": 185000,
-                    "notes": "Used as a directional market signal for senior platform roles.",
-                }
-            ],
-            "insufficient_evidence": False,
-        },
-        "assumptions": [
-            "Hiring manager wants a senior IC rather than a team lead",
-        ],
-        "warnings": ["Compensation should be validated before publishing."],
-        "missing_fields": [],
-    },
-    {
-        "company_index": 1,
-        "recruiter_slot": 1,
-        "thread_id": "job-ai-growth-engineer",
-        "status": "draft_saved",
-        "mode": "create",
-        "source_prompt": "Draft a growth engineer role for candidate acquisition funnels and experiment-driven product growth.",
-        "locked_fields": [],
-        "latest_draft": {
-            "title": "Growth Engineer",
-            "location": "Lalitpur",
-            "location_type": LocationType.remote,
-            "salary_min": 100000,
-            "salary_max": 155000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 65,
-            "overview": "Ship acquisition experiments, landing page improvements, and measurement loops that help grow candidate supply.",
-            "responsibilities": [
-                "Build growth experiments end to end",
-                "Instrument and analyze candidate funnel performance",
-                "Collaborate with product and marketing on iteration cycles",
-            ],
-            "requirements": [
-                "Strong product engineering instincts",
-                "Comfort with analytics and experimentation",
-                "Ability to move quickly with clear measurement",
-            ],
-            "preferred_qualifications": ["Marketplace or PLG experience"],
-            "benefits": ["Remote-first setup", "Health insurance", "Growth bonus"],
-            "auto_shortlist": False,
-            "assumptions": ["The role will report into product, not marketing."],
-            "missing_fields": ["Exact interview loop"],
-            "warnings": ["Success metrics should be finalized before publishing."],
-        },
-        "salary_research": None,
-        "assumptions": [
-            "This role will be measured primarily on conversion efficiency."
-        ],
-        "warnings": [
-            "Compensation band may need calibration against product engineering roles."
-        ],
-        "missing_fields": ["Hiring manager"],
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "job-ai-risk-analytics-lead",
-        "status": "awaiting_human",
-        "mode": "create",
-        "source_prompt": "Draft a senior risk analytics platform role for F1Soft's transaction monitoring, reconciliation, and finance reporting stack.",
-        "locked_fields": ["currency", "location"],
-        "latest_draft": {
-            "title": "Senior Risk Analytics Platform Engineer",
-            "location": "Kathmandu",
-            "location_type": LocationType.hybrid,
-            "salary_min": 155000,
-            "salary_max": 225000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 72,
-            "overview": "Build the data platform behind transaction monitoring, merchant risk analytics, and finance-grade reporting across payment operations.",
-            "responsibilities": [
-                "Own warehouse models and orchestration for risk and finance analytics",
-                "Improve quality, lineage, and stakeholder trust in operational datasets",
-                "Partner with product, finance, and risk teams on metric definitions",
-            ],
-            "requirements": [
-                "Strong SQL and Python data engineering background",
-                "Hands-on Airflow and dbt experience",
-                "Good product judgment when working with business metrics",
-            ],
-            "preferred_qualifications": [
-                "Fintech analytics or reconciliation experience"
-            ],
-            "benefits": ["Hybrid work", "Health insurance", "Quarterly bonus"],
-            "auto_shortlist": True,
-            "assumptions": [
-                "The role should sit between data platform and business analytics ownership."
-            ],
-            "missing_fields": ["Final reporting line"],
-            "warnings": [
-                "The panel may want to split this into platform and analytics tracks later."
-            ],
-        },
-        "salary_research": {
-            "role": "Senior Risk Analytics Platform Engineer",
-            "country": "Nepal",
-            "currency": "NPR",
-            "recommended_min": 155000,
-            "recommended_max": 225000,
-            "confidence": "medium",
-            "rationale": "Comparable fintech data platform roles in Kathmandu tend to cluster in the upper senior IC range.",
-            "sources": [
-                {
-                    "source_name": "Internal recruiter benchmark",
-                    "url": "https://example.com/salary-benchmark/data-platform-nepal",
-                    "country": "Nepal",
-                    "currency": "NPR",
-                    "quoted_min": 145000,
-                    "quoted_max": 220000,
-                    "notes": "Directional benchmark used during recruiter calibration.",
-                }
-            ],
-            "insufficient_evidence": False,
-        },
-        "assumptions": [
-            "Priya intends to keep this role senior IC rather than people-manager."
-        ],
-        "warnings": [
-            "Compensation needs final approval from finance before the role is published."
-        ],
-        "missing_fields": ["Hiring manager", "Interview panel"],
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "job-ai-merchant-platform-followup",
-        "status": "draft_saved",
-        "mode": "create",
-        "source_prompt": "Draft a follow-up backend role focused on merchant platform tooling, partner enablement, and operational integrations for F1Soft.",
-        "locked_fields": ["currency"],
-        "latest_draft": {
-            "title": "Backend Engineer (Merchant Platform Tooling)",
-            "location": "Kathmandu",
-            "location_type": LocationType.hybrid,
-            "salary_min": 135000,
-            "salary_max": 198000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 68,
-            "overview": "Build the internal APIs, onboarding workflows, and operational support tools that help F1Soft scale merchant integrations cleanly.",
-            "responsibilities": [
-                "Ship partner enablement APIs and merchant tooling improvements",
-                "Improve diagnostics and internal workflows for merchant operations teams",
-                "Collaborate with commercial and support stakeholders on integration quality",
-            ],
-            "requirements": [
-                "Strong backend API development experience",
-                "Comfort working across product and business-facing workflows",
-                "Good debugging and operational ownership instincts",
-            ],
-            "preferred_qualifications": ["Payments or merchant platform experience"],
-            "benefits": ["Hybrid work", "Health insurance", "Festival bonuses"],
-            "auto_shortlist": True,
-            "assumptions": [
-                "Priya intends this role to support the main merchant integrations team rather than replace it."
-            ],
-            "missing_fields": ["Hiring manager", "Final level calibration"],
-            "warnings": [
-                "This role overlaps with the existing merchant integrations opening and may need scope clarification."
-            ],
-        },
-        "salary_research": None,
-        "assumptions": [
-            "The role should be positioned as a platform extension role rather than a customer-facing integrations lead."
-        ],
-        "warnings": [
-            "The team should avoid opening this role until the current merchant integrations pipeline is resolved."
-        ],
-        "missing_fields": ["Approval status", "Team placement"],
-    },
-]
-
-CHAT_SESSION_BLUEPRINTS = [
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-payments-overview",
-        "title": "Backend hiring pipeline review",
-        "last_interaction_offset_hours": 4,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 1,
-        "thread_id": "recruiter-chat-frontend-salary-research",
-        "title": "Frontend compensation research",
-        "last_interaction_offset_hours": 26,
-    },
-    {
-        "company_index": 1,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-ai-role-summary",
-        "title": "AI engineer candidate search",
-        "last_interaction_offset_hours": 8,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-platform-calibration",
-        "title": "Platform reliability calibration notes",
-        "last_interaction_offset_hours": 2,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-merchant-shortlist-batch",
-        "title": "Merchant integrations shortlist batch",
-        "last_interaction_offset_hours": 6,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-risk-analytics-forecast",
-        "title": "Risk analytics hiring forecast",
-        "last_interaction_offset_hours": 12,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-offer-prep-nischal",
-        "title": "Offer prep for Nischal Kharel",
-        "last_interaction_offset_hours": 18,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-outreach-approval-queue",
-        "title": "Outreach approval queue review",
-        "last_interaction_offset_hours": 1,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-interview-reschedule-log",
-        "title": "Interview reschedule and follow-up log",
-        "last_interaction_offset_hours": 9,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-rejection-copy-notes",
-        "title": "Rejection copy and candidate notes",
-        "last_interaction_offset_hours": 14,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-eng-manager-panel-sync",
-        "title": "Engineering manager panel sync",
-        "last_interaction_offset_hours": 21,
-    },
-]
-
 RESUME_IMPORT_TASK_BLUEPRINTS = [
     {
         "candidate_index": 0,
@@ -5405,103 +5093,6 @@ async def seed_live_pipeline_data(
     print(f"  ✓ Interview recordings: {recording_counter}")
 
 
-def _seed_chat_history_message(
-    role: str,
-    content: str,
-    *,
-    hours_ago: int,
-    response_type: str | None = None,
-    data: dict | None = None,
-) -> dict:
-    return {
-        "role": role,
-        "content": content,
-        "created_at": (NOW - timedelta(hours=hours_ago)).isoformat(),
-        "response_type": response_type,
-        "data": data,
-    }
-
-
-def _build_chat_session_state(blueprint: dict) -> dict:
-    title = blueprint["title"].lower()
-    base_history = [
-        _seed_chat_history_message(
-            "user",
-            blueprint["title"],
-            hours_ago=blueprint["last_interaction_offset_hours"] + 2,
-        ),
-    ]
-
-    if "salary" in title or "compensation" in title:
-        base_history.append(
-            _seed_chat_history_message(
-                "assistant",
-                "I compiled the latest frontend compensation benchmark for Nepal and nearby remote markets.",
-                hours_ago=blueprint["last_interaction_offset_hours"],
-                response_type="salary_answer",
-                data={
-                    "role": "Frontend Engineer",
-                    "country": "Nepal",
-                    "currency": "NPR",
-                    "recommended_min": 1800000,
-                    "recommended_max": 2600000,
-                },
-            )
-        )
-    elif "edit" in title or "calibration" in title or "panel sync" in title:
-        base_history.append(
-            _seed_chat_history_message(
-                "assistant",
-                "I prepared a safe job update preview for review before anything is applied.",
-                hours_ago=blueprint["last_interaction_offset_hours"],
-                response_type="job_edit_preview",
-                data={
-                    "job_id": str(uuid.uuid4()),
-                    "job_title": "Platform Reliability Engineer",
-                    "summary": "Update the requirements and tighten the reliability ownership language.",
-                    "patch": {"title": "Senior Platform Reliability Engineer"},
-                    "diffs": [
-                        {
-                            "field": "title",
-                            "before": "Platform Reliability Engineer",
-                            "after": "Senior Platform Reliability Engineer",
-                        }
-                    ],
-                },
-            )
-        )
-    else:
-        base_history.append(
-            _seed_chat_history_message(
-                "assistant",
-                "Here is a company job query summary with the roles that need attention next.",
-                hours_ago=blueprint["last_interaction_offset_hours"],
-                response_type="job_list",
-                data={
-                    "total": 3,
-                    "counts": {"active": 2, "draft": 1, "expired": 0},
-                    "jobs": [],
-                },
-            )
-        )
-
-    return {
-        "mode": "idle",
-        "history": base_history,
-        "salary_slots": {
-            "role": "Frontend Engineer" if "salary" in title else None,
-            "country": "Nepal" if "salary" in title else None,
-            "period": "yearly" if "salary" in title else None,
-            "year": NOW.year if "salary" in title else None,
-        },
-        "pending_job_match": None,
-        "pending_edit": None,
-        "default_scope": "company",
-        "seeded": True,
-        "title": blueprint["title"],
-    }
-
-
 def _status_activity_copy(
     status: ApplicationStatus, company_name: str, job_title: str
 ) -> tuple[str, str]:
@@ -6002,50 +5593,6 @@ async def seed_preferences_and_activity(
     print(f"  ✓ Activity events: {activity_counter}")
 
 
-async def seed_ai_artifacts(db, company_contexts: list[dict]) -> None:
-    print("\n🤖 Seeding recruiter AI drafts and chat sessions...")
-
-    for blueprint in AI_DRAFT_BLUEPRINTS:
-        company_context = company_contexts[blueprint["company_index"]]
-        recruiter = company_context["recruiters"][blueprint["recruiter_slot"]]
-        db.add(
-            JobAIDraft(
-                recruiter_id=recruiter.id,
-                company_id=company_context["company"].id,
-                thread_id=blueprint["thread_id"],
-                status=blueprint["status"],
-                mode=blueprint["mode"],
-                source_rough_description=blueprint["source_prompt"],
-                locked_fields=blueprint["locked_fields"],
-                latest_draft=blueprint["latest_draft"],
-                salary_research=blueprint["salary_research"],
-                assumptions=blueprint["assumptions"],
-                warnings=blueprint["warnings"],
-                missing_fields=blueprint["missing_fields"],
-                last_interrupt=None,
-            )
-        )
-
-    for blueprint in CHAT_SESSION_BLUEPRINTS:
-        company_context = company_contexts[blueprint["company_index"]]
-        recruiter = company_context["recruiters"][blueprint["recruiter_slot"]]
-        db.add(
-            RecruiterChatSession(
-                recruiter_id=recruiter.id,
-                company_id=company_context["company"].id,
-                thread_id=blueprint["thread_id"],
-                title=blueprint["title"],
-                last_interaction_at=NOW
-                - timedelta(hours=blueprint["last_interaction_offset_hours"]),
-                state_json=_build_chat_session_state(blueprint),
-            )
-        )
-
-    await db.flush()
-    print(f"  ✓ AI drafts: {len(AI_DRAFT_BLUEPRINTS)}")
-    print(f"  ✓ Chat sessions: {len(CHAT_SESSION_BLUEPRINTS)}")
-
-
 async def seed_candidate_import_tasks(
     db, candidate_users: list[tuple[User, list[Resume]]]
 ) -> None:
@@ -6221,8 +5768,6 @@ async def seed_audit_history(
     scores = (await db.execute(select(CandidateEvaluationScore))).scalars().all()
     evaluation_schemas = (await db.execute(select(JobEvaluationSchema))).scalars().all()
     preferences = (await db.execute(select(RecruiterPreference))).scalars().all()
-    ai_drafts = (await db.execute(select(JobAIDraft))).scalars().all()
-    chat_sessions = (await db.execute(select(RecruiterChatSession))).scalars().all()
     import_tasks = (
         (
             await db.execute(
@@ -7252,94 +6797,6 @@ async def seed_audit_history(
             request_method="PATCH",
         )
 
-    for draft in ai_drafts:
-        actor = actor_by_user_id.get(draft.recruiter_id)
-        record(
-            created_at=draft.created_at,
-            entity_type="job_ai_draft",
-            entity_id=draft.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=draft.recruiter_id,
-            company_id=draft.company_id,
-            after_json=_serialize_audit_entity(draft),
-            request_path="/job-ai/drafts",
-            request_method="POST",
-        )
-        draft_before, draft_after, draft_diff = _build_audit_snapshots(
-            draft,
-            before_overrides={"status": "drafting", "warnings": []},
-        )
-        record(
-            created_at=(draft.updated_at or draft.created_at) + timedelta(hours=1),
-            entity_type="job_ai_draft",
-            entity_id=draft.id,
-            action_type="update",
-            actor=actor,
-            target_user_id=draft.recruiter_id,
-            company_id=draft.company_id,
-            before_json=draft_before,
-            after_json=draft_after,
-            diff_json=draft_diff,
-            request_path=f"/job-ai/drafts/{draft.id}",
-            request_method="PATCH",
-        )
-
-    first_chat_session = None
-    for session in chat_sessions:
-        actor = actor_by_user_id.get(session.recruiter_id)
-        if first_chat_session is None:
-            first_chat_session = session
-        record(
-            created_at=session.created_at,
-            entity_type="chat_session",
-            entity_id=session.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=session.recruiter_id,
-            company_id=session.company_id,
-            after_json=_serialize_audit_entity(session),
-            request_path="/recruiter-chat/sessions",
-            request_method="POST",
-        )
-        session_before, session_after, session_diff = _build_audit_snapshots(
-            session,
-            before_overrides={"title": "Untitled recruiter chat"},
-        )
-        record(
-            created_at=(session.updated_at or session.created_at) + timedelta(hours=2),
-            entity_type="chat_session",
-            entity_id=session.id,
-            action_type="update",
-            actor=actor,
-            target_user_id=session.recruiter_id,
-            company_id=session.company_id,
-            before_json=session_before,
-            after_json=session_after,
-            diff_json=session_diff,
-            request_path=f"/recruiter-chat/sessions/{session.id}",
-            request_method="PATCH",
-        )
-
-    if first_chat_session is not None:
-        deleted_chat_id = uuid.uuid4()
-        deleted_chat_snapshot = _serialize_audit_entity(first_chat_session) | {
-            "id": str(deleted_chat_id),
-            "title": "Old recruiter sync notes",
-        }
-        record(
-            created_at=NOW - timedelta(days=40),
-            entity_type="chat_session",
-            entity_id=deleted_chat_id,
-            action_type="delete",
-            actor=actor_by_user_id.get(first_chat_session.recruiter_id),
-            target_user_id=first_chat_session.recruiter_id,
-            company_id=first_chat_session.company_id,
-            before_json=deleted_chat_snapshot,
-            request_path=f"/recruiter-chat/sessions/{deleted_chat_id}",
-            request_method="DELETE",
-        )
-
     for task_index, task in enumerate(import_tasks):
         actor = actor_by_user_id.get(task.user_id)
         task_anchor = NOW - timedelta(days=28 - task_index)
@@ -7446,7 +6903,6 @@ async def seed() -> None:
         # --- Applications, Shortlisting, Outreach, Interviews ---
         await seed_applications(db, candidate_users, all_jobs, COMPANIES)
         await seed_live_pipeline_data(db, candidate_users, company_contexts)
-        await seed_ai_artifacts(db, company_contexts)
         await seed_candidate_import_tasks(db, candidate_users)
         await seed_preferences_and_activity(db, company_contexts)
         await seed_audit_history(db, company_contexts, candidate_users)
@@ -7504,10 +6960,6 @@ async def seed() -> None:
         ) or 0
         total_recordings = (
             await db.scalar(select(func.count(InterviewRecording.id)))
-        ) or 0
-        total_ai_drafts = await db.scalar(select(func.count(JobAIDraft.id))) or 0
-        total_chat_sessions = (
-            await db.scalar(select(func.count(RecruiterChatSession.id)))
         ) or 0
         total_import_tasks = (
             await db.scalar(select(func.count(ResumeImportTask.id)))
@@ -7578,8 +7030,6 @@ async def seed() -> None:
         print(f"  Email drafts        : {total_email_drafts}")
         print(f"  Interview bookings  : {total_interviews}")
         print(f"  Interview recordings: {total_recordings}")
-        print(f"  AI job drafts       : {total_ai_drafts}")
-        print(f"  Chat sessions       : {total_chat_sessions}")
         print(f"  Resume import tasks : {total_import_tasks}")
         print(f"  Activity events     : {total_activity_events}")
         print(f"  Notifications       : {total_notifications}")

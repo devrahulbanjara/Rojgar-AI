@@ -23,12 +23,11 @@ MODEL_MODULES = [
     "app.modules.resumes.models",
     "app.modules.jobs.models",
     "app.modules.applications.models",
-    "app.modules.job_ai.models",
+    "app.modules.assistant.models",
     "app.modules.interviews.models",
     "app.modules.interviews.recording_model",
     "app.modules.interviews.evaluation_models",
     "app.modules.outreach.models",
-    "app.modules.recruiter_chat.models",
     "app.modules.recruiter_preferences.models",
     "app.modules.notifications.models",
     "app.modules.audit.models",
@@ -58,8 +57,8 @@ SUBSYSTEMS: list[tuple[str, list[str]]] = [
         ["jobs", "applications", "job_sync_events"],
     ),
     (
-        "Subsystem 3 - Recruiter Chat",
-        ["recruiter_chat_sessions", "recruiter_preferences"],
+        "Subsystem 3 - Recruiter Assistant and Preferences",
+        ["assistant_threads", "recruiter_preferences"],
     ),
     (
         "Subsystem 4 - Resumes and Profiles",
@@ -82,10 +81,6 @@ SUBSYSTEMS: list[tuple[str, list[str]]] = [
             "job_evaluation_schemas",
             "candidate_evaluation_scores",
         ],
-    ),
-    (
-        "Subsystem 6 - AI Job Drafting",
-        ["job_ai_drafts"],
     ),
     (
         "Subsystem 7 - Outreach and Interview Scheduling",
