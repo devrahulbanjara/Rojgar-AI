@@ -3,6 +3,7 @@ from loguru import logger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.shared.normalize import normalize_email, normalize_company_name
 from app.core.cache import (
     get_company_applicant_user_ids,
     invalidate_candidate_read_caches_for_users,
@@ -144,11 +145,28 @@ async def register_company(
     email: str = data["email"]
 
     # Guard: if the user somehow already verified before finishing setup
-    existing = await db.execute(select(User).where(User.email == email))
+    existing = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(email))
+    )
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="This email has already been verified. Please log in.",
+        )
+
+    company_name = " ".join(payload.company_name.split())
+    name_taken = await db.scalar(
+        select(Company.id).where(
+            func.lower(Company.name) == normalize_company_name(company_name)
+        )
+    )
+    if name_taken:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"A company named '{company_name}' already exists on ConvexHire. "
+                "Ask its admin to approve you as a recruiter instead."
+            ),
         )
 
     # Build a new pending token that carries the company details
@@ -159,7 +177,7 @@ async def register_company(
             "email": email,
             "password_hash": data["password_hash"],
             "primary_role": data["primary_role"],
-            "company_name": payload.company_name,
+            "company_name": company_name,
             "industry": payload.industry,
             "company_size": payload.company_size,
             "website": payload.website,
@@ -195,7 +213,9 @@ async def request_join_company(
 
     # Verify the company exists now so the user gets immediate feedback
     result = await db.execute(
-        select(Company).where(Company.name == payload.company_name)
+        select(Company).where(
+            func.lower(Company.name) == normalize_company_name(payload.company_name)
+        )
     )
     if not result.scalar_one_or_none():
         raise HTTPException(
@@ -204,7 +224,9 @@ async def request_join_company(
         )
 
     # Guard: email already verified
-    existing = await db.execute(select(User).where(User.email == email))
+    existing = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(email))
+    )
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

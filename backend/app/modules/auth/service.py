@@ -5,9 +5,10 @@ from uuid import UUID
 from fastapi import BackgroundTasks, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from loguru import logger
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.shared.normalize import normalize_email, normalize_company_name
 from app.core.cache import (
     invalidate_company_dashboard_caches,
     invalidate_profile_read_caches,
@@ -124,7 +125,9 @@ async def signup(
     db: AsyncSession, payload: SignupRequest, bg_tasks: BackgroundTasks
 ) -> SignupData:
     """Validate email uniqueness, generate pending-signup token, and send verification email."""
-    result = await db.execute(select(User).where(User.email == payload.email))
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(payload.email))
+    )
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
@@ -170,7 +173,9 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
 
     email: str = data["email"]
 
-    existing = await db.execute(select(User).where(User.email == email))
+    existing = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(email))
+    )
     if existing.scalar_one_or_none():
         logger.info(f"Duplicate verify-email click ignored for {email}")
         return
@@ -205,6 +210,20 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
     token_type: str = data.get("type", "")
 
     if token_type == "pending_company" and data.get("company_name"):
+        name_taken = await db.scalar(
+            select(Company.id).where(
+                func.lower(Company.name) == normalize_company_name(data["company_name"])
+            )
+        )
+        if name_taken:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "A company with this name was registered before you verified. "
+                    "Please sign up again and request to join it instead."
+                ),
+            )
         company = Company(
             name=data["company_name"],
             industry=data.get("industry"),
@@ -227,7 +246,10 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
 
     elif token_type == "pending_recruiter" and data.get("join_company_name"):
         company_result = await db.execute(
-            select(Company).where(Company.name == data["join_company_name"])
+            select(Company).where(
+                func.lower(Company.name)
+                == normalize_company_name(data["join_company_name"])
+            )
         )
         company = company_result.scalar_one_or_none()
         if company:
@@ -261,7 +283,9 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
 
 async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> dict:
     """Verify credentials, create tokens, set refresh cookie, and return user data."""
-    result = await db.execute(select(User).where(User.email == payload.email))
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(payload.email))
+    )
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(user.password_hash, payload.password):
@@ -351,7 +375,9 @@ async def google_register(
         )
 
     # Guard against token replay after another browser tab already registered
-    existing = await db.execute(select(User).where(User.email == data["email"]))
+    existing = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(data["email"]))
+    )
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -416,7 +442,9 @@ async def google_register(
 
 async def login_swagger(db: AsyncSession, payload: OAuth2PasswordRequestForm) -> dict:
     """Verify credentials and return access token (Swagger UI compatibility)."""
-    result = await db.execute(select(User).where(User.email == payload.username))
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(payload.username))
+    )
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(user.password_hash, payload.password):
@@ -560,7 +588,9 @@ async def forgot_password(
     db: AsyncSession, payload: ForgotPasswordRequest, bg_tasks: BackgroundTasks
 ) -> dict:
     """Generate reset token and send password reset email (if user exists)."""
-    result = await db.execute(select(User).where(User.email == payload.email))
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(payload.email))
+    )
     user = result.scalar_one_or_none()
 
     # always return same message — don't reveal if email exists

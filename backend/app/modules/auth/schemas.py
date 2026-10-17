@@ -1,14 +1,20 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
-from pydantic import EmailStr, Field
+
+from pydantic import AfterValidator, EmailStr, Field
 
 from app.core.schemas import BaseSchema
 from app.modules.auth.enums import MembershipStatus, UserRole
+from app.shared.normalize import normalize_email
+
+# Emails are compared and stored lowercase (see ix_users_email_lower).
+NormalizedEmail = Annotated[EmailStr, AfterValidator(normalize_email)]
 
 
 class SignupRequest(BaseSchema):
     full_name: str = Field(min_length=2, max_length=255)
-    email: EmailStr
+    email: NormalizedEmail
     password: str = Field(min_length=8, max_length=128)
     primary_role: UserRole
 
@@ -18,13 +24,13 @@ class SignupData(BaseSchema):
 
 
 class LoginRequest(BaseSchema):
-    email: EmailStr
+    email: NormalizedEmail
     password: str
     remember_me: bool = False
 
 
 class ForgotPasswordRequest(BaseSchema):
-    email: EmailStr
+    email: NormalizedEmail
 
 
 class UpdateMeRequest(BaseSchema):

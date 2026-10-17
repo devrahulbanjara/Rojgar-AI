@@ -3,9 +3,10 @@ from urllib.parse import urlencode
 import httpx
 from fastapi import HTTPException, Response, status
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.shared.normalize import normalize_email
 from app.core.config import settings
 from app.core.security import create_signup_token, create_tokens
 from app.modules.auth.models import OAuthAccount, RefreshToken, User
@@ -85,7 +86,9 @@ async def google_oauth_callback(
     avatar_url: str | None = user_info.get("picture")
 
     # 2. Check if a user with this email already exists
-    user_result = await db.execute(select(User).where(User.email == email))
+    user_result = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(email))
+    )
     user = user_result.scalar_one_or_none()
 
     if user and user.is_deleted:
