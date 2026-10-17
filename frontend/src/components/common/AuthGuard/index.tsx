@@ -26,6 +26,8 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice'
 
+let restoring: Promise<void> | null = null
+
 interface AuthGuardProps {
   /** person: anyone signed in · member: on a business team · platform_admin: staff. */
   access: Access
@@ -65,22 +67,26 @@ export default function AuthGuard({ access, children }: AuthGuardProps) {
         return
       }
 
-      try {
-        const result = await refreshToken().unwrap()
-        if (cancelled) return
-        if (result.success && result.data?.access_token) {
+      // One restore at a time: refresh tokens rotate, so a second parallel
+      // call (React dev double effects, two guards) would be refused.
+      restoring ??= (async () => {
+        try {
+          const result = await refreshToken().unwrap()
+          if (!result.success || !result.data?.access_token) return
           dispatch(updateAccessToken(result.data.access_token))
           try {
             await triggerGetMe().unwrap()
           } catch {
             dispatch(clearCredentials())
           }
+        } catch {
+          // No valid refresh cookie — user is logged out
         }
-      } catch {
-        // No valid refresh cookie — user is logged out
-      } finally {
-        if (!cancelled) setSessionChecked(true)
-      }
+      })().finally(() => {
+        restoring = null
+      })
+      await restoring
+      if (!cancelled) setSessionChecked(true)
     }
 
     void restoreSession()
