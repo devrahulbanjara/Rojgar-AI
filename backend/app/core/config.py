@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     # values are constants (core/constants.py or next to the module using them).
 
     # App
-    product_name: str = "Rojgar AI"
     debug: bool = False
     # Defaults to prod so a missing ENVIRONMENT never exposes /docs or drops the
     # Secure flag on auth cookies. Local setups set environment=dev (.env.example).
@@ -127,14 +126,8 @@ class Settings(BaseSettings):
     aws_secret_access_key_shortlisting: str | None = None
     review_bedrock_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
-    # Resume import
-    resume_import_max_upload_bytes: int = 10 * 1024 * 1024
-
     # Public apply (no account)
     turnstile_secret: str | None = None
-    magic_link_ttl_minutes: int = 15
-    guest_applications_per_email_per_hour: int = 10
-    magic_links_per_email_per_15_min: int = 3
 
     # Guardrails
     guardrails_enabled: bool = True

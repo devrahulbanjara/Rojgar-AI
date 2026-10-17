@@ -16,7 +16,7 @@ from fastapi import HTTPException, UploadFile, status
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
-from app.core.config import settings
+from app.core.constants import MAX_CV_BYTES
 
 PDF_MAGIC = b"%PDF-"
 MAX_PAGES = 6
@@ -65,7 +65,7 @@ async def read_cv_upload(file: UploadFile) -> CvFile:
     data = await file.read()
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="The CV file is empty.")
-    if len(data) > settings.resume_import_max_upload_bytes:
+    if len(data) > MAX_CV_BYTES:
         raise HTTPException(
             status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="The CV must be 10 MB or smaller.",

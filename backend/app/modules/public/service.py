@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.constants import PRODUCT_NAME
 from app.core.cache import (
     invalidate_company_application_caches,
     invalidate_job_detail_caches,
@@ -89,6 +90,12 @@ _WITHDRAWABLE = {
     ApplicationStage.interview,
     ApplicationStage.rejected,
 }
+
+
+# Abuse limits and link lifetime for applying without an account.
+APPLICATIONS_PER_PERSON_PER_HOUR = 10
+MAGIC_LINKS_PER_EMAIL_PER_15_MIN = 3
+MAGIC_LINK_TTL_MINUTES = 15
 
 
 def _now() -> datetime:
@@ -302,7 +309,7 @@ async def _enforce_person_rate(db: AsyncSession, user_id: uuid.UUID) -> None:
             Application.user_id == user_id, Application.created_at >= since
         )
     )
-    if (recent or 0) >= settings.guest_applications_per_email_per_hour:
+    if (recent or 0) >= APPLICATIONS_PER_PERSON_PER_HOUR:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many applications from this person. Try again later.",
@@ -316,7 +323,7 @@ def _email_shell(title: str, body_html: str) -> str:
         <h2 style="font-size: 20px; margin: 0 0 16px;">{escape(title)}</h2>
         {body_html}
         <p style="font-size: 12px; color: #78716c; margin-top: 32px;">
-            {escape(settings.product_name)}
+            {escape(PRODUCT_NAME)}
         </p>
     </div>
     """
@@ -834,7 +841,7 @@ async def request_magic_link(db: AsyncSession, email: str) -> None:
             MagicLinkToken.email == email, MagicLinkToken.created_at >= since
         )
     )
-    if (recent or 0) >= settings.magic_links_per_email_per_15_min:
+    if (recent or 0) >= MAGIC_LINKS_PER_EMAIL_PER_15_MIN:
         return
 
     token, token_hash = new_magic_token()
@@ -842,22 +849,22 @@ async def request_magic_link(db: AsyncSession, email: str) -> None:
         MagicLinkToken(
             email=email,
             token_hash=token_hash,
-            expires_at=_now() + timedelta(minutes=settings.magic_link_ttl_minutes),
+            expires_at=_now() + timedelta(minutes=MAGIC_LINK_TTL_MINUTES),
         )
     )
     await db.commit()
 
     link = f"{settings.backend_url}/public/auth/magic?token={token}"
     html = _email_shell(
-        f"Sign in to {settings.product_name}",
+        f"Sign in to {PRODUCT_NAME}",
         f"""<p>{_button(link, "Sign in")}</p>
         <p style="font-size:13px;color:#57534e;">This link works once and expires
-        in {settings.magic_link_ttl_minutes} minutes. Didn't ask for it? Ignore this email.</p>""",
+        in {MAGIC_LINK_TTL_MINUTES} minutes. Didn't ask for it? Ignore this email.</p>""",
     )
     if settings.environment == "dev" and not settings.send_emails:
         logger.info("Dev magic link for {}: {}", email, link)
     await EmailService.send_generic_email(
-        email, f"Your {settings.product_name} sign-in link", html
+        email, f"Your {PRODUCT_NAME} sign-in link", html
     )
 
 

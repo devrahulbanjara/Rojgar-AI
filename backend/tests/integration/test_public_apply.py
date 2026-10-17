@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import func, select
 
+from app.modules.public import service as public_service
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.storage.service import storage_service
 from app.modules.applications.models import Application, Review
@@ -355,9 +356,7 @@ class TestGuestApply:
         assert resp.status_code == 400
 
     async def test_per_email_rate_limit(self, client, db, outbox, monkeypatch):
-        from app.core.config import settings
-
-        monkeypatch.setattr(settings, "guest_applications_per_email_per_hour", 1)
+        monkeypatch.setattr(public_service, "APPLICATIONS_PER_PERSON_PER_HOUR", 1)
         _, company = await make_recruiter_admin(db, email="a10@test.com")
         first = await make_active_job(db, company.id, title="Job One")
         second = await make_active_job(db, company.id, title="Job Two")
