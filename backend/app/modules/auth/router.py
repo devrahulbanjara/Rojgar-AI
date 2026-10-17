@@ -280,7 +280,7 @@ async def upload_my_avatar(
 ) -> UnifiedResponse[UserResponse]:
     """Upload or replace the authenticated user's avatar image."""
     previous_avatar_url = current_user.avatar_url
-    await release_connection(db)  # no pooled connection during the S3 upload
+    await release_connection(db)  # no pooled connection during the upload
     new_avatar_url = await storage_service.upload_image(file, folder="avatars")
     current_user.avatar_url = new_avatar_url
     await db.commit()

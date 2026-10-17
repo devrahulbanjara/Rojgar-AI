@@ -74,7 +74,7 @@ HEIC = b"\x00\x00\x00\x18ftypheic" + b"\x00" * 64
 
 @pytest.fixture
 def outbox(monkeypatch):
-    """Capture emails and fake private uploads (no SMTP/S3 in tests)."""
+    """Capture emails and fake private uploads (no SMTP or Cloudinary in tests)."""
     sent: list[dict] = []
 
     async def _send(to_email, subject, html_body):
@@ -260,7 +260,7 @@ class TestGuestApply:
             {"question": "Earliest start date?", "answer": "Next month"}
         ]
         resume = await db.get(Resume, application.resume_id)
-        assert resume.cv_file_key == "private/cvs/test.pdf"
+        assert resume.cv_file_key == f"private/cv/{job.company_id}/test.pdf"
         assert "FastAPI" in (resume.summary or "")
 
         assert len(outbox) == 1 and outbox[0]["to"] == "sita.gurung@example.com"
@@ -280,7 +280,7 @@ class TestGuestApply:
         assert review.state == "needs_person"
         assert review.flag_reason == PHOTO_NOT_READ
         resume = await db.get(Resume, application.resume_id)
-        assert resume.cv_file_key == "private/cvs/test.png"
+        assert resume.cv_file_key == f"private/cv/{job.company_id}/test.png"
         assert resume.summary is None
 
     async def test_no_cv_is_fine_and_sms_carries_the_status_link(

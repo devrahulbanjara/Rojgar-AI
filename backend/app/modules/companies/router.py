@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
+from app.core.database import release_connection
 from app.core.dependencies import (
     ActiveMember,
     CurrentUser,
@@ -80,6 +81,7 @@ async def upload_company_logo(
 ) -> UnifiedResponse[CompanyResponse]:
     company = ctx.business
     previous_logo_url = company.logo_url
+    await release_connection(db)  # no pooled connection during the upload
     company.logo_url = await storage_service.upload_image(file, folder="logos")
     await db.commit()
     await db.refresh(company)

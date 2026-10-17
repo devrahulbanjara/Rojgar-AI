@@ -451,7 +451,7 @@ async def submit_guest_application(
             text = await cv_text.extract_text(cv_file.data)
         cv_key = await storage_service.upload_private_document(
             cv_file.data,
-            "cvs",
+            f"cv/{job.company_id}",
             extension=cv_file.extension,
             content_type=cv_file.content_type,
         )
