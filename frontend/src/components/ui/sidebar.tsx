@@ -584,7 +584,7 @@ function SidebarMenuSkeleton({
   showIcon?: boolean
 }) {
   // Deterministic width between 50 and 90% (keeps render pure).
-  const width = `${50 + (React.useId().length * 7) % 40}%`
+  const width = `${50 + ((React.useId().length * 7) % 40)}%`
 
   return (
     <div
