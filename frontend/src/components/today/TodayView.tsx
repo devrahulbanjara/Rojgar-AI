@@ -1,0 +1,247 @@
+'use client'
+
+import Link from 'next/link'
+
+import { formatTime, formatWhen } from '@/lib/dates'
+import { notify } from '@/lib/notify'
+import { useUpdateRecruiterStatusMutation } from '@/store/services/companyApi'
+import {
+  type RecruiterHomeData,
+  type RecruiterHomeInterview,
+  useGetRecruiterHomeQuery,
+} from '@/store/services/dashboardApi'
+import { format } from 'date-fns'
+import { Plus, Video } from 'lucide-react'
+
+import { PageContainer } from '@/components/app/AppShell'
+import { EmptyState } from '@/components/app/EmptyState'
+import { EntityAvatar } from '@/components/app/EntityAvatar'
+import { StatStrip } from '@/components/app/Numbers'
+import { PageHeader } from '@/components/app/PageHeader'
+import { RoleCard } from '@/components/app/RoleCard'
+import { Section } from '@/components/app/Section'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+
+function greeting(date = new Date()): string {
+  const hour = date.getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+const isUrl = (value: string | null) => !!value && /^https?:\/\//i.test(value)
+
+function InterviewRow({ interview }: { interview: RecruiterHomeInterview }) {
+  return (
+    <li className="flex items-center gap-4 px-4 py-3">
+      <span className="w-20 shrink-0 text-sm font-medium tabular-nums text-foreground">
+        {formatTime(interview.start_time)}
+      </span>
+      <EntityAvatar name={interview.candidate_name} className="size-8" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-foreground">{interview.candidate_name}</p>
+        <p className="truncate text-xs text-muted-foreground">{interview.job_title}</p>
+      </div>
+      {isUrl(interview.location) ? (
+        <Button asChild size="sm">
+          <a href={interview.location!} target="_blank" rel="noreferrer">
+            <Video />
+            Join
+          </a>
+        </Button>
+      ) : null}
+      <Link
+        href={`/recruiter/jobs/${interview.job_id}?stage=interview&app=${interview.application_id}`}
+        className="text-sm font-medium whitespace-nowrap text-primary hover:underline"
+      >
+        Open →
+      </Link>
+    </li>
+  )
+}
+
+function JoinRequests({ requests }: { requests: RecruiterHomeData['join_requests'] }) {
+  const [updateStatus, { isLoading }] = useUpdateRecruiterStatusMutation()
+
+  async function decide(membershipId: string, name: string, status: 'active' | 'rejected') {
+    try {
+      await updateStatus({ membershipId, status }).unwrap()
+      notify.success(status === 'active' ? `${name} can now sign in` : `Declined ${name}`)
+    } catch {
+      notify.error("Couldn't update the request. Try again.")
+    }
+  }
+
+  return (
+    <Section title={`Waiting to join (${requests.length})`}>
+      <ul className="divide-y rounded-xl border bg-card">
+        {requests.map((request) => (
+          <li key={request.membership_id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+            <EntityAvatar name={request.recruiter_name} className="size-8" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{request.recruiter_name}</p>
+              <p className="truncate text-xs text-muted-foreground">{request.recruiter_email}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isLoading}
+                onClick={() =>
+                  void decide(request.membership_id, request.recruiter_name, 'rejected')
+                }
+              >
+                Decline
+              </Button>
+              <Button
+                size="sm"
+                disabled={isLoading}
+                onClick={() => void decide(request.membership_id, request.recruiter_name, 'active')}
+              >
+                Approve
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )
+}
+
+function TodaySkeleton() {
+  return (
+    <PageContainer>
+      <Skeleton className="h-10 w-72" />
+      <Skeleton className="h-20 w-full rounded-xl" />
+      <div className="grid gap-4 md:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-40 rounded-xl" />
+        ))}
+      </div>
+    </PageContainer>
+  )
+}
+
+export function TodayView() {
+  const { data, isLoading, isError, refetch } = useGetRecruiterHomeQuery()
+  const home = data?.data
+
+  if (isLoading) return <TodaySkeleton />
+  if (isError || !home) {
+    return (
+      <PageContainer>
+        <EmptyState
+          action={
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        >
+          Couldn&apos;t load Today.
+        </EmptyState>
+      </PageContainer>
+    )
+  }
+
+  const totals = home.roles.reduce(
+    (sum, role) => ({
+      review: sum.review + role.to_review,
+      contact: sum.contact + role.to_contact,
+      decide: sum.decide + role.to_decide,
+    }),
+    { review: 0, contact: 0, decide: 0 },
+  )
+
+  return (
+    <PageContainer>
+      <PageHeader
+        breadcrumb={[{ label: home.company_name || 'Today' }]}
+        title={`${greeting()}, ${home.first_name}`}
+        facts={[format(new Date(), 'EEEE, d MMMM')]}
+        primaryAction={
+          <Button asChild>
+            <Link href="/recruiter/jobs/new">
+              <Plus />
+              Post a job
+            </Link>
+          </Button>
+        }
+      />
+
+      <StatStrip
+        items={[
+          { label: 'To review', value: totals.review },
+          { label: 'To contact', value: totals.contact },
+          { label: 'To decide', value: totals.decide },
+          { label: 'Interviews today', value: home.interviews_today.length },
+        ]}
+      />
+
+      {home.is_admin && home.join_requests.length > 0 ? (
+        <JoinRequests requests={home.join_requests} />
+      ) : null}
+
+      <Section
+        title="Interviews today"
+        action={
+          <Link href="/recruiter/interviews" className="text-sm text-primary hover:underline">
+            All interviews
+          </Link>
+        }
+      >
+        {home.interviews_today.length ? (
+          <ul className="divide-y rounded-xl border bg-card">
+            {home.interviews_today.map((interview) => (
+              <InterviewRow key={interview.interview_id} interview={interview} />
+            ))}
+          </ul>
+        ) : (
+          <EmptyState>
+            {home.next_interview
+              ? `None today. Next: ${formatWhen(home.next_interview.start_time)} with ${home.next_interview.candidate_name}.`
+              : 'No interviews booked.'}
+          </EmptyState>
+        )}
+      </Section>
+
+      <Section title="Open roles">
+        {home.roles.length ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {home.roles.map((role) => (
+              <RoleCard key={role.job_id} role={role} companyName={home.company_name} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            action={
+              <Button asChild size="sm">
+                <Link href="/recruiter/jobs/new">Post a job</Link>
+              </Button>
+            }
+          >
+            No open roles.
+          </EmptyState>
+        )}
+      </Section>
+
+      {home.drafts.length ? (
+        <Section title="Unfinished posts">
+          <ul className="divide-y rounded-xl border bg-card">
+            {home.drafts.map((draft) => (
+              <li key={draft.job_id} className="flex items-center gap-3 px-4 py-3">
+                <p className="min-w-0 flex-1 truncate text-sm font-medium">{draft.title}</p>
+                <Link
+                  href={`/recruiter/jobs/${draft.job_id}/edit`}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  Finish →
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
+    </PageContainer>
+  )
+}
