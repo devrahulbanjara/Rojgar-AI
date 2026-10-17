@@ -1,7 +1,5 @@
-import 'react-toastify/dist/ReactToastify.css'
-
 import type { Metadata } from 'next'
-import { EB_Garamond, Geist_Mono, Lato, Poppins } from 'next/font/google'
+import { EB_Garamond, Geist_Mono, Manrope } from 'next/font/google'
 
 import '@/app/globals.css'
 import LenisProvider from '@/providers/LenisProvider'
@@ -15,17 +13,12 @@ import MainLayout from '@/components/layout/MainLayout'
 
 import '@/styles/main.scss'
 
-const poppins = Poppins({
-  variable: '--font-heading',
+// One typeface for the whole app; styles/main.scss maps the legacy
+// --font-heading / --font-body variables onto it.
+const manrope = Manrope({
+  variable: '--font-manrope',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-})
-
-const lato = Lato({
-  variable: '--font-body',
-  subsets: ['latin'],
-  weight: ['300', '400', '700'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 })
 
@@ -54,10 +47,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${poppins.variable} ${lato.variable} ${ebGaramond.variable} ${geistMono.variable}`}
-      >
+    <html
+      lang="en"
+      className={`${manrope.variable} ${ebGaramond.variable} ${geistMono.variable}`}
+    >
+      <body>
         <a href="#main-content" className="skip-to-content">
           Skip to main content
         </a>

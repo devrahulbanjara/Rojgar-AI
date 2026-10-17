@@ -26,7 +26,6 @@
 @use 'components/faq';
 @use 'components/pricing';
 @use 'components/featured-jobs';
-@use 'components/toast';
 @use 'components/connection-status';
 
 // ── 5. Pages ─────────────────────────────────────────────────
@@ -50,10 +49,9 @@
   --color-bg: #{$color-bg};
   --color-text: #{$color-text};
   --color-text-muted: #{$color-text-muted};
-  --font-heading: #{$font-heading};
-  --font-body: #{$font-body};
+  --font-heading: var(--font-manrope), system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-manrope), system-ui, -apple-system, sans-serif;
   --font-sans: #{$font-sans};
-  --font-mono: #{$font-mono};
   --radius-sm: #{$radius-sm};
   --radius-md: #{$radius-md};
   --radius-lg: #{$radius-lg};

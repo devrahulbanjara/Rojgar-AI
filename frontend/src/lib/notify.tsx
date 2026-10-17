@@ -1,101 +1,76 @@
-import { type Id, type ToastOptions, toast } from 'react-toastify'
+import type { ReactNode } from 'react'
+
+import { type ExternalToast, toast } from 'sonner'
 
 type NotifyType = 'success' | 'error' | 'info' | 'warning'
+type ToastId = string | number
 
-const DEFAULT_TITLES: Record<NotifyType, string> = {
-  success: 'Success',
-  error: 'Error',
-  info: 'Info',
-  warning: 'Warning',
-}
+/** Legacy react-toastify option names still accepted by callers. */
+type NotifyOptions = ExternalToast & { autoClose?: number | false; toastId?: ToastId }
 
-function ToastBody({ title, description }: { title: string; description?: React.ReactNode }) {
+function isOptions(value: unknown): value is NotifyOptions {
   return (
-    <div>
-      <span className="toast-title">{title}</span>
-      {description ? <span className="toast-description">{description}</span> : null}
-    </div>
+    typeof value === 'object' && value !== null && !('$$typeof' in (value as object))
   )
 }
 
-function isOptions(v: unknown): v is ToastOptions {
-  return typeof v === 'object' && v !== null
+function toSonnerOptions(options?: NotifyOptions): ExternalToast | undefined {
+  if (!options) return undefined
+  const { autoClose, toastId, ...rest } = options
+  return {
+    ...rest,
+    ...(toastId !== undefined ? { id: toastId } : {}),
+    ...(autoClose === false ? { duration: Infinity } : {}),
+    ...(typeof autoClose === 'number' ? { duration: autoClose } : {}),
+  }
 }
 
 /**
- * Pastel toast notifications matching the design system.
- *
- * Calling forms:
- *   notify.success('Saved.')                          → title 'Success', description 'Saved.'
- *   notify.success('Saved.', 'All changes synced.')   → title 'Saved.',  description 'All changes synced.'
- *   notify.success('Saved.', { autoClose: 2000 })     → title 'Success', description 'Saved.', options
- *   notify.success('Saved.', 'desc', { autoClose: 0 })→ all three
+ * Thin compatibility layer over sonner that keeps the old notify() API:
+ *   notify.success('Saved.')
+ *   notify.success('Saved.', 'All changes synced.')
+ *   notify.success('Saved.', { autoClose: 2000 })
+ *   notify.success('Saved.', 'desc', { autoClose: 0 })
+ * With a single argument the message is the toast title — no generic
+ * "Success"/"Error" headings.
  */
 function fire(
   type: NotifyType,
-  message: React.ReactNode,
-  descriptionOrOptions?: React.ReactNode | ToastOptions,
-  maybeOptions?: ToastOptions,
-): Id {
-  let title: React.ReactNode
-  let description: React.ReactNode | undefined
-  let options: ToastOptions | undefined
+  message: ReactNode,
+  descriptionOrOptions?: ReactNode | NotifyOptions,
+  maybeOptions?: NotifyOptions,
+): ToastId {
+  let description: ReactNode | undefined
+  let options: NotifyOptions | undefined
 
-  if (
-    typeof descriptionOrOptions === 'string' ||
-    (descriptionOrOptions != null && typeof descriptionOrOptions !== 'object')
-  ) {
-    title = message
-    description = descriptionOrOptions as React.ReactNode
-    options = maybeOptions
-  } else if (
-    descriptionOrOptions &&
-    isOptions(descriptionOrOptions) &&
-    !('$$typeof' in descriptionOrOptions)
-  ) {
-    // ToastOptions object
-    title = DEFAULT_TITLES[type]
-    description = message
-    options = descriptionOrOptions as ToastOptions
-  } else if (descriptionOrOptions != null) {
-    // ReactNode description (e.g. JSX element)
-    title = message
-    description = descriptionOrOptions as React.ReactNode
-    options = maybeOptions
+  if (isOptions(descriptionOrOptions)) {
+    options = descriptionOrOptions
   } else {
-    title = DEFAULT_TITLES[type]
-    description = message
+    description = descriptionOrOptions
     options = maybeOptions
   }
 
-  const content = <ToastBody title={String(title)} description={description} />
-  switch (type) {
-    case 'success':
-      return toast.success(content, options)
-    case 'error':
-      return toast.error(content, options)
-    case 'warning':
-      return toast.warning(content, options)
-    case 'info':
-    default:
-      return toast.info(content, options)
-  }
+  return toast[type](message, { ...toSonnerOptions(options), description })
 }
 
+type NotifyFn = (
+  message: ReactNode,
+  descriptionOrOptions?: ReactNode | NotifyOptions,
+  options?: NotifyOptions,
+) => ToastId
+
+const make =
+  (type: NotifyType): NotifyFn =>
+  (message, descriptionOrOptions, options) =>
+    fire(type, message, descriptionOrOptions, options)
+
 export const notify = {
-  success: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
-    fire('success', msg, d, o),
-  error: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
-    fire('error', msg, d, o),
-  info: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
-    fire('info', msg, d, o),
-  warning: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
-    fire('warning', msg, d, o),
-  warn: (msg: React.ReactNode, d?: React.ReactNode | ToastOptions, o?: ToastOptions) =>
-    fire('warning', msg, d, o),
-  dismiss: toast.dismiss,
-  update: toast.update,
-  isActive: toast.isActive,
+  success: make('success'),
+  error: make('error'),
+  info: make('info'),
+  warning: make('warning'),
+  warn: make('warning'),
+  dismiss: (id?: ToastId) => toast.dismiss(id),
 }
 
 export default notify

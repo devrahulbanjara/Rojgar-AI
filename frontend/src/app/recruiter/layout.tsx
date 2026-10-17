@@ -10,8 +10,8 @@ import { useLazyGetMeQuery } from '@/store/services/authApi'
 import { useLogoutMutation } from '@/store/services/authApi'
 import { Clock, ShieldOff } from 'lucide-react'
 
+import { RecruiterShell } from '@/components/app/AppShell'
 import AuthGuard from '@/components/common/AuthGuard'
-import DashNavbar from '@/components/layout/DashNavbar'
 
 const FloatingRecruiterChat = dynamic(
   () => import('@/components/recruiter-chat/FloatingRecruiterChat'),
@@ -118,11 +118,10 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
-      <DashNavbar role="recruiter_admin" />
+    <RecruiterShell>
       <main className="dash-page">{children}</main>
       <FloatingRecruiterChat />
-    </>
+    </RecruiterShell>
   )
 }
 

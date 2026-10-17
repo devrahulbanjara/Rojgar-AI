@@ -246,3 +246,60 @@ class RecruiterAdminDashboardAnalyticsResponse(BaseSchema):
     membership_breakdown: list[MembershipBreakdownPoint]
     team_activity: list[TeamMemberActivity]
     velocity: RecruiterAnalyticsVelocity
+
+
+# ---------------------------------------------------------------------------
+# Recruiter "Today" home
+# ---------------------------------------------------------------------------
+
+
+class HomeInterview(BaseSchema):
+    interview_id: UUID
+    application_id: UUID
+    job_id: UUID
+    candidate_name: str
+    job_title: str
+    start_time: datetime
+    end_time: datetime
+    location: str | None = None
+
+
+class RoleCard(BaseSchema):
+    """One open (or recently closed) role with the work waiting on it."""
+
+    job_id: UUID
+    title: str
+    status: JobStatus
+    location: str | None = None
+    location_type: LocationType
+    created_at: datetime
+    expires_at: datetime | None = None
+    applicants: int
+    # Applications nobody has decided on yet.
+    to_review: int
+    # Of those, how many scored at or above the job's shortlist threshold.
+    strong: int
+    # Shortlisted candidates who haven't been emailed yet.
+    to_contact: int
+    upcoming_interviews: int
+    # Interviewed (completed, or booked with the time already past) and
+    # still without an offer / rejection.
+    to_decide: int
+    share_slug: str
+
+
+class DraftRole(BaseSchema):
+    job_id: UUID
+    title: str
+    updated_at: datetime
+
+
+class RecruiterHomeResponse(BaseSchema):
+    first_name: str
+    company_name: str
+    is_admin: bool
+    interviews_today: list[HomeInterview]
+    next_interview: HomeInterview | None = None
+    roles: list[RoleCard]
+    drafts: list[DraftRole]
+    join_requests: list[JoinRequestItem]

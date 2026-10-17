@@ -7,7 +7,7 @@ from app.core.dependencies import (
     RecruiterPrivileges,
 )
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.dashboards import service
+from app.modules.dashboards import home, service
 from app.modules.dashboards.schemas import (
     CandidateDashboardAnalyticsResponse,
     CandidateDashboardResponse,
@@ -15,6 +15,7 @@ from app.modules.dashboards.schemas import (
     RecruiterAdminDashboardResponse,
     RecruiterDashboardAnalyticsResponse,
     RecruiterDashboardResponse,
+    RecruiterHomeResponse,
 )
 
 router = APIRouter(prefix="/dashboards", tags=["Dashboards"])
@@ -93,3 +94,18 @@ async def get_recruiter_admin_dashboard_analytics(
     return ResponseBuilder.success(
         data=data, message="Admin dashboard analytics retrieved"
     )
+
+
+@router.get("/recruiter/home")
+async def get_recruiter_home(
+    current_user: RecruiterPrivileges,
+    db: DbSession,
+    tz: str | None = None,
+) -> UnifiedResponse[RecruiterHomeResponse]:
+    """Return the recruiter's Today screen: interviews and the work waiting per role.
+
+    ``tz`` is the viewer's IANA timezone (e.g. ``Asia/Kathmandu``) so "today"
+    matches the recruiter's calendar, not the server's.
+    """
+    data = await home.get_recruiter_home(db, current_user, tz)
+    return ResponseBuilder.success(data=data, message="Recruiter home retrieved")

@@ -3088,7 +3088,7 @@
 // ── Dashboard page wrapper ─────────────────────────────────────
 .dash-page {
   min-height: calc(100vh - 78px);
-  background: $color-gray-100;
+  background: var(--background, #{$color-gray-100});
 }
 
 // ── Stats column-count modifiers ──────────────────────────────
