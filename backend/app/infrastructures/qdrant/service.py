@@ -81,7 +81,7 @@ class QdrantService:
     async def initialize(self) -> None:
         """Robust initialization: create collections and payload indexes."""
         if (
-            settings.recruiter_chat_hybrid_search_enabled
+            settings.candidate_hybrid_search_enabled
             or settings.jobs_hybrid_search_enabled
         ):
             try:
@@ -181,7 +181,7 @@ class QdrantService:
         name = self.candidate_collection_name
         exists = await self.client.collection_exists(name)
 
-        if exists and settings.recruiter_chat_hybrid_search_enabled:
+        if exists and settings.candidate_hybrid_search_enabled:
             info = await self.client.get_collection(name)
             vectors = getattr(info.config.params, "vectors", None)
             sparse = getattr(info.config.params, "sparse_vectors", None) or {}
@@ -201,7 +201,7 @@ class QdrantService:
         if exists:
             return
 
-        if settings.recruiter_chat_hybrid_search_enabled:
+        if settings.candidate_hybrid_search_enabled:
             await self.client.create_collection(
                 collection_name=name,
                 vectors_config={
@@ -459,7 +459,7 @@ class QdrantService:
                 "updated_at_ts": updated_at_ts,
             }
 
-            if settings.recruiter_chat_hybrid_search_enabled:
+            if settings.candidate_hybrid_search_enabled:
                 sparse_vector = await self._abuild_sparse_vector(text_content)
                 vector_payload: dict[str, Any] = {
                     CANDIDATE_DENSE_NAME: dense_vector,
@@ -821,7 +821,7 @@ class QdrantService:
             must_not=must_not_conditions or None,
         )
 
-        if settings.recruiter_chat_hybrid_search_enabled:
+        if settings.candidate_hybrid_search_enabled:
             return await self._search_applications_hybrid(
                 query=query,
                 query_filter=query_filter,
@@ -905,20 +905,20 @@ class QdrantService:
     def _tag_relevance(all_hits: list[dict], limit: int) -> list[dict]:
         """Drop irrelevant hits and tag the rest high/low by cosine similarity.
 
-        1. Hard cut-off (`recruiter_chat_hard_min_score`): dropped entirely.
-        2. Absolute floor (`recruiter_chat_hybrid_min_score`) and relative floor
-           (`best * recruiter_chat_hybrid_relative_floor`): below either is "low".
+        1. Hard cut-off (`candidate_search_hard_min_score`): dropped entirely.
+        2. Absolute floor (`candidate_search_min_score`) and relative floor
+           (`best * candidate_search_relative_floor`): below either is "low".
         The frontend shows `high` by default and `low` behind "Show more".
         """
-        hard_floor = settings.recruiter_chat_hard_min_score
+        hard_floor = settings.candidate_search_hard_min_score
         all_hits = [h for h in all_hits if h["score"] >= hard_floor]
         if not all_hits:
             return []
 
         best = max(h["score"] for h in all_hits)
         threshold = max(
-            settings.recruiter_chat_hybrid_min_score,
-            best * settings.recruiter_chat_hybrid_relative_floor,
+            settings.candidate_search_min_score,
+            best * settings.candidate_search_relative_floor,
         )
         for hit in all_hits:
             hit["relevance"] = "high" if hit["score"] >= threshold else "low"

@@ -101,8 +101,8 @@ class Settings(BaseSettings):
     llama_cloud_api_key: str | None = None
     llama_cloud_base_url: str | None = None
 
-    groq_model_job_drafting: str = "openai/gpt-oss-120b"
-    groq_model_recruiter_chat: str = "openai/gpt-oss-120b"
+    groq_model_structured: str = "openai/gpt-oss-120b"
+    groq_model_chat: str = "openai/gpt-oss-120b"
 
     llama_extract_mode: str = "PREMIUM"
     llama_extract_parse_model: str = "gemini-2.5-pro"
@@ -174,15 +174,15 @@ class Settings(BaseSettings):
     # Turns (question + answer) kept per thread and sent to the model.
     assistant_history_turns: int = 8
 
-    # Candidate hybrid search (read by the Qdrant service; old names kept)
-    recruiter_chat_hybrid_search_enabled: bool = True
+    # Candidate hybrid search (Qdrant)
+    candidate_hybrid_search_enabled: bool = True
     candidate_sparse_model: str = "Qdrant/bm25"
     candidate_hybrid_prefetch_limit: int = 50
-    recruiter_chat_hard_min_score: float = 0.20
-    recruiter_chat_hybrid_min_score: float = 0.45
+    candidate_search_hard_min_score: float = 0.20
+    candidate_search_min_score: float = 0.45
     # Tag results as low-relevance when RRF score is below `top_score * relative_floor`.
     # Catches the gap from "actually relevant" to "barely related" within one query.
-    recruiter_chat_hybrid_relative_floor: float = 0.5
+    candidate_search_relative_floor: float = 0.5
 
     # Public jobs hybrid search
     jobs_hybrid_search_enabled: bool = True

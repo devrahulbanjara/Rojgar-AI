@@ -186,7 +186,7 @@ class AIService:
         self._llm_client = AsyncGroq(
             api_key=settings.groq_api_key, max_retries=0, timeout=60
         )
-        self._llm_model = settings.groq_model_job_drafting
+        self._llm_model = settings.groq_model_structured
 
     def _get_embeddings_client(self) -> GoogleGenerativeAIEmbeddings | _FakeEmbeddings:
         """Lazily initialise and return the Gemini embeddings client."""
@@ -267,7 +267,7 @@ class AIService:
     ) -> ChatGroq:
         """Create a ChatGroq client configured for plain-text streaming."""
         return ChatGroq(
-            model=model or settings.groq_model_recruiter_chat,
+            model=model or settings.groq_model_chat,
             temperature=temperature,
             api_key=SecretStr(settings.groq_api_key),
             max_tokens=4096,
