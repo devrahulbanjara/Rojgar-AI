@@ -1,18 +1,21 @@
 import Link from 'next/link'
 
+import { getT } from '@/lib/i18n/server'
+
 import { SystemState } from '@/components/app/SystemState'
 import { Button } from '@/components/ui/button'
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getT()
   return (
     <SystemState
       action={
         <Button asChild>
-          <Link href="/">Go home</Link>
+          <Link href="/">{t.system.goHome}</Link>
         </Button>
       }
     >
-      This page doesn&apos;t exist.
+      {t.system.notFound}
     </SystemState>
   )
 }

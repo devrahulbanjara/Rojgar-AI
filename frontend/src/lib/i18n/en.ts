@@ -35,6 +35,14 @@ export const en = {
     optional: 'optional',
   },
 
+  system: {
+    notFound: "This page doesn't exist.",
+    jobClosed: 'This job is no longer open.',
+    goHome: 'Go home',
+    myApplications: 'See my applications',
+    crashed: 'Something went wrong.',
+  },
+
   cookie: { line: 'We only use cookies that keep you signed in.', details: 'Details', ok: 'OK' },
 
   stage: {

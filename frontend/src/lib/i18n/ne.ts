@@ -37,6 +37,14 @@ export const ne: Dict = {
     optional: 'ऐच्छिक',
   },
 
+  system: {
+    notFound: 'यो पेज छैन।',
+    jobClosed: 'यो जागिर अब खुला छैन।',
+    goHome: 'गृहपृष्ठमा जानुहोस्',
+    myApplications: 'मेरा आवेदन हेर्नुहोस्',
+    crashed: 'केही मिलेन।',
+  },
+
   cookie: { line: 'हामी साइन इन राख्ने कुकीज मात्र प्रयोग गर्छौं।', details: 'विवरण', ok: 'ठीक छ' },
 
   stage: {
