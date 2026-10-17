@@ -545,13 +545,6 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         </div>
       ) : null}
 
-      {isAppliedStage && threshold !== null && screeningStats.pending > 0 ? (
-        <p className={styles.evaluationNote}>
-          <span className={styles.evaluationNoteDot} aria-hidden="true" />
-          The strongest matches also get a detailed AI review. You make every final decision.
-        </p>
-      ) : null}
-
       {isPostShortlistStage && outreachStats.cohort > 0 ? (
         <div
           className={styles.evaluationBar}
@@ -734,11 +727,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                     <Check size={14} aria-hidden="true" /> Shortlist {selectedVisibleIds.length}
                   </button>
                 </>
-              ) : (
-                <span className={styles.bulkBarHint}>
-                  Best matches first. Tick candidates to decide in bulk, or use ✓ / ✗ on a row.
-                </span>
-              )}
+              ) : null}
             </div>
           ) : null}
           {visibleApplications.map((row) => {

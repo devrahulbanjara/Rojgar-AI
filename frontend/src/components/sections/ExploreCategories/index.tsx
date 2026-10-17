@@ -21,8 +21,8 @@ const CATEGORIES = [
 
 const STATS = [
   { num: 'Free', desc: 'For job seekers' },
-  { num: 'AI + You', desc: 'Explained fit feedback on every application' },
-  { num: 'Human', desc: 'A recruiter makes every final decision' },
+  { num: 'Feedback', desc: 'On every application' },
+  { num: 'People', desc: 'Make every final decision' },
 ]
 
 export default function ExploreCategories() {

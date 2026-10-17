@@ -99,8 +99,7 @@ export default function Home() {
           </form>
           <div className="homepage__proof-container">
             <p className="homepage__proof">
-              <strong>Free for job seekers.</strong> AI explains every match, and a recruiter makes
-              every final decision.
+              <strong>Free for job seekers.</strong> A recruiter makes every final decision.
             </p>
           </div>
         </div>

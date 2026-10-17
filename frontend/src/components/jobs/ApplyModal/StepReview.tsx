@@ -67,7 +67,7 @@ export default function StepReview({
   if (resumes.length === 0) {
     return (
       <div className={styles.applyModal__empty}>
-        <p>You need a resume to apply. Create one from your profile in one click.</p>
+        <p>You need a resume to apply.</p>
         <div className={styles.applyModal__stepActions}>
           <button
             className="btn btn--primary"
@@ -128,7 +128,7 @@ export default function StepReview({
 
       {hasPendingPatch ? (
         <p className={styles.applyModal__intro}>
-          Your AI-suggested resume changes will be saved when you submit.
+          AI changes will be saved to your resume when you submit.
         </p>
       ) : null}
 
@@ -148,10 +148,7 @@ export default function StepReview({
 
       <p className={styles.applyModal__notice}>
         <Info size={14} aria-hidden="true" />
-        <span>
-          Your application will be screened with AI assistance; a recruiter makes the final
-          decision.
-        </span>
+        <span>Screened with AI help. A recruiter makes the final decision.</span>
       </p>
     </div>
   )

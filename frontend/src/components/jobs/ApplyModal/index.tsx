@@ -30,7 +30,6 @@ function resolveStepTitle(step: string, jobTitle: string) {
     return {
       eyebrow: 'Fit check',
       title: 'Analyzing your resume',
-      subtitle: 'We are comparing your resume with the job requirements right now.',
     }
   }
 
@@ -38,7 +37,6 @@ function resolveStepTitle(step: string, jobTitle: string) {
     return {
       eyebrow: 'Fit check',
       title: 'Resume gap analysis',
-      subtitle: 'Submit now, or let AI suggest safe improvements first.',
     }
   }
 
@@ -46,7 +44,6 @@ function resolveStepTitle(step: string, jobTitle: string) {
     return {
       eyebrow: 'Fit check',
       title: 'Preparing proposed changes',
-      subtitle: 'Drafting safe AI suggestions for you to review before anything is saved.',
     }
   }
 
@@ -54,7 +51,6 @@ function resolveStepTitle(step: string, jobTitle: string) {
     return {
       eyebrow: 'Fit check',
       title: 'Review proposed changes',
-      subtitle: 'Nothing is saved until you choose. Apply with these changes in one click.',
     }
   }
 
@@ -62,7 +58,6 @@ function resolveStepTitle(step: string, jobTitle: string) {
     return {
       eyebrow: 'Fit check',
       title: 'Updating your resume',
-      subtitle: 'Saving the confirmed AI suggestions to your resume.',
     }
   }
 
@@ -70,14 +65,12 @@ function resolveStepTitle(step: string, jobTitle: string) {
     return {
       eyebrow: 'Submitting',
       title: 'Applying to the job',
-      subtitle: 'Submitting your application and selected resume to the recruiter.',
     }
   }
 
   return {
     eyebrow: 'Apply',
     title: `Apply to ${jobTitle}`,
-    subtitle: 'Submit now, or check your fit with AI first.',
   }
 }
 
@@ -184,7 +177,6 @@ export default function ApplyModal({
             <div className="modal__title" id="apply-flow-title">
               {stepMeta.title}
             </div>
-            <p className={styles.applyModal__subtitle}>{stepMeta.subtitle}</p>
             <div className={styles.applyModal__progress} aria-hidden="true">
               {STEP_ORDER.map((step, index) => {
                 const isActive = activeStepIndex === index
@@ -252,10 +244,7 @@ export default function ApplyModal({
             {flow.step === 'committing_patch' ? <StepPatching mode="committing" /> : null}
 
             {flow.step === 'submitting' ? (
-              <StepAnalyzing
-                title="Submitting your application"
-                subtitle="Sending your resume and profile details to the recruiter."
-              />
+              <StepAnalyzing title="Submitting your application" />
             ) : null}
           </div>
         </div>

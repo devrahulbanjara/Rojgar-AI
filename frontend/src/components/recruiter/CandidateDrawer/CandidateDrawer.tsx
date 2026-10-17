@@ -434,17 +434,13 @@ function ProfileTab({
           ) : (
             <p className={styles.muted}>Not evaluated yet.</p>
           )}
-          <p className={styles.muted}>
-            AI output is a recommendation. Press S to shortlist, R to reject, J / K for the next or
-            previous candidate.{' '}
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={() => setIsEditingReview(true)}
-            >
-              Edit assessment
-            </button>
-          </p>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setIsEditingReview(true)}
+          >
+            Edit assessment
+          </button>
         </div>
       )}
 
