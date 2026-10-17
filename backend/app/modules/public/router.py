@@ -71,7 +71,9 @@ async def recommend(
 ) -> UnifiedResponse[RecommendCreated]:
     data = await service.recommend_candidate(db, slug, payload, bg_tasks)
     return ResponseBuilder.success(
-        data=data, message="Thanks for the recommendation", status_code=status.HTTP_201_CREATED
+        data=data,
+        message="Thanks for the recommendation",
+        status_code=status.HTTP_201_CREATED,
     )
 
 
@@ -116,7 +118,8 @@ async def apply_as_guest(
             _EMAIL.validate_python(email)
         except ValidationError as exc:
             raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter a valid email."
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Please enter a valid email.",
             ) from exc
     data = await service.submit_guest_application(
         db,

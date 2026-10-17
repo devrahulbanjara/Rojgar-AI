@@ -40,7 +40,9 @@ from app.shared.normalize import normalize_email, normalize_phone
 router = APIRouter(prefix="/recruiter/v2", tags=["Recruiter"])
 
 
-@router.get("/jobs/{job_id}/pipeline", summary="Stage counts and applications for a job")
+@router.get(
+    "/jobs/{job_id}/pipeline", summary="Stage counts and applications for a job"
+)
 async def get_pipeline(
     job_id: uuid.UUID,
     user: ActiveMember,
@@ -77,7 +79,9 @@ async def decide(
 async def undo(
     payload: UndoRequest, user: ActiveMember, db: DbSession
 ) -> UnifiedResponse[UndoResponse]:
-    return ResponseBuilder.success(data=await pipeline.undo(db, user, payload.event_ids))
+    return ResponseBuilder.success(
+        data=await pipeline.undo(db, user, payload.event_ids)
+    )
 
 
 @router.post(
@@ -121,7 +125,9 @@ async def quick_add(
     source: Annotated[str, Form()],
     email: Annotated[str | None, Form(max_length=255)] = None,
     referred_by: Annotated[str | None, Form(max_length=255)] = None,
-    answers: Annotated[str | None, Form(description="JSON [{question, answer}]")] = None,
+    answers: Annotated[
+        str | None, Form(description="JSON [{question, answer}]")
+    ] = None,
     cv: Annotated[UploadFile | None, File()] = None,
 ) -> UnifiedResponse[QuickAddCreated]:
     try:
@@ -139,7 +145,8 @@ async def quick_add(
         ]
     except (ValidationError, ValueError, KeyError, TypeError, AttributeError) as exc:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Check the name, phone and source."
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Check the name, phone and source.",
         ) from exc
     normalized_phone = normalize_phone(form.phone)
     if normalized_phone is None:

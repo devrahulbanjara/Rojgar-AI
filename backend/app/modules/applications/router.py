@@ -61,7 +61,9 @@ async def search_candidates_semantic(
     return ResponseBuilder.success(data=data, message="Search complete.")
 
 
-@router.get("/company/me/candidates", summary="Candidates across jobs, one row per person")
+@router.get(
+    "/company/me/candidates", summary="Candidates across jobs, one row per person"
+)
 async def list_my_company_candidates(
     job_id: Annotated[str | None, Query()] = None,
     stage: Annotated[ApplicationStage | None, Query()] = None,
@@ -96,7 +98,9 @@ async def get_application(
     return ResponseBuilder.success(data=data, message="Application fetched.")
 
 
-@router.get("/{application_id}/timeline", summary="My application's timeline (candidate)")
+@router.get(
+    "/{application_id}/timeline", summary="My application's timeline (candidate)"
+)
 async def get_application_timeline(
     application_id: UUIDPath, user: CandidateUser, db: DbSession
 ) -> UnifiedResponse[list[ActivityEventResponse]]:

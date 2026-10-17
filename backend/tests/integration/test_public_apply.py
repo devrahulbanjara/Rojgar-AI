@@ -181,7 +181,11 @@ class TestGuestApply:
             db,
             company.id,
             questions=[
-                {"label": "Earliest start date?", "type": "short_text", "required": True}
+                {
+                    "label": "Earliest start date?",
+                    "type": "short_text",
+                    "required": True,
+                }
             ],
         )
         resp = await _apply(
@@ -272,9 +276,7 @@ class TestGuestApply:
         assert (await _apply(client, first.slug)).status_code == 201
         assert (await _apply(client, second.slug)).status_code == 429
 
-    async def test_flagged_cv_is_quarantined_not_blocked(
-        self, client, db, outbox
-    ):
+    async def test_flagged_cv_is_quarantined_not_blocked(self, client, db, outbox):
         from app.infrastructures.guardrails.service import GuardrailResult
         from app.modules.applications.models import Review
         from app.modules.review.reviewer import FakeReviewer

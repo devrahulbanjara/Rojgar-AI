@@ -105,7 +105,11 @@ async def _claim(db: AsyncSession, event_id: uuid.UUID) -> dict | None:
             ApplicationEvent.type == EventType.email_scheduled.value,
             ApplicationEvent.payload["status"].astext == "scheduled",
         )
-        .values(payload=ApplicationEvent.payload.op("||")(cast({"status": "sending"}, JSONB)))
+        .values(
+            payload=ApplicationEvent.payload.op("||")(
+                cast({"status": "sending"}, JSONB)
+            )
+        )
         .returning(ApplicationEvent.payload, ApplicationEvent.application_id)
         .execution_options(synchronize_session=False)
     )

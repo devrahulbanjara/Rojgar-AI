@@ -40,8 +40,7 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
 
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
-# Fail the build if the ML pre-filter model is missing; without it every
-# application would silently be scored 1.0 and auto-shortlisted.
+# Fail the build if the ML ranking model (review tie-break) is missing.
 RUN test -s /app/ml_bouncer_model.pkl
 RUN mkdir -p /app/logs && chown -R app:app /app
 

@@ -501,9 +501,7 @@ def upgrade() -> None:
     )
     op.drop_column("jobs", "status")
     op.alter_column("jobs", "status_v2", new_column_name="status")
-    op.alter_column(
-        "jobs", "status", nullable=False, server_default=sa.text("'draft'")
-    )
+    op.alter_column("jobs", "status", nullable=False, server_default=sa.text("'draft'"))
     op.create_index("ix_jobs_status", "jobs", ["status"])
     op.create_index("ix_jobs_closes_at", "jobs", ["closes_at"])
     op.create_index("ix_jobs_closed_at", "jobs", ["closed_at"])
@@ -545,7 +543,9 @@ def _parse_description(text: str) -> dict:
         heading = first[3:] if first.startswith("## ") else None
         if heading in _HEADING_TO_COLUMN:
             current = _HEADING_TO_COLUMN[heading]
-            out[current] = [line[2:] for line in rest.split("\n") if line.startswith("- ")]
+            out[current] = [
+                line[2:] for line in rest.split("\n") if line.startswith("- ")
+            ]
         else:
             current = None
             overview.append(block)
@@ -583,7 +583,9 @@ def downgrade() -> None:
     )
     op.add_column(
         "jobs",
-        sa.Column("auto_shortlist", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column(
+            "auto_shortlist", sa.Boolean(), nullable=False, server_default="false"
+        ),
     )
     op.add_column(
         "jobs",
@@ -620,7 +622,9 @@ def downgrade() -> None:
     op.add_column("jobs", sa.Column("expires_at", sa.DateTime(timezone=True)))
 
     rows = bind.execute(
-        sa.text("SELECT id, description, must_haves, nice_to_haves, questions FROM jobs")
+        sa.text(
+            "SELECT id, description, must_haves, nice_to_haves, questions FROM jobs"
+        )
     ).all()
     for job_id, description, must_haves, nice_to_haves, questions in rows:
         parsed = _parse_description(description or "")
@@ -694,9 +698,7 @@ def downgrade() -> None:
     ):
         op.drop_column("jobs", column)
     op.alter_column("jobs", "status_v1", new_column_name="status")
-    op.alter_column(
-        "jobs", "status", nullable=False, server_default=sa.text("'draft'")
-    )
+    op.alter_column("jobs", "status", nullable=False, server_default=sa.text("'draft'"))
     op.execute("DROP TYPE jobstatus_v2")
     op.execute("DROP TYPE jobcategory")
     op.execute("DROP TYPE employmenttype")
@@ -735,7 +737,9 @@ def downgrade() -> None:
             "generated_by_user_id",
             sa.Uuid(),
             sa.ForeignKey(
-                "users.id", ondelete="SET NULL", name="fk_email_drafts_generated_by_user"
+                "users.id",
+                ondelete="SET NULL",
+                name="fk_email_drafts_generated_by_user",
             ),
         ),
         sa.Column(
@@ -758,7 +762,9 @@ def downgrade() -> None:
             "discarded_by_user_id",
             sa.Uuid(),
             sa.ForeignKey(
-                "users.id", ondelete="SET NULL", name="fk_email_drafts_discarded_by_user"
+                "users.id",
+                ondelete="SET NULL",
+                name="fk_email_drafts_discarded_by_user",
             ),
         ),
         sa.Column("discarded_at", sa.DateTime(timezone=True)),
@@ -897,7 +903,13 @@ def downgrade() -> None:
     )
     op.alter_column("applications", "source", server_default="platform")
     op.drop_index("ix_applications_referrer_id", table_name="applications")
-    for column in ("stage", "decided_by", "decided_at", "rejected_reason", "referrer_id"):
+    for column in (
+        "stage",
+        "decided_by",
+        "decided_at",
+        "rejected_reason",
+        "referrer_id",
+    ):
         op.drop_column("applications", column)
     op.execute("DROP TYPE applicationstage")
     op.drop_table("application_reviews")
@@ -914,4 +926,3 @@ def downgrade() -> None:
     op.drop_column("users", "phone")
     op.execute("DELETE FROM users WHERE email IS NULL")
     op.alter_column("users", "email", existing_type=sa.String(255), nullable=False)
-

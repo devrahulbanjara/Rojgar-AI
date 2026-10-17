@@ -49,7 +49,9 @@ from app.modules.review.reviewer import (
 from app.shared.enums import EventType, Fit, ReviewState, ReviewTriage
 
 FLAG_INJECTION = "Possible hidden instructions in the CV. Check the CV before deciding."
-FLAG_UNCHECKED = "The automatic safety check was unavailable. Read this application yourself."
+FLAG_UNCHECKED = (
+    "The automatic safety check was unavailable. Read this application yourself."
+)
 FLAG_FAILED = "The automatic review failed. Read this application yourself."
 NOTHING_YET = "No CV or answers yet"
 
@@ -354,7 +356,9 @@ async def _invalidate(db: AsyncSession, application_id: uuid.UUID) -> None:
     enqueue_application_sync_event(db, application_id)
     await db.commit()
     if company_id is not None:
-        await invalidate_company_application_caches(str(company_id), str(application_id))
+        await invalidate_company_application_caches(
+            str(company_id), str(application_id)
+        )
 
 
 async def review_application(
@@ -412,9 +416,7 @@ async def review_application(
                 exc,
             )
             if exhausted:
-                reason = (
-                    FLAG_UNCHECKED if "guardrail" in str(exc) else FLAG_FAILED
-                )
+                reason = FLAG_UNCHECKED if "guardrail" in str(exc) else FLAG_FAILED
                 await _save(
                     db,
                     application_id,

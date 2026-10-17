@@ -28,8 +28,7 @@ def verify_quote(quote: str | None, source: str) -> bool:
         return False
     haystack = match_key(source)
     fragments = [
-        match_key(part)
-        for part in _ELLIPSIS_RE.split(quote.strip().strip("\"'“”‘’"))
+        match_key(part) for part in _ELLIPSIS_RE.split(quote.strip().strip("\"'“”‘’"))
     ]
     fragments = [f for f in fragments if f]
     if not fragments or sum(len(f) for f in fragments) < _MIN_QUOTE_CHARS:
@@ -133,7 +132,9 @@ def _yes_no(value: str | None) -> str | None:
     return None
 
 
-def failed_knockouts(questions: list[dict] | None, answers: list[dict] | None) -> list[dict]:
+def failed_knockouts(
+    questions: list[dict] | None, answers: list[dict] | None
+) -> list[dict]:
     """Knockout questions answered the wrong way (deterministic, no LLM).
 
     A question is a knockout when it is yes/no and sets `knockout_answer`.

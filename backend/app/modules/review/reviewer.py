@@ -160,8 +160,26 @@ class BedrockReviewer:
 
 _WORD_RE = re.compile(r"[\wऀ-ॿ]+")
 _STOP = {
-    "and", "or", "the", "a", "an", "of", "in", "on", "for", "with", "to", "at",
-    "years", "year", "yrs", "experience", "least", "good", "able", "can",
+    "and",
+    "or",
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "on",
+    "for",
+    "with",
+    "to",
+    "at",
+    "years",
+    "year",
+    "yrs",
+    "experience",
+    "least",
+    "good",
+    "able",
+    "can",
 }
 
 
@@ -195,7 +213,9 @@ class FakeReviewer:
             checks.append(RubricCheckOut(index=index, result=result, evidence=evidence))
         first = next((line for line in lines if not line.endswith(":")), "")
         return ReviewCall(
-            output=RubricOutput(summary=first[:140] or "Short application", checks=checks),
+            output=RubricOutput(
+                summary=first[:140] or "Short application", checks=checks
+            ),
             usage=Usage("fake"),
         )
 

@@ -14,7 +14,9 @@ from app.shared.enums import (
 )
 
 # Where a shared link was opened (UTM-like `src` on the apply link).
-ApplySource = Literal["linkedin", "facebook", "merojob", "viber", "qr", "direct", "other"]
+ApplySource = Literal[
+    "linkedin", "facebook", "merojob", "viber", "qr", "direct", "other"
+]
 
 
 class PublicCompany(BaseSchema):

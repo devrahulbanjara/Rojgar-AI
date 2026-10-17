@@ -35,7 +35,9 @@ def scratch_db(monkeypatch):
         cur.execute(f'DROP DATABASE IF EXISTS "{name}"')
         cur.execute(f'CREATE DATABASE "{name}"')
     for attr in ("user", "password", "host", "port"):
-        monkeypatch.setattr(settings, f"db_{attr}", getattr(settings, f"test_db_{attr}"))
+        monkeypatch.setattr(
+            settings, f"db_{attr}", getattr(settings, f"test_db_{attr}")
+        )
     monkeypatch.setattr(settings, "db_name", name)
     cfg = Config("alembic.ini")
     yield name, cfg
@@ -127,10 +129,14 @@ def _seed_v1(dbname: str) -> dict[str, str]:
                     IDS["resume"],
                     status,
                     [80, 74, 49, None, 90, 75, 50, 10][i],
-                    '["Six years handling cash at a cooperative"]' if i % 2 == 0 else None,
+                    '["Six years handling cash at a cooperative"]'
+                    if i % 2 == 0
+                    else None,
                     '["No banking diploma"]' if i == 0 else None,
                     0.42 if i == 0 else None,
-                    "needs_human_review" if i == 3 else ("completed" if i < 3 else None),
+                    "needs_human_review"
+                    if i == 3
+                    else ("completed" if i < 3 else None),
                     i,
                     "Flagged by rail" if i == 3 else None,
                     i == 1,
@@ -142,7 +148,12 @@ def _seed_v1(dbname: str) -> dict[str, str]:
                    is_approved, sent_at)
                VALUES (%s, %s, 'Shortlisted', '<p>Hi</p>', true, true, now()),
                       (%s, %s, 'Draft', '<p>unsent</p>', false, false, NULL)""",
-            (str(uuid.uuid4()), apps["shortlisted"], str(uuid.uuid4()), apps["rejected"]),
+            (
+                str(uuid.uuid4()),
+                apps["shortlisted"],
+                str(uuid.uuid4()),
+                apps["rejected"],
+            ),
         )
         cur.execute(
             """INSERT INTO interviews (id, application_id, cal_booking_uid,
@@ -243,7 +254,9 @@ async def test_upgrade_maps_rows_and_downgrade_restores_them(scratch_db):
     }
     status, reason, description, must, nice, questions, has_close = jobs[JOBS["active"]]
     assert (status, reason, has_close) == ("open", None, True)
-    assert description.startswith("Front desk role.\n\n## Responsibilities\n- Count cash")
+    assert description.startswith(
+        "Front desk role.\n\n## Responsibilities\n- Count cash"
+    )
     assert "## Requirements\n- +2 in management" in description
     assert "- Punctual" in description  # all requirements kept in the text
     assert must == [
@@ -255,7 +268,9 @@ async def test_upgrade_maps_rows_and_downgrade_restores_them(scratch_db):
         "Computer basics",
     ]
     assert nice == ["Banking diploma"]
-    assert questions == [{"label": "Notice period?", "type": "short_text", "required": True}]
+    assert questions == [
+        {"label": "Notice period?", "type": "short_text", "required": True}
+    ]
     assert jobs[JOBS["expired"]][:2] == ("closed", "expired")
     assert jobs[JOBS["hired"]][:2] == ("closed", "hired")
     assert jobs[JOBS["draft"]][:2] == ("draft", None)
@@ -268,9 +283,7 @@ async def test_upgrade_maps_rows_and_downgrade_restores_them(scratch_db):
         (row[0], "expired", *row[2:]) if row[0] == JOBS["hired"] else row
         for row in before["jobs"]
     ]
-    assert [r[:2] + r[2:] for r in after["jobs"]] == [
-        tuple(r) for r in expected_jobs
-    ]
+    assert [r[:2] + r[2:] for r in after["jobs"]] == [tuple(r) for r in expected_jobs]
     drafts = _rows(name, "SELECT application_id::text, is_sent FROM email_drafts")
     assert drafts == [(apps["shortlisted"], True)]  # unsent drafts are not restored
 

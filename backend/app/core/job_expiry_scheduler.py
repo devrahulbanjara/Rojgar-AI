@@ -39,7 +39,8 @@ def _run_expire_due_jobs() -> None:
         expired_count = asyncio.run(_expire_due_jobs_once_in_scheduler_thread())
         if expired_count:
             logger.info(
-                "Hourly scheduler closed {} job(s) past their closing time.", expired_count
+                "Hourly scheduler closed {} job(s) past their closing time.",
+                expired_count,
             )
     except Exception:
         logger.exception("Daily expiry scheduler failed while expiring due jobs.")

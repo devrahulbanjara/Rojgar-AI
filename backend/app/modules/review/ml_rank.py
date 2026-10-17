@@ -92,9 +92,12 @@ def _build_resume_text(application: Application) -> str:
 def blind_resume_text(resume) -> str:
     """Resume text for similarity features: no institutions, no years line."""
     parts = [resume.headline or "", resume.summary or ""]
-    parts.extend(f"{e.title or ''} at {e.company_name or ''}" for e in resume.experiences or [])
     parts.extend(
-        " ".join(p for p in [e.degree, e.field_of_study] if p) for e in resume.educations or []
+        f"{e.title or ''} at {e.company_name or ''}" for e in resume.experiences or []
+    )
+    parts.extend(
+        " ".join(p for p in [e.degree, e.field_of_study] if p)
+        for e in resume.educations or []
     )
     parts.append(", ".join(s.skill_name for s in resume.skills or [] if s.skill_name))
     return " ".join(p for p in parts if p)

@@ -138,7 +138,9 @@ class JobListItem(BaseSchema):
     applications_count: int = 0
     has_applied: bool = False
     created_at: datetime
-    match_score: float | None = Field(default=None, description="Semantic similarity (0-1)")
+    match_score: float | None = Field(
+        default=None, description="Semantic similarity (0-1)"
+    )
     is_fallback: bool = False
 
 

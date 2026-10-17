@@ -83,14 +83,22 @@ from app.shared.enums import (
 S = ApplicationStage
 
 # action -> (stages it applies to, target stage, email template or None)
-ACTIONS: dict[str, tuple[frozenset[ApplicationStage], ApplicationStage | None, str | None]] = {
+ACTIONS: dict[
+    str, tuple[frozenset[ApplicationStage], ApplicationStage | None, str | None]
+] = {
     "shortlist": (frozenset({S.new}), S.shortlisted, "shortlist"),
     "reject": (frozenset(ACTIVE_STAGES), S.rejected, "rejection"),
-    "invite_to_interview": (frozenset({S.shortlisted}), S.interview, "interview_invite"),
+    "invite_to_interview": (
+        frozenset({S.shortlisted}),
+        S.interview,
+        "interview_invite",
+    ),
     "make_offer": (frozenset({S.shortlisted, S.interview}), S.offer, "offer"),
     "mark_hired": (frozenset({S.offer}), S.hired, None),
     "move_back": (
-        frozenset({S.shortlisted, S.interview, S.offer, S.hired, S.rejected, S.withdrawn}),
+        frozenset(
+            {S.shortlisted, S.interview, S.offer, S.hired, S.rejected, S.withdrawn}
+        ),
         None,
         None,
     ),
@@ -128,7 +136,9 @@ def actions_for(stage: ApplicationStage) -> list[str]:
 
 async def _company_job(db: AsyncSession, user: User, job_id) -> tuple[uuid.UUID, Job]:
     company_id = await get_active_company_id(db, user)
-    job = await db.scalar(select(Job).where(Job.id == job_id, Job.company_id == company_id))
+    job = await db.scalar(
+        select(Job).where(Job.id == job_id, Job.company_id == company_id)
+    )
     if job is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Job not found.")
     return company_id, job
@@ -215,7 +225,9 @@ async def job_pipeline(
         job=PipelineJob.model_validate(job),
         counts=counts,
         reviewing=int(by_state.get(ReviewState.pending.value, 0)),
-        reviewed=int(sum(n for s, n in by_state.items() if s != ReviewState.pending.value)),
+        reviewed=int(
+            sum(n for s, n in by_state.items() if s != ReviewState.pending.value)
+        ),
         items=items,
     )
 
@@ -328,14 +340,18 @@ async def candidate_panel(
             name=display_name(application, applicant),
             email=shared_email(application),
             phone=shared_phone(application),
-            location=application.shared_location_value if share.share_location else None,
+            location=application.shared_location_value
+            if share.share_location
+            else None,
             avatar_url=application.shared_avatar_url if share.share_avatar else None,
             headline=application.shared_headline_value
             if share.share_headline_summary
             else None,
             linkedin_url=application.shared_linkedin_url if share.share_links else None,
             github_url=application.shared_github_url if share.share_links else None,
-            portfolio_url=application.shared_portfolio_url if share.share_links else None,
+            portfolio_url=application.shared_portfolio_url
+            if share.share_links
+            else None,
         ),
         review=ReviewView(
             state=review.state if review else ReviewState.pending.value,
@@ -348,7 +364,9 @@ async def candidate_panel(
             flag_reason=review.flag_reason if flagged else None,
         ),
         answers=[
-            AnswerView(question=str(a.get("question", "")), answer=str(a.get("answer", "")))
+            AnswerView(
+                question=str(a.get("question", "")), answer=str(a.get("answer", ""))
+            )
             for a in application.screening_answers or []
         ],
         cv_url=cv_url,
@@ -362,7 +380,9 @@ async def candidate_panel(
 # ---------------------------------------------------------------- decide / undo
 
 
-async def _move_back_target(db: AsyncSession, application: Application) -> ApplicationStage:
+async def _move_back_target(
+    db: AsyncSession, application: Application
+) -> ApplicationStage:
     payload = await db.scalar(
         select(ApplicationEvent.payload)
         .where(
@@ -391,7 +411,9 @@ async def decide(
     rows = await db.execute(
         select(Application, Job)
         .join(Job, Job.id == Application.job_id)
-        .where(Application.id.in_(payload.application_ids), Job.company_id == company_id)
+        .where(
+            Application.id.in_(payload.application_ids), Job.company_id == company_id
+        )
         .with_for_update(of=Application)
     )
     found = {app.id: (app, job) for app, job in rows.all()}
@@ -496,7 +518,9 @@ async def decide(
     )
 
 
-async def undo(db: AsyncSession, user: User, event_ids: list[uuid.UUID]) -> UndoResponse:
+async def undo(
+    db: AsyncSession, user: User, event_ids: list[uuid.UUID]
+) -> UndoResponse:
     """Revert decisions whose email has not gone out yet."""
     company_id = await get_active_company_id(db, user)
     rows = await db.execute(
@@ -543,7 +567,9 @@ async def undo(db: AsyncSession, user: User, event_ids: list[uuid.UUID]) -> Undo
             else None
         )
         application.rejected_reason = previous.get("rejected_reason")
-        await db.execute(delete(ApplicationEvent).where(ApplicationEvent.id == event.id))
+        await db.execute(
+            delete(ApplicationEvent).where(ApplicationEvent.id == event.id)
+        )
         enqueue_application_sync_event(db, application.id)
         response.undone.append(application.id)
         touched.append(application)
@@ -562,10 +588,14 @@ async def undo(db: AsyncSession, user: User, event_ids: list[uuid.UUID]) -> Undo
     return response
 
 
-async def _invalidate(db: AsyncSession, company_id, applications: list[Application]) -> None:
+async def _invalidate(
+    db: AsyncSession, company_id, applications: list[Application]
+) -> None:
     await invalidate_company_application_caches(str(company_id))
     await invalidate_company_dashboard_caches(db, str(company_id))
-    await invalidate_candidate_read_caches_for_users({str(a.user_id) for a in applications})
+    await invalidate_candidate_read_caches_for_users(
+        {str(a.user_id) for a in applications}
+    )
 
 
 # ---------------------------------------------------------------- notes, flags
@@ -574,7 +604,9 @@ async def _invalidate(db: AsyncSession, company_id, applications: list[Applicati
 async def add_note(
     db: AsyncSession, user: User, application_id: uuid.UUID, text: str
 ) -> EventView:
-    _company_id, application, _job = await _company_application(db, user, application_id)
+    _company_id, application, _job = await _company_application(
+        db, user, application_id
+    )
     event = ApplicationEvent(
         id=uuid.uuid4(),
         application_id=application.id,
@@ -599,9 +631,13 @@ async def clear_flag(
 ) -> CandidatePanelResponse:
     """A person read the CV and cleared the flag: review it (rail skipped)."""
     company_id, application, _job = await _company_application(db, user, application_id)
-    review = await db.scalar(select(Review).where(Review.application_id == application.id))
+    review = await db.scalar(
+        select(Review).where(Review.application_id == application.id)
+    )
     if review is None or not is_flagged(review):
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="This application is not flagged.")
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail="This application is not flagged."
+        )
     db.add(
         ApplicationEvent(
             application_id=application.id,
@@ -803,13 +839,25 @@ async def list_referrers(
 _FIT_LABEL = {"strong": "Strong fit", "possible": "Possible fit", "weak": "Weak fit"}
 
 
-async def export_csv(db: AsyncSession, user: User, job_id: uuid.UUID) -> tuple[str, str]:
+async def export_csv(
+    db: AsyncSession, user: User, job_id: uuid.UUID
+) -> tuple[str, str]:
     """(filename, CSV text) of a job's applications in pipeline order."""
     pipeline = await job_pipeline(db, user, job_id)
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow(
-        ["Name", "Phone", "Email", "Stage", "Fit", "Summary", "Source", "Referred by", "Applied"]
+        [
+            "Name",
+            "Phone",
+            "Email",
+            "Stage",
+            "Fit",
+            "Summary",
+            "Source",
+            "Referred by",
+            "Applied",
+        ]
     )
     for item in pipeline.items:
         writer.writerow(

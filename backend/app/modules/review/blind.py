@@ -17,7 +17,9 @@ from typing import Any
 from app.shared.unicode_text import strip_invisible
 
 _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-_URL_RE = re.compile(r"(https?://\S+|www\.\S+|\b[\w-]+\.(?:com|np|org|net|io)/\S*)", re.I)
+_URL_RE = re.compile(
+    r"(https?://\S+|www\.\S+|\b[\w-]+\.(?:com|np|org|net|io)/\S*)", re.I
+)
 _PHONE_RE = re.compile(r"(?<!\w)\+?[\d०-९][\d०-९\s().-]{6,}[\d०-९](?!\w)")
 
 # Whole lines that only describe identity.
@@ -190,9 +192,7 @@ def build_blind_text(
     return "\n".join(lines).strip()
 
 
-def candidate_text_for_guardrail(
-    resume: Any | None, answers: list[dict] | None
-) -> str:
+def candidate_text_for_guardrail(resume: Any | None, answers: list[dict] | None) -> str:
     """Every candidate-controlled text field, unredacted, for the injection rail."""
     parts: list[str] = []
     if resume is not None:
@@ -216,7 +216,9 @@ def candidate_text_for_guardrail(
                 str(v) for v in (edu.institution, edu.degree, edu.field_of_study) if v
             )
         parts.extend(
-            str(s.skill_name) for s in getattr(resume, "skills", None) or [] if s.skill_name
+            str(s.skill_name)
+            for s in getattr(resume, "skills", None) or []
+            if s.skill_name
         )
     for item in answers or []:
         if item.get("answer"):

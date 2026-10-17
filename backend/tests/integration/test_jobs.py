@@ -152,7 +152,10 @@ class TestJobV2Fields:
         assert resp.status_code == 201, resp.text
         data = resp.json()["data"]
         assert data["status"] == "open" and data["currency"] == "NPR"
-        assert data["must_haves"] == ["Fluent in English and Nepali", "Female receptionist"]
+        assert data["must_haves"] == [
+            "Fluent in English and Nepali",
+            "Female receptionist",
+        ]
         assert data["questions"][1]["knockout_answer"] is None  # only yes/no
         assert [(w["field"], w["index"], w["ground"]) for w in data["warnings"]] == [
             ("must_haves", 1, "gender")
@@ -186,7 +189,12 @@ class TestJobV2Fields:
             cand, resume = await make_candidate_with_resume(db, email=f"close{i}@t.com")
             apps.append(
                 await make_application(
-                    db, cand.id, job.id, resume.id, stage, shared_email_value=f"close{i}@t.com"
+                    db,
+                    cand.id,
+                    job.id,
+                    resume.id,
+                    stage,
+                    shared_email_value=f"close{i}@t.com",
                 )
             )
 
@@ -250,7 +258,11 @@ class TestJobV2Fields:
 
         async def fake(_prompt, _payload, schema, **_kwargs):
             return schema(
-                must_haves=["Valid driving licence (heavy)", "Male only", "Knows routes"],
+                must_haves=[
+                    "Valid driving licence (heavy)",
+                    "Male only",
+                    "Knows routes",
+                ],
                 nice_to_haves=["Basic English"],
                 questions=[
                     {
@@ -266,7 +278,10 @@ class TestJobV2Fields:
         admin, _ = await make_recruiter_admin(db, email="v2suggest@test.com")
         resp = await client.post(
             "/jobs/suggest-must-haves",
-            json={"title": "Truck driver", "description": "Drive trucks Kathmandu-Birgunj."},
+            json={
+                "title": "Truck driver",
+                "description": "Drive trucks Kathmandu-Birgunj.",
+            },
             headers=auth_headers(admin.id),
         )
         assert resp.status_code == 200, resp.text
@@ -278,7 +293,9 @@ class TestJobV2Fields:
     async def test_role_templates_endpoint(self, client, db):
         admin, _ = await make_recruiter_admin(db, email="v2tpl@test.com")
         resp = await client.get(
-            "/job-templates", params={"category": "healthcare"}, headers=auth_headers(admin.id)
+            "/job-templates",
+            params={"category": "healthcare"},
+            headers=auth_headers(admin.id),
         )
         assert resp.status_code == 200
         titles = [t["title"] for t in resp.json()["data"]]
@@ -295,7 +312,12 @@ class TestJobV2Fields:
             category=JobCategory.healthcare,
             employment_type=EmploymentType.part_time,
             questions=[
-                {"label": "NNC licence?", "type": "yes_no", "required": True, "knockout_answer": "yes"}
+                {
+                    "label": "NNC licence?",
+                    "type": "yes_no",
+                    "required": True,
+                    "knockout_answer": "yes",
+                }
             ],
         )
         data = (await client.get(f"/public/jobs/{job.slug}")).json()["data"]

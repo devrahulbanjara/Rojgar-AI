@@ -14,7 +14,7 @@ from loguru import logger
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.cache import (
     invalidate_candidate_read_caches,
@@ -535,7 +535,9 @@ async def respond_to_offer(
     enqueue_application_sync_event(db, application.id)
     await db.commit()
     await invalidate_candidate_read_caches(str(user.id))
-    await invalidate_company_application_caches(str(job.company_id), str(application.id))
+    await invalidate_company_application_caches(
+        str(job.company_id), str(application.id)
+    )
 
 
 # ---------------------------------------------------------------- recruiter: candidates across jobs
@@ -615,7 +617,9 @@ async def _build_company_candidates(
             bucket["applications"].append(summary)
             bucket["last_activity_at"] = max(bucket["last_activity_at"], activity)
     rows = [
-        RecruiterCandidateListItem(**bucket, application_count=len(bucket["applications"]))
+        RecruiterCandidateListItem(
+            **bucket, application_count=len(bucket["applications"])
+        )
         for bucket in grouped.values()
     ]
     rows.sort(key=lambda item: item.last_activity_at, reverse=True)
@@ -637,7 +641,9 @@ async def list_company_candidates(
     )
 
     async def _load(db: AsyncSession = db) -> list:
-        items = await _build_company_candidates(db, company_id, job_id, stage, page, size)
+        items = await _build_company_candidates(
+            db, company_id, job_id, stage, page, size
+        )
         return [item.model_dump(mode="json") for item in items]
 
     payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=180)
@@ -710,7 +716,7 @@ async def semantic_search_candidates(
 async def find_similar_candidates(
     db: AsyncSession, user: User, application_id: str, limit: int = 10
 ) -> SimilarCandidatesResponse:
-    """"More like this one" within the same company."""
+    """ "More like this one" within the same company."""
     company_id = await get_active_company_id(db, user)
     ref = await db.execute(
         select(Application, User, Job, Review)

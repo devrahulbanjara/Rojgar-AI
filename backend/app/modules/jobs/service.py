@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -627,7 +627,11 @@ async def update_job(
         category="jobs",
         message=f"Job '{job.title}' {action.replace('job_', '').replace('_', ' ')} "
         f"by {user.full_name}"
-        + (f"; {closed_out} candidate(s) told the position is closed" if closing else ""),
+        + (
+            f"; {closed_out} candidate(s) told the position is closed"
+            if closing
+            else ""
+        ),
         entity_id=job.id,
         company_id=company_id,
         diff_json={
@@ -742,7 +746,11 @@ async def _close_out_applications(
         )
         if email is not None:
             email_ids.append(email.id)
-        db.add(ApplicationSyncEvent(application_id=application.id, action=SyncAction.UPSERT))
+        db.add(
+            ApplicationSyncEvent(
+                application_id=application.id, action=SyncAction.UPSERT
+            )
+        )
     return len(waiting), email_ids
 
 
@@ -840,7 +848,9 @@ class _Suggestion(BaseSchema):
     questions: list[JobQuestion]
 
 
-async def suggest_must_haves(payload: SuggestMustHavesRequest) -> SuggestMustHavesResponse:
+async def suggest_must_haves(
+    payload: SuggestMustHavesRequest,
+) -> SuggestMustHavesResponse:
     """LLM-suggested criteria and questions; protected grounds are dropped."""
     from app.infrastructures.ai.service import ai_service
 
@@ -851,17 +861,19 @@ async def suggest_must_haves(payload: SuggestMustHavesRequest) -> SuggestMustHav
         temperature=0.0,
     )
     must = [" ".join(m.split())[:200] for m in suggestion.must_haves if m.strip()][:6]
-    nice = [" ".join(m.split())[:200] for m in suggestion.nice_to_haves if m.strip()][:6]
+    nice = [" ".join(m.split())[:200] for m in suggestion.nice_to_haves if m.strip()][
+        :6
+    ]
     questions = suggestion.questions[:3]
-    warnings = check_protected_grounds(
-        must, nice, [q.model_dump() for q in questions]
-    )
+    warnings = check_protected_grounds(must, nice, [q.model_dump() for q in questions])
     flagged = {(w.field, w.index) for w in warnings}
     return SuggestMustHavesResponse(
         must_haves=[m for i, m in enumerate(must) if ("must_haves", i) not in flagged],
         nice_to_haves=[
             m for i, m in enumerate(nice) if ("nice_to_haves", i) not in flagged
         ],
-        questions=[q for i, q in enumerate(questions) if ("questions", i) not in flagged],
+        questions=[
+            q for i, q in enumerate(questions) if ("questions", i) not in flagged
+        ],
         warnings=warnings,
     )

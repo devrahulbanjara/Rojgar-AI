@@ -366,7 +366,8 @@ async def submit_guest_application(
     normalized_phone = normalize_phone(phone)
     if phone and normalized_phone is None:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter a valid phone number."
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Please enter a valid phone number.",
         )
     if not email and not normalized_phone:
         raise HTTPException(

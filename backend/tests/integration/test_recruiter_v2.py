@@ -82,7 +82,9 @@ class TestPipeline:
 
     async def test_other_company_cannot_read(self, client, db):
         _admin, job, _apps = await _job_with_apps(db, "tenancy", 1)
-        outsider, _ = await make_recruiter_admin(db, email="outsider@t.com", company_name="X")
+        outsider, _ = await make_recruiter_admin(
+            db, email="outsider@t.com", company_name="X"
+        )
         resp = await client.get(
             f"/recruiter/v2/jobs/{job.id}/pipeline", headers=auth_headers(outsider.id)
         )
@@ -150,12 +152,10 @@ class TestDecide:
     async def test_undo_fails_once_the_email_is_out(self, client, db):
         admin, _job, apps = await _job_with_apps(db, "sent", 1)
         data = (await _decide(client, admin, "reject", [apps[0].id])).json()["data"]
-        email_id = (
-            await db.scalar(
-                select(ApplicationEvent.id).where(
-                    ApplicationEvent.application_id == apps[0].id,
-                    ApplicationEvent.type == "email_scheduled",
-                )
+        email_id = await db.scalar(
+            select(ApplicationEvent.id).where(
+                ApplicationEvent.application_id == apps[0].id,
+                ApplicationEvent.type == "email_scheduled",
             )
         )
         assert await emails.deliver(email_id, db=db) is True
@@ -217,9 +217,9 @@ class TestDecide:
             ][0]
             assert result["ok"], (action, result)
             assert result["stage"] == stage
-        assert (
-            await _decide(client, admin, "withdraw", [app_id])
-        ).json()["data"]["results"][0]["stage"] == "withdrawn"
+        assert (await _decide(client, admin, "withdraw", [app_id])).json()["data"][
+            "results"
+        ][0]["stage"] == "withdrawn"
 
     async def test_move_back_returns_to_the_stage_it_came_from(self, client, db):
         admin, _job, apps = await _job_with_apps(
@@ -253,7 +253,9 @@ class TestNotesAndFlags:
             headers=auth_headers(admin.id),
         )
         assert resp.status_code == 201
-        assert resp.json()["data"]["payload"] == {"text": "Called, available from Monday"}
+        assert resp.json()["data"]["payload"] == {
+            "text": "Called, available from Monday"
+        }
         panel = await client.get(
             f"/recruiter/v2/applications/{apps[0].id}", headers=auth_headers(admin.id)
         )
