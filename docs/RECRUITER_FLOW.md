@@ -2,6 +2,42 @@
 
 The spec the recruiter app is built from. If a screen or field is not here, it does not ship.
 
+## 0. Who is who (hierarchy and roles)
+
+Words in the product: **Business**, **Team**, **Job**, **Applicant**. We never say "candidate" or "recruiter".
+
+```
+Rojgar AI (platform)
+  └─ Platform staff (is_platform_admin)       approve businesses, handle reports, plans, support
+Person (one account: phone and/or email; no global role)
+  ├─ can be a member of Businesses            role per business: Owner · Manager · Interviewer
+  └─ can be an Applicant to Jobs              sees only their own applications
+Business (status: pending → active · suspended · rejected)
+  ├─ Members (Owner 1+, Manager, Interviewer), joined only by invite link
+  ├─ Branches (optional, for multi-branch businesses)
+  └─ Jobs → Applications → Applicant (Person), Referrers, Interviews, Events
+```
+
+| Role | Can |
+|---|---|
+| Owner | Everything in the business: plan and billing, members, all jobs |
+| Manager | Post and edit jobs, decide on applicants, invite to interview |
+| Interviewer | See applicants of jobs they're added to, add notes and scorecards |
+| Applicant | Apply (no account needed), see status, withdraw, delete their data |
+| Platform staff | Approve or reject businesses, suspend, review reports and flagged jobs, adjust plans, read-only support view |
+
+### How a business starts
+A business doesn't "sign up". A **person** signs up (phone number + SMS code, or email), then **creates a business** (name, type, district, phone, optional PAN/registration number and a photo of the certificate). The business is **pending**: the owner can set everything up and draft jobs, but **jobs can't go public until platform staff approve the business** (usually the same day; staff check PAN on the IRD site or call the owner). Approved businesses get a "Verified" badge on their job pages.
+
+People join an existing business **only through an invite link** from an Owner. There is no "request to join" by typing a business name.
+
+### Platform admin panel (/admin)
+- **Approvals**: queue of pending businesses with details and documents; Approve, Ask for more info (sends SMS/email), Reject (with reason).
+- **Businesses**: search, status, plan and usage, members, suspend/restore.
+- **Reports and flags**: applicants' "Report this job", jobs flagged automatically (fee requests, phone numbers asking for money, discriminatory must-haves); Unpublish / Restore / Suspend business.
+- **Payments**: passes and subscriptions; mark a bank-transfer payment as received until eSewa/Khalti is live.
+- Every admin action is written to the audit log.
+
 ## 1. What a recruiter is trying to do
 
 | Job to be done | How often | Today | Target |
