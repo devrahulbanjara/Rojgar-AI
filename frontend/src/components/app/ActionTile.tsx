@@ -36,7 +36,7 @@ export function ActionTile({
       <span className="font-heading text-2xl leading-none font-light tabular-nums">
         {count > 0 ? `+${count}` : 0}
       </span>
-      <span className="truncate text-xs font-medium">{label}</span>
+      <span className="line-clamp-2 text-xs font-medium">{label}</span>
     </Link>
   )
 }
