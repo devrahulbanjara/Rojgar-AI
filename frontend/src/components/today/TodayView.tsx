@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 import Link from 'next/link'
 
 import { formatTime, formatWhen } from '@/lib/dates'
@@ -15,7 +17,6 @@ import { format } from 'date-fns'
 import { PageContainer } from '@/components/app/AppShell'
 import { EmptyState } from '@/components/app/EmptyState'
 import { EntityAvatar } from '@/components/app/EntityAvatar'
-import { StatStrip } from '@/components/app/Numbers'
 import { PageHeader } from '@/components/app/PageHeader'
 import { RoleCard } from '@/components/app/RoleCard'
 import { Section } from '@/components/app/Section'
@@ -32,31 +33,39 @@ function greeting(date = new Date()): string {
 
 const isUrl = (value: string | null) => !!value && /^https?:\/\//i.test(value)
 
-function InterviewRow({ interview }: { interview: RecruiterHomeInterview }) {
+function InterviewRow({ interview, now }: { interview: RecruiterHomeInterview; now: number }) {
+  const over = new Date(interview.end_time).getTime() <= now
   return (
-    <li className="flex items-center gap-4 px-4 py-3">
-      <span className="w-20 shrink-0 text-sm font-medium tabular-nums text-foreground">
+    <li className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+      <span className="w-16 shrink-0 text-sm font-medium text-foreground tabular-nums sm:w-20">
         {formatTime(interview.start_time)}
       </span>
-      <EntityAvatar name={interview.candidate_name} className="size-8" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{interview.candidate_name}</p>
-        <p className="truncate text-xs text-muted-foreground">{interview.job_title}</p>
-      </div>
-      {isUrl(interview.location) ? (
-        <Button asChild size="sm">
+      <Link
+        href={`/recruiter/jobs/${interview.job_id}?candidate=${interview.application_id}`}
+        className="flex min-w-0 flex-1 basis-40 items-center gap-3 hover:underline"
+      >
+        <EntityAvatar name={interview.candidate_name} className="size-8" />
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium text-foreground">
+            {interview.candidate_name}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground">
+            {interview.job_title}
+          </span>
+        </span>
+      </Link>
+      {over ? (
+        <Button asChild size="sm" variant="outline" className="ml-auto">
+          <Link href="/recruiter/interviews">Add scorecard</Link>
+        </Button>
+      ) : isUrl(interview.location) ? (
+        <Button asChild size="sm" className="ml-auto">
           <a href={interview.location!} target="_blank" rel="noreferrer">
             <VideoIcon />
             Join
           </a>
         </Button>
       ) : null}
-      <Link
-        href={`/recruiter/jobs/${interview.job_id}?stage=interview&app=${interview.application_id}`}
-        className="text-sm font-medium whitespace-nowrap text-primary hover:underline"
-      >
-        Open →
-      </Link>
     </li>
   )
 }
@@ -124,6 +133,7 @@ function TodaySkeleton() {
 }
 
 export function TodayView() {
+  const [now] = useState(Date.now)
   const { data, isLoading, isError, refetch } = useGetRecruiterHomeQuery()
   const home = data?.data
 
@@ -144,21 +154,22 @@ export function TodayView() {
     )
   }
 
-  const totals = home.roles.reduce(
-    (sum, role) => ({
-      review: sum.review + role.to_review,
-      contact: sum.contact + role.to_contact,
-      decide: sum.decide + role.to_decide,
-    }),
-    { review: 0, contact: 0, decide: 0 },
-  )
+  const totals = home.roles.reduce((sum, role) => ({ review: sum.review + role.to_review }), {
+    review: 0,
+  })
 
   return (
     <PageContainer>
       <PageHeader
         breadcrumb={[{ label: home.company_name || 'Today' }]}
         title={`${greeting()}, ${home.first_name}`}
-        facts={[format(new Date(), 'EEEE, d MMMM')]}
+        facts={[
+          format(new Date(), 'EEEE, d MMMM'),
+          totals.review ? `${totals.review} to review` : null,
+          home.interviews_today.length
+            ? `${home.interviews_today.length} interview${home.interviews_today.length === 1 ? '' : 's'} today`
+            : null,
+        ]}
         primaryAction={
           <Button asChild>
             <Link href="/recruiter/jobs/new">
@@ -167,15 +178,6 @@ export function TodayView() {
             </Link>
           </Button>
         }
-      />
-
-      <StatStrip
-        items={[
-          { label: 'To review', value: totals.review },
-          { label: 'To contact', value: totals.contact },
-          { label: 'To decide', value: totals.decide },
-          { label: 'Interviews today', value: home.interviews_today.length },
-        ]}
       />
 
       {home.is_admin && home.join_requests.length > 0 ? (
@@ -193,7 +195,7 @@ export function TodayView() {
         {home.interviews_today.length ? (
           <ul className="divide-y rounded-xl border bg-card">
             {home.interviews_today.map((interview) => (
-              <InterviewRow key={interview.interview_id} interview={interview} />
+              <InterviewRow key={interview.interview_id} interview={interview} now={now} />
             ))}
           </ul>
         ) : (
