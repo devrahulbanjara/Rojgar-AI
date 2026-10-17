@@ -97,13 +97,16 @@ const transferColumns: ColumnDef<PaymentRow>[] = [
         <span className="truncate text-xs text-muted-foreground">
           {[row.original.item, row.original.job_title].filter(Boolean).join(' · ')}
         </span>
+        <span className="text-xs text-foreground tabular-nums sm:hidden">
+          {npr(row.original.amount_npr)}
+        </span>
       </div>
     ),
   },
   {
     accessorKey: 'amount_npr',
     header: 'Amount',
-    meta: { className: 'text-right' },
+    meta: { className: 'hidden sm:table-cell' },
     cell: ({ row }) => (
       <span className="whitespace-nowrap tabular-nums">{npr(row.original.amount_npr)}</span>
     ),
@@ -155,7 +158,6 @@ const paidColumns: ColumnDef<PaidPlanRow>[] = [
   {
     accessorKey: 'active_passes',
     header: 'Live Job Passes',
-    meta: { className: 'text-right' },
   },
 ]
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { notify } from '@/lib/notify'
+import { localPhone } from '@/lib/session'
 import {
   type ApprovalItem,
   useApproveBusinessMutation,
@@ -86,10 +87,12 @@ function ApprovalCard({ item }: { item: ApprovalItem }) {
       </div>
 
       <dl className="grid gap-3 sm:grid-cols-4">
-        <Detail label="Business phone">{item.phone ?? '—'}</Detail>
+        <Detail label="Business phone">{localPhone(item.phone) ?? '—'}</Detail>
         <Detail label="PAN number">{item.pan_number ?? 'Not given'}</Detail>
         <Detail label="Created by">
-          {[item.created_by_name, item.created_by_contact].filter(Boolean).join(' · ') || '—'}
+          {[item.created_by_name, localPhone(item.created_by_contact)]
+            .filter(Boolean)
+            .join(' · ') || '—'}
         </Detail>
         <Detail label="Certificate">
           {item.document_url ? (

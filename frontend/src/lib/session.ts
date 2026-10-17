@@ -24,7 +24,12 @@ export function useIsOwner(): boolean {
   return useActiveBusiness()?.role === 'owner'
 }
 
+/** Nepali numbers as people write them (98XXXXXXXX); other countries keep their +code. */
+export function localPhone(phone: string | null | undefined): string | null {
+  return phone ? phone.replace(/^\+977/, '') : null
+}
+
 /** A name to show for a person who signed up by phone and hasn't added one yet. */
 export function displayName(user: Pick<BaseUser, 'full_name' | 'phone'> | null | undefined) {
-  return user?.full_name || user?.phone || 'You'
+  return user?.full_name || localPhone(user?.phone) || 'You'
 }

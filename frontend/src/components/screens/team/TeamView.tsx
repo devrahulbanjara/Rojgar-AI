@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { parseApiError } from '@/lib/apiError'
 import { shortDate } from '@/lib/dates'
 import { notify } from '@/lib/notify'
-import { ROLE_LABEL } from '@/lib/session'
+import { ROLE_LABEL, localPhone } from '@/lib/session'
 import type { BusinessRole } from '@/lib/types/user'
 import { useAppSelector } from '@/store/hooks'
 import {
@@ -130,7 +130,7 @@ export function TeamView() {
         next.delete(member.membership_id)
         return next
       })
-    notify.undoable(`Removed ${member.full_name || member.phone}`, {
+    notify.undoable(`Removed ${member.full_name || localPhone(member.phone)}`, {
       onUndo: restore,
       onCommit: () => {
         removeMember({ businessId, membershipId: member.membership_id })
@@ -146,7 +146,7 @@ export function TeamView() {
   async function setRole(member: TeamMember, role: BusinessRole) {
     if (!businessId || role === member.role) return
     const before = member.role
-    const name = member.full_name || member.phone || 'They'
+    const name = member.full_name || localPhone(member.phone) || 'They'
     try {
       await changeRole({ businessId, membershipId: member.membership_id, role }).unwrap()
       notify.undoable(`${name} is now ${ROLE_LABEL[role]}`, {
@@ -164,11 +164,13 @@ export function TeamView() {
       header: ({ column }) => <SortableHeader column={column} label="Name" />,
       cell: ({ row }) => (
         <PersonCell
-          name={
-            (row.original.full_name || row.original.phone || 'No name yet') +
-            (row.original.user_id === me?.id ? ' (you)' : '')
-          }
-          meta={row.original.email ?? row.original.phone}
+          name={row.original.full_name || localPhone(row.original.phone) || 'No name yet'}
+          meta={[
+            row.original.user_id === me?.id ? 'You' : null,
+            row.original.email ?? localPhone(row.original.phone),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
           src={row.original.avatar_url}
         />
       ),

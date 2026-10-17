@@ -40,6 +40,13 @@ const SUSPEND_LINES = [
 
 type Filter = 'all' | BusinessStatus
 
+const CHIP: Record<BusinessStatus, string> = {
+  active: 'Verified',
+  pending: 'Waiting',
+  suspended: 'Suspended',
+  rejected: 'Not approved',
+}
+
 function planName(plan: string): string {
   return PLANS[plan as PlanId]?.name ?? plan
 }
@@ -101,12 +108,18 @@ const columns: ColumnDef<BusinessRow>[] = [
         <span className="truncate text-xs text-muted-foreground">
           {[row.original.business_type, row.original.district].filter(Boolean).join(' · ')}
         </span>
+        <span className="mt-1 sm:hidden">
+          <StatusPill tone={BUSINESS_STATUS[row.original.status].tone}>
+            {BUSINESS_STATUS[row.original.status].label}
+          </StatusPill>
+        </span>
       </div>
     ),
   },
   {
     accessorKey: 'status',
     header: 'Status',
+    meta: { className: 'hidden sm:table-cell' },
     cell: ({ row }) => {
       const status = BUSINESS_STATUS[row.original.status]
       return <StatusPill tone={status.tone}>{status.label}</StatusPill>
@@ -121,17 +134,17 @@ const columns: ColumnDef<BusinessRow>[] = [
   {
     accessorKey: 'members',
     header: 'Team',
-    meta: { className: 'hidden md:table-cell text-right' },
+    meta: { className: 'hidden md:table-cell' },
   },
   {
     accessorKey: 'jobs',
     header: 'Jobs',
-    meta: { className: 'hidden md:table-cell text-right' },
+    meta: { className: 'hidden md:table-cell' },
   },
   {
     accessorKey: 'open_reports',
     header: 'Reports',
-    meta: { className: 'hidden sm:table-cell text-right' },
+    meta: { className: 'hidden sm:table-cell' },
     cell: ({ row }) =>
       row.original.open_reports ? (
         <StatusPill tone="danger">{row.original.open_reports}</StatusPill>
@@ -181,11 +194,10 @@ export function BusinessesView() {
         value={filter}
         onChange={setFilter}
         options={[
-          { value: 'all', label: 'All', count: all.length },
-          { value: 'active', label: 'Verified', count: count('active') },
-          { value: 'pending', label: 'Waiting', count: count('pending') },
-          { value: 'suspended', label: 'Suspended', count: count('suspended') },
-          { value: 'rejected', label: 'Not approved', count: count('rejected') },
+          { value: 'all' as Filter, label: 'All', count: all.length },
+          ...(['active', 'pending', 'suspended', 'rejected'] as const)
+            .filter((status) => count(status) > 0 || filter === status)
+            .map((status) => ({ value: status, label: CHIP[status], count: count(status) })),
         ]}
       />
       {isError ? (

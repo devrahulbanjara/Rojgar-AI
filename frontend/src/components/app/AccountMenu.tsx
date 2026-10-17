@@ -91,6 +91,16 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
+        {showName ? (
+          // The trigger hides the name on phones; say who and where here instead.
+          <>
+            <DropdownMenuLabel className="flex flex-col font-normal sm:hidden">
+              <span className="truncate text-sm font-medium">{displayName(user)}</span>
+              <span className="truncate text-xs text-muted-foreground">{roleLine}</span>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="sm:hidden" />
+          </>
+        ) : null}
         {active ? (
           <DropdownMenuItem asChild>
             <Link href="/recruiter/settings">
@@ -148,8 +158,10 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
             {memberships.map((m) => (
               <DropdownMenuItem
                 key={m.business_id}
-                disabled={m.active}
-                onSelect={() => void switchTo(m.business_id, m.business_name)}
+                aria-current={m.active || undefined}
+                onSelect={() => {
+                  if (!m.active) void switchTo(m.business_id, m.business_name)
+                }}
               >
                 {m.active ? <CheckIcon /> : <BusinessIcon />}
                 <span className="truncate">{m.business_name}</span>

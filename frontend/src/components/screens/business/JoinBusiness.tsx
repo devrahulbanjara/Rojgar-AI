@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { parseApiError } from '@/lib/apiError'
 import { useT } from '@/lib/i18n/client'
 import { notify } from '@/lib/notify'
+import { homePathFor } from '@/lib/roleRoutes'
 import { useMounted } from '@/lib/useMounted'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery, useUpdateMeMutation } from '@/store/services/authApi'
@@ -77,12 +78,15 @@ export function JoinBusiness({ token }: { token: string }) {
   const title = t.auth.invite.title(invite.business_name)
 
   if (invite.problem) {
+    const onTeam = user?.memberships.some((m) => m.business_name === invite.business_name)
     return (
       <AuthCard title={title}>
-        <p className="text-sm text-foreground">{invite.problem}</p>
+        <p className="text-sm text-foreground">
+          {onTeam ? t.auth.invite.joined(invite.business_name) : invite.problem}
+        </p>
         {user ? (
           <Button asChild variant="outline" className="w-full">
-            <Link href="/">{t.nav.openApp}</Link>
+            <Link href={homePathFor(user)}>{t.nav.openApp}</Link>
           </Button>
         ) : null}
       </AuthCard>
