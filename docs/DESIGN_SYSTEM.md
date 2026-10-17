@@ -129,11 +129,9 @@ See the file for the rest.
 - **`Section title action?`**: a titled block, with no helper text under it.
 
 **Data display**
-- **`DataTable columns data getRowId bulkActions? initialSorting? emptyText?`**: built on TanStack.
-  - Sortable headers come from `SortableHeader`.
-  - Passing `bulkActions` adds a checkbox column and a sticky `BulkBar`.
-  - The footer shows "Showing 1–10 of 48", rows per page and paging.
-  - Put `PersonCell` in the first cell and a `RowLink` ("Review →") on the right.
+- **`DataTable`**: the one table, on TanStack Table (shadcn data-table pattern). Old props
+  (`columns data getRowId bulkActions? initialSorting? emptyText? pageSizes?`) keep working; the
+  rest is opt-in. See [DataTable](#datatable) below.
 - **`PersonCell name meta? src?`**: avatar plus a bold name and a muted meta line.
 - **`StatusPill tone`**: dot, tinted background and matching text.
   - `ApplicationStatusPill` and `JobStatusPill` map statuses to wording and tone (see
@@ -176,6 +174,63 @@ See the file for the rest.
 
 **Public chrome** is owned by the public-pages branch: `PublicNav`, `PublicFooter`,
 `lib/brand.ts` (`BRAND`). There is one definition of each.
+
+## DataTable
+
+`@/components/app/DataTable` (helpers in `DataTableToolbar`, `DataTablePagination`, `DataTableState`).
+
+| Prop | Does |
+|---|---|
+| `columns data getRowId` | Required. A column whose `header` is a string sorts on click: ascending → descending → off (shift-click adds a second column); `aria-sort` is set on the `<th>`. Custom headers can use `SortableHeader`. |
+| `meta.className` / `meta.label` | `'hidden md:table-cell'` hides a column on phones; `label` names it in Columns and chips. |
+| `searchPlaceholder` | Shows one search box (global filter, 250 ms debounce). |
+| `filters={[{ column, title, options? }]}` | A filter button per column: popover with checkboxes, counts and Clear; active values show as chips with ✕ and a Reset button. Options default to the column's values. |
+| `tableId` | Adds the Columns menu; the choice is remembered in localStorage per `tableId`. |
+| `getRowHref` / `onRowOpen` | Rows become focusable; Enter or a click on empty row space opens. |
+| `bulkActions(rows, clear)` | Checkbox column and the sticky `BulkBar`. |
+| `loading` | Skeleton rows under the real header. |
+| `emptyText emptyAction` | Shown as an `EmptyState` when there is no data at all. Filters that hide every row show "No results." with Clear filters instead. |
+| `pageSizes` | Footer "Showing 1–10 of 48", rows per page, previous/next; shown once rows exceed the smallest size. |
+| `manualPagination rowCount pagination onPaginationChange` (+ `manualSorting`/`sorting`, `manualFiltering`/`globalFilter`/`columnFilters` and their `on…Change`) | Server-side mode: `data` is the current page, `rowCount` the total. Pass `options[].count` to filters. |
+
+The header sticks under the top bar on `md+` while the page scrolls; on phones the table scrolls
+sideways instead and the toolbar wraps.
+
+```tsx
+const columns: ColumnDef<JobReply>[] = [
+  { accessorKey: 'title', header: 'Job' },
+  { id: 'status', accessorFn: (r) => (r.status === 'active' ? 'Open' : 'Closed'), header: 'Status',
+    meta: { className: 'hidden md:table-cell' } },
+  { accessorKey: 'waiting', header: 'Waiting' },
+]
+
+<DataTable
+  tableId="insights-replies"
+  columns={columns}
+  data={rows}
+  getRowId={(r) => r.job_id}
+  getRowHref={(r) => `/recruiter/jobs/${r.job_id}`}
+  searchPlaceholder="Search jobs"
+  filters={[{ column: 'status', title: 'Status' }]}
+  pageSizes={[5, 10, 25]}
+/>
+```
+
+## Charts
+
+`@/components/ui/chart` is shadcn's chart (Recharts 3, pinned exact in `package.json`):
+`ChartContainer config`, `ChartTooltip` + `ChartTooltipContent`, `ChartLegend` + `ChartLegendContent`.
+
+- **Colours** come from tokens through the config: `{ count: { label: 'Applications', color: 'var(--primary)' } }`,
+  then `fill="var(--color-count)"`. Counts of people use `--primary`; a second measure (days) uses
+  `--ai-2`; grid and cursor use `--border` / `--muted`. No hex.
+- **One measure per chart, one axis.** Horizontal bars for categories (labels stay readable at
+  390px), area for a weekly trend. Value labels and numeric ticks use Manrope.
+- **Plain words.** Title says what it shows ("Where applicants come from"); tooltips say
+  "5 · 13% of applicants", not raw ratios. No vanity numbers.
+- **Accessible.** Each chart sits in a titled card with `role="img"` + `aria-label` summary and
+  the same numbers in an `sr-only` table (`ChartCard` in `components/screens/insights`).
+- **Motion.** Animate only when `prefers-reduced-motion` is not set (400 ms).
 
 ## Page patterns
 

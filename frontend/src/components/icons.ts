@@ -18,6 +18,7 @@ export {
   CalendarBlank as InterviewsIcon,
   UsersThree as TeamIcon,
   Gear as SettingsIcon,
+  ChartBar as InsightsIcon,
   SidebarSimple as SidebarIcon,
   List as MenuIcon,
   // Actions

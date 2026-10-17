@@ -1,6 +1,7 @@
 import {
   CandidatesIcon,
   type IconComponent,
+  InsightsIcon,
   InterviewsIcon,
   JobsIcon,
   SettingsIcon,
@@ -24,6 +25,13 @@ export const RECRUITER_NAV: NavItem[] = [
   { label: 'Interviews', href: '/recruiter/interviews', icon: InterviewsIcon },
   { label: 'Team', href: '/recruiter/team', icon: TeamIcon, adminOnly: true },
 ]
+
+/** Bottom group, above Settings. */
+export const RECRUITER_INSIGHTS: NavItem = {
+  label: 'Insights',
+  href: '/recruiter/insights',
+  icon: InsightsIcon,
+}
 
 export const RECRUITER_SETTINGS: NavItem = {
   label: 'Settings',
