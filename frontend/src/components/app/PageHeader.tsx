@@ -60,7 +60,9 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-normal tracking-tight text-foreground">{title}</h1>
+            <h1 className="font-heading text-3xl font-normal tracking-tight text-foreground">
+              {title}
+            </h1>
             {status}
           </div>
           {factLine ? <p className="text-sm text-muted-foreground">{factLine}</p> : null}

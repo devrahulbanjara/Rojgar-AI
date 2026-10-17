@@ -32,7 +32,9 @@ export function StatStrip({ items }: { items: { label: string; value: ReactNode 
       {items.map((item) => (
         <div key={item.label} className="flex flex-col gap-1 bg-card px-4 py-3">
           <dt className="text-xs text-muted-foreground">{item.label}</dt>
-          <dd className="text-xl font-light tabular-nums text-foreground">{item.value}</dd>
+          <dd className="font-heading text-xl font-light tabular-nums text-foreground">
+            {item.value}
+          </dd>
         </div>
       ))}
     </dl>
