@@ -9,9 +9,7 @@ type ToastId = string | number
 type NotifyOptions = ExternalToast & { autoClose?: number | false; toastId?: ToastId }
 
 function isOptions(value: unknown): value is NotifyOptions {
-  return (
-    typeof value === 'object' && value !== null && !('$$typeof' in (value as object))
-  )
+  return typeof value === 'object' && value !== null && !('$$typeof' in (value as object))
 }
 
 function toSonnerOptions(options?: NotifyOptions): ExternalToast | undefined {
