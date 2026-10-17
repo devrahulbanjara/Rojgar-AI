@@ -119,7 +119,8 @@ class Settings(BaseSettings):
     aws_access_key_id_shortlisting: str | None = None
     aws_secret_access_key_shortlisting: str | None = None
     review_bedrock_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    review_max_attempts: int = 3
+    # Attempts per review; waits 5, 10, 20 s between them (rate limits).
+    review_max_attempts: int = 4
     review_retry_delay_seconds: float = 5.0
     # Cheap pass must-have coverage (0-1) at or above which the full review runs.
     review_full_review_min_coverage: float = 0.25

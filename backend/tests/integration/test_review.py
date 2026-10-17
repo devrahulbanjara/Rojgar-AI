@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.infrastructures.guardrails.service import (
     GuardrailResult,
     _parse_classifier_output,
@@ -477,7 +478,7 @@ class TestRollingReview:
             retry_delay=0,
         )
         review = await _review(db, application.id)
-        assert len(calls) == 3  # settings.review_max_attempts
+        assert len(calls) == settings.review_max_attempts
         assert review.state == "needs_person"
         assert review.flag_reason == review_service.FLAG_UNCHECKED
 

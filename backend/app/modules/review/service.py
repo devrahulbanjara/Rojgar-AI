@@ -425,7 +425,8 @@ async def review_application(
                 )
                 await _invalidate(db, application_id)
                 return ReviewState.needs_person.value
-            await asyncio.sleep(delay * (inputs.attempts + 1))
+            # Exponential backoff: provider rate limits are per minute.
+            await asyncio.sleep(delay * 2**inputs.attempts)
             continue
         model = ",".join(sorted({u.model for u in outcome.usages})) or reviewer.name
         await _save(db, application_id, outcome, model)
