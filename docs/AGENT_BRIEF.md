@@ -16,6 +16,11 @@ Roles: recruiter, company admin (recruiter + team/company settings/audit), candi
 6. Smaller codebase. Delete what you replace: old pages, components, SCSS, hooks, API slices, endpoints. Never leave dead code.
 7. AI is quiet plumbing, but when AI is working, show it with the AI motion system (below), the way Galaxy AI does.
 
+## Voice and key phrases
+- Human oversight, short: **"AI assists. You decide."** Long: "AI helps you review every application, but it never decides alone. Every hiring decision is made by a person." Never "A person makes this decision" or "A recruiter makes every final decision".
+- Words: Business, Team (Owner, Manager, Interviewer), Job, Applicant, "Suggest someone you know". Stages: New, Shortlisted, Interview, Offer, Hired, Not selected. Never "candidate", "recruiter", "organization", "rejected", "pipeline", "AI screening".
+- Nepali equivalents: व्यवसाय, टिम, जागिर, आवेदक, चिनेको मान्छे सुझाउनुहोस्; stages नयाँ · छानिएको · अन्तर्वार्ता · प्रस्ताव · नियुक्त · यसपटक छानिएन. Avoid "सिफारिस" (sounds like nepotism).
+
 ## Design system (frontend)
 - Next.js app, Tailwind v4 + shadcn/ui (Radix). Fonts: Manrope for headings and large numbers (`font-heading`), DM Sans for everything else.
 - Colors only from tokens in `src/app/globals.css` (`primary`, `muted`, `border`, `success/warning/danger/neutral`, `ai-1..4`). Never hex values in components.
