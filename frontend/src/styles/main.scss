@@ -22,7 +22,6 @@
 @use 'components/connection-status';
 
 // ── 5. Pages ─────────────────────────────────────────────────
-@use 'pages/public-jobs';
 @use 'pages/legal';
 @use 'pages/auth';
 @use 'pages/dashboard';
@@ -30,7 +29,6 @@
 @use 'pages/resume';
 @use 'pages/profile';
 @use 'pages/interviews';
-@use 'components/recruiter-chat';
 
 // ── 6. Global tokens (CSS custom properties + body defaults) ─
 :root {

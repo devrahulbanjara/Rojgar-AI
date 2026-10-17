@@ -1,29 +1,8 @@
-// ── Shared utilities for resume components ────────────────────────────────
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-export const SECTIONS = ['Personal', 'Summary', 'Experience', 'Education', 'Skills'] as const
-
-export type Section = (typeof SECTIONS)[number]
-
-export function uid() {
-  return Math.random().toString(36).slice(2)
-}
-
+/** "2023-04" → "Apr 2023"; empty → fallback. */
 export function fmtDate(val: string, fallback = 'Present') {
   if (!val) return fallback
   const [year, month] = val.split('-')
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ]
-  return `${months[parseInt(month, 10) - 1]} ${year}`
+  return `${MONTHS[parseInt(month, 10) - 1]} ${year}`
 }

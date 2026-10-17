@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation'
 import gsap from 'gsap'
 import Lenis from 'lenis'
 
+import { isAppPath } from '@/components/app/SiteLayout'
+
 /**
  * LenisProvider
  *
@@ -16,7 +18,7 @@ import Lenis from 'lenis'
  */
 export default function LenisProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isDashboard = /^\/(candidate|recruiter|onboarding)(\/|$)/.test(pathname ?? '')
+  const isDashboard = isAppPath(pathname)
 
   useEffect(() => {
     if (isDashboard) return

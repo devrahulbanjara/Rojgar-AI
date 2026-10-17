@@ -59,13 +59,13 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
       <div className="flex gap-2">
         <ActionTile
           count={role.to_review}
-          label={role.strong > 0 ? `to review · ${role.strong} strong` : 'to review'}
+          label={role.strong > 0 ? `to review · ${role.strong} fit well` : 'to review'}
           href={`${jobHref}?stage=applied`}
           tone="primary"
         />
         <ActionTile
           count={role.to_contact}
-          label="to contact"
+          label="to call"
           href={`${jobHref}?stage=shortlist`}
           tone="warning"
         />

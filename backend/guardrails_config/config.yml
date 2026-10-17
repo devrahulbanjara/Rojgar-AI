@@ -1,9 +1,0 @@
-models:
-  - type: main
-    engine: groq
-    model: llama-3.3-70b-versatile
-
-rails:
-  input:
-    flows:
-      - self check input

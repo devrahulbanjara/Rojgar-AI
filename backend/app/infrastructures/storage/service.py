@@ -1,5 +1,10 @@
 import asyncio
+import hashlib
+import hmac
+import time
 import uuid
+from pathlib import Path
+from typing import BinaryIO
 from urllib.parse import urlparse
 
 import boto3
@@ -50,10 +55,81 @@ async def _read_head(file: UploadFile, size: int = 16) -> bytes:
     return head
 
 
+def sign_local_file(file_key: str, expires_in: int) -> str:
+    """Query string that lets /files serve a private local file until it expires."""
+    expires = int(time.time()) + expires_in
+    sig = hmac.new(
+        settings.secret_key.encode(), f"{file_key}:{expires}".encode(), hashlib.sha256
+    ).hexdigest()
+    return f"exp={expires}&sig={sig}"
+
+
+def verify_local_file(file_key: str, exp: int, sig: str) -> bool:
+    if exp < time.time():
+        return False
+    expected = hmac.new(
+        settings.secret_key.encode(), f"{file_key}:{exp}".encode(), hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, sig)
+
+
 class StorageService:
     def __init__(self) -> None:
         self.bucket = settings.s3_bucket_name
         self._client: BaseClient | None = None
+
+    @property
+    def local(self) -> bool:
+        """Dev and test keep files on disk so they never touch a real bucket."""
+        return settings.effective_storage_backend == "local"
+
+    def _local_path(self, file_key: str) -> Path:
+        root = Path(settings.local_storage_dir).resolve()
+        path = (root / file_key).resolve()
+        if root not in path.parents:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Bad file key."
+            )
+        return path
+
+    def _public_url(self, file_key: str) -> str:
+        if self.local:
+            return f"{settings.backend_url}/files/{file_key}"
+        return f"{settings.s3_base_url}/{file_key}"
+
+    async def _put(
+        self, body: bytes | BinaryIO, file_key: str, content_type: str
+    ) -> None:
+        if self.local:
+            data = body if isinstance(body, bytes) else body.read()
+            path = self._local_path(file_key)
+            await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+            await asyncio.to_thread(path.write_bytes, data)
+            return
+        if isinstance(body, bytes):
+            await asyncio.to_thread(
+                self.client.put_object,
+                Bucket=self.bucket,
+                Key=file_key,
+                Body=body,
+                ContentType=content_type,
+            )
+        else:
+            await asyncio.to_thread(
+                self.client.upload_fileobj,
+                body,
+                self.bucket,
+                file_key,
+                ExtraArgs={"ContentType": content_type},
+            )
+
+    async def _delete(self, file_key: str) -> None:
+        if self.local:
+            await asyncio.to_thread(self._local_path(file_key).unlink, missing_ok=True)
+            return
+        await asyncio.to_thread(
+            self.client.delete_object, Bucket=self.bucket, Key=file_key
+        )
 
     @property
     def client(self) -> BaseClient:
@@ -93,13 +169,7 @@ class StorageService:
         await file.seek(0)
 
         try:
-            await asyncio.to_thread(
-                self.client.upload_fileobj,
-                file.file,
-                self.bucket,
-                file_key,
-                ExtraArgs={"ContentType": content_type},
-            )
+            await self._put(file.file, file_key, content_type)
         except Exception as exc:
             logger.exception("Storage upload failed for key {}: {}", file_key, exc)
             raise HTTPException(
@@ -107,7 +177,7 @@ class StorageService:
                 detail="Upload failed. Please try again later.",
             ) from exc
 
-        url = f"{settings.s3_base_url}/{file_key}"
+        url = self._public_url(file_key)
         logger.info("Storage: Uploaded {}", url)
         return url
 
@@ -123,19 +193,16 @@ class StorageService:
             return
 
         try:
-            await asyncio.to_thread(
-                self.client.delete_object,
-                Bucket=self.bucket,
-                Key=file_key,
-            )
+            await self._delete(file_key)
             logger.info("Storage: Deleted {}", file_key)
         except Exception as exc:
             logger.error("Storage delete failed for key {}: {}", file_key, exc)
 
     def _extract_key(self, image_url: str) -> str | None:
         """Extract S3 key from full URL."""
-        parsed = urlparse(image_url)
-        key = parsed.path.lstrip("/")
+        key = urlparse(image_url).path.lstrip("/")
+        if self.local:
+            key = key.removeprefix("files/")
         return key or None
 
     def _extract_extension(self, filename: str | None) -> str:
@@ -178,13 +245,7 @@ class StorageService:
         await file.seek(0)
 
         try:
-            await asyncio.to_thread(
-                self.client.upload_fileobj,
-                file.file,
-                self.bucket,
-                file_key,
-                ExtraArgs={"ContentType": content_type},
-            )
+            await self._put(file.file, file_key, content_type)
         except Exception as exc:
             logger.exception("Audio upload failed for key {}: {}", file_key, exc)
             raise HTTPException(
@@ -192,7 +253,7 @@ class StorageService:
                 detail="Upload failed. Please try again later.",
             ) from exc
 
-        url = f"{settings.s3_base_url}/{file_key}"
+        url = self._public_url(file_key)
         logger.info("Storage: Uploaded audio {}", url)
         return url, file_key
 
@@ -206,13 +267,7 @@ class StorageService:
         """
         file_key = f"private/{folder}/{uuid.uuid4()}.{extension}"
         try:
-            await asyncio.to_thread(
-                self.client.put_object,
-                Bucket=self.bucket,
-                Key=file_key,
-                Body=data,
-                ContentType=content_type,
-            )
+            await self._put(data, file_key, content_type)
         except Exception as exc:
             logger.exception("Document upload failed for key {}: {}", file_key, exc)
             raise HTTPException(
@@ -224,16 +279,16 @@ class StorageService:
     async def delete_key(self, file_key: str) -> None:
         """Best-effort delete of one object by key."""
         try:
-            await asyncio.to_thread(
-                self.client.delete_object, Bucket=self.bucket, Key=file_key
-            )
+            await self._delete(file_key)
         except Exception as exc:
             logger.warning("Failed to delete object {}: {}", file_key, exc)
 
     async def generate_presigned_url(
         self, file_key: str, expires_in: int = 3600
     ) -> str:
-        """Generate a presigned URL for an S3 object."""
+        """Generate a short-lived URL for a private object."""
+        if self.local:
+            return f"{settings.backend_url}/files/{file_key}?{sign_local_file(file_key, expires_in)}"
         try:
             url = await asyncio.to_thread(
                 self.client.generate_presigned_url,
@@ -244,8 +299,10 @@ class StorageService:
             return url
         except Exception as exc:
             logger.error("Failed to generate presigned URL for {}: {}", file_key, exc)
-            # Fallback to the public URL pattern just in case
-            return f"{settings.s3_base_url}/{file_key}"
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Could not open the file. Please try again.",
+            ) from exc
 
 
 storage_service = StorageService()

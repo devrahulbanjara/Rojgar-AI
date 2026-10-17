@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
-import CandidateEvaluationCard from '@/app/recruiter/candidates/_components/CandidateEvaluationCard'
-import InterviewRecordingCard from '@/app/recruiter/candidates/_components/InterviewRecordingCard'
 import { mapRecruiterCandidateResume } from '@/app/recruiter/candidates/_lib/mapRecruiterCandidateResume'
 import { buildEmailPreviewDocument } from '@/lib/email/preview'
 import { notify } from '@/lib/notify'
@@ -356,13 +354,7 @@ export default function CandidateDrawer({
               }
             />
           ) : activeTab === 'interview' ? (
-            <>
-              <InterviewBookingSection interview={interview ?? null} />
-              <InterviewRecordingCard key={applicationId} applicationId={applicationId} />
-              <div className={styles.interviewEvaluationSpacing}>
-                <CandidateEvaluationCard applicationId={applicationId} />
-              </div>
-            </>
+            <InterviewBookingSection interview={interview ?? null} />
           ) : activeTab === 'outreach' ? (
             <OutreachTab
               applicationId={applicationId}

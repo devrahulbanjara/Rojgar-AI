@@ -1,4 +1,4 @@
-/** Routes that render a standalone auth card and skip the site header/footer. */
+/** Routes that render a standalone card (auth, application status) and skip the site header/footer. */
 const AUTH_PATHS = [
   '/login',
   '/signup',
@@ -8,6 +8,7 @@ const AUTH_PATHS = [
   '/verify-email',
   '/oauth-callback',
   '/auth/oauth-callback',
+  '/applications/status',
 ]
 
 export function isAuthPath(pathname: string | null): boolean {

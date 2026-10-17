@@ -1,4 +1,7 @@
-from fastapi import APIRouter
+import uuid
+from datetime import date
+
+from fastapi import APIRouter, Query
 
 from app.core.dependencies import (
     CandidateUser,
@@ -7,7 +10,7 @@ from app.core.dependencies import (
     RecruiterPrivileges,
 )
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.dashboards import home, service
+from app.modules.dashboards import home, insights, service
 from app.modules.dashboards.schemas import (
     CandidateDashboardAnalyticsResponse,
     CandidateDashboardResponse,
@@ -120,3 +123,21 @@ async def get_recruiter_jobs_overview(
     """Every company job with applicant and waiting-work counts (jobs table)."""
     data = await home.get_recruiter_jobs_overview(db, current_user)
     return ResponseBuilder.success(data=data, message="Recruiter jobs retrieved")
+
+
+@router.get("/insights")
+async def get_recruiter_insights(
+    current_user: RecruiterPrivileges,
+    db: DbSession,
+    job_id: uuid.UUID | None = None,
+    start: date | None = Query(None, alias="from"),
+    end: date | None = Query(None, alias="to"),
+    tz: str | None = None,
+) -> UnifiedResponse[insights.InsightsResponse]:
+    """Insights for one job or all jobs between two dates (inclusive, viewer's
+    timezone): applicant sources, applications per week, reply speed and
+    cumulative hiring progress."""
+    data = await insights.get_recruiter_insights(
+        db, current_user, job_id=job_id, start=start, end=end, tz=tz
+    )
+    return ResponseBuilder.success(data=data, message="Insights retrieved")

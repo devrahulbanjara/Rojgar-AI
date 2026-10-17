@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -16,6 +16,7 @@ from app.core.cache import (
     invalidate_job_detail_caches,
 )
 from app.core.config import settings
+from app.core.database import release_connection
 from app.core.swr_cache import swr_get, swr_set
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
@@ -368,7 +369,7 @@ async def create_job(
     return _job_detail_response_from_row(job, applications_count)
 
 
-async def _build_recommendation_query(db: AsyncSession, user: User) -> str:
+async def _build_recommendation_query(db: AsyncSession, user: User) -> str | None:
     """
     Build a semantically rich query string from the candidate's profile.
     Target role is repeated at the top for highest embedding weight.
@@ -385,7 +386,7 @@ async def _build_recommendation_query(db: AsyncSession, user: User) -> str:
     profile = result.scalar_one_or_none()
 
     if not profile:
-        return "Jobs hiring now across all industries and roles"
+        return None
 
     target_roles: list[str] = profile.target_roles or []
     top_target = target_roles[0] if target_roles else "Technology Professional"
@@ -428,6 +429,83 @@ async def _build_recommendation_query(db: AsyncSession, user: User) -> str:
     return "\n\n".join(parts)
 
 
+def normalize_search_query(q: str | None) -> str | None:
+    """Lowercase and collapse whitespace so equal searches share one embedding."""
+    if not q:
+        return None
+    normalized = " ".join(q.lower().split())[:300]
+    return normalized or None
+
+
+def _open_job_conditions(
+    location: str | None,
+    location_type: LocationType | None,
+    salary_min: int | None,
+    salary_max: int | None,
+) -> list:
+    """SQL filters for jobs a candidate can see, mirroring the Qdrant filters."""
+    conditions = [
+        Job.status == JobStatus.active,
+        Job.hiring_completed.is_(False),
+        or_(Job.expires_at.is_(None), Job.expires_at > _utcnow()),
+    ]
+    if location:
+        conditions.append(Job.location.icontains(location.strip(), autoescape=True))
+    if location_type:
+        conditions.append(Job.location_type == location_type)
+    if salary_min is not None:
+        conditions.append(Job.salary_max >= salary_min)
+    if salary_max is not None:
+        conditions.append(Job.salary_min <= salary_max)
+    return conditions
+
+
+async def _search_jobs_in_db(
+    db: AsyncSession,
+    user: "User | None",
+    terms: str | None,
+    conditions: list,
+    page: int,
+    size: int,
+) -> tuple[list[JobListItem], int]:
+    """Newest open jobs, optionally matching every word of ``terms``.
+
+    Used for browsing (no query: no embedding needed) and as the fallback
+    when the embedding provider or vector store is unavailable.
+    """
+    where = list(conditions)
+    for word in (terms or "").split()[:6]:
+        where.append(
+            or_(
+                Job.title.icontains(word, autoescape=True),
+                Job.overview.icontains(word, autoescape=True),
+                func.array_to_string(Job.requirements, " ").icontains(
+                    word, autoescape=True
+                ),
+            )
+        )
+    total = await db.scalar(select(func.count(Job.id)).where(*where)) or 0
+    if total == 0:
+        return [], 0
+    rows = await db.execute(
+        select(Job, func.count(Application.id).label("applications_count"))
+        .options(selectinload(Job.company))
+        .outerjoin(Application, Application.job_id == Job.id)
+        .where(*where)
+        .group_by(Job.id)
+        .order_by(Job.created_at.desc(), Job.id)
+        .offset((page - 1) * size)
+        .limit(size)
+    )
+    rows = rows.all()
+    applied_job_ids = await _get_applied_job_ids(db, user, [job.id for job, _ in rows])
+    items = [
+        _job_list_item_from_row(job, count, has_applied=job.id in applied_job_ids)
+        for job, count in rows
+    ]
+    return items, total
+
+
 async def search_jobs(
     db: AsyncSession,
     user: "User | None",
@@ -440,37 +518,46 @@ async def search_jobs(
     size: int,
 ) -> tuple[list[JobListItem], int]:
     """
-    Vector-powered job search with AI recommendations.
+    Public job search.
 
-    - When ``q`` is provided: embeds the search string and queries Qdrant.
-    - When no ``q`` and user is a candidate: builds a profile-based
-      recommendation query so the most relevant jobs surface first.
-    - Metadata filters (location, location_type, salary) are applied inside
-      Qdrant, with smart fallback padding for under-filled pages.
+    - ``q`` given: semantic search (embedding cached per normalized query).
+    - No ``q``, signed-in candidate with a profile: profile-based recommendations.
+    - Otherwise (browse): newest open jobs straight from Postgres; no embedding.
+    - If the embedding provider or Qdrant fails (quota, outage), the search
+      degrades to keyword matching instead of returning a 500.
     """
-    # 1. Determine the semantic query string
-    if q and q.strip():
-        search_query = q.strip()
-    elif user and user.primary_role == UserRole.candidate:
+    conditions = _open_job_conditions(location, location_type, salary_min, salary_max)
+    query = normalize_search_query(q)
+    search_query = query
+    if search_query is None and user and user.primary_role == UserRole.candidate:
         search_query = await _build_recommendation_query(db, user)
-    else:
-        search_query = "Software technology engineering jobs"
+    if search_query is None:
+        return await _search_jobs_in_db(db, user, None, conditions, page, size)
 
-    # 2. Run the semantic search with simple filter parameters
-    qdrant_results, total_count = await qdrant_service.search_jobs(
-        query=search_query,
-        location=location.strip() if location else None,
-        location_type=location_type.value if location_type else None,
-        salary_min=salary_min,
-        salary_max=salary_max,
-        page=page,
-        size=size,
-    )
+    # Return the pooled connection before the embedding + vector calls; loaded
+    # objects stay usable (expire_on_commit=False).
+    await release_connection(db)
+    try:
+        qdrant_results, total_count = await qdrant_service.search_jobs(
+            query=search_query,
+            location=location.strip() if location else None,
+            location_type=location_type.value if location_type else None,
+            salary_min=salary_min,
+            salary_max=salary_max,
+            page=page,
+            size=size,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Semantic job search unavailable ({}); using keyword search.",
+            type(exc).__name__,
+        )
+        return await _search_jobs_in_db(db, user, query, conditions, page, size)
 
     if not qdrant_results:
         return [], 0
 
-    # 3. Batch-fetch the real job rows from Postgres (preserves no ordering)
+    # Batch-fetch the real job rows from Postgres (preserves no ordering)
     job_ids = [res["job_id"] for res in qdrant_results]
     applied_job_ids = await _get_applied_job_ids(db, user, job_ids)
     stmt = (
@@ -483,7 +570,7 @@ async def search_jobs(
     db_result = await db.execute(stmt)
     job_map = {job.id: (job, app_count) for job, app_count in db_result.all()}
 
-    # 4. Reconstruct the list in Qdrant's exact semantic score order
+    # Reconstruct the list in Qdrant's exact semantic score order
     final_jobs: list[JobListItem] = []
     for res in qdrant_results:
         row = job_map.get(res["job_id"])

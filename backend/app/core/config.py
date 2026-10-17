@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     # Number of reverse proxies in front of the API that append to
     # X-Forwarded-For (e.g. 1 on Render). 0 = trust only the socket peer.
     trusted_proxy_hops: int = 0
+    # Per-client limits on auth and public endpoints (core/rate_limit.py).
+    rate_limit_enabled: bool = True
 
     # Auth
     secret_key: str
@@ -49,6 +51,11 @@ class Settings(BaseSettings):
     db_host: str
     db_port: int = 5432
     db_name: str
+    # Connections per API worker: pool_size kept open, up to max_overflow more
+    # under load. Keep workers * (size + overflow) below Postgres max_connections.
+    db_pool_size: int = 10
+    db_max_overflow: int = 10
+    db_pool_timeout_seconds: int = 10
 
     # Test Database
     test_db_user: str
@@ -99,6 +106,10 @@ class Settings(BaseSettings):
     aws_region: str = "us-east-1"
 
     # S3
+    # "local" keeps uploads on disk (dev/test); "s3" uses the bucket. Empty = local
+    # everywhere except prod, so a laptop can never write to the real bucket.
+    storage_backend: Literal["", "local", "s3"] = ""
+    local_storage_dir: str = ".local-storage"
     s3_bucket_name: str | None = None
     s3_upload_acl: str | None = "public-read"
     s3_max_upload_bytes: int = 5 * 1024 * 1024
@@ -151,16 +162,18 @@ class Settings(BaseSettings):
     guardrails_enabled: bool = True
     guardrails_groq_model: str = "openai/gpt-oss-120b"
 
-    # Recruiter chat
-    recruiter_chat_candidate_min_score: float = 0.55
-    recruiter_chat_pronoun_max_turn_gap: int = 2
-    recruiter_chat_title_min_chars: int = 4
-    recruiter_chat_title_fallback_after_turns: int = 3
-    recruiter_chat_summarize_trigger_messages: int = 40
-    recruiter_chat_summarize_keep_messages: int = 6
-    recruiter_chat_handler_context_messages: int = 8
+    # Assistant: job draft + "ask about this candidate"
+    assistant_model: str = "openai/gpt-oss-120b"
+    assistant_temperature: float = 0.2
+    assistant_max_tokens: int = 3000
+    # Hard deadline for one turn, retries included.
+    assistant_turn_timeout_seconds: float = 30.0
+    # Longest wait for the input guardrail before falling back to a marker scan.
+    assistant_guard_timeout_seconds: float = 6.0
+    # Turns (question + answer) kept per thread and sent to the model.
+    assistant_history_turns: int = 8
 
-    # Recruiter chat hybrid search
+    # Candidate hybrid search (read by the Qdrant service; old names kept)
     recruiter_chat_hybrid_search_enabled: bool = True
     candidate_sparse_model: str = "Qdrant/bm25"
     candidate_hybrid_prefetch_limit: int = 50
@@ -188,6 +201,12 @@ class Settings(BaseSettings):
 
     # Derived URLs
     @property
+    def effective_storage_backend(self) -> str:
+        if self.storage_backend:
+            return self.storage_backend
+        return "s3" if self.environment == "prod" else "local"
+
+    @property
     def database_url(self) -> str:
         """Async SQLAlchemy URL for the primary database."""
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
@@ -196,11 +215,6 @@ class Settings(BaseSettings):
     def test_database_url(self) -> str:
         """Async SQLAlchemy URL for the test database."""
         return f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
-
-    @property
-    def langgraph_postgres_dsn(self) -> str:
-        """Sync PostgreSQL DSN used by LangGraph runtime components."""
-        return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
     def s3_base_url(self) -> str:
