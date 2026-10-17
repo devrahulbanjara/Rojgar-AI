@@ -156,6 +156,12 @@ export interface RecruiterCandidateListItem {
   latest_updated_at: string
   primary_job_title: string
   primary_job_id: string
+  /** Not sent yet by the backend; shown when present. */
+  applicant_phone?: string | null
+  /** false = applied without a CV. Not sent yet by the backend. */
+  has_cv_file?: boolean
+  /** Job category ("Accounting", "Nursing", "Hospitality"). Not sent yet by the backend. */
+  primary_job_category?: string | null
   application_count: number
   applications: RecruiterCandidateApplicationSummary[]
 }
@@ -167,6 +173,8 @@ export interface RecruiterCandidateApplicationSummary {
   status: ApplicationStatus
   created_at: string
   updated_at: string
+  /** pending | completed | failed | needs_human_review */
+  ai_review_status?: string | null
   score: number | null
   strengths: string[] | null
   weaknesses: string[] | null
