@@ -29,23 +29,50 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 const AREAS = [
   { value: 'all', label: 'All' },
-  { value: 'auth', label: 'Sign-in' },
+  { value: 'auth', label: 'Team and sign-in' },
+  { value: 'business', label: 'Business' },
   { value: 'jobs', label: 'Jobs' },
-  { value: 'pipeline', label: 'Candidates' },
-  { value: 'outreach', label: 'Emails' },
-  { value: 'interviews', label: 'Interviews' },
+  { value: 'pipeline', label: 'Applicants' },
 ] as const
 
-const AREA_LABEL: Record<string, string> = Object.fromEntries(AREAS.map((a) => [a.value, a.label]))
+const AREA_LABEL: Record<string, string> = {
+  ...Object.fromEntries(AREAS.map((a) => [a.value, a.label])),
+  platform: 'Rojgar AI',
+}
 
 const EVERYONE = '__everyone'
 
-const PAST: Record<string, string> = { create: 'Created', update: 'Updated', delete: 'Deleted' }
+const VERB: Record<string, string> = {
+  create: 'Added',
+  update: 'Updated',
+  delete: 'Deleted',
+  status_transition: 'Moved',
+  approve: 'Approved',
+  send: 'Sent',
+  discard: 'Discarded',
+  mark_complete: 'Finished',
+}
 
-/** "create" + "job" → "Created job" when the backend sent no message. */
+const THING: Record<string, string> = {
+  application: 'an application',
+  email_draft: 'an email',
+  interview: 'an interview',
+  interview_recording: 'an interview recording',
+  candidate_evaluation_score: 'interview notes',
+  chat_session: 'an assistant chat',
+  job_ai_draft: 'a job draft',
+  job: 'a job',
+  company: 'business details',
+  membership: 'a team member',
+  business_invite: 'an invite link',
+  session: 'a sign-in',
+}
+
+/** "create" + "job" → "Added a job" when the server sent no message. */
 function describe(action: string, entity: string): string {
-  const verb = PAST[action] ?? action.replace(/[._]+/g, ' ').trim()
-  const text = `${verb} ${entity.replace(/[._]+/g, ' ')}`.trim()
+  const verb = VERB[action] ?? action.replace(/[._]+/g, ' ')
+  const thing = THING[entity] ?? entity.replace(/[._]+/g, ' ')
+  const text = `${verb} ${thing}`.trim()
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
@@ -115,7 +142,7 @@ function AuditSkeleton() {
   )
 }
 
-/** Admins: who did what, filterable by area and person. */
+/** Owners: who did what, filterable by area and person. */
 export function AuditView() {
   const router = useRouter()
   const pathname = usePathname()
@@ -142,7 +169,12 @@ export function AuditView() {
     () =>
       (data?.data ?? []).map((item) => ({
         ...item,
-        who: item.actor_user_id ? (names.get(item.actor_user_id) ?? 'Someone') : 'System',
+        who:
+          item.category === 'platform'
+            ? 'Rojgar AI'
+            : item.actor_user_id
+              ? (names.get(item.actor_user_id) ?? 'Someone')
+              : 'Automatic',
         what: item.message || describe(item.action_type, item.entity_type),
       })),
     [data, names],
@@ -157,7 +189,10 @@ export function AuditView() {
 
   return (
     <PageContainer>
-      <PageHeader breadcrumb={[{ label: 'Team', href: '/recruiter/team' }]} title="Audit log" />
+      <PageHeader
+        breadcrumb={[{ label: 'Team', href: '/recruiter/team' }, { label: 'Audit log' }]}
+        title="Audit log"
+      />
       <div className="flex flex-wrap items-center gap-3">
         <FilterChips
           label="Area"

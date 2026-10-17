@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 import Link from 'next/link'
 
+import { notify } from '@/lib/notify'
 import { useActiveBusiness } from '@/lib/session'
 import { useLazyGetMeQuery } from '@/store/services/authApi'
 
@@ -20,6 +21,15 @@ export function BusinessBanner() {
   const business = useActiveBusiness()
   const [getMe] = useLazyGetMeQuery()
   const status = business?.business_status
+
+  // Say so once when staff approve while the page is open.
+  const previous = useRef(status)
+  useEffect(() => {
+    if (previous.current === 'pending' && status === 'active') {
+      notify.success('Your business is approved. Your jobs can go live now.')
+    }
+    previous.current = status
+  }, [status])
 
   useEffect(() => {
     if (status !== 'pending') return

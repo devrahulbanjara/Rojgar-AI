@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 import { notify } from '@/lib/notify'
 import { ROLE_LABEL, displayName } from '@/lib/session'
@@ -51,15 +51,17 @@ export function useLogout(to = '/login') {
 export function AccountMenu({ showName = true }: { showName?: boolean }) {
   const user = useAppSelector((s) => s.auth.user)
   const router = useRouter()
+  const inAdmin = usePathname()?.startsWith('/admin') ?? false
   const handleLogout = useLogout()
   const [switchBusiness] = useSetActiveBusinessMutation()
   const active = user?.active_business ?? null
   const memberships = user?.memberships ?? []
-  const roleLine = active
-    ? `${ROLE_LABEL[active.role]} · ${active.business_name}`
-    : user?.is_platform_admin
+  const roleLine =
+    inAdmin || (!active && user?.is_platform_admin)
       ? 'Rojgar AI staff'
-      : 'Applicant'
+      : active
+        ? `${ROLE_LABEL[active.role]} · ${active.business_name}`
+        : 'Applicant'
 
   async function switchTo(businessId: string, name: string) {
     try {
@@ -113,7 +115,7 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
             </DropdownMenuItem>
           </>
         ) : null}
-        {user?.has_applications || !active ? (
+        {user?.has_applications || (!active && !user?.is_platform_admin) ? (
           <DropdownMenuItem asChild>
             <Link href="/me/applications">
               <FileIcon />
@@ -121,11 +123,19 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
             </Link>
           </DropdownMenuItem>
         ) : null}
-        {user?.is_platform_admin ? (
+        {user?.is_platform_admin && !inAdmin ? (
           <DropdownMenuItem asChild>
             <Link href="/admin">
               <StaffIcon />
-              Admin panel
+              Staff panel
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
+        {inAdmin && active ? (
+          <DropdownMenuItem asChild>
+            <Link href="/recruiter">
+              <BusinessIcon />
+              {active.business_name}
             </Link>
           </DropdownMenuItem>
         ) : null}
