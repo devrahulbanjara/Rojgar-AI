@@ -46,15 +46,18 @@ def _run_expire_due_jobs() -> None:
 
 
 def create_job_expiry_scheduler() -> BackgroundScheduler:
-    """Create the background scheduler that expires due jobs daily."""
+    """Create the background scheduler that expires due jobs every hour.
+
+    Expiry is timestamp-based, so an hourly run bounds how late a job closes
+    (the API already reports overdue jobs as expired immediately).
+    """
     scheduler = BackgroundScheduler()
     scheduler.add_job(
         _run_expire_due_jobs,
         "cron",
-        hour=21,
         minute=15,
         second=0,
-        id="expire-due-jobs-daily",
+        id="expire-due-jobs-hourly",
         replace_existing=True,
     )
     return scheduler
