@@ -1,13 +1,13 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
-from app.modules.jobs.models import Job, JobSyncEvent
 from app.infrastructures.qdrant.service import qdrant_service
+from app.modules.jobs.models import Job, JobSyncEvent
 from app.shared.enums import JobStatus, SyncAction, SyncStatus
 
 
@@ -26,7 +26,7 @@ async def process_sync_event(event_id: uuid.UUID) -> None:
                     .where(Job.id == event.job_id)
                 )
 
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
 
                 # Only open jobs before their closing time belong in the vector
                 # store; drafts and closed jobs are removed from Qdrant.

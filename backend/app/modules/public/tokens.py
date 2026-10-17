@@ -3,7 +3,7 @@
 import hashlib
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 
@@ -17,8 +17,7 @@ def create_status_token(application_id: uuid.UUID) -> str:
     payload = {
         "sub": str(application_id),
         "type": _STATUS_TYPE,
-        "exp": datetime.now(timezone.utc)
-        + timedelta(days=settings.public_status_token_days),
+        "exp": datetime.now(UTC) + timedelta(days=settings.public_status_token_days),
     }
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 

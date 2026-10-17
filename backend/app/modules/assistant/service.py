@@ -15,7 +15,7 @@ import re
 import secrets
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -69,7 +69,7 @@ async def _company_id(db: AsyncSession, user: User) -> uuid.UUID:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _sse(event: str, data: dict[str, Any]) -> str:
@@ -155,11 +155,11 @@ _MULTIPLIERS = {
     "लाख": 100_000,
     "million": 1_000_000,
 }
-_SALARY_WORD = re.compile(r"salary|pay|talab|compensation|तलब|सेलरी", re.I)
+_SALARY_WORD = re.compile(r"salary|pay|talab|compensation|तलब|सेलरी", re.IGNORECASE)
 _RESEARCH_WORD = re.compile(
     r"\b(market|benchmark|typical|average|going rate|research|look ?up|search|"
     r"kati|how much)\b|कति",
-    re.I,
+    re.IGNORECASE,
 )
 
 

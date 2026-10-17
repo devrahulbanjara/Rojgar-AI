@@ -3,7 +3,12 @@ from datetime import UTC, datetime, timedelta
 from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStage, ApplicationStatus, EventType, JobStatus, LocationType
+from app.shared.enums import (
+    ApplicationStage,
+    EventType,
+    JobStatus,
+    LocationType,
+)
 from tests.integration.helpers import (
     auth_headers,
     make_candidate_with_resume,

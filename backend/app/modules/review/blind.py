@@ -18,7 +18,7 @@ from app.shared.unicode_text import strip_invisible
 
 _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 _URL_RE = re.compile(
-    r"(https?://\S+|www\.\S+|\b[\w-]+\.(?:com|np|org|net|io)/\S*)", re.I
+    r"(https?://\S+|www\.\S+|\b[\w-]+\.(?:com|np|org|net|io)/\S*)", re.IGNORECASE
 )
 _PHONE_RE = re.compile(r"(?<!\w)\+?[\d०-९][\d०-९\s().-]{6,}[\d०-९](?!\w)")
 
@@ -31,7 +31,7 @@ _IDENTITY_LINE_RE = re.compile(
     r"लिङ्ग|लिंग|उमेर|जन्म\s*मिति|धर्म|जात|जाति|वैवाहिक\s*स्थिति|ठेगाना|"
     r"स्थायी\s*ठेगाना|अस्थायी\s*ठेगाना|बुबाको\s*नाम|आमाको\s*नाम|नागरिकता)"
     r"\s*[:：\-–].*$",
-    re.I | re.M,
+    re.IGNORECASE | re.MULTILINE,
 )
 _PRONOUNS = {
     "he": "they",
@@ -43,14 +43,14 @@ _PRONOUNS = {
     "himself": "themself",
     "herself": "themself",
 }
-_PRONOUN_RE = re.compile(r"\b(" + "|".join(_PRONOUNS) + r")\b", re.I)
+_PRONOUN_RE = re.compile(r"\b(" + "|".join(_PRONOUNS) + r")\b", re.IGNORECASE)
 _HONORIFIC_RE = re.compile(
-    r"\b(?:mr|mrs|ms|miss|mx)\.?\s+|(?:श्रीमान्?|श्रीमती|सुश्री|सुश्री)\s*", re.I
+    r"\b(?:mr|mrs|ms|miss|mx)\.?\s+|(?:श्रीमान्?|श्रीमती|सुश्री|सुश्री)\s*", re.IGNORECASE
 )
 _AGE_RE = re.compile(
     r"\b\d{1,2}\s*(?:years?|yrs?)\s*old\b|\baged?\s*:?\s*\d{1,2}\b|"
     r"[\d०-९]{1,2}\s*वर्ष(?:को)?\s*(?:उमेर)",
-    re.I,
+    re.IGNORECASE,
 )
 _MONTHS = (
     r"jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|"
@@ -63,7 +63,7 @@ _DATE_RE = re.compile(
     rf"\b(?:{_MONTHS})\.?\s*,?\s*(?:\d{{1,2}},?\s*)?(?:19|20)\d{{2}}\b|"  # May 2019
     r"\b(?:19|20)\d{2}\b|"  # bare years (AD and BS)
     r"[०-९]{4}(?:\s*[/.-]\s*[०-९]{1,2}){0,2}",  # Devanagari years/dates
-    re.I,
+    re.IGNORECASE,
 )
 _INSTITUTION_WORDS = (
     r"University|College|Campus|Institute|Institution|School|Academy|Polytechnic|"
@@ -81,7 +81,7 @@ _CREDENTIAL_RE = re.compile(
     r"certif|licen[cs]e|chartered|\bca\b|\bacca\b|\bcpa\b|registered|registration|"
     r"\bnnc\b|\btsc\b|\bnpc\b|\bnmc\b|\bican\b|council|university|college|institute|"
     r"\bsee\b|\bslc\b|\+2|plus two|डिग्री|स्नातक|प्रमाणपत्र|लाइसेन्स|अनुमतिपत्र|दर्ता",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -108,7 +108,9 @@ def redact(text: str | None, *, names: list[str], keep_institutions: bool) -> st
     text = _DATE_RE.sub("[date]", text)
     text = _PHONE_RE.sub("[phone]", text)
     for token in names:
-        text = re.sub(rf"(?<!\w){re.escape(token)}(?!\w)", "[name]", text, flags=re.I)
+        text = re.sub(
+            rf"(?<!\w){re.escape(token)}(?!\w)", "[name]", text, flags=re.IGNORECASE
+        )
     text = _HONORIFIC_RE.sub("", text)
     text = _PRONOUN_RE.sub(lambda m: _PRONOUNS[m.group(1).lower()], text)
     if not keep_institutions:

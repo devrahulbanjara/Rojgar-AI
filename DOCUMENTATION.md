@@ -167,7 +167,7 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 ## 10. Stack
 
 **Backend.** Python 3.12, FastAPI, SQLAlchemy 2 async, Pydantic v2, Alembic, PostgreSQL, Redis, Qdrant, LangChain v1.x, LangGraph, UV, APScheduler, Argon2, PyJWT, fastapi-limiter, aiosmtplib, WeasyPrint, Jinja2, pytest-asyncio, loguru.
-**Frontend.** Next.js 16 App Router, React 19, TypeScript, Redux Toolkit + RTK Query, raw fetch + SSE for chat streams, SCSS tokens (`_variables.scss`), single-source button system (`_buttons.scss`), pnpm.
+**Frontend.** Next.js 16 App Router, React 19, TypeScript, Redux Toolkit + RTK Query, raw fetch + SSE for chat streams, SCSS tokens (`_variables.scss`), single-source button system (`_buttons.scss`), npm.
 **AI / ML.**
 - **Groq** — recruiter chat, job drafting, intent classifier, summarization
 - **Groq gpt-oss-20b / gpt-oss-120b** — application review (cheap pass / full evidence review); Bedrock optional

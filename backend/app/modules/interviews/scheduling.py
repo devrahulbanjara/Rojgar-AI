@@ -8,7 +8,7 @@ import hmac
 import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Literal
 from zoneinfo import ZoneInfo
 
@@ -155,7 +155,7 @@ def _cn(name: str) -> str:
 
 
 def _utc(at: datetime) -> str:
-    return at.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return at.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _local(at: datetime, zone: ZoneInfo) -> str:
@@ -206,7 +206,7 @@ def build_ics(
         "BEGIN:VEVENT",
         f"UID:{uid}",
         f"SEQUENCE:{sequence}",
-        f"DTSTAMP:{_utc(now or datetime.now(timezone.utc))}",
+        f"DTSTAMP:{_utc(now or datetime.now(UTC))}",
         f"DTSTART;TZID={tz}:{_local(start, zone)}",
         f"DTEND;TZID={tz}:{_local(end, zone)}",
         f"SUMMARY:{_escape(summary)}",

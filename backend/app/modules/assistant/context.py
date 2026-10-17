@@ -119,7 +119,9 @@ async def load_candidate_context(
     review_lines: list[str] = []
     if review:
         if review.fit:
-            fit_val = review.fit.value if hasattr(review.fit, "value") else str(review.fit)
+            fit_val = (
+                review.fit.value if hasattr(review.fit, "value") else str(review.fit)
+            )
             review_lines.append(f"{fit_val.capitalize()} fit")
         if review.summary:
             review_lines.append(f"Summary: {review.summary}")
@@ -129,7 +131,7 @@ async def load_candidate_context(
             quote = c.get("evidence", "")
             line = f"Check: {crit} → {res}"
             if quote:
-                line += f" (Quote: \"{quote}\")"
+                line += f' (Quote: "{quote}")'
             review_lines.append(line)
 
     scorecards = (
@@ -181,7 +183,11 @@ async def load_candidate_context(
         for e in reversed(events)
     ]
 
-    stage_key = application.stage.value if hasattr(application.stage, "value") else str(application.stage)
+    stage_key = (
+        application.stage.value
+        if hasattr(application.stage, "value")
+        else str(application.stage)
+    )
     return CandidateContext(
         application_id=application.id,
         job_title=job.title,

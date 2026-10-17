@@ -84,7 +84,12 @@ export function ContactButtons({
     )
   }
   if (email)
-    contacts.push({ key: 'email', label: `Email ${email}`, href: `mailto:${email}`, icon: <MailIcon /> })
+    contacts.push({
+      key: 'email',
+      label: `Email ${email}`,
+      href: `mailto:${email}`,
+      icon: <MailIcon />,
+    })
   if (linkedin)
     contacts.push({
       key: 'linkedin',

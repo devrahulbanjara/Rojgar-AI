@@ -2,7 +2,7 @@
 calendar files, reminders and scorecards."""
 
 import asyncio
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -54,7 +54,7 @@ def outbox(monkeypatch):
 
 
 def test_default_slots_sunday_to_friday_ten_working_days():
-    now = datetime(2026, 10, 16, 2, 0, tzinfo=timezone.utc)  # Fri 07:45 in Nepal
+    now = datetime(2026, 10, 16, 2, 0, tzinfo=UTC)  # Fri 07:45 in Nepal
     slots = open_slots(
         weekly_hours=DEFAULT_WEEKLY_HOURS,
         tz="Asia/Kathmandu",
@@ -80,7 +80,7 @@ def test_default_slots_sunday_to_friday_ten_working_days():
 
 
 def test_slots_skip_busy_times_with_buffer_and_short_notice():
-    now = datetime(2026, 10, 18, 4, 0, tzinfo=timezone.utc)  # Sun 09:45 Nepal
+    now = datetime(2026, 10, 18, 4, 0, tzinfo=UTC)  # Sun 09:45 Nepal
     busy_start = datetime(2026, 10, 18, 14, 0, tzinfo=KTM)
     slots = open_slots(
         weekly_hours=DEFAULT_WEEKLY_HOURS,
@@ -371,7 +371,7 @@ async def test_reminders_sent_once(client, db, outbox):
 async def test_parallel_reminder_sweeps_send_once(committed, outbox):
     async with committed() as s:
         admin, company, job, application = await _shortlisted(s)
-        start = datetime.now(timezone.utc) + timedelta(minutes=30)
+        start = datetime.now(UTC) + timedelta(minutes=30)
         s.add(
             Interview(
                 application_id=application.id,
@@ -429,7 +429,7 @@ async def test_scorecard_and_agenda(client, db, outbox):
     assert item["meeting_link"].startswith("https://meet.jit.si/")
     assert item["scorecard"] == "not_due"
 
-    past = datetime.now(timezone.utc) - timedelta(hours=2)
+    past = datetime.now(UTC) - timedelta(hours=2)
     interview.start_time, interview.end_time = past, past + timedelta(minutes=45)
     await db.flush()
     agenda = await client.get(

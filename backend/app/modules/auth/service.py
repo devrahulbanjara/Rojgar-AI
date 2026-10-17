@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, Response, status
@@ -8,7 +8,6 @@ from loguru import logger
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.shared.normalize import normalize_email
 from app.core.cache import (
     invalidate_company_dashboard_caches,
     invalidate_profile_read_caches,
@@ -46,6 +45,7 @@ from app.modules.auth.schemas import (
 from app.modules.auth.utils import build_user_payload
 from app.modules.companies.models import CompanyMembership
 from app.modules.companies.team import activate_membership
+from app.shared.normalize import normalize_email
 
 
 async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
@@ -167,7 +167,7 @@ async def start_session(db: AsyncSession, user: User, response: Response) -> dic
     await db.execute(
         delete(RefreshToken).where(
             RefreshToken.user_id == user.id,
-            RefreshToken.expires_at < datetime.now(timezone.utc),
+            RefreshToken.expires_at < datetime.now(UTC),
         )
     )
     tokens, jti, refresh_expires_at = create_tokens(str(user.id))
@@ -430,7 +430,7 @@ async def forgot_password(
     if user and user.is_email_verified:
         reset_token = secrets.token_urlsafe(32)
         user.password_reset_token = reset_token
-        user.password_reset_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        user.password_reset_expires_at = datetime.now(UTC) + timedelta(hours=1)
         await db.commit()
         logger.info(f"Password reset requested: {user.email}")
 
@@ -454,9 +454,7 @@ async def reset_password(db: AsyncSession, payload: ResetPasswordRequest) -> dic
             detail="Invalid or expired reset token",
         )
 
-    if user.password_reset_expires_at.replace(tzinfo=timezone.utc) < datetime.now(
-        timezone.utc
-    ):
+    if user.password_reset_expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Reset token has expired"
         )
@@ -481,7 +479,7 @@ async def delete_my_account(
 ) -> None:
     """Soft-delete the user's account: marks deleted, revokes all sessions, clears cookie."""
     user.is_deleted = True
-    user.deleted_at = datetime.now(timezone.utc)
+    user.deleted_at = datetime.now(UTC)
     await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
     response.delete_cookie("refresh_token", path="/")
     await db.commit()

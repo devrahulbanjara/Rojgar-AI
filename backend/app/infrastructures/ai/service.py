@@ -8,7 +8,7 @@ from array import array
 from collections import OrderedDict
 from collections.abc import AsyncIterator
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Type, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from fastapi import HTTPException, status
 from groq import APIStatusError, AsyncGroq, BadRequestError
@@ -128,7 +128,7 @@ def _walk_groq_strict_schema(node: Any) -> None:
             _walk_groq_strict_schema(value)
 
 
-def _to_groq_strict_json_schema(schema_model: Type[SchemaT]) -> dict[str, Any]:
+def _to_groq_strict_json_schema(schema_model: type[SchemaT]) -> dict[str, Any]:
     """Return a Groq-compatible strict JSON schema for a Pydantic model."""
     schema = deepcopy(schema_model.model_json_schema())
     _walk_groq_strict_schema(schema)
@@ -280,7 +280,7 @@ class AIService:
         self,
         system_prompt: str,
         user_payload: dict[str, Any],
-        schema_model: Type[SchemaT],
+        schema_model: type[SchemaT],
         model: str | None = None,
         temperature: float | None = None,
     ) -> SchemaT:
@@ -294,7 +294,7 @@ class AIService:
         self,
         system_prompt: str,
         user_payload: dict[str, Any] | str,
-        schema_model: Type[SchemaT],
+        schema_model: type[SchemaT],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int = 4096,

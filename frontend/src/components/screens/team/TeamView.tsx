@@ -12,7 +12,6 @@ import { useAppSelector } from '@/store/hooks'
 import {
   type TeamMember,
   useCreateInviteMutation,
-  useGetMyCompanyQuery,
   useGetTeamQuery,
   useRemoveMemberMutation,
 } from '@/store/services/companyApi'
@@ -56,16 +55,12 @@ export function TeamView() {
   const { data, isLoading, isError, isFetching, refetch } = useGetTeamQuery(businessId ?? '', {
     skip: !businessId,
   })
-  const company = useGetMyCompanyQuery().data?.data
   const [removeMember] = useRemoveMemberMutation()
   const [createInvite, { isLoading: creatingInvite }] = useCreateInviteMutation()
   const [hidden, setHidden] = useState<Set<string>>(new Set())
 
   const all = useMemo(() => data?.data ?? [], [data])
-  const members = useMemo(
-    () => all.filter((m) => !hidden.has(m.membership_id)),
-    [all, hidden],
-  )
+  const members = useMemo(() => all.filter((m) => !hidden.has(m.membership_id)), [all, hidden])
 
   async function copyInvite() {
     if (!businessId) return

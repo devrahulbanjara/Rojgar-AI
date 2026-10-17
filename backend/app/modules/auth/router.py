@@ -1,7 +1,6 @@
 import secrets
 from typing import Annotated
 
-from loguru import logger
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -15,6 +14,7 @@ from fastapi import (
 )
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from loguru import logger
 
 from app.core.config import settings
 from app.core.database import release_connection
@@ -22,12 +22,11 @@ from app.core.dependencies import CurrentUser, DbSession
 from app.core.rate_limit import RateLimit
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.infrastructures.storage.service import storage_service
-from app.modules.auth import service
+from app.modules.auth import otp, service
 from app.modules.auth.oauth import (
     get_google_auth_url,
     google_oauth_callback,
 )
-from app.modules.auth import otp
 from app.modules.auth.schemas import (
     ActiveBusinessRequest,
     ChangePasswordRequest,

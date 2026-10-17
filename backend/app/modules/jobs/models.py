@@ -19,7 +19,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.companies.models import Company
-from app.shared.slugs import job_slug
 from app.shared.enums import (
     EmploymentType,
     JobCategory,
@@ -28,6 +27,7 @@ from app.shared.enums import (
     SyncAction,
     SyncStatus,
 )
+from app.shared.slugs import job_slug
 
 
 class Job(Base):

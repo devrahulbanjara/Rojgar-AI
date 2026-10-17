@@ -33,8 +33,6 @@ class Base(AsyncAttrs, DeclarativeBase):
     without triggering MissingGreenlet errors in async context.
     """
 
-    pass
-
 
 @event.listens_for(Base, "init", propagate=True)
 def _apply_pk_defaults(target, args, kwargs) -> None:

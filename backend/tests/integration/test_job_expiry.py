@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import app.modules.jobs.service as jobs_service
 from app.shared.enums import ApplicationStage, JobStatus
@@ -17,7 +17,7 @@ async def test_closing_uses_timestamp_and_decides_nothing(db, monkeypatch):
     monkeypatch.setattr(jobs_service, "process_sync_event", _noop)
 
     _, company = await make_recruiter_admin(db, email="expiry_admin@example.com")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     later_today = await make_active_job(
         db, company.id, title="Later", closes_at=now + timedelta(minutes=30)
     )

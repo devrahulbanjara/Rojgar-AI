@@ -27,9 +27,7 @@ def normalize_phone(phone: str | None) -> str | None:
         return None
     if not plus and digits.startswith("00"):
         digits, plus = digits[2:], True
-    if plus:
-        number = digits
-    elif digits.startswith("977") and len(digits) >= 11:
+    if plus or digits.startswith("977") and len(digits) >= 11:
         number = digits
     else:
         number = "977" + digits.lstrip("0")

@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 
 import { useT } from '@/lib/i18n/client'
 import { isAuthPath } from '@/lib/publicRoutes'
+import { homePathFor } from '@/lib/roleRoutes'
 import { useMounted } from '@/lib/useMounted'
 import { useAppSelector } from '@/store/hooks'
 
@@ -24,8 +25,6 @@ const matches = (pathname: string | null, prefixes: string[]) =>
   !!pathname && prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
 export const isAppPath = (pathname: string | null) => matches(pathname, APP_PREFIXES)
-
-import { homePathFor } from '@/lib/roleRoutes'
 
 /** Where a signed-in person works: members in the business app, applicants in /me. */
 function useSignedInHome(): string | null {

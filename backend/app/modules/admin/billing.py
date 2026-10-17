@@ -5,7 +5,7 @@ Prices come from entitlements (they exclude VAT; the amount due adds 13%).
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -104,4 +104,4 @@ async def apply(db: AsyncSession, payment: ManualPayment) -> None:
     elif payment.kind == "top_up":
         await entitlements.add_extra_reviews(db, payment.company_id, TOP_UP_REVIEWS)
     payment.status = "received"
-    payment.received_at = datetime.now(timezone.utc)
+    payment.received_at = datetime.now(UTC)

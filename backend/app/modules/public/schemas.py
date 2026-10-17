@@ -6,7 +6,6 @@ from pydantic import EmailStr, Field
 
 from app.core.schemas import BaseSchema
 from app.shared.enums import (
-    ApplicationStage,
     EmploymentType,
     JobCategory,
     LocationType,

@@ -11,7 +11,6 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 
-
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
 
 

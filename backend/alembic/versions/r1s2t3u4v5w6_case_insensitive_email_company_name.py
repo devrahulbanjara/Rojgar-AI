@@ -11,15 +11,16 @@ Existing emails are lowercased; the migration aborts with a clear message if
 that would merge two accounts or if duplicate company names exist.
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "r1s2t3u4v5w6"
-down_revision: Union[str, None] = "q1r2s3t4u5v6"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "q1r2s3t4u5v6"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _abort_on_duplicates(bind, sql: str, what: str) -> None:

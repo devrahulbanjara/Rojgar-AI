@@ -7,8 +7,11 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from app.core.dependencies import DbSession, OwnerContext, PlatformAdmin, UUIDPath
 from app.core.rate_limit import RateLimit, client_ip
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.admin import guards  # noqa: F401  (registers the job rules)
-from app.modules.admin import billing, service
+from app.modules.admin import (
+    billing,
+    guards,  # noqa: F401  (registers the job rules)
+    service,
+)
 from app.modules.admin.schemas import (
     ApprovalItem,
     BusinessRow,

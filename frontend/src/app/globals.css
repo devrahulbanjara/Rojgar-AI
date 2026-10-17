@@ -1,15 +1,11 @@
 /*
   Design-system entry point (Tailwind v4 + shadcn/ui tokens).
 
-  Coexistence with the legacy SCSS bundle (src/styles/main.scss):
-  - Tailwind's preflight is NOT imported; the legacy reset already covers it,
-    and importing preflight would restyle every page that hasn't migrated yet.
-  - Utilities are imported with `important` so they win over the legacy,
-    unlayered SCSS (e.g. the `* { padding: 0 }` reset) on migrated components.
-  See docs/DESIGN_SYSTEM.md before changing anything here.
+  Removed legacy SCSS. Tailwind preflight is included to provide consistent base styles.
 */
 @layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities) important source(none);
 @import 'tw-animate-css';
 
@@ -63,7 +59,13 @@
   --ai-2: #3b82f6;
   --ai-3: #22d3ee;
   --ai-4: #2dd4bf;
-  --ai-gradient: linear-gradient(120deg, var(--ai-1), var(--ai-2) 40%, var(--ai-3) 75%, var(--ai-4));
+  --ai-gradient: linear-gradient(
+    120deg,
+    var(--ai-1),
+    var(--ai-2) 40%,
+    var(--ai-3) 75%,
+    var(--ai-4)
+  );
 
   --sidebar: #ffffff;
   --sidebar-foreground: #3a4157;

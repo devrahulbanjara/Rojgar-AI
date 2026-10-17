@@ -1,13 +1,13 @@
 """Sign in or sign up with a phone number and an SMS code."""
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
 from app.core.config import settings
-from app.modules.auth.models import PhoneOtp, User
 from app.infrastructures.sms.service import get_sms_provider
+from app.modules.auth.models import PhoneOtp, User
 
 PHONE = "9812345678"
 E164 = "+9779812345678"
@@ -68,7 +68,7 @@ async def test_code_expires_after_five_minutes(client, db):
     await _request(client)
     code = _last_code()
     otp = await db.scalar(select(PhoneOtp).where(PhoneOtp.phone == E164))
-    otp.expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+    otp.expires_at = datetime.now(UTC) - timedelta(seconds=1)
     await db.flush()
     resp = await _verify(client, code)
     assert resp.status_code == 400

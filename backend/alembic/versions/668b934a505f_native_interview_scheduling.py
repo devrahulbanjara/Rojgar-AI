@@ -16,16 +16,17 @@ Create Date: 2026-10-17
 import json
 import math
 import uuid
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 revision: str = "668b934a505f"
-down_revision: Union[str, None] = "05b5ba8c8acd"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "05b5ba8c8acd"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 _WEEK = {d: [["10:00", "17:00"]] for d in ("sun", "mon", "tue", "wed", "thu", "fri")}
 _WEEK["sat"] = []

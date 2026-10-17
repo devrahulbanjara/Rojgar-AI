@@ -5,9 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { formatTime, formatWhen } from '@/lib/dates'
-import { notify } from '@/lib/notify'
 import {
-  type RecruiterHomeData,
   type RecruiterHomeInterview,
   useGetRecruiterHomeQuery,
 } from '@/store/services/dashboardApi'

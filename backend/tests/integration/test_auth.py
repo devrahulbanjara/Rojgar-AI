@@ -1,3 +1,5 @@
+from datetime import UTC
+
 from tests.integration.helpers import (
     TEST_PASSWORD,
     auth_headers,
@@ -54,8 +56,8 @@ class TestLogin:
         assert resp.status_code == 401
 
     async def test_unverified_email_403(self, client, db):
-        from app.modules.auth.models import User
         from app.core.security import hash_password
+        from app.modules.auth.models import User
 
         user = User(
             email="unverified@example.com",
@@ -74,11 +76,11 @@ class TestLogin:
         assert resp.json()["errors"][0]["code"] == "email_not_verified"
 
     async def test_deleted_account_403(self, client, db):
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         user = await make_candidate(db, email="deleted@example.com")
         user.is_deleted = True
-        user.deleted_at = datetime.now(timezone.utc)
+        user.deleted_at = datetime.now(UTC)
         await db.flush()
 
         resp = await client.post(

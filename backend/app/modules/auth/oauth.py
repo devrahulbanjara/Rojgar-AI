@@ -6,10 +6,10 @@ from loguru import logger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.shared.normalize import normalize_email
 from app.core.config import settings
 from app.modules.auth.models import OAuthAccount, User
 from app.modules.auth.service import start_session
+from app.shared.normalize import normalize_email
 
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"

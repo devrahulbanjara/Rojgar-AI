@@ -24,7 +24,7 @@ from app.modules.dashboards.schemas import (
     RoleCard,
 )
 from app.modules.dashboards.service import _get_company_context
-from app.modules.interviews.models import Interview, InterviewStatus
+from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.shared.enums import (
     ApplicationStage,

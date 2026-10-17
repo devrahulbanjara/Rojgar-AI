@@ -145,29 +145,24 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: "pnpm"
-          cache-dependency-path: frontend/pnpm-lock.yaml
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Check Types & Lint
         run: |
-          pnpm type-check
-          pnpm stylelint
-          pnpm lint
-          pnpm format:check
+          npm run type-check
+          npm run stylelint
+          npm run lint
+          npm run format:check
 
       - name: Build Application
-        run: pnpm build
+        run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1

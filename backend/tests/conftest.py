@@ -3,9 +3,9 @@ import os
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
@@ -24,8 +24,8 @@ settings.qdrant_api_key = settings.test_qdrant_api_key or ""
 settings.qdrant_collection_name = f"test_{settings.test_db_name}_jobs"
 settings.qdrant_candidate_collection_name = f"test_{settings.test_db_name}_candidates"
 
-from main import app  # noqa: E402
-from app.core.database import Base, get_db  # noqa: E402
+from app.core.database import Base, get_db
+from main import app
 
 RUN_LIVE_AI = os.getenv("RUN_HYBRID_EVAL") == "1"
 

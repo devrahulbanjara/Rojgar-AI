@@ -16,16 +16,17 @@ Revises: 668b934a505f
 Create Date: 2026-10-17
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 revision: str = "448c86788f39"
-down_revision: Union[str, None] = "2017037b521a"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "2017037b521a"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 # Old membership role -> new business role.
 ROLE_MAP = {"admin": "owner", "recruiter": "manager"}
@@ -269,9 +270,7 @@ def upgrade() -> None:
             index=True,
         ),
         sa.Column("kind", sa.String(20), nullable=False),
-        sa.Column(
-            "job_id", sa.Uuid(), sa.ForeignKey("jobs.id", ondelete="SET NULL")
-        ),
+        sa.Column("job_id", sa.Uuid(), sa.ForeignKey("jobs.id", ondelete="SET NULL")),
         sa.Column("amount_npr", sa.Integer(), nullable=False),
         sa.Column("reference", sa.String(100)),
         sa.Column("status", sa.String(20), nullable=False, server_default="awaiting"),

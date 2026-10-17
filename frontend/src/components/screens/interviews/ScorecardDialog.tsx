@@ -155,7 +155,9 @@ export function ScorecardDialog({
         className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
       >
         <DialogHeader>
-          <DialogTitle>{interview ? `How did it go with ${interview.candidate.name}?` : ''}</DialogTitle>
+          <DialogTitle>
+            {interview ? `How did it go with ${interview.candidate.name}?` : ''}
+          </DialogTitle>
         </DialogHeader>
         {interview ? (
           <ScorecardForm

@@ -2,15 +2,15 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
-import app.modules.auth.models  # noqa: F401 — registers all models with Base.metadata
-import app.modules.companies.models  # noqa: F401
-import app.modules.profiles.models  # noqa: F401
+import app.modules.applications.models
+import app.modules.assistant.models
+import app.modules.auth.models
+import app.modules.companies.models
+import app.modules.entitlements.models
+import app.modules.interviews.models
+import app.modules.jobs.models
+import app.modules.profiles.models
 import app.modules.resumes.models  # noqa: F401
-import app.modules.jobs.models  # noqa: F401
-import app.modules.applications.models  # noqa: F401
-import app.modules.assistant.models  # noqa: F401
-import app.modules.interviews.models  # noqa: F401
-import app.modules.entitlements.models  # noqa: F401
 from alembic import context
 from app.core.config import settings
 from app.core.database import Base

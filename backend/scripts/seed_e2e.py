@@ -19,7 +19,6 @@ from sqlalchemy import select
 
 # Register all model classes with Base.metadata so relationship() lookups resolve.
 import app.core.model_registry  # noqa: F401
-
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
 from app.modules.auth.enums import BusinessStatus, MembershipRole

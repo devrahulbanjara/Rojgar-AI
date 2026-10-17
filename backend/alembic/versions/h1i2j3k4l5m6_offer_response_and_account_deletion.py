@@ -6,20 +6,21 @@ Create Date: 2026-04-20 12:00:00.000000
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "h1i2j3k4l5m6"
-down_revision: Union[str, Sequence[str], None] = (
+down_revision: str | Sequence[str] | None = (
     "b1c2d3e4f5a6",
     "a9c4e7f2b6d1",
     "aa12bb34cc56",
 )
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

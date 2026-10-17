@@ -13,7 +13,7 @@ interviewer start time).
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Literal
 from zoneinfo import ZoneInfo
 
@@ -23,9 +23,9 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
-from app.modules.applications.models import Application
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.entitlements.plans import SMS
 from app.modules.entitlements.service import job_features
@@ -61,13 +61,12 @@ from app.modules.interviews.schemas import (
     SlotView,
 )
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStage
 
 Actor = Literal["candidate", "recruiter"]
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 async def _member_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:

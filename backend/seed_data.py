@@ -4,7 +4,7 @@ import re
 import secrets
 import uuid
 from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
@@ -137,7 +137,7 @@ LEGACY_BY_APP: dict[uuid.UUID, tuple[ApplicationStatus, int | None]] = {}
 COMMON_PW = hash_password("Password@123")
 DEFAULT_LOGIN_PASSWORD = "Password@123"
 
-NOW = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+NOW = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
 EXPIRED_DATE = NOW - timedelta(days=3)  # Jobs expired 3 days ago
 SEED_AUDIT_USER_AGENT = "Rojgar AI Seed Script"
 AUDIT_REDACTED_FIELDS = {
@@ -4490,7 +4490,6 @@ async def seed_applications(
         )
         application_counter += 1
 
-
         if target_status in {
             ApplicationStatus.interview_booked,
             ApplicationStatus.interview_completed,
@@ -4543,7 +4542,7 @@ async def seed_live_pipeline_data(
     company_contexts: list[dict],
 ) -> None:
     print(
-        "\n📈 Seeding active pipeline applications, drafts, interviews and scorecards..." 
+        "\n📈 Seeding active pipeline applications, drafts, interviews and scorecards..."
     )
 
     application_counter = 0
@@ -4611,7 +4610,6 @@ async def seed_live_pipeline_data(
             )
         )
         application_counter += 1
-
 
         LEGACY_BY_APP[application.id] = (legacy, spec.get("score"))
         variant = candidate_data["resume_variants"][spec["resume_index"]]

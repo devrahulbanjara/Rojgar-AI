@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy import Date, String
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column, declarative_mixin
+from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
 
 
 @declarative_mixin

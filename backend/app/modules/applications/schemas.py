@@ -98,7 +98,6 @@ class RecruiterCandidateApplicationSummary(BaseSchema):
     updated_at: datetime
 
 
-
 class RecruiterCandidateListItem(BaseSchema):
     """Candidates across jobs: one row per person."""
 

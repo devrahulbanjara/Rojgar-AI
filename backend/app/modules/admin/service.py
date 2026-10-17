@@ -2,7 +2,7 @@
 
 import hashlib
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
 from loguru import logger
@@ -15,16 +15,17 @@ from app.core.cache import (
 )
 from app.core.config import settings
 from app.infrastructures.email.service import EmailService
+from app.infrastructures.sms.service import send_sms
 from app.infrastructures.storage.service import storage_service
-from app.modules.admin.models import JobReport, JobTakedown, ManualPayment
 from app.modules.admin import billing
+from app.modules.admin.models import JobReport, JobTakedown, ManualPayment
 from app.modules.admin.schemas import (
     ApprovalItem,
     BusinessRow,
     FlaggedJob,
+    PaidPlanRow,
     PaymentRow,
     PaymentsOverview,
-    PaidPlanRow,
     ReportCreate,
     ReportItem,
 )
@@ -35,11 +36,10 @@ from app.modules.companies.models import Company, CompanyMembership
 from app.modules.entitlements.models import JobPass
 from app.modules.entitlements.plans import PassKind, PlanId
 from app.modules.jobs.models import Job
-from app.infrastructures.sms.service import send_sms
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 async def _business(db: AsyncSession, business_id: str) -> Company:

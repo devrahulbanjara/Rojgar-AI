@@ -50,7 +50,7 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
    - All 4 wave branches (`wave/b1`, `wave/b4`, `wave/f4`, `wave/f5`) are now fully merged into `production-hardening`!
 9. **Completed Verification Gates (Part 4):**
    - **Frontend TypeScript (`npx tsc --noEmit`):** Fixed 22 errors across 8 components (`SiteLayout.tsx`, `LoginForm.tsx`, `SignupForm.tsx`, `AuditView.tsx`, `CandidatePanel.tsx`, `ProfileSettings.tsx`, `TeamView.tsx`, `TodayView.tsx`). Rewrote `SignupForm.tsx` to match wave/b4 auth flow. Passed with 0 errors.
-   - **Frontend Production Build (`pnpm build`):** Successfully built all 32 routes with Next.js Turbopack.
+   - **Frontend Production Build (`npm run build`):** Successfully built all 32 routes with Next.js Turbopack.
    - **Backend Pytest (`uv run pytest`):** Cleaned up obsolete recruiter-admin schemas in `dashboards/service.py`, added missing `ApplicationStage` import in `public/service.py`, and added `ApplicationStatus`/`ShortlistStatus` backward-compatibility aliases in `shared/enums.py`. All 330 tests collected and ran with 0 errors.
    - **Alembic Single Head:** Verified single migration head `e1267236faf8 (head)`.
 10. **Completed Merge to Main (Part 5):**
@@ -125,7 +125,7 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
 - `backend/.env` must point at **local** stores (`DB_HOST=localhost`, `DB_PORT=5433`, `QDRANT_URL=http://localhost:6335`, `REDIS_ENABLED=false` or local Redis). Never use the production Supabase/Qdrant/Upstash for seeding or tests.
 - Run:
   - backend: `cd backend && uv run alembic upgrade head && uv run uvicorn main:app --port 8000 --reload --reload-dir app`
-  - frontend: `cd frontend && npx -y pnpm@10 dev` (port 3000)
+  - frontend: `cd frontend && npm run dev` (port 3000)
 - Logins (local seed, password `Password@123`):
   - business member: `priya.maharjan@f1soft.com`
   - business owner: `bikash.shrestha@f1soft.com`
@@ -136,7 +136,7 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
 ## Commands (gates before every push)
 
 - Backend: `cd backend && REDIS_ENABLED=true uv run pytest -p no:cacheprovider -o addopts="" -q` (217 passing at handover), `uvx ruff@0.14.10 check` and `uvx ruff@0.14.10 format`.
-- Frontend: `cd frontend && npx tsc --noEmit && npx -y pnpm@10 lint && npx -y pnpm@10 build`.
+- Frontend: `cd frontend && npm run type-check && npm run lint && npm run build`.
 - Design file: `npx @google/design.md@0.4.0 lint DESIGN.md`.
 
 ## Product decisions made in this session (keep them)

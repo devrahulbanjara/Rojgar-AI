@@ -4,7 +4,7 @@ sign-in, and recruiter source counts."""
 
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import func, select
@@ -160,7 +160,7 @@ class TestPublicPages:
         expired = await make_active_job(
             db,
             company.id,
-            closes_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            closes_at=datetime.now(UTC) - timedelta(hours=1),
         )
         filled = await make_active_job(
             db, company.id, status=JobStatus.closed, closed_reason="hired"
@@ -541,7 +541,7 @@ class TestMagicLink:
             MagicLinkToken(
                 email="late@example.com",
                 token_hash=hash_magic_token("expired-token-value"),
-                expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+                expires_at=datetime.now(UTC) - timedelta(minutes=1),
             )
         )
         await db.flush()
@@ -639,4 +639,3 @@ class TestSuggestSomeone:
             json={"referrer_name": "Ram", "name": "Hari", "phone": "9812345678"},
         )
         assert resp.status_code == 404
-

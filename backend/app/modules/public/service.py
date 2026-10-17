@@ -6,7 +6,7 @@ import json
 import os
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from html import escape
 
 import httpx
@@ -28,6 +28,7 @@ from app.core.database import AsyncSessionLocal
 from app.core.security import create_tokens
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.storage.service import storage_service
+from app.modules.admin.guards import is_publicly_visible, taken_down_job_ids
 from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.applications.pipeline import find_or_create_person, new_referrer_token
 from app.modules.applications.service import (
@@ -37,18 +38,17 @@ from app.modules.applications.service import (
     schedule_review,
 )
 from app.modules.applications.sync import enqueue_application_sync_event
-from app.modules.auth.models import OAuthAccount, RefreshToken, User
-from app.modules.admin.guards import is_publicly_visible, taken_down_job_ids
 from app.modules.auth.enums import BusinessStatus
-from app.modules.companies.models import Company, CompanyMembership
+from app.modules.auth.models import OAuthAccount, RefreshToken, User
+from app.modules.companies.models import Company
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job, JobReferrer
 from app.modules.profiles.models import Profile
-from app.shared.enums import ApplicationStage
 from app.modules.public import cv_text
 from app.modules.public.models import JobSuggestion, MagicLinkToken
 from app.modules.public.notify import notify_applicant
 from app.modules.public.phone import normalize_phone
+from app.modules.public.tokens import create_status_token, status_url
 from app.modules.public.schemas import (
     ApplicationStatusView,
     CareersPage,
@@ -63,11 +63,11 @@ from app.modules.public.schemas import (
     PublicQuestion,
     RecommendCreated,
     RecommendRequest,
-    RecommendSent,
     ScreeningAnswer,
     Stage,
     WithdrawResult,
 )
+from app.shared.enums import ApplicationStage
 
 _WITHDRAWABLE = {
     ApplicationStage.new,
@@ -78,7 +78,7 @@ _WITHDRAWABLE = {
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 _STAGE: dict[ApplicationStage, Stage] = {
@@ -485,7 +485,9 @@ async def submit_guest_application(
             job=job,
             user=user,
             resume_id=resume.id if resume else None,
-            source=ApplicationSource.referral.value if (referrer or suggestion) else source,
+            source=ApplicationSource.referral.value
+            if (referrer or suggestion)
+            else source,
             referrer_id=referrer.id if referrer else None,
             fields={
                 "consented_at": _now(),
@@ -509,8 +511,15 @@ async def submit_guest_application(
         suggestion.application_id = application.id
         await db.commit()
 
-    if cv_bytes is not None and settings.llama_cloud_api_key and cv_file and not cv_file.is_photo:
-        bg_tasks.add_task(enrich_guest_cv, resume.id if resume else None, application.id, cv_bytes)
+    if (
+        cv_bytes is not None
+        and settings.llama_cloud_api_key
+        and cv_file
+        and not cv_file.is_photo
+    ):
+        bg_tasks.add_task(
+            enrich_guest_cv, resume.id if resume else None, application.id, cv_bytes
+        )
         schedule_review(None, application.id)
         if "PYTEST_CURRENT_TEST" not in os.environ:
             from app.modules.applications.sync import process_sync_event
@@ -717,7 +726,6 @@ async def enrich_guest_cv(
         _to_resume_update,
     )
     from app.modules.resumes.service import update_resume
-
     from app.modules.review.service import review_application
 
     upload = UploadFile(

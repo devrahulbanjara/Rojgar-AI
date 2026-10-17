@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import case, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,10 +20,10 @@ from app.modules.dashboards.schemas import (
     CandidateDashboardAnalyticsResponse,
     CandidateDashboardResponse,
     CandidateInterviewItem,
-    InterviewLoadPoint,
-    JobPipelineItem,
     FitDistribution,
     FitDistributionBucket,
+    InterviewLoadPoint,
+    JobPipelineItem,
     RecruiterAnalyticsStats,
     RecruiterAnalyticsTimeseriesPoint,
     RecruiterAnalyticsVelocity,
@@ -68,7 +68,7 @@ _INTERVIEW_DONE = exists().where(
 
 def _utcnow() -> datetime:
     """Return the current UTC datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _today_utc() -> date:
@@ -98,7 +98,7 @@ def _analytics_window(range_key: str) -> tuple[str, datetime, date, date]:
     normalized = _normalize_range_key(range_key)
     end_date = _today_utc()
     start_date = end_date - timedelta(days=ANALYTICS_RANGE_DAYS[normalized] - 1)
-    start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
+    start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
     return normalized, start_dt, start_date, end_date
 
 
@@ -689,14 +689,12 @@ async def _get_recruiter_interview_load(
             .where(
                 Job.company_id == company_id,
                 Interview.start_time
-                >= datetime.combine(
-                    load_start, datetime.min.time(), tzinfo=timezone.utc
-                ),
+                >= datetime.combine(load_start, datetime.min.time(), tzinfo=UTC),
                 Interview.start_time
                 < datetime.combine(
                     load_end + timedelta(days=1),
                     datetime.min.time(),
-                    tzinfo=timezone.utc,
+                    tzinfo=UTC,
                 ),
             )
         )
@@ -841,4 +839,3 @@ async def get_recruiter_dashboard_analytics(
 
     payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)
     return RecruiterDashboardAnalyticsResponse.model_validate(payload)
-

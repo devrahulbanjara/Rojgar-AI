@@ -1,6 +1,6 @@
 """Businesses, roles and the guards around them."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi import HTTPException
@@ -222,7 +222,7 @@ class TestTeam:
         token = url.rsplit("/", 1)[1]
         stored = await db.scalar(select(BusinessInvite))
         assert stored.token_hash != token and token not in stored.token_hash
-        assert stored.expires_at - datetime.now(timezone.utc) > timedelta(days=6)
+        assert stored.expires_at - datetime.now(UTC) > timedelta(days=6)
 
         preview = await client.get(f"/invites/{token}")
         assert preview.json()["data"] == {
@@ -268,7 +268,7 @@ class TestTeam:
         expired = await db.scalar(
             select(BusinessInvite).where(BusinessInvite.id == tokens[0]["id"])
         )
-        expired.expires_at = datetime.now(timezone.utc) - timedelta(minutes=1)
+        expired.expires_at = datetime.now(UTC) - timedelta(minutes=1)
         await db.flush()
         await client.delete(
             f"/businesses/{company.id}/invites/{tokens[1]['id']}",

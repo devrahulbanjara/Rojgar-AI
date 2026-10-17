@@ -15,7 +15,7 @@ and runs when reviews are available again. Applications are never blocked.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 from zoneinfo import ZoneInfo
 
@@ -64,7 +64,7 @@ ReviewClaim = Literal["pass", "plan", "extra"]
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def current_month(now: datetime | None = None) -> date:

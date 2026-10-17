@@ -14,11 +14,7 @@ import { SiteLayout } from '@/components/app/SiteLayout'
 // which is the correct pattern for Server Component layouts.
 import ToasterNoSSR from '@/components/common/ToasterNoSSR'
 
-import '@/styles/main.scss'
 
-// Two typefaces (see docs/DESIGN_SYSTEM.md → Typography): Manrope for headings
-// and large numerals, DM Sans for everything else. styles/main.scss maps the
-// legacy --font-heading / --font-body variables onto these.
 const manrope = Manrope({
   variable: '--font-manrope',
   subsets: ['latin'],
@@ -75,7 +71,10 @@ export default async function RootLayout({
       className={`${manrope.variable} ${dmSans.variable} ${devanagari.variable} ${ebGaramond.variable} ${geistMono.variable}`}
     >
       <body>
-        <a href="#main-content" className="skip-to-content">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+        >
           Skip to main content
         </a>
         <LocaleProvider locale={locale}>

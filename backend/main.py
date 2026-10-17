@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from sqlalchemy import text
 
+from app.core.body_limit import BodySizeLimitMiddleware
 from app.core.config import settings
 from app.core.database import engine
 from app.core.dependencies import DbSession
@@ -15,37 +16,36 @@ from app.core.job_expiry_scheduler import (
     run_job_expiry_startup_check,
 )
 from app.core.logging_config import setup_logging
-from app.core.body_limit import BodySizeLimitMiddleware
 from app.core.request_middleware import RequestContextMiddleware
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.core.tasks import sync_daemon_loop
-from app.modules.interviews.reminders import reminder_loop
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
+from app.infrastructures.storage.router import router as files_router
 from app.modules.activity.router import router as activity_router
+from app.modules.admin.router import router as admin_router
+from app.modules.applications.emails import deliver_overdue
+from app.modules.applications.recruiter_router import router as recruiter_router
 from app.modules.applications.router import router as applications_router
 from app.modules.assistant.router import router as assistant_router
 from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
-from app.modules.admin.router import router as admin_router
 from app.modules.companies.router import businesses as businesses_router
 from app.modules.companies.router import invites as invites_router
 from app.modules.companies.router import router as companies_router
 from app.modules.dashboards.router import router as dash_router
 from app.modules.entitlements.router import router as entitlements_router
+from app.modules.interviews.reminders import reminder_loop
 from app.modules.interviews.router import router as interviews_router
 from app.modules.jobs.router import router as jobs_router
+from app.modules.jobs.templates_router import router as job_templates_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.profiles.router import router as profiles_router
 from app.modules.public.router import router as public_router
-from app.infrastructures.storage.router import router as files_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
 from app.modules.resumes.router import router as resumes_router
-from app.modules.applications.emails import deliver_overdue
-from app.modules.applications.recruiter_router import router as recruiter_router
-from app.modules.jobs.templates_router import router as job_templates_router
 from app.modules.review.ml_rank import assert_model_available
 from app.modules.review.service import recover_pending_reviews
 
@@ -151,7 +151,6 @@ app.include_router(applications_router)
 app.include_router(recruiter_router)
 app.include_router(job_templates_router)
 app.include_router(interviews_router)
-
 
 
 @app.get("/", tags=["System"])

@@ -14,7 +14,6 @@ from app.core.request_context import (
     set_request_context,
 )
 
-
 # Client-supplied request IDs are echoed and stored in audit rows (String(100));
 # accept only short, safe tokens and mint our own otherwise.
 _REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,100}$")

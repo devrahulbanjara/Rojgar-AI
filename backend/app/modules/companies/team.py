@@ -3,7 +3,7 @@
 import hashlib
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select, update
@@ -16,13 +16,13 @@ from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipRole, MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import BusinessInvite, Company, CompanyMembership
-from app.modules.entitlements.service import ensure_can_add_member
 from app.modules.companies.schemas import (
     InviteCreated,
     InvitePreview,
     InviteResponse,
     MemberResponse,
 )
+from app.modules.entitlements.service import ensure_can_add_member
 
 INVITE_TTL = timedelta(days=7)
 
@@ -34,7 +34,7 @@ ROLE_LABELS = {
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _hash_token(token: str) -> str:

@@ -17,7 +17,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "// --- fix-all ---": "full clean: scss → lint → format (before commit)",
-    "fix-all": "pnpm type-check && pnpm stylelint:fix && pnpm lint:fix && pnpm format",
+    "fix-all": "npm run type-check && npm run stylelint:fix && npm run lint:fix && npm run format",
     "// --- e2e ---": "Playwright — boots docker test stack + migrations + backend (uv) + frontend automatically",
     "e2e": "node e2e/run-e2e.mjs",
     "e2e:ui": "node e2e/run-e2e.mjs --ui",
@@ -73,5 +73,8 @@
     "stylelint-config-standard-scss": "^17.0.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
+  },
+  "overrides": {
+    "eslint-plugin-react-hooks": "7.0.1"
   }
 }

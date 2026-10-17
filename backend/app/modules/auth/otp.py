@@ -7,7 +7,7 @@ Sending is limited per phone (and per IP by the route's RateLimit).
 import hashlib
 import hmac
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, update
@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.rate_limit import TOO_MANY_MESSAGE, hit
-from app.modules.auth.models import PhoneOtp, User
 from app.infrastructures.sms.service import send_sms
+from app.modules.auth.models import PhoneOtp, User
 
 CODE_TTL = timedelta(minutes=5)
 MAX_ATTEMPTS = 5
@@ -25,7 +25,7 @@ SEND_WINDOW_SECONDS = 600
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _hash(phone: str, code: str) -> str:

@@ -8,7 +8,7 @@ UPDATE ... RETURNING before it is sent, so nobody gets the same reminder twice.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from loguru import logger
 from sqlalchemy import select, text, update
@@ -41,7 +41,7 @@ async def send_due_reminders(db: AsyncSession, now: datetime | None = None) -> i
     Claims run in one short transaction under the advisory lock; the emails
     and SMS go out after the commit, without holding a connection.
     """
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     locked = await db.scalar(
         text("SELECT pg_try_advisory_xact_lock(:key)"), {"key": _LOCK_KEY}
     )

@@ -15,12 +15,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sqlalchemy import func, or_, select  # noqa: E402
+from sqlalchemy import func, or_, select
 
-import app.core.model_registry  # noqa: E402,F401
-from app.core.database import AsyncSessionLocal  # noqa: E402
-from app.modules.auth.models import User  # noqa: E402
-from app.shared.normalize import normalize_email, normalize_phone  # noqa: E402
+import app.core.model_registry  # noqa: F401
+from app.core.database import AsyncSessionLocal
+from app.modules.auth.models import User
+from app.shared.normalize import normalize_email, normalize_phone
 
 
 async def main(identifier: str, remove: bool) -> int:

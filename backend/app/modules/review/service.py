@@ -287,7 +287,7 @@ async def _call(reviewer: Reviewer, inputs: _Inputs, *, cheap: bool):
             criteria=inputs.criteria,
             cheap=cheap,
         )
-    except Exception as exc:  # noqa: BLE001 - any provider error is retryable
+    except Exception as exc:
         raise _RetryableError(type(exc).__name__) from exc
 
 

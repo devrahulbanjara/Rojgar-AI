@@ -1,6 +1,5 @@
 import uuid
 
-
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,

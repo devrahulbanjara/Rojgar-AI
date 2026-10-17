@@ -1,6 +1,6 @@
 import math
+from datetime import UTC, datetime
 from typing import Any, Generic, TypeVar
-from datetime import datetime, timezone
 
 from fastapi import Response, status
 from fastapi.encoders import jsonable_encoder
@@ -31,7 +31,7 @@ class PaginatedData(BaseModel, Generic[T]):
 class ResponseMeta(BaseModel):
     """Metadata attached to every response envelope."""
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     requestId: str | None = None
 
 
@@ -75,7 +75,7 @@ class ResponseBuilder:
         """Build the response metadata block from the current request context."""
         request_context = get_request_context()
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "requestId": request_context.request_id,
         }
 

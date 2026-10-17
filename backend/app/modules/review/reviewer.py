@@ -8,8 +8,8 @@ computed from its checks in `rubric.py` after every quote is verified.
 from __future__ import annotations
 
 import re
-from functools import lru_cache
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Literal, Protocol
 
 from pydantic import BaseModel, Field

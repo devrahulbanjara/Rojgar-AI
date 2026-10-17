@@ -16,13 +16,12 @@ WARNING: downgrade is irreversible for screening rows — they have already been
 collapsed into `applied` on upgrade and the original distinction is lost.
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
-
 revision: str = "k1l2m3n4o5p6"
-down_revision: Union[str, Sequence[str], None] = "f1a2b3c4d5e6"
+down_revision: str | Sequence[str] | None = "f1a2b3c4d5e6"
 branch_labels = None
 depends_on = None
 

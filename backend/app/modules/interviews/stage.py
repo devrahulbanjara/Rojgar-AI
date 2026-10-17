@@ -32,11 +32,17 @@ from app.shared.enums import ApplicationStage, EventType
 
 
 def can_schedule(application: Application) -> bool:
-    return application.stage in {ApplicationStage.shortlisted, ApplicationStage.interview}
+    return application.stage in {
+        ApplicationStage.shortlisted,
+        ApplicationStage.interview,
+    }
 
 
 def candidate_phone(application: Application) -> str | None:
-    return getattr(getattr(application, "user", None), "phone", None) or application.shared_phone_value
+    return (
+        getattr(getattr(application, "user", None), "phone", None)
+        or application.shared_phone_value
+    )
 
 
 def job_must_haves(job: Job) -> list[str]:
@@ -111,7 +117,13 @@ async def _event(
 
 
 async def on_invited(db, application, job, actor_user_id) -> None:
-    _add_event(db, application.id, EventType.email_sent, actor_user_id, {"subject": f"Interview invite for {job.title}"})
+    _add_event(
+        db,
+        application.id,
+        EventType.email_sent,
+        actor_user_id,
+        {"subject": f"Interview invite for {job.title}"},
+    )
     await _event(
         db,
         application,
@@ -131,7 +143,10 @@ async def on_booked(db, application, job, interview, actor_user_id) -> None:
         application.id,
         EventType.interview_booked,
         actor_user_id,
-        {"interview_id": str(interview.id), "starts_at": interview.start_time.isoformat()},
+        {
+            "interview_id": str(interview.id),
+            "starts_at": interview.start_time.isoformat(),
+        },
     )
     await _event(
         db,
@@ -153,7 +168,11 @@ async def on_rescheduled(db, application, job, interview, actor_user_id) -> None
         application.id,
         EventType.interview_booked,
         actor_user_id,
-        {"interview_id": str(interview.id), "starts_at": interview.start_time.isoformat(), "moved": True},
+        {
+            "interview_id": str(interview.id),
+            "starts_at": interview.start_time.isoformat(),
+            "moved": True,
+        },
     )
     await _event(
         db,

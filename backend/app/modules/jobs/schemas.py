@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -78,9 +78,7 @@ class JobBase(BaseSchema):
         if self.closes_at is not None:
             if self.closes_at.tzinfo is None:
                 raise ValueError("closes_at must be timezone-aware")
-            if self.status == JobStatus.open and self.closes_at <= datetime.now(
-                timezone.utc
-            ):
+            if self.status == JobStatus.open and self.closes_at <= datetime.now(UTC):
                 raise ValueError("closes_at must be in the future for open jobs")
         return self
 

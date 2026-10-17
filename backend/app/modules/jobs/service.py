@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -57,7 +57,7 @@ from app.shared.enums import (
 
 def _utcnow() -> datetime:
     """Return the current UTC datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _effective_job_status(job: Job) -> JobStatus:
@@ -263,11 +263,7 @@ async def create_job(
         questions=[q.model_dump(mode="json") for q in payload.questions or []],
     )
 
-    if (
-        job.status == JobStatus.open
-        and job.closes_at
-        and job.closes_at <= _utcnow()
-    ):
+    if job.status == JobStatus.open and job.closes_at and job.closes_at <= _utcnow():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Open jobs must have a closes_at in the future.",

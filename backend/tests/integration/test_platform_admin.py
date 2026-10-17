@@ -4,12 +4,12 @@ import uuid
 
 from sqlalchemy import select
 
+from app.infrastructures.sms.service import get_sms_provider
 from app.modules.admin.models import JobReport, ManualPayment
 from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import BusinessStatus
 from app.modules.companies.models import Company
 from app.modules.entitlements.models import JobPass
-from app.infrastructures.sms.service import get_sms_provider
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,

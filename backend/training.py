@@ -1,15 +1,16 @@
+import matplotlib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
-import matplotlib
+from sklearn.model_selection import train_test_split
 
 matplotlib.use("Agg")
+import os
+
+import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-import joblib
-import os
 
 print("Generating 10,000 Hybrid AI candidate-job pairs...")
 np.random.seed(42)

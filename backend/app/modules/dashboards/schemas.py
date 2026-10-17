@@ -142,6 +142,8 @@ class RecruiterAdminDashboardResponse(BaseSchema):
     todays_interviews: list[TodayInterview]
     join_requests: list[JoinRequestItem]
     team_activity: list[TeamMemberActivity]
+
+
 class RecruiterAnalyticsStats(BaseSchema):
     active_jobs: int
     applications: int

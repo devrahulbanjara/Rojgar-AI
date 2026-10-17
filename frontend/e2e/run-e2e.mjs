@@ -108,7 +108,7 @@ function seedUsers() {
 function runPlaywright() {
   return new Promise((resolve) => {
     const args = ['playwright', 'test', ...process.argv.slice(2)]
-    const child = spawn('pnpm', args, {
+    const child = spawn('npx', args, {
       stdio: 'inherit',
       env: { ...process.env, ...TEST_ENV },
     })

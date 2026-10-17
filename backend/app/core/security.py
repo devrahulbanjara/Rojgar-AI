@@ -2,7 +2,7 @@ import asyncio
 import base64
 import hashlib
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from argon2 import PasswordHasher
@@ -44,7 +44,7 @@ def create_tokens(user_id: str) -> tuple[dict, str, datetime]:
     Returns (token_dict, jti, refresh_expires_at)
     Caller is responsible for persisting jti to refresh_tokens table.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     jti = str(uuid.uuid4())
     refresh_expires_at = now + timedelta(days=settings.refresh_token_expire_days)
 
@@ -111,7 +111,7 @@ def create_pending_signup_token(data: dict) -> str:
     """
     payload = {
         **data,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=24),
+        "exp": datetime.now(UTC) + timedelta(hours=24),
     }
     # JWTs are signed, not encrypted, and these tokens travel in API responses
     # and email links; never expose the Argon2 hash in readable form.

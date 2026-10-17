@@ -5,13 +5,12 @@ Revises: 5c1b71f8d57e
 Create Date: 2026-03-29 10:15:00.000000
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
-
 revision: str = "f9b3c7d1e2a4"
-down_revision: Union[str, Sequence[str], None] = "5c1b71f8d57e"
+down_revision: str | Sequence[str] | None = "5c1b71f8d57e"
 branch_labels = None
 depends_on = None
 

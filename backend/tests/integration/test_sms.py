@@ -1,6 +1,6 @@
 """SMS channel: number handling, segment maths, templates, console provider."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.core.config import settings
 from app.infrastructures.sms import service as sms
@@ -27,7 +27,7 @@ def test_templates_nepali_by_default_and_short(monkeypatch):
     assert "आवेदन" in text
     assert sms.sms_segments(text) == 1
 
-    when = sms_when(datetime(2026, 10, 20, 4, 45, tzinfo=timezone.utc))
+    when = sms_when(datetime(2026, 10, 20, 4, 45, tzinfo=UTC))
     assert when == "Tue 20 Oct 10:30"
     booked = render_sms(
         "interview_booked", company="Acme", when=when, link="https://meet.jit.si/x"

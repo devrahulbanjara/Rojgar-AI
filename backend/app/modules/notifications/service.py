@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, update
@@ -18,7 +18,7 @@ from app.modules.recruiter_preferences.models import RecruiterPreference
 
 def _utcnow() -> datetime:
     """Return the current UTC datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 async def _user_allows_in_app_notifications(

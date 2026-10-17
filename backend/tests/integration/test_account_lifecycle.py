@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -10,7 +10,7 @@ from tests.integration.helpers import TEST_PASSWORD, auth_headers, make_candidat
 
 async def _delete(db, user):
     user.is_deleted = True
-    user.deleted_at = datetime.now(timezone.utc)
+    user.deleted_at = datetime.now(UTC)
     await db.flush()
 
 

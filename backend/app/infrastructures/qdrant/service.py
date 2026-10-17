@@ -1,7 +1,7 @@
 import asyncio
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from loguru import logger
@@ -381,7 +381,7 @@ class QdrantService:
         from app.shared.enums import JobStatus
 
         try:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             if job.status != JobStatus.open or (
                 job.closes_at is not None and job.closes_at <= now
             ):
@@ -539,7 +539,7 @@ class QdrantService:
         Returns:
             Tuple of (results list, total count)
         """
-        now_ts = int(datetime.now(timezone.utc).timestamp())
+        now_ts = int(datetime.now(UTC).timestamp())
 
         active_condition = models.FieldCondition(
             key="status", match=models.MatchValue(value="active")

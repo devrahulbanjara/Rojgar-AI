@@ -14,12 +14,12 @@ from app.shared.schemas import (
 
 __all__ = [
     "BaseSchema",
-    "ExperienceResponse",
-    "EducationResponse",
-    "SkillResponse",
-    "ProfileUpdate",
-    "ProfileResponse",
     "CandidateOnboardingRequest",
+    "EducationResponse",
+    "ExperienceResponse",
+    "ProfileResponse",
+    "ProfileUpdate",
+    "SkillResponse",
 ]
 
 

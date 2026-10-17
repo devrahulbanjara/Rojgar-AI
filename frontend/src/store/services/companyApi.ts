@@ -129,24 +129,30 @@ export const companyApi = baseApi.injectEndpoints({
 
     /** POST /businesses (multipart) — pending until Rojgar AI approves it. */
     createBusiness: builder.mutation<CompanyProfileResponse, FormData>({
-      query: (body) => ({ url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses`, method: 'POST', body }),
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses`,
+        method: 'POST',
+        body,
+      }),
       invalidatesTags: ['Company', 'User'],
     }),
 
     /** POST /businesses/:id/verification (multipart) — PAN and certificate. */
-    updateVerification: builder.mutation<CompanyProfileResponse, { businessId: string; body: FormData }>(
-      {
-        query: ({ businessId, body }) => ({
-          url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/verification`,
-          method: 'POST',
-          body,
-        }),
-        invalidatesTags: ['Company', 'User'],
-      },
-    ),
+    updateVerification: builder.mutation<
+      CompanyProfileResponse,
+      { businessId: string; body: FormData }
+    >({
+      query: ({ businessId, body }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/verification`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Company', 'User'],
+    }),
 
     getTeam: builder.query<ApiResponse<TeamMember[]>, string>({
-      query: (businessId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/members`,
+      query: (businessId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/members`,
       providesTags: ['Team'],
     }),
 
@@ -171,20 +177,22 @@ export const companyApi = baseApi.injectEndpoints({
     }),
 
     getInvites: builder.query<ApiResponse<Invite[]>, string>({
-      query: (businessId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/invites`,
+      query: (businessId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/invites`,
       providesTags: ['Team'],
     }),
 
-    createInvite: builder.mutation<ApiResponse<CreatedInvite>, { businessId: string; role: BusinessRole }>(
-      {
-        query: ({ businessId, role }) => ({
-          url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/invites`,
-          method: 'POST',
-          body: { role },
-        }),
-        invalidatesTags: ['Team'],
-      },
-    ),
+    createInvite: builder.mutation<
+      ApiResponse<CreatedInvite>,
+      { businessId: string; role: BusinessRole }
+    >({
+      query: ({ businessId, role }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/invites`,
+        method: 'POST',
+        body: { role },
+      }),
+      invalidatesTags: ['Team'],
+    }),
 
     revokeInvite: builder.mutation<EmptyResponse, { businessId: string; inviteId: string }>({
       query: ({ businessId, inviteId }) => ({
@@ -200,7 +208,10 @@ export const companyApi = baseApi.injectEndpoints({
     }),
 
     acceptInvite: builder.mutation<ApiResponse<{ business_id: string }>, string>({
-      query: (token) => ({ url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/invites/${token}/accept`, method: 'POST' }),
+      query: (token) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/invites/${token}/accept`,
+        method: 'POST',
+      }),
       invalidatesTags: ['User', 'Company', 'Team'],
     }),
   }),

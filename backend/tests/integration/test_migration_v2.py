@@ -8,9 +8,9 @@ import uuid
 
 import psycopg2
 import pytest
-from alembic import command
 from alembic.config import Config
 
+from alembic import command
 from app.core.config import settings
 
 BEFORE, V2 = "b0acfd8bc7d7", "2017037b521a"

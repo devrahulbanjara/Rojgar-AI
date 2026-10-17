@@ -6,16 +6,17 @@ Revises: a7c3e9d1f4b2
 Create Date: 2026-10-17
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 revision: str = "b0acfd8bc7d7"
-down_revision: Union[str, None] = "a7c3e9d1f4b2"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "a7c3e9d1f4b2"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 # Lowercase ASCII words joined by hyphens, same shape as app.shared.slugs.slugify.
 _SLUG_SQL = "trim(both '-' from regexp_replace(lower({col}), '[^a-z0-9]+', '-', 'g'))"

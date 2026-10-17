@@ -12,7 +12,7 @@ import io
 import os
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from sqlalchemy import case, delete, func, select
@@ -127,7 +127,7 @@ _FIT_ORDER = {Fit.strong.value: 0, Fit.possible.value: 1, Fit.weak.value: 2}
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def actions_for(stage: ApplicationStage) -> list[str]:
