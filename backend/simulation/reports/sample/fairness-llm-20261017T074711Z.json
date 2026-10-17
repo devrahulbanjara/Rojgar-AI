@@ -1,0 +1,2838 @@
+{
+  "mode": "fairness",
+  "config": {
+    "bases": 2,
+    "cross_pairings": false,
+    "with_llm": true,
+    "llm_bases": 2,
+    "review_bases": 1,
+    "repeats": 2,
+    "seed": 7,
+    "ml_bouncer_min_score": 0.4,
+    "bedrock_model": "us.anthropic.claude-sonnet-4-6"
+  },
+  "cases": [
+    {
+      "case": "case01",
+      "candidate": "Kritika Adhikari",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "seed_score": 96
+    },
+    {
+      "case": "case02",
+      "candidate": "Dipika Shrestha",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "seed_score": 95
+    }
+  ],
+  "ml_rows": [
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "brahmin_chhetri",
+      "label": "Nabin Khadka",
+      "applicant_name": "Nabin Khadka",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Nabin Khadka",
+      "applicant_name": "Nabin Khadka",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "brahmin_chhetri",
+      "label": "Priya Sharma",
+      "applicant_name": "Priya Sharma",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Priya Sharma",
+      "applicant_name": "Priya Sharma",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "newar",
+      "label": "Bibek Maharjan",
+      "applicant_name": "Bibek Maharjan",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Bibek Maharjan",
+      "applicant_name": "Bibek Maharjan",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "newar",
+      "label": "Sunita Shrestha",
+      "applicant_name": "Sunita Shrestha",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Sunita Shrestha",
+      "applicant_name": "Sunita Shrestha",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "janajati",
+      "label": "Ravi Magar",
+      "applicant_name": "Ravi Magar",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Ravi Magar",
+      "applicant_name": "Ravi Magar",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "janajati",
+      "label": "Sita Gurung",
+      "applicant_name": "Sita Gurung",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Sita Gurung",
+      "applicant_name": "Sita Gurung",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "madhesi",
+      "label": "Sanjay Gupta",
+      "applicant_name": "Sanjay Gupta",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Sanjay Gupta",
+      "applicant_name": "Sanjay Gupta",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "madhesi",
+      "label": "Anjali Chaudhary",
+      "applicant_name": "Anjali Chaudhary",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Anjali Chaudhary",
+      "applicant_name": "Anjali Chaudhary",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "dalit",
+      "label": "Bibek Damai",
+      "applicant_name": "Bibek Damai",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Bibek Damai",
+      "applicant_name": "Bibek Damai",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_group",
+      "group": "dalit",
+      "label": "Sita Pariyar",
+      "applicant_name": "Sita Pariyar",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Sita Pariyar",
+      "applicant_name": "Sita Pariyar",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "hometown",
+      "group": "kathmandu_valley",
+      "label": "Kathmandu",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "hometown",
+      "group": "hills",
+      "label": "Pokhara",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "hometown",
+      "group": "madhesh",
+      "label": "Janakpur",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "hometown",
+      "group": "karnali_farwest",
+      "label": "Dhangadhi",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8728,
+      "score": 87,
+      "delta_vs_reference": -0.0107,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3328,
+        "semantic_sim": 0.7929,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Kathmandu University (KU), Dhulikhel",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Kathmandu Engineering College",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8728,
+      "score": 87,
+      "delta_vs_reference": -0.0107,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3323,
+        "semantic_sim": 0.7961,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Herald College Kathmandu",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3395,
+        "semantic_sim": 0.7949,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Mahendra Morang Adarsha Multiple Campus, Biratnagar",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8751,
+      "score": 88,
+      "delta_vs_reference": -0.0083,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3341,
+        "semantic_sim": 0.7818,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Far Western University, Mahendranagar",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7864,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "age_graduation_year",
+      "group": "younger",
+      "label": "graduation +0y",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "age_graduation_year",
+      "group": "mid_career",
+      "label": "graduation -8y",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "age_graduation_year",
+      "group": "older",
+      "label": "graduation -16y",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "employment_gap",
+      "group": "no_gap",
+      "label": "reference timeline",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "employment_gap",
+      "group": "gap_silent",
+      "label": "2y gap, dates only",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "employment_gap",
+      "group": "gap_disclosed",
+      "label": "2y caregiving gap, explained",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8842,
+      "score": 88,
+      "delta_vs_reference": 0.0008,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3434,
+        "semantic_sim": 0.7858,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "data_completeness",
+      "group": "yoe_reported",
+      "label": "years_of_experience present",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.8835,
+      "score": 88,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7947,
+        "yoe": 3.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case01",
+      "job": "Mobile Engineer \u2013 Flutter (iOS & Android)",
+      "threshold": 65,
+      "axis": "data_completeness",
+      "group": "yoe_missing",
+      "label": "years_of_experience left blank",
+      "applicant_name": "Kritika Adhikari",
+      "prob": 0.2533,
+      "score": 25,
+      "delta_vs_reference": -0.6301,
+      "selected": false,
+      "llm_cohort_eligible": false,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3376,
+        "semantic_sim": 0.7885,
+        "yoe": 0.0,
+        "num_companies": 2.0,
+        "num_educations": 1.0,
+        "num_skills": 14.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "brahmin_chhetri",
+      "label": "Nabin Khadka",
+      "applicant_name": "Nabin Khadka",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Nabin Khadka",
+      "applicant_name": "Nabin Khadka",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "brahmin_chhetri",
+      "label": "Priya Sharma",
+      "applicant_name": "Priya Sharma",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Priya Sharma",
+      "applicant_name": "Priya Sharma",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "newar",
+      "label": "Bibek Maharjan",
+      "applicant_name": "Bibek Maharjan",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Bibek Maharjan",
+      "applicant_name": "Bibek Maharjan",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "newar",
+      "label": "Sunita Shrestha",
+      "applicant_name": "Sunita Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Sunita Shrestha",
+      "applicant_name": "Sunita Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "janajati",
+      "label": "Ravi Magar",
+      "applicant_name": "Ravi Magar",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Ravi Magar",
+      "applicant_name": "Ravi Magar",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "janajati",
+      "label": "Sita Gurung",
+      "applicant_name": "Sita Gurung",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Sita Gurung",
+      "applicant_name": "Sita Gurung",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "madhesi",
+      "label": "Sanjay Gupta",
+      "applicant_name": "Sanjay Gupta",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Sanjay Gupta",
+      "applicant_name": "Sanjay Gupta",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "madhesi",
+      "label": "Anjali Chaudhary",
+      "applicant_name": "Anjali Chaudhary",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Anjali Chaudhary",
+      "applicant_name": "Anjali Chaudhary",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "dalit",
+      "label": "Bibek Damai",
+      "applicant_name": "Bibek Damai",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "male",
+      "label": "Bibek Damai",
+      "applicant_name": "Bibek Damai",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_group",
+      "group": "dalit",
+      "label": "Sita Pariyar",
+      "applicant_name": "Sita Pariyar",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "name_gender",
+      "group": "female",
+      "label": "Sita Pariyar",
+      "applicant_name": "Sita Pariyar",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "hometown",
+      "group": "kathmandu_valley",
+      "label": "Kathmandu",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "hometown",
+      "group": "hills",
+      "label": "Pokhara",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "hometown",
+      "group": "madhesh",
+      "label": "Janakpur",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "hometown",
+      "group": "karnali_farwest",
+      "label": "Dhangadhi",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8584,
+      "score": 86,
+      "delta_vs_reference": 0.0006,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.4,
+        "semantic_sim": 0.8083,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Kathmandu University (KU), Dhulikhel",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Kathmandu Engineering College",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8507,
+      "score": 85,
+      "delta_vs_reference": -0.007,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3956,
+        "semantic_sim": 0.8075,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Herald College Kathmandu",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8507,
+      "score": 85,
+      "delta_vs_reference": -0.007,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3949,
+        "semantic_sim": 0.8069,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Mahendra Morang Adarsha Multiple Campus, Biratnagar",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8584,
+      "score": 86,
+      "delta_vs_reference": 0.0006,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3976,
+        "semantic_sim": 0.8067,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Far Western University, Mahendranagar",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8513,
+      "score": 85,
+      "delta_vs_reference": -0.0064,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.394,
+        "semantic_sim": 0.8059,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "age_graduation_year",
+      "group": "younger",
+      "label": "graduation +0y",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "age_graduation_year",
+      "group": "mid_career",
+      "label": "graduation -8y",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "age_graduation_year",
+      "group": "older",
+      "label": "graduation -16y",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "employment_gap",
+      "group": "no_gap",
+      "label": "reference timeline",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "employment_gap",
+      "group": "gap_silent",
+      "label": "2y gap, dates only",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "employment_gap",
+      "group": "gap_disclosed",
+      "label": "2y caregiving gap, explained",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8584,
+      "score": 86,
+      "delta_vs_reference": 0.0006,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.4059,
+        "semantic_sim": 0.809,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "data_completeness",
+      "group": "yoe_reported",
+      "label": "years_of_experience present",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.8578,
+      "score": 86,
+      "delta_vs_reference": 0.0,
+      "selected": true,
+      "llm_cohort_eligible": true,
+      "ml_input_identical": true,
+      "gap_llm_input_identical": true,
+      "review_llm_input_identical": true,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8076,
+        "yoe": 5.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    },
+    {
+      "case": "case02",
+      "job": "Machine Learning Engineer \u2013 NLP & LLM Fine-tuning",
+      "threshold": 70,
+      "axis": "data_completeness",
+      "group": "yoe_missing",
+      "label": "years_of_experience left blank",
+      "applicant_name": "Dipika Shrestha",
+      "prob": 0.3017,
+      "score": 30,
+      "delta_vs_reference": -0.5561,
+      "selected": false,
+      "llm_cohort_eligible": false,
+      "ml_input_identical": false,
+      "gap_llm_input_identical": false,
+      "review_llm_input_identical": false,
+      "features": {
+        "tfidf_sim": 0.3837,
+        "semantic_sim": 0.8069,
+        "yoe": 0.0,
+        "num_companies": 3.0,
+        "num_educations": 2.0,
+        "num_skills": 17.0
+      }
+    }
+  ],
+  "ml_summary": {
+    "name_group": {
+      "brahmin_chhetri": {
+        "n": 4,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "newar": {
+        "n": 4,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "janajati": {
+        "n": 4,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "madhesi": {
+        "n": 4,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "dalit": {
+        "n": 4,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      }
+    },
+    "name_gender": {
+      "male": {
+        "n": 10,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "female": {
+        "n": 10,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      }
+    },
+    "hometown": {
+      "kathmandu_valley": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "hills": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "madhesh": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "karnali_farwest": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      }
+    },
+    "college_tier": {
+      "tier1": {
+        "n": 4,
+        "mean_score": 86.8,
+        "mean_delta_pts": -0.3,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 0.5,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "tier2": {
+        "n": 4,
+        "mean_score": 86.2,
+        "mean_delta_pts": -0.6,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 0.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "tier3": {
+        "n": 4,
+        "mean_score": 86.8,
+        "mean_delta_pts": -0.4,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 0.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      }
+    },
+    "age_graduation_year": {
+      "younger": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "mid_career": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "older": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      }
+    },
+    "employment_gap": {
+      "no_gap": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "gap_silent": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "gap_disclosed": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.1,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 0.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      }
+    },
+    "data_completeness": {
+      "yoe_reported": {
+        "n": 2,
+        "mean_score": 87,
+        "mean_delta_pts": 0.0,
+        "selection_rate": 1.0,
+        "llm_cohort_rate": 1.0,
+        "flip_vs_reference": 0.0,
+        "ml_input_identical_share": 1.0,
+        "impact_ratio": 1.0,
+        "fails_four_fifths": false
+      },
+      "yoe_missing": {
+        "n": 2,
+        "mean_score": 27.5,
+        "mean_delta_pts": -59.3,
+        "selection_rate": 0.0,
+        "llm_cohort_rate": 0.0,
+        "flip_vs_reference": 1.0,
+        "ml_input_identical_share": 0.0,
+        "impact_ratio": 0.0,
+        "fails_four_fifths": true
+      }
+    }
+  },
+  "gap_llm_rows": [
+    {
+      "case": "case01",
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "error": null,
+      "overall_score_estimate": 78,
+      "missing_skills": [
+        "Preferred Qualification"
+      ],
+      "experience_gaps": [],
+      "verdict": "Your resume aligns well with the core requirements, showcasing the required Flutter, Dart, and security experience. Adding a clear mention of your knowledge of Nepal\u2019s mobile ecosystem will strengthen the fit for this role."
+    },
+    {
+      "case": "case01",
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "error": null,
+      "overall_score_estimate": 85,
+      "missing_skills": [
+        "Knowledge of Nepal's mobile ecosystem"
+      ],
+      "experience_gaps": [],
+      "verdict": "Your resume aligns well with the core Flutter and mobile security requirements and showcases strong fintech experience. Adding a brief note about Nepal's mobile ecosystem will address the preferred qualification and strengthen your fit for the Khalti app role."
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "kathmandu_valley",
+      "label": "Kathmandu",
+      "error": null,
+      "overall_score_estimate": 85,
+      "missing_skills": [
+        "Knowledge of Nepal's mobile ecosystem"
+      ],
+      "experience_gaps": [
+        "QR scanning implementation"
+      ],
+      "verdict": "Your resume aligns well with the core Flutter and mobile security requirements, and you already showcase strong fintech experience. Adding explicit mentions of Nepal's mobile ecosystem knowledge and QR\u2011scanning work will tighten the fit. With those tweaks, you\u2019ll be a very strong candidate."
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "kathmandu_valley",
+      "label": "Kathmandu",
+      "error": null,
+      "overall_score_estimate": 85,
+      "missing_skills": [],
+      "experience_gaps": [],
+      "verdict": "Your resume aligns well with the core requirements, showcasing the needed Flutter, Dart, and security experience. Adding a few points about offline\u2011first handling and Nepal\u2019s mobile ecosystem will strengthen your fit for the preferred qualifications."
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "hills",
+      "label": "Pokhara",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6364, Requested 2758. Please try again in 8.415s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "hills",
+      "label": "Pokhara",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7943, Requested 2453. Please try again in 17.97s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "madhesh",
+      "label": "Janakpur",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7948, Requested 2454. Please try again in 18.015s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "madhesh",
+      "label": "Janakpur",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6594, Requested 3335. Please try again in 14.4675s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "karnali_farwest",
+      "label": "Dhangadhi",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5444, Requested 3335. Please try again in 5.8425s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "hometown",
+      "group": "karnali_farwest",
+      "label": "Dhangadhi",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7795, Requested 2454. Please try again in 16.8675s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5477, Requested 3307. Please try again in 5.88s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7721, Requested 3341. Please try again in 22.965s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Kathmandu Engineering College",
+      "error": null,
+      "overall_score_estimate": 78,
+      "missing_skills": [
+        "Provider state management",
+        "QR scanning",
+        "Knowledge of Nepal's mobile ecosystem"
+      ],
+      "experience_gaps": [
+        "Offline\u2011first capability"
+      ],
+      "verdict": "You have a solid foundation that aligns well with the core Flutter and mobile security requirements, and your fintech experience is a strong match. Adding a few missing details\u2014especially QR scanning, Provider knowledge, and offline\u2011first handling\u2014will make your resume much more compelling for this role."
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Kathmandu Engineering College",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7693, Requested 3331. Please try again in 22.68s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Herald College Kathmandu",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6283, Requested 3331. Please try again in 12.105s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Herald College Kathmandu",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6539, Requested 3252. Please try again in 13.4325s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Mahendra Morang Adarsha Multiple Campus, Biratnagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6571, Requested 3341. Please try again in 14.34s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Mahendra Morang Adarsha Multiple Campus, Biratnagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7913, Requested 3173. Please try again in 23.145s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Far Western University, Mahendranagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7935, Requested 2759. Please try again in 20.205s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Far Western University, Mahendranagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7713, Requested 3335. Please try again in 22.86s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "employment_gap",
+      "group": "gap_silent",
+      "label": "2y gap, dates only",
+      "error": null,
+      "overall_score_estimate": 85,
+      "missing_skills": [
+        "Knowledge of Nepal's mobile ecosystem"
+      ],
+      "experience_gaps": [
+        "QR scanning implementation"
+      ],
+      "verdict": "Your resume aligns well with the core requirements, showcasing strong Flutter, Dart, and fintech experience. Adding a brief mention of Provider, Nepal's mobile ecosystem, and any QR\u2011scanning work will make your profile even tighter for this role."
+    },
+    {
+      "case": "case01",
+      "axis": "employment_gap",
+      "group": "gap_silent",
+      "label": "2y gap, dates only",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6339, Requested 3336. Please try again in 12.5625s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "employment_gap",
+      "group": "gap_disclosed",
+      "label": "2y caregiving gap, explained",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6319, Requested 2786. Please try again in 8.2875s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "employment_gap",
+      "group": "gap_disclosed",
+      "label": "2y caregiving gap, explained",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6384, Requested 3315. Please try again in 12.7425s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case01",
+      "axis": "data_completeness",
+      "group": "yoe_missing",
+      "label": "years_of_experience left blank",
+      "error": null,
+      "overall_score_estimate": 65,
+      "missing_skills": [
+        "State Management - Provider",
+        "Knowledge of Nepal's mobile ecosystem"
+      ],
+      "experience_gaps": [
+        "Offline-first support",
+        "QR scanning"
+      ],
+      "verdict": "You have a solid foundation in Flutter, Dart, and fintech app development, which aligns well with the core requirements. However, the lack of Provider experience and missing highlights around offline\u2011first handling, QR scanning, and Nepal-specific ecosystem knowledge reduce your fit. Adding these details will markedly improve your chances of being shortlisted."
+    },
+    {
+      "case": "case01",
+      "axis": "data_completeness",
+      "group": "yoe_missing",
+      "label": "years_of_experience left blank",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7923, Requested 2759. Please try again in 20.115s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6284, Requested 3913. Please try again in 16.4775s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7807, Requested 4876. Please try again in 35.1225s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "kathmandu_valley",
+      "label": "Kathmandu",
+      "error": null,
+      "overall_score_estimate": 45,
+      "missing_skills": [
+        "Datasets library",
+        "Large language model fine-tuning",
+        "Linux and GPU cluster management",
+        "Quantization (GGUF, GPTQ) and vLLM",
+        "Familiarity with Nepal's healthcare data landscape and NHISS system"
+      ],
+      "experience_gaps": [
+        "Large language model fine-tuning"
+      ],
+      "verdict": "Your resume shows strong ML engineering fundamentals and relevant Nepali NLP work, but it lacks several critical requirements such as LLM fine\u2011tuning, the Hugging Face Datasets library, and GPU cluster management. Addressing these gaps and highlighting preferred quantization and health\u2011data experience will significantly improve your chances of being shortlisted."
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "kathmandu_valley",
+      "label": "Kathmandu",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7735, Requested 3918. Please try again in 27.3975s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "hills",
+      "label": "Pokhara",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5381, Requested 3909. Please try again in 9.675s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "hills",
+      "label": "Pokhara",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4475, Requested 3909. Please try again in 2.88s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "madhesh",
+      "label": "Janakpur",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7885, Requested 4873. Please try again in 35.685s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "madhesh",
+      "label": "Janakpur",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7260, Requested 3818. Please try again in 23.084999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "karnali_farwest",
+      "label": "Dhangadhi",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3954, Requested 4379. Please try again in 2.4975s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "hometown",
+      "group": "karnali_farwest",
+      "label": "Dhangadhi",
+      "error": null,
+      "overall_score_estimate": 55,
+      "missing_skills": [
+        "Python Libraries - Datasets",
+        "NLP - Tokenization",
+        "DevOps - Linux",
+        "DevOps - GPU cluster management",
+        "Model Optimization - Quantization"
+      ],
+      "experience_gaps": [
+        "LLM Fine\u2011tuning / Deployment",
+        "Domain Knowledge - Nepal Healthcare Data"
+      ],
+      "verdict": "Your resume shows solid ML engineering fundamentals and strong Nepali NLP work, but it lacks several critical requirements such as LLM fine\u2011tuning, Linux/GPU cluster experience, and the Datasets library. Adding these missing skills and highlighting any relevant quantisation or healthcare data exposure will dramatically improve your shortlisting chances."
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7782, Requested 3826. Please try again in 27.06s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier1",
+      "label": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7794, Requested 3826. Please try again in 27.15s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Kathmandu Engineering College",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7408, Requested 4871. Please try again in 32.0925s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Kathmandu Engineering College",
+      "error": null,
+      "overall_score_estimate": 55,
+      "missing_skills": [
+        "Skill",
+        "Skill",
+        "Skill",
+        "Skill",
+        "Skill"
+      ],
+      "experience_gaps": [
+        "Experience",
+        "Experience",
+        "Experience"
+      ],
+      "verdict": "Your background demonstrates solid ML engineering fundamentals and strong Nepali NLP expertise, which aligns well with the core of the role. However, critical gaps remain in large\u2011language\u2011model fine\u2011tuning, Linux proficiency, and specific tooling like Hugging Face Datasets and tokenization. Addressing these areas will significantly improve your chances of being shortlisted."
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Herald College Kathmandu",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6660, Requested 4967. Please try again in 27.202499999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier2",
+      "label": "Herald College Kathmandu",
+      "error": null,
+      "overall_score_estimate": 45,
+      "missing_skills": [
+        "Python libraries - Datasets",
+        "Tokenization",
+        "Linux proficiency",
+        "GPU cluster management",
+        "Quantization (GGUF, GPTQ)",
+        "vLLM inference"
+      ],
+      "experience_gaps": [
+        "Fine\u2011tuning large language models",
+        "Devanagari text preprocessing pipelines",
+        "Model evaluation frameworks (BLEU, ROUGE, human evaluation)",
+        "RAG pipeline implementation with LangChain"
+      ],
+      "verdict": "You have solid ML engineering experience, strong Python and transformer skills, and relevant Nepali NLP work, which align well with many core requirements. However, critical gaps remain in LLM fine\u2011tuning, Linux/GPU cluster expertise, and specific tooling like Datasets and tokenization. Addressing these areas will markedly improve your chances of being shortlisted."
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Mahendra Morang Adarsha Multiple Campus, Biratnagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7442, Requested 4387. Please try again in 28.7175s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Mahendra Morang Adarsha Multiple Campus, Biratnagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7693, Requested 4881. Please try again in 34.305s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Far Western University, Mahendranagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6491, Requested 4875. Please try again in 25.245s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Far Western University, Mahendranagar",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6511, Requested 4875. Please try again in 25.395s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "employment_gap",
+      "group": "gap_silent",
+      "label": "2y gap, dates only",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6633, Requested 4876. Please try again in 26.3175s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "employment_gap",
+      "group": "gap_silent",
+      "label": "2y gap, dates only",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6679, Requested 4573. Please try again in 24.389999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "employment_gap",
+      "group": "gap_disclosed",
+      "label": "2y caregiving gap, explained",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4351, Requested 4998. Please try again in 10.1175s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "employment_gap",
+      "group": "gap_disclosed",
+      "label": "2y caregiving gap, explained",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4308, Requested 4998. Please try again in 9.795s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "data_completeness",
+      "group": "yoe_missing",
+      "label": "years_of_experience left blank",
+      "error": "HTTPException(status_code=429, detail='Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01jzm70gtdexhrge99cn2mx876` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4445, Requested 4764. Please try again in 9.0675s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing')"
+    },
+    {
+      "case": "case02",
+      "axis": "data_completeness",
+      "group": "yoe_missing",
+      "label": "years_of_experience left blank",
+      "error": null,
+      "overall_score_estimate": 68,
+      "missing_skills": [
+        "Skill",
+        "Skill",
+        "Skill",
+        "Skill"
+      ],
+      "experience_gaps": [
+        "Experience",
+        "Experience",
+        "Experience"
+      ],
+      "verdict": "You have a solid foundation in ML engineering and Nepali NLP, but the resume lacks explicit evidence of large language model fine\u2011tuning, Linux/GPU cluster skills, and key libraries like Datasets and tokenization. Adding those details and highlighting any work with quantization or Nepal health data will significantly improve your fit for this role."
+    }
+  ],
+  "gap_llm_summary": {
+    "reference_noise": {
+      "case01": {
+        "scores": [
+          78,
+          85
+        ],
+        "spread": 7
+      }
+    },
+    "hometown": {
+      "kathmandu_valley": {
+        "n": 2,
+        "mean_score": 85,
+        "mean_delta_vs_reference": 3.5
+      }
+    },
+    "college_tier": {
+      "tier2": {
+        "n": 1,
+        "mean_score": 78,
+        "mean_delta_vs_reference": -3.5
+      }
+    },
+    "employment_gap": {
+      "gap_silent": {
+        "n": 1,
+        "mean_score": 85,
+        "mean_delta_vs_reference": 3.5
+      }
+    },
+    "data_completeness": {
+      "yoe_missing": {
+        "n": 1,
+        "mean_score": 65,
+        "mean_delta_vs_reference": -16.5
+      }
+    },
+    "errors": 40
+  },
+  "review_rows": [
+    {
+      "case": "case01",
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "error": "ClientError('An error occurred (UnrecognizedClientException) when calling the Converse operation: The security token included in the request is invalid.')",
+      "n_strengths": 0,
+      "n_weaknesses": 0,
+      "gap_or_tenure_concerns": [],
+      "institution_mentions": []
+    },
+    {
+      "case": "case01",
+      "axis": "reference",
+      "group": "reference",
+      "label": "unchanged",
+      "error": "ClientError('An error occurred (UnrecognizedClientException) when calling the Converse operation: The security token included in the request is invalid.')",
+      "n_strengths": 0,
+      "n_weaknesses": 0,
+      "gap_or_tenure_concerns": [],
+      "institution_mentions": []
+    },
+    {
+      "case": "case01",
+      "axis": "employment_gap",
+      "group": "gap_silent",
+      "label": "2y gap, dates only",
+      "error": "ClientError('An error occurred (UnrecognizedClientException) when calling the Converse operation: The security token included in the request is invalid.')",
+      "n_strengths": 0,
+      "n_weaknesses": 0,
+      "gap_or_tenure_concerns": [],
+      "institution_mentions": []
+    },
+    {
+      "case": "case01",
+      "axis": "employment_gap",
+      "group": "gap_disclosed",
+      "label": "2y caregiving gap, explained",
+      "error": "ClientError('An error occurred (UnrecognizedClientException) when calling the Converse operation: The security token included in the request is invalid.')",
+      "n_strengths": 0,
+      "n_weaknesses": 0,
+      "gap_or_tenure_concerns": [],
+      "institution_mentions": []
+    },
+    {
+      "case": "case01",
+      "axis": "data_completeness",
+      "group": "yoe_missing",
+      "label": "years_of_experience left blank",
+      "error": "ClientError('An error occurred (UnrecognizedClientException) when calling the Converse operation: The security token included in the request is invalid.')",
+      "n_strengths": 0,
+      "n_weaknesses": 0,
+      "gap_or_tenure_concerns": [],
+      "institution_mentions": []
+    },
+    {
+      "case": "case01",
+      "axis": "college_tier",
+      "group": "tier3",
+      "label": "Mahendra Morang Adarsha Multiple Campus, Biratnagar",
+      "error": "ClientError('An error occurred (UnrecognizedClientException) when calling the Converse operation: The security token included in the request is invalid.')",
+      "n_strengths": 0,
+      "n_weaknesses": 0,
+      "gap_or_tenure_concerns": [],
+      "institution_mentions": []
+    }
+  ],
+  "spend": {
+    "estimated_usd": 0.0155,
+    "calls": {
+      "gap_analysis": 12
+    }
+  }
+}
