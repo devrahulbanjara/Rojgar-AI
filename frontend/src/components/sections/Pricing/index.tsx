@@ -1,6 +1,4 @@
 'use client'
-import { useState } from 'react'
-
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -26,74 +24,9 @@ interface PricingTier {
   ctaExternal?: boolean
   ctaVariant: 'outline' | 'filled'
   featured: boolean
-  isCredits?: boolean
 }
 
-type ViewMode = 'candidates' | 'companies'
-
 // ── Data ───────────────────────────────────────────────────────────────────
-
-const CANDIDATE_TIERS: PricingTier[] = [
-  {
-    id: 'candidate-free',
-    badge: 'For Everyone',
-    planName: 'Free',
-    currency: 'NPR',
-    amount: '0',
-    period: '',
-    featured: false,
-    ctaVariant: 'outline',
-    cta: 'Get Started',
-    ctaHref: '/signup',
-    features: [
-      { text: 'Create profile + AI resume import (1 use)', included: true },
-      { text: 'Up to 2 resumes with PDF download', included: true },
-      { text: 'Browse and search all jobs (semantic + keyword)', included: true },
-      { text: 'Up to 5 active applications', included: true },
-      { text: 'Full pipeline tracking with AI score and feedback visibility', included: true },
-      { text: 'Real-time notifications on status changes', included: true },
-    ],
-  },
-  {
-    id: 'candidate-pro',
-    badge: 'Pay once, not monthly',
-    planName: 'Pro',
-    currency: 'NPR',
-    amount: '199',
-    period: 'one-time',
-    featured: true,
-    ctaVariant: 'filled',
-    cta: 'Buy Pro',
-    ctaHref: '/signup',
-    features: [
-      { text: 'Everything in Free', included: true },
-      { text: 'Unlimited applications', included: true },
-      { text: 'AI resume import (3 uses)', included: true },
-      { text: 'Up to 5 named resumes (e.g. "Backend focused")', included: true },
-      { text: 'Resume Gap Analysis before applying (5 uses)', included: true },
-      { text: 'AI Auto-Patch with Frozen Facts protection (3 uses)', included: true },
-      { text: 'Accept or decline offers directly from dashboard', included: true },
-    ],
-  },
-  {
-    id: 'candidate-credits',
-    badge: 'Top-up Credits',
-    planName: 'Credit Top-ups',
-    currency: '',
-    amount: '',
-    period: '',
-    featured: false,
-    ctaVariant: 'outline',
-    cta: 'Buy Credits',
-    ctaHref: '/signup',
-    isCredits: true,
-    features: [
-      { text: 'Gap Analysis: NPR 49/use', included: true },
-      { text: 'Resume AI Auto-Patch: NPR 69/use', included: true },
-      { text: 'AI Resume Import: NPR 49/use', included: true },
-    ],
-  },
-]
 
 const COMPANY_TIERS: PricingTier[] = [
   {
@@ -106,7 +39,7 @@ const COMPANY_TIERS: PricingTier[] = [
     featured: false,
     ctaVariant: 'outline',
     cta: 'Get Started',
-    ctaHref: '/signup',
+    ctaHref: '/signup?role=company',
     features: [
       { text: '1 admin, up to 2 recruiters', included: true },
       { text: '2 active jobs at a time', included: true },
@@ -118,15 +51,15 @@ const COMPANY_TIERS: PricingTier[] = [
   },
   {
     id: 'company-growth',
-    badge: 'Most Popular',
+    badge: 'For Growing Teams',
     planName: 'Growth',
     currency: 'NPR',
     amount: '3,999',
     period: '/ month',
     featured: true,
     ctaVariant: 'filled',
-    cta: 'Start Free Trial',
-    ctaHref: '/signup',
+    cta: 'Get Started',
+    ctaHref: '/signup?role=company',
     features: [
       { text: 'Up to 5 recruiters', included: true },
       { text: 'Up to 8 active jobs', included: true },
@@ -160,8 +93,6 @@ const COMPANY_TIERS: PricingTier[] = [
       { text: 'Unlimited active jobs', included: true },
       { text: 'Everything in Growth', included: true },
       { text: 'Semantic search across all historical applicants', included: true },
-      { text: 'Prompt injection guardrails + PII redaction on all AI pipelines', included: true },
-      { text: 'Custom branding on candidate outreach emails', included: true },
       { text: 'Priority support', included: true },
     ],
   },
@@ -180,8 +111,7 @@ function LockIcon({ className }: { className?: string }) {
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function Pricing() {
-  const [viewMode, setViewMode] = useState<ViewMode>('companies')
-  const activeTiers = viewMode === 'candidates' ? CANDIDATE_TIERS : COMPANY_TIERS
+  const activeTiers = COMPANY_TIERS
 
   return (
     <section className="pricing" id="pricing">
@@ -207,33 +137,8 @@ export default function Pricing() {
             data-reveal
             style={{ '--reveal-delay': '0.1s' } as React.CSSProperties}
           >
-            Free for candidates and companies to get started. Company plans unlock AI hiring tools
-            for your entire team. One subscription, every recruiter covered.
+            Free for job seekers. Plans below are for hiring teams.
           </p>
-
-          {/* View toggle */}
-          <div
-            className="pricing__toggle"
-            data-reveal
-            style={{ '--reveal-delay': '0.15s' } as React.CSSProperties}
-          >
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={() => setViewMode('candidates')}
-              aria-pressed={viewMode === 'candidates'}
-            >
-              For Candidates
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={() => setViewMode('companies')}
-              aria-pressed={viewMode === 'companies'}
-            >
-              For Companies
-            </button>
-          </div>
         </header>
 
         {/* Cards - staggered scale-fade */}
@@ -241,7 +146,7 @@ export default function Pricing() {
           {activeTiers.map((tier) => (
             <div
               key={tier.id}
-              className={`pricing__card-wrap${tier.featured ? ' pricing__card-wrap--featured' : ''}${tier.isCredits ? ' pricing__card-wrap--credits' : ''}`}
+              className={`pricing__card-wrap${tier.featured ? ' pricing__card-wrap--featured' : ''}`}
             >
               {tier.featured && (
                 <span className="pricing__ribbon" aria-label="Most popular plan">
@@ -258,13 +163,11 @@ export default function Pricing() {
                     {tier.badge}
                   </span>
                   <h3 className="pricing__plan-name">{tier.planName}</h3>
-                  {!tier.isCredits && (
-                    <div className="pricing__price-row">
-                      <span className="pricing__currency">{tier.currency}</span>
-                      <span className="pricing__amount">{tier.amount}</span>
-                      {tier.period && <span className="pricing__period">{tier.period}</span>}
-                    </div>
-                  )}
+                  <div className="pricing__price-row">
+                    <span className="pricing__currency">{tier.currency}</span>
+                    <span className="pricing__amount">{tier.amount}</span>
+                    {tier.period && <span className="pricing__period">{tier.period}</span>}
+                  </div>
                 </div>
 
                 <hr className="pricing__divider" />
@@ -273,17 +176,13 @@ export default function Pricing() {
                 <ul className="pricing__features" aria-label={`${tier.planName} plan features`}>
                   {tier.features.map((feature, idx) => (
                     <li key={idx} className="pricing__feature">
-                      {!tier.isCredits && (
-                        <>
-                          {feature.included ? (
-                            <CheckIcon className="pricing__feature-icon pricing__feature-icon--check" />
-                          ) : (
-                            <LockIcon className="pricing__feature-icon pricing__feature-icon--lock" />
-                          )}
-                        </>
+                      {feature.included ? (
+                        <CheckIcon className="pricing__feature-icon pricing__feature-icon--check" />
+                      ) : (
+                        <LockIcon className="pricing__feature-icon pricing__feature-icon--lock" />
                       )}
                       <span
-                        className={`pricing__feature-text${!feature.included ? ' pricing__feature-text--muted' : ''}${tier.isCredits ? ' pricing__feature-text--credits' : ''}`}
+                        className={`pricing__feature-text${!feature.included ? ' pricing__feature-text--muted' : ''}`}
                       >
                         {feature.text}
                       </span>
@@ -306,13 +205,6 @@ export default function Pricing() {
             </div>
           ))}
         </div>
-
-        {/* Candidate note */}
-        {viewMode === 'candidates' && (
-          <p className="pricing__note">
-            No monthly lock-in. Buy Pro when you&apos;re actively hunting. Top up if you need more.
-          </p>
-        )}
       </div>
     </section>
   )

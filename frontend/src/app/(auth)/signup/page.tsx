@@ -340,6 +340,8 @@ function SignupContent() {
   // Invite links (/signup?join=<company>) prefill the company and skip the
   // "who are you" and "create or join" steps.
   const invitedCompany = (searchParams.get('join') ?? '').trim().slice(0, 200)
+  // Pricing CTAs (/signup?role=company) skip the job-seeker/hiring choice.
+  const isCompanySignup = searchParams.get('role') === 'company'
   const [joinCompanyName, setJoinCompanyName] = useState(invitedCompany)
   const [errors, setErrors] = useState<FormErrors>({})
   const passwordStrength = getPasswordStrength(creds.password)
@@ -396,7 +398,7 @@ function SignupContent() {
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
     } else {
-      setStep(invitedCompany ? 'join-company' : 'intent')
+      setStep(invitedCompany ? 'join-company' : isCompanySignup ? 'company-choice' : 'intent')
     }
   }
 
