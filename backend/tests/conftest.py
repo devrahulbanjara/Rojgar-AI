@@ -29,6 +29,19 @@ from main import app  # noqa: E402
 RUN_LIVE_AI = os.getenv("RUN_HYBRID_EVAL") == "1"
 
 
+class _NoRedis:
+    """Quota counters without Redis: tests never share or leak rate limits."""
+
+    async def incr_window(self, *_args, **_kwargs):
+        return None
+
+    async def get(self, _key):
+        return None
+
+    async def set(self, *_args, **_kwargs):
+        return None
+
+
 @pytest.fixture(scope="session")
 def monkeypatch_session():
     mp = MonkeyPatch()
@@ -59,13 +72,22 @@ def disable_side_effects(monkeypatch_session):
     # fail under provider rate limits (the root cause of earlier flaky runs).
     if not RUN_LIVE_AI:
         from app.infrastructures.ai.service import _FakeEmbeddings, ai_service
-        from app.infrastructures.guardrails.service import guardrails_service
 
         # Deterministic vectors of the real size; the cache logic still runs.
         monkeypatch_session.setattr(
             ai_service, "_embeddings", _FakeEmbeddings(ai_service.embedding_dim)
         )
-        monkeypatch_session.setattr(guardrails_service, "_get_llm", lambda: None)
+        from app.infrastructures.ai import llm, quota
+        from tests.fakes import ScriptedChatModel
+
+        # Every agent gets a model with no replies (it raises), so the
+        # injection check is "unavailable" unless a test scripts a model; and
+        # no Gemini fallback. Quota counters stay in memory.
+        monkeypatch_session.setattr(
+            llm, "groq_model", lambda **_kw: ScriptedChatModel()
+        )
+        monkeypatch_session.setattr(settings, "gemini_api_key", None)
+        monkeypatch_session.setattr(quota, "redis_service", _NoRedis())
         # Paid CV parsing (LlamaExtract) is skipped when no key is configured.
         monkeypatch_session.setattr(settings, "llama_cloud_api_key", None)
 
@@ -188,3 +210,11 @@ async def committed(engine):
     tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
     async with engine.begin() as conn:
         await conn.execute(text(f"TRUNCATE {tables} CASCADE"))
+
+
+@pytest.fixture(autouse=True)
+def _fresh_ai_quota():
+    """Each test starts with no AI calls counted and no model cooling down."""
+    from app.infrastructures.ai import quota
+
+    quota._local.clear()

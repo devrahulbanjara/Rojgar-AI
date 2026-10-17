@@ -1,74 +1,109 @@
-"""AI call robustness: no unsafe fallbacks, no silent truncation."""
+"""AI calls: retries, Groq -> Gemini fallback, free-tier quota, no raw errors.
+
+A scripted chat model (tests/fakes.py) stands in for each provider, so the real
+agent, middleware and quota code runs.
+"""
+
+import pytest
+from fastapi import HTTPException
+from pydantic import BaseModel
+
+from app.infrastructures.ai import llm, quota
+from tests.fakes import ScriptedChatModel, answer, use_model
 
 
-class _Choice:
-    def __init__(self, content, finish_reason="stop"):
-        self.finish_reason = finish_reason
-        self.message = type("M", (), {"content": content})()
+class Out(BaseModel):
+    ok: bool
 
 
-class _Resp:
-    def __init__(self, content, finish_reason="stop"):
-        self.choices = [_Choice(content, finish_reason)]
-
-
-def _rate_limit_error():
+def _rate_limit_error(message: str = "rate limited: org_123 tokens per minute"):
     import httpx
     from groq import RateLimitError
 
     request = httpx.Request("POST", "https://api.groq.test")
     return RateLimitError(
-        "rate limited", response=httpx.Response(429, request=request), body=None
+        message, response=httpx.Response(429, request=request), body=None
     )
 
 
-async def test_structured_call_retries_rate_limits(monkeypatch):
-    from pydantic import BaseModel
-
-    from app.infrastructures.ai import service as ai_mod
-
-    class Out(BaseModel):
-        ok: bool
-
-    calls = {"n": 0}
-
-    async def create(**kwargs):
-        calls["n"] += 1
-        assert kwargs["temperature"] == 0.0  # deterministic by default
-        if calls["n"] < 3:
-            raise _rate_limit_error()
-        return _Resp('{"ok": true}')
-
-    async def no_sleep(_s):
-        return None
-
-    monkeypatch.setattr(ai_mod.asyncio, "sleep", no_sleep)
-    monkeypatch.setattr(
-        ai_mod.ai_service._llm_client.chat.completions, "create", create
-    )
-    out = await ai_mod.ai_service.generate_structured("sys", {}, Out)
-    assert out.ok and calls["n"] == 3
+class _ServerError(Exception):
+    status_code = 503
 
 
-async def test_truncated_structured_output_is_an_error(monkeypatch):
-    import pytest
-    from fastapi import HTTPException
-    from pydantic import BaseModel
+@pytest.fixture(autouse=True)
+def _fast_retries(monkeypatch):
+    monkeypatch.setattr(llm, "_RETRY_FIRST_DELAY_SECONDS", 0.01)
 
-    from app.infrastructures.ai import service as ai_mod
 
-    class Out(BaseModel):
-        ok: bool
+async def test_transient_errors_are_retried(monkeypatch):
+    model = use_model(monkeypatch, _ServerError(), _ServerError(), answer(Out, ok=True))
+    out, usage = await llm.generate_structured("sys", "hi", Out)
+    assert out.ok and len(model.calls) == 3  # two failures, then the answer
+    assert usage.model == "scripted"
 
-    async def create(**_kwargs):
-        return _Resp('{"ok": tr', finish_reason="length")
 
-    monkeypatch.setattr(
-        ai_mod.ai_service._llm_client.chat.completions, "create", create
-    )
+async def test_a_model_that_keeps_answering_wrong_stops(monkeypatch):
+    use_model(monkeypatch, default=answer(Out, ok="not a boolean"))
     with pytest.raises(HTTPException) as err:
-        await ai_mod.ai_service.generate_structured("sys", {}, Out)
+        await llm.generate_structured("sys", "hi", Out)
     assert err.value.status_code == 502
+    assert err.value.detail == llm.AI_INVALID_MESSAGE
+
+
+async def test_rate_limit_is_friendly_and_never_shows_provider_text(monkeypatch):
+    use_model(monkeypatch, *[_rate_limit_error()] * 5)
+    with pytest.raises(HTTPException) as err:
+        await llm.generate_structured("sys", "hi", Out)
+    assert err.value.status_code == 429
+    assert err.value.detail == llm.AI_BUSY_MESSAGE
+    assert int(err.value.headers["Retry-After"]) >= 50  # cooling for a minute
+
+
+async def test_groq_rate_limit_goes_to_gemini_at_once(monkeypatch):
+    from app.core.config import settings
+
+    use_model(monkeypatch, _rate_limit_error())
+    gemini = ScriptedChatModel(
+        replies=[answer(Out, ok=True)], model_name="gemini-2.5-flash"
+    )
+    monkeypatch.setattr(settings, "gemini_api_key", "test-key")
+    monkeypatch.setattr(llm, "gemini_model", lambda **_kw: gemini)
+    out, usage = await llm.generate_structured("sys", "hi", Out)
+    assert out.ok and usage.model == "gemini-2.5-flash"
+    # Groq is now cooling down: the next call skips it without asking.
+    gemini.replies.append(answer(Out, ok=True))
+    out, usage = await llm.generate_structured("sys", "hi", Out)
+    assert usage.model == "gemini-2.5-flash"
+
+
+async def test_budget_is_checked_before_calling():
+    limits = quota.limits_for("openai/gpt-oss-120b")
+    assert (limits.rpm, limits.rpd, limits.tpm) == (30, 1_000, 8_000)
+    await quota.record("openai/gpt-oss-120b", 7_000)
+    with pytest.raises(quota.QuotaUnavailable) as err:
+        await quota.reserve("openai/gpt-oss-120b", 2_500)
+    assert 0 < err.value.retry_after <= 60  # the next minute
+    await quota.reserve("openai/gpt-oss-20b", 2_500)  # other model, own budget
+
+
+def test_provider_retry_delays_are_read():
+    groq = _rate_limit_error(
+        "Rate limit reached for model `openai/gpt-oss-120b` on tokens per minute "
+        "(TPM): Limit 8000, Used 7900. Please try again in 1m30.5s."
+    )
+    assert quota.retry_delay_seconds(groq) == pytest.approx(90.5)
+    gemini = Exception("429 RESOURCE_EXHAUSTED ... 'retryDelay': '41s'")
+    assert quota.retry_delay_seconds(gemini) == 41
+    assert quota.retry_delay_seconds(Exception("Please try again in 450ms")) == 0.45
+    assert quota.retry_delay_seconds(Exception("quota exceeded")) is None
+
+
+async def test_daily_cap_cools_down_until_the_providers_reset():
+    exc = _rate_limit_error("Rate limit reached on requests per day (RPD).")
+    delay = await quota.cool_down("openai/gpt-oss-20b", exc)
+    assert 0 < delay <= 86_400
+    with pytest.raises(quota.QuotaUnavailable):
+        await quota.reserve("openai/gpt-oss-20b", 100)
 
 
 async def test_chat_rate_limit_key_ignores_forwarded_for():
@@ -127,53 +162,3 @@ def test_candidate_embedding_document_has_no_identity():
         application, SimpleNamespace(title="Backend Engineer")
     )
     assert "Nisha" not in doc and "nisha@x.com" not in doc
-
-
-async def test_persistent_rate_limit_is_friendly_and_bounded(monkeypatch):
-    import pytest
-    from fastapi import HTTPException
-    from pydantic import BaseModel
-
-    from app.infrastructures.ai import service as ai_mod
-
-    class Out(BaseModel):
-        ok: bool
-
-    slept: list[float] = []
-
-    async def fake_sleep(seconds):
-        slept.append(seconds)
-
-    async def always_429(**_kwargs):
-        raise _rate_limit_error()
-
-    monkeypatch.setattr(ai_mod.asyncio, "sleep", fake_sleep)
-    monkeypatch.setattr(
-        ai_mod.ai_service._llm_client.chat.completions, "create", always_429
-    )
-    with pytest.raises(HTTPException) as err:
-        await ai_mod.ai_service.generate_structured("sys", {}, Out)
-    assert err.value.status_code == 429
-    assert err.value.detail == ai_mod.AI_BUSY_MESSAGE  # no raw provider text
-    assert sum(slept) <= ai_mod._RETRY_WAIT_BUDGET_SECONDS
-
-
-async def test_stream_rate_limit_is_friendly(monkeypatch):
-    import pytest
-    from fastapi import HTTPException
-
-    from app.infrastructures.ai import service as ai_mod
-
-    class FakeLLM:
-        async def astream(self, _messages):
-            raise _rate_limit_error()
-            yield  # pragma: no cover
-
-    monkeypatch.setattr(ai_mod.ai_service, "_build_chat_model", lambda **_kw: FakeLLM())
-    with pytest.raises(HTTPException) as err:
-        async for _ in ai_mod.ai_service.stream_text(
-            system_prompt="s", user_payload={}
-        ):
-            pass
-    assert err.value.status_code == 429
-    assert err.value.detail == ai_mod.AI_BUSY_MESSAGE

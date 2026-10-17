@@ -56,7 +56,7 @@ def _enum_or_none(value: Any, allowed: tuple[str, ...]) -> str | None:
 class Question(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    label: str = Field(min_length=1, max_length=200)
+    label: str = Field(min_length=1, max_length=200, description="The question.")
     type: Literal["short_text", "yes_no"] = "short_text"
     required: bool = False
 
@@ -72,17 +72,42 @@ class JobDraft(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     title: str | None = Field(default=None, max_length=120)
-    category: Category | None = None
+    category: Category | None = Field(
+        default=None,
+        description="Any job at a hotel, restaurant, travel or trekking company "
+        '(receptionist, cook, waiter, guide) is "Hospitality & Tourism"; shops '
+        'and field sales are "Sales & Retail"; drivers and delivery are '
+        '"Logistics & Driving".',
+    )
     location: str | None = Field(default=None, max_length=120)
     work_type: WorkType | None = None
     employment_type: EmploymentType | None = None
     salary_min: int | None = Field(default=None, ge=0)
     salary_max: int | None = Field(default=None, ge=0)
     currency: str | None = Field(default=None, max_length=10)
-    description: str = Field(default="", max_length=6000)
-    must_haves: list[str] = Field(default_factory=list, max_length=6)
-    nice_to_haves: list[str] = Field(default_factory=list, max_length=6)
-    questions: list[Question] = Field(default_factory=list, max_length=3)
+    description: str = Field(
+        default="",
+        max_length=6000,
+        description="Plain text, a few short paragraphs: about the job, what "
+        "they will do, what we offer.",
+    )
+    must_haves: list[str] = Field(
+        default_factory=list,
+        max_length=6,
+        description="Short, checkable facts a CV or form answer can show, under 8 "
+        "words each; what the recruiter asked for first, then only what the job "
+        'clearly needs. Good: "Valid two-wheeler licence", "NNC registration", '
+        '"2+ years as receptionist". Never soft skills ("Friendly", "Team player").',
+    )
+    nice_to_haves: list[str] = Field(
+        default_factory=list, max_length=6, description="Same style as must_haves."
+    )
+    questions: list[Question] = Field(
+        default_factory=list,
+        max_length=3,
+        description="Screening questions for the apply form, only when useful. "
+        "Never ask for name, email, phone or CV (the form collects them).",
+    )
 
     @field_validator("title", "location", "currency", mode="before")
     @classmethod
@@ -159,12 +184,19 @@ class JobDraft(BaseModel):
 
 
 class DraftTurnOutput(BaseModel):
+    """Your answer to the recruiter: a short reply and the job post draft."""
+
     model_config = ConfigDict(extra="ignore")
 
-    reply: str = ""
-    follow_up: bool = False
+    reply: str = Field(default="", description="Short message to the recruiter.")
+    follow_up: bool = Field(
+        default=False, description="True only if reply is a question."
+    )
     draft: JobDraft = Field(default_factory=JobDraft)
-    salary_source_urls: list[str] = Field(default_factory=list)
+    salary_source_urls: list[str] = Field(
+        default_factory=list,
+        description="URLs of search_salary results you took salary numbers from.",
+    )
 
     @field_validator("salary_source_urls", mode="before")
     @classmethod
@@ -175,17 +207,27 @@ class DraftTurnOutput(BaseModel):
 class Quote(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    text: str = Field(min_length=1, max_length=400)
-    source: QuoteSource
+    text: str = Field(
+        min_length=1, max_length=400, description="Exact words copied from the data."
+    )
+    source: QuoteSource = Field(description="The part of the data it comes from.")
 
 
 class CandidateTurnOutput(BaseModel):
+    """Your answer about this applicant."""
+
     model_config = ConfigDict(extra="ignore")
 
-    answer: str = ""
-    found: bool = True
-    quotes: list[Quote] = Field(default_factory=list)
-    action: ActionName | None = None
+    answer: str = Field(
+        default="", description="Short and plain: at most 5 sentences or 5 bullets."
+    )
+    found: bool = Field(
+        default=True, description="False when the data does not contain the answer."
+    )
+    quotes: list[Quote] = Field(default_factory=list, description="Up to 3.")
+    action: ActionName | None = Field(
+        default=None, description="Set only when asked to shortlist, reject or email."
+    )
 
     @field_validator("quotes", mode="before")
     @classmethod

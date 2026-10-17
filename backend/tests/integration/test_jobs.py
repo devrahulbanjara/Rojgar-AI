@@ -247,10 +247,13 @@ class TestJobV2Fields:
     async def test_suggest_must_haves_drops_protected_grounds(
         self, client, db, monkeypatch
     ):
-        from app.infrastructures.ai.service import ai_service
+        from app.modules.jobs.service import _Suggestion
+        from tests.fakes import answer, use_model
 
-        async def fake(_prompt, _payload, schema, **_kwargs):
-            return schema(
+        use_model(
+            monkeypatch,
+            answer(
+                _Suggestion,
                 must_haves=[
                     "Valid driving licence (heavy)",
                     "Male only",
@@ -265,9 +268,8 @@ class TestJobV2Fields:
                         "knockout_answer": "yes",
                     }
                 ],
-            )
-
-        monkeypatch.setattr(ai_service, "generate_structured", fake)
+            ),
+        )
         admin, _ = await make_recruiter_admin(db, email="v2suggest@test.com")
         resp = await client.post(
             "/jobs/suggest-must-haves",

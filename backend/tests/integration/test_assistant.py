@@ -1,7 +1,7 @@
 """Assistant: tenant isolation, "not in data", no writes, draft schema, 429s.
 
-The LLM is faked at `llm.stream_json`, except in the 429 tests, which fake the
-provider client underneath so the real retry/backoff path runs.
+The chat model is scripted (tests/fakes.py) under the real agents, so the
+guardrails, limits, retries and the salary tool all run.
 """
 
 import json
@@ -10,10 +10,17 @@ import pytest
 from sqlalchemy import func, select
 
 from app.modules.applications.models import ApplicationEvent
-from app.modules.assistant import llm, service
+from app.infrastructures.ai import guards, llm as ai_llm
+from app.infrastructures.guardrails.service import guardrails_service
+from app.modules.assistant import agents, grounding, service
 from app.modules.assistant.models import AssistantThread
-from app.modules.assistant.schemas import JobDraft
+from app.modules.assistant.schemas import (
+    CandidateTurnOutput,
+    DraftTurnOutput,
+    JobDraft,
+)
 from app.shared.enums import ApplicationStage
+from tests.fakes import answer, call, use_model
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
@@ -28,15 +35,11 @@ CV = (
 )
 
 
-def fake_llm(monkeypatch, payload: dict, calls: list | None = None) -> None:
-    async def stream(messages):
-        if calls is not None:
-            calls.append(messages)
-        text = json.dumps(payload, ensure_ascii=False)
-        for i in range(0, len(text), 7):  # small chunks, like a real stream
-            yield text[i : i + 7]
-
-    monkeypatch.setattr(llm, "stream_json", stream)
+def fake_llm(monkeypatch, payload: dict, calls: list | None = None, *before) -> None:
+    """Every model call answers `payload` (after any `before` replies);
+    `calls` gets each call's messages as role/content dicts."""
+    schema = CandidateTurnOutput if "answer" in payload else DraftTurnOutput
+    use_model(monkeypatch, *before, default=answer(schema, **payload), recorder=calls)
 
 
 def events(body: str) -> list[tuple[str, dict]]:
@@ -173,7 +176,7 @@ async def test_not_in_data(client, db, monkeypatch, model_output):
         headers=auth_headers(recruiter.id),
     )
     out = final(resp.text)
-    assert out["answer"] == service.NOT_IN_DATA and out["quotes"] == []
+    assert out["answer"] == agents.NOT_IN_DATA and out["quotes"] == []
 
 
 async def test_no_cv_answers_from_form_only(client, db, monkeypatch):
@@ -248,7 +251,7 @@ async def test_candidate_questions_never_use_web_search(client, db, monkeypatch)
         json={"message": "What is the market salary research for someone like her?"},
         headers=auth_headers(recruiter.id),
     )
-    assert final(resp.text)["answer"] == service.NOT_IN_DATA
+    assert final(resp.text)["answer"] == agents.NOT_IN_DATA
 
 
 async def test_blocked_input_streams_nothing(client, db, monkeypatch):
@@ -259,7 +262,7 @@ async def test_blocked_input_streams_nothing(client, db, monkeypatch):
     async def unsafe(text, *, source, fail_closed=False):
         return GuardrailResult(safe=False, source=source, score=99)
 
-    monkeypatch.setattr(service.guardrails_service, "check_input", unsafe)
+    monkeypatch.setattr(guardrails_service, "check_input", unsafe)
     fake_llm(monkeypatch, {"answer": "leaked", "found": True})
     resp = await client.post(
         f"/assistant/candidates/{app.id}",
@@ -267,7 +270,7 @@ async def test_blocked_input_streams_nothing(client, db, monkeypatch):
         headers=auth_headers(recruiter.id),
     )
     assert events(resp.text) == [
-        ("error", {"code": "blocked", "message": service.BLOCKED_MESSAGE})
+        ("error", {"code": "blocked", "message": agents.BLOCKED_MESSAGE})
     ]
 
 
@@ -279,8 +282,8 @@ async def test_slow_guardrail_falls_back_to_marker_scan(client, db, monkeypatch)
     async def slow(text, *, source, fail_closed=False):
         await asyncio.sleep(5)
 
-    monkeypatch.setattr(service, "GUARD_TIMEOUT_SECONDS", 0.05)
-    monkeypatch.setattr(service.guardrails_service, "check_input", slow)
+    monkeypatch.setattr(guards, "GUARD_TIMEOUT_SECONDS", 0.05)
+    monkeypatch.setattr(guardrails_service, "check_input", slow)
     fake_llm(monkeypatch, {"answer": "Not in their CV or notes.", "found": False})
     url = f"/assistant/candidates/{app.id}"
     ok = await client.post(
@@ -294,7 +297,7 @@ async def test_slow_guardrail_falls_back_to_marker_scan(client, db, monkeypatch)
     )
     assert events(bad.text)[-1] == (
         "error",
-        {"code": "blocked", "message": service.BLOCKED_MESSAGE},
+        {"code": "blocked", "message": agents.BLOCKED_MESSAGE},
     )
 
 
@@ -331,22 +334,22 @@ def test_job_draft_schema_is_clipped_and_cleaned():
 
 def test_draft_language_follows_the_script_the_recruiter_used():
     assert (
-        service.draft_language(["hotel ma receptionist chahiyo, Thamel"]) == "English"
+        grounding.draft_language(["hotel ma receptionist chahiyo, Thamel"]) == "English"
     )
-    assert service.draft_language(["पोखराको अस्पतालका लागि स्टाफ नर्स, NNC"]) == "Nepali"
-    assert service.draft_language(["Staff nurse, Pokhara"]) == "English"
+    assert grounding.draft_language(["पोखराको अस्पतालका लागि स्टाफ नर्स, NNC"]) == "Nepali"
+    assert grounding.draft_language(["Staff nurse, Pokhara"]) == "English"
 
 
 def test_salary_numbers_must_come_from_the_recruiter_or_a_cited_source():
-    assert {40000, 50000} <= service.numbers_in("talab 40-50 hajar")
-    assert {145000, 215000} <= service.numbers_in("NPR 145–215k")
-    assert 150000 in service.numbers_in("१.५ लाख")
+    assert {40000, 50000} <= grounding.numbers_in("talab 40-50 hajar")
+    assert {145000, 215000} <= grounding.numbers_in("NPR 145–215k")
+    assert 150000 in grounding.numbers_in("१.५ लाख")
     invented = JobDraft(salary_min=60000, salary_max=80000, currency="NPR")
-    assert service.ground_salary(invented, "Staff nurse, Pokhara", []).model_dump(
+    assert grounding.ground_salary(invented, "Staff nurse, Pokhara", []).model_dump(
         include={"salary_min", "salary_max", "currency"}
     ) == {"salary_min": None, "salary_max": None, "currency": None}
     cited = [{"title": "t", "url": "u", "snippet": "Nurses earn NPR 35,000 to 60,000"}]
-    grounded = service.ground_salary(
+    grounded = grounding.ground_salary(
         JobDraft(salary_min=35000, salary_max=60000), "nurse", cited
     )
     assert (grounded.salary_min, grounded.salary_max, grounded.currency) == (
@@ -465,7 +468,12 @@ async def test_salary_search_sends_only_title_and_place(client, db, monkeypatch)
         "draft": DRAFT_REPLY["draft"] | {"salary_min": 40000, "salary_max": None},
         "salary_source_urls": ["https://pay.example"],
     }
-    fake_llm(monkeypatch, reply)
+    fake_llm(
+        monkeypatch,
+        reply,
+        None,
+        call("search_salary", title="Accountant", location="Butwal"),
+    )
     resp = await client.post(
         "/assistant/job-draft",
         json={
@@ -484,36 +492,24 @@ async def test_salary_search_sends_only_title_and_place(client, db, monkeypatch)
 # ---- errors -------------------------------------------------------------------------
 
 
-def _rate_limit_error():
+def _rate_limit_error(extra: str = ""):
     import httpx
     from groq import RateLimitError
 
     request = httpx.Request("POST", "https://api.groq.test")
     return RateLimitError(
-        "rate limited: org_123 tokens per minute",
+        f"rate limited: org_123 tokens per minute. {extra}",
         response=httpx.Response(429, request=request),
         body=None,
     )
 
 
-async def test_rate_limit_is_retried_briefly_then_friendly(client, db, monkeypatch):
-    from app.infrastructures.ai import service as ai_mod
-
+async def test_rate_limit_is_friendly_and_never_shows_provider_text(
+    client, db, monkeypatch
+):
     recruiter, app = await setup_application(db, "rl@test.com", "RL")
-    slept: list[float] = []
-    attempts = {"n": 0}
-
-    async def fake_sleep(seconds):
-        slept.append(seconds)
-
-    async def always_429(**_kwargs):
-        attempts["n"] += 1
-        raise _rate_limit_error()
-
-    monkeypatch.setattr(ai_mod.asyncio, "sleep", fake_sleep)
-    monkeypatch.setattr(
-        ai_mod.ai_service._llm_client.chat.completions, "create", always_429
-    )
+    monkeypatch.setattr(ai_llm, "_RETRY_FIRST_DELAY_SECONDS", 0.01)
+    model = use_model(monkeypatch, *[_rate_limit_error()] * 5)
     resp = await client.post(
         f"/assistant/candidates/{app.id}",
         json={"message": "Summarize their last role"},
@@ -521,57 +517,26 @@ async def test_rate_limit_is_retried_briefly_then_friendly(client, db, monkeypat
     )
     assert resp.status_code == 200
     assert events(resp.text) == [
-        ("error", {"code": "busy", "message": llm.BUSY_MESSAGE})
+        ("error", {"code": "busy", "message": agents.BUSY_MESSAGE})
     ]
-    assert attempts["n"] > 1 and sum(slept) <= 12
+    # The 429 cooled the model down for a minute: no call was wasted on it.
+    assert len(model.calls) == 1
     assert "org_123" not in resp.text
 
 
-async def test_rate_limit_then_success_streams_normally(client, db, monkeypatch):
-    from app.infrastructures.ai import service as ai_mod
-
+async def test_short_rate_limit_waits_then_answers(client, db, monkeypatch):
     recruiter, _ = await make_recruiter_admin(db, "rs@test.com", "RS")
     await db.commit()
-    attempts = {"n": 0}
-    text = json.dumps(DRAFT_REPLY)
-
-    class Chunk:
-        def __init__(self, content):
-            delta = type("D", (), {"content": content})()
-            self.choices = [type("C", (), {"delta": delta})()]
-
-    async def chunks():
-        for i in range(0, len(text), 50):
-            yield Chunk(text[i : i + 50])
-
-    async def flaky(**kwargs):
-        attempts["n"] += 1
-        assert kwargs["stream"] is True and kwargs["temperature"] <= 0.3
-        if attempts["n"] == 1:
-            raise _rate_limit_error()
-        return chunks()
-
-    async def no_sleep(_s):
-        return None
-
-    monkeypatch.setattr(ai_mod.asyncio, "sleep", no_sleep)
-    monkeypatch.setattr(ai_mod.ai_service._llm_client.chat.completions, "create", flaky)
+    monkeypatch.setattr(ai_llm, "_RETRY_FIRST_DELAY_SECONDS", 0.01)
+    model = use_model(
+        monkeypatch,
+        _rate_limit_error("Please try again in 0.2s."),
+        answer(DraftTurnOutput, **DRAFT_REPLY),
+    )
     resp = await client.post(
         "/assistant/job-draft",
         json={"message": "Delivery driver, two-wheeler license, Kathmandu valley"},
         headers=auth_headers(recruiter.id),
     )
     assert final(resp.text)["draft"]["title"] == "Hotel Receptionist"
-    assert attempts["n"] == 2
-
-
-def test_field_streamer_handles_split_escapes():
-    streamer = llm.FieldStreamer("answer")
-    parts = [
-        '{"found": true, "ans',
-        'wer": "a\\',
-        "nb \\u09",
-        '15 \\"q\\"',
-        '", "x": "y"}',
-    ]
-    assert "".join(streamer.feed(p) for p in parts) == 'a\nb क "q"'
+    assert len(model.calls) == 2

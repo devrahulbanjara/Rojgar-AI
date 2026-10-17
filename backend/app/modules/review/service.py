@@ -27,20 +27,23 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from datetime import UTC, datetime, timedelta
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 
+from fastapi import HTTPException
 from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal, release_connection
+from app.infrastructures.guardrails.service import heuristic_injection_signal
 from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.entitlements import service as entitlements
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
-from app.modules.review import rubric
+from app.modules.review import excerpt, rubric
 from app.modules.review.blind import build_blind_text, candidate_text_for_guardrail
 from app.modules.review.reviewer import (
     PROMPT_VERSION,
@@ -52,6 +55,7 @@ from app.modules.review.reviewer import (
     system_prompt,
 )
 from app.shared.enums import EventType, Fit, ReviewState, ReviewTriage
+from app.shared.unicode_text import clean_for_classifier
 
 FLAG_INJECTION = "Possible hidden instructions in the CV. Check the CV before deciding."
 FLAG_UNCHECKED = (
@@ -89,6 +93,21 @@ def _default_guardrail() -> GuardrailFn:
 
 class _RetryableError(Exception):
     """Provider or classifier outage: try again, then hand to a person."""
+
+
+class _AIBusy(Exception):
+    """Every model is out of free quota for now. Not a failed attempt: the
+    review waits (in place when short, else for the next sweep)."""
+
+    def __init__(self, retry_after: float) -> None:
+        super().__init__(f"AI busy for {retry_after:.0f}s")
+        self.retry_after = retry_after
+
+
+# Wait in place for quota up to this long; longer waits go to the next sweep.
+BUSY_WAIT_IN_PLACE_SECONDS = 90
+# The sweep picks up reviews left pending this long (busy AI, lost worker).
+STALE_PENDING_MINUTES = 10
 
 
 @dataclass
@@ -273,10 +292,20 @@ async def _evaluate(
             rank_score=rubric.rank_score([], inputs.tiebreak),
         )
 
+    # What the model reads: the whole application, or its best-matching
+    # passages when it's long (free-tier token limits).
+    text = await excerpt.for_review(inputs.blind_text, inputs.criteria)
+
     if not inputs.skip_guardrail:
-        verdict = await guardrail(
-            inputs.raw_text or inputs.blind_text, source="review", fail_closed=True
-        )
+        # The marker scan is free, so it reads every field; the classifier
+        # reads exactly what the reviewer will read.
+        if heuristic_injection_signal(clean_for_classifier(inputs.raw_text or "")):
+            return _Outcome(
+                state=ReviewState.needs_person.value, flag_reason=FLAG_INJECTION
+            )
+        verdict = await guardrail(text, source="review", fail_closed=True)
+        if verdict.error and getattr(verdict, "retry_after", None):
+            raise _AIBusy(verdict.retry_after)
         if verdict.error:
             raise _RetryableError("guardrail unavailable")
         if not verdict.safe:
@@ -286,7 +315,7 @@ async def _evaluate(
 
     if not inputs.criteria:
         # Nothing to check against: summary only, no fit.
-        call = await _call(reviewer, inputs, cheap=True)
+        call = await _call(reviewer, inputs, text, cheap=True)
         return _Outcome(
             state=ReviewState.done.value,
             summary=rubric.cap_summary(call.output.summary),
@@ -296,7 +325,7 @@ async def _evaluate(
         )
 
     usages: list[Usage] = []
-    cheap = await _call(reviewer, inputs, cheap=True)
+    cheap = await _call(reviewer, inputs, text, cheap=True)
     usages.append(cheap.usage)
     checks = _checks(inputs, cheap.output)
     summary = cheap.output.summary
@@ -305,7 +334,7 @@ async def _evaluate(
         FULL_REVIEW_MIN_COVERAGE
     ) or rubric.coverage(checks, "must") is None
     if plausible:
-        full = await _call(reviewer, inputs, cheap=False)
+        full = await _call(reviewer, inputs, text, cheap=False)
         usages.append(full.usage)
         checks = _checks(inputs, full.output)
         summary = full.output.summary
@@ -321,16 +350,32 @@ async def _evaluate(
     )
 
 
-async def _call(reviewer: Reviewer, inputs: _Inputs, *, cheap: bool):
+async def _call(reviewer: Reviewer, inputs: _Inputs, text: str, *, cheap: bool):
     try:
         return await reviewer.review(
             system=system_prompt(inputs.job_title, tuple(inputs.criteria)),
-            text=inputs.blind_text,
+            text=text,
             criteria=inputs.criteria,
             cheap=cheap,
         )
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            retry = (exc.headers or {}).get("Retry-After")
+            raise _AIBusy(float(retry or 60)) from exc
+        raise _RetryableError(type(exc).__name__) from exc
     except Exception as exc:
         raise _RetryableError(type(exc).__name__) from exc
+
+
+async def _unclaim(db: AsyncSession, inputs: _Inputs) -> None:
+    """Give back the attempt counted by `_claim`."""
+    await db.execute(
+        update(Review)
+        .where(Review.application_id == inputs.application_id)
+        .values(attempts=inputs.attempts)
+        .execution_options(synchronize_session=False)
+    )
+    await db.commit()
 
 
 def _checks(inputs: _Inputs, output) -> list[dict]:
@@ -457,6 +502,15 @@ async def review_application(
         try:
             async with _gate():
                 outcome = await _evaluate(inputs, reviewer, guardrail)
+        except _AIBusy as exc:
+            await _unclaim(db, inputs)
+            if exc.retry_after <= BUSY_WAIT_IN_PLACE_SECONDS:
+                logger.info("Review of {} waits {}", application_id, exc)
+                await asyncio.sleep(exc.retry_after)
+                continue
+            await _release(db, inputs, quota)
+            logger.info("Review of {} left for the next sweep: {}", application_id, exc)
+            return ReviewState.pending.value
         except _RetryableError as exc:
             exhausted = inputs.attempts + 1 >= max_attempts
             logger.warning(
@@ -546,13 +600,15 @@ async def resume_waiting_reviews(
 
 
 async def waiting_review_loop(interval_seconds: int = 1800) -> None:
-    """Every half hour, retry reviews that waited for quota (new month, etc.)."""
+    """Every half hour, retry reviews that waited for quota (new month, etc.)
+    and reviews left pending while the AI was busy."""
     while True:
         await asyncio.sleep(interval_seconds)
         try:
             resumed = await resume_waiting_reviews()
             if resumed:
                 logger.info("Retried {} review(s) waiting for quota.", len(resumed))
+            await recover_pending_reviews(stale_minutes=STALE_PENDING_MINUTES)
         except Exception:  # noqa: BLE001 - the loop must keep running
             logger.exception("Waiting review sweep failed")
 
@@ -575,16 +631,20 @@ async def rereview(db: AsyncSession, application_id: uuid.UUID) -> None:
     )
 
 
-async def recover_pending_reviews(limit: int = 500) -> int:
-    """Resume reviews left pending (crash, restart, backlog). Called at startup."""
+async def recover_pending_reviews(
+    limit: int = 500, *, stale_minutes: int | None = None
+) -> int:
+    """Resume reviews left pending (crash, restart, backlog, busy AI). At
+    startup every pending review; from the sweep only ones idle `stale_minutes`."""
+    stmt = select(Review.application_id).where(
+        Review.state == ReviewState.pending.value
+    )
+    if stale_minutes is not None:
+        cutoff = datetime.now(UTC) - timedelta(minutes=stale_minutes)
+        stmt = stmt.where(Review.updated_at < cutoff)
     async with AsyncSessionLocal() as db:
         ids = list(
-            await db.scalars(
-                select(Review.application_id)
-                .where(Review.state == ReviewState.pending.value)
-                .order_by(Review.created_at.asc())
-                .limit(limit)
-            )
+            await db.scalars(stmt.order_by(Review.created_at.asc()).limit(limit))
         )
     for application_id in ids:
         try:

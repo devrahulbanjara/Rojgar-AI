@@ -1,7 +1,9 @@
+import json
 import os
 import uuid
 from datetime import UTC, datetime
 
+from pydantic import Field
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import func, select
@@ -623,31 +625,35 @@ async def delete_job(
 
 _SUGGEST_PROMPT = """You help a small business in Nepal write a job post. The job can be any kind of work (shop, hotel, school, clinic, bank, factory, office, transport, IT).
 
-From the job description, propose:
-- must_haves: 3 to 6 short criteria a CV or a short answer can show, e.g. "Valid driving licence (heavy vehicle)", "2+ years as a cook in a restaurant", "Registered with Nepal Nursing Council".
-- nice_to_haves: 0 to 4 short criteria, same style.
-- questions: 1 to 3 short questions for the apply form. Use type "yes_no" with knockout_answer when a wrong answer means the person cannot do the job (e.g. "Do you have a valid driving licence?" knockout_answer "yes"); otherwise "short_text" with knockout_answer null.
-Each item at most 120 characters, in the language of the description.
+From the job description, propose must-haves, nice-to-haves and apply-form questions. Each item at most 120 characters, in the language of the description. A yes/no question gets a knockout_answer only when a wrong answer means the person cannot do the job (e.g. "Do you have a valid driving licence?" -> "yes").
 Never ask about gender, age range, caste, ethnicity, religion, marital status, pregnancy, disability, looks or hometown (Labour Act 2074, s.6). Describe the work instead."""
 
 
 class _Suggestion(BaseSchema):
-    must_haves: list[str]
-    nice_to_haves: list[str]
-    questions: list[JobQuestion]
+    """Suggested criteria and questions for this job."""
+
+    must_haves: list[str] = Field(
+        description="3 to 6 short criteria a CV or a short answer can show, e.g. "
+        '"Valid driving licence (heavy vehicle)", "2+ years as a cook".'
+    )
+    nice_to_haves: list[str] = Field(description="0 to 4, same style.")
+    questions: list[JobQuestion] = Field(description="1 to 3 short questions.")
 
 
 async def suggest_must_haves(
     payload: SuggestMustHavesRequest,
 ) -> SuggestMustHavesResponse:
     """LLM-suggested criteria and questions; protected grounds are dropped."""
-    from app.infrastructures.ai.service import ai_service
+    from app.infrastructures.ai import llm
 
-    suggestion = await ai_service.generate_structured(
+    suggestion, _usage = await llm.generate_structured(
         _SUGGEST_PROMPT,
-        {"title": payload.title or "", "description": payload.description},
+        json.dumps(
+            {"title": payload.title or "", "description": payload.description},
+            ensure_ascii=False,
+        ),
         _Suggestion,
-        temperature=0.0,
+        label="Must-have suggestions",
     )
     must = [" ".join(m.split())[:200] for m in suggestion.must_haves if m.strip()][:6]
     nice = [" ".join(m.split())[:200] for m in suggestion.nice_to_haves if m.strip()][

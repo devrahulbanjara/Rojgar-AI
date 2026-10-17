@@ -103,8 +103,11 @@ class RedisService:
         """True when a Redis client is connected."""
         return self._client is not None
 
-    async def incr_window(self, key: str, ttl_seconds: int) -> int | None:
-        """Increment a counter that expires ``ttl_seconds`` after it was created.
+    async def incr_window(
+        self, key: str, ttl_seconds: int, amount: int = 1
+    ) -> int | None:
+        """Add ``amount`` to a counter that expires ``ttl_seconds`` after it was
+        created.
 
         Returns the new value, or None when Redis is unavailable (the caller
         falls back to its own counter).
@@ -115,7 +118,7 @@ class RedisService:
         try:
             async with self._client.pipeline(transaction=True) as pipe:
                 pipe.set(full_key, 0, ex=ttl_seconds, nx=True)
-                pipe.incr(full_key)
+                pipe.incrby(full_key, amount)
                 _, value = await pipe.execute()
             return int(value)
         except Exception as exc:

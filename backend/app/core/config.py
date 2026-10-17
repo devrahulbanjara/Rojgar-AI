@@ -101,11 +101,13 @@ class Settings(BaseSettings):
     llama_cloud_api_key: str | None = None
     llama_cloud_base_url: str | None = None
 
-    groq_model_structured: str = _GROQ_LARGE
-    groq_model_chat: str = _GROQ_LARGE
-
-    # AWS (Bedrock review provider; credentials are the *_shortlisting ones)
-    aws_region: str = "us-east-1"
+    # Chat models (app/infrastructures/ai/llm.py). Groq answers first; when
+    # GEMINI_API_KEY is set, Gemini answers whenever Groq fails or is rate
+    # limited, so the two free tiers add up.
+    groq_model: str = _GROQ_LARGE
+    groq_small_model: str = _GROQ_SMALL
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
 
     # File storage
     # "local" keeps uploads on disk; "cloudinary" uses CLOUDINARY_URL. Empty =
@@ -116,25 +118,14 @@ class Settings(BaseSettings):
     image_max_upload_bytes: int = 5 * 1024 * 1024
     image_allowed_extensions: tuple[str, ...] = ("jpg", "jpeg", "png", "webp", "gif")
 
-    # AI review (one per application, rolling). Provider: groq | bedrock | fake.
+    # AI review (one per application, rolling). Provider: groq | fake.
     review_provider: str = "groq"
-    # Full evidence review and the cheap first pass (Groq model ids).
-    review_model: str = _GROQ_LARGE
-    review_cheap_model: str = _GROQ_SMALL
-    # Bedrock alternative (credentials below).
-    aws_access_key_id_shortlisting: str | None = None
-    aws_secret_access_key_shortlisting: str | None = None
-    review_bedrock_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
     # Public apply (no account)
     turnstile_secret: str | None = None
 
     # Guardrails
     guardrails_enabled: bool = True
-    guardrails_groq_model: str = _GROQ_LARGE
-
-    # Assistant: job draft + "ask about this candidate"
-    assistant_model: str = _GROQ_LARGE
 
     # Derived URLs
     @property
