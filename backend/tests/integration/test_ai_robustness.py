@@ -144,15 +144,13 @@ def test_candidate_embedding_document_has_no_identity():
     from types import SimpleNamespace
 
     from app.infrastructures.qdrant.service import qdrant_service
-    from app.shared.enums import ApplicationStatus
+    from app.shared.enums import ApplicationStage
 
     application = SimpleNamespace(
         resume=None,
         user=SimpleNamespace(full_name="Nisha Sharma", email="nisha@x.com"),
-        status=ApplicationStatus.applied,
-        score=None,
-        strengths=None,
-        weaknesses=None,
+        stage=ApplicationStage.new,
+        screening_answers=None,
     )
     doc = qdrant_service._build_application_document(
         application, SimpleNamespace(title="Backend Engineer")

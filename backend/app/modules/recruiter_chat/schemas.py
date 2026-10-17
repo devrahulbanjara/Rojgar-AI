@@ -96,7 +96,7 @@ class JobOption(BaseSchema):
     salary_min: int | None = None
     salary_max: int | None = None
     currency: str | None = None
-    expires_at: datetime | None = None
+    closes_at: datetime | None = None
 
 
 class CompanyJobData(BaseSchema):
@@ -108,7 +108,7 @@ class CompanyJobData(BaseSchema):
     salary_max: int | None = None
     currency: str | None = None
     status: str
-    expires_at: datetime | None = None
+    closes_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

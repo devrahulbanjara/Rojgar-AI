@@ -89,17 +89,15 @@ def _map_draft_to_job_create(
         title=draft["title"],
         location=draft.get("location"),
         location_type=LocationType(draft["location_type"]),
+        category=draft.get("category") or "other",
+        employment_type=draft.get("employment_type") or "full_time",
         salary_min=draft.get("salary_min"),
         salary_max=draft.get("salary_max"),
-        currency=draft.get("currency") or "USD",
+        currency=draft.get("currency") or "NPR",
         status=status_override or JobStatus(draft.get("status", "draft")),
-        shortlist_threshold=draft.get("shortlist_threshold", 70),
-        overview=draft["overview"],
-        responsibilities=draft.get("responsibilities", []),
-        requirements=draft.get("requirements", []),
-        preferred_qualifications=draft.get("preferred_qualifications", []),
-        benefits=draft.get("benefits", []),
-        auto_shortlist=draft.get("auto_shortlist", False),
+        description=draft.get("description", ""),
+        must_haves=draft.get("must_haves", [])[:6],
+        nice_to_haves=draft.get("nice_to_haves", [])[:6],
     )
 
 

@@ -15,14 +15,14 @@ from app.core.cache import (
 )
 from app.core.swr_cache import swr_get
 from app.modules.activity.service import create_activity_event
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.models import Interview
 from app.modules.interviews.schemas import CandidateInterviewView, InterviewResponse
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStatus
+from app.shared.enums import ApplicationStage, EventType
 
 
 def _interview_list_cache_key(
@@ -79,7 +79,7 @@ async def _build_interview_list(
             location=interview.location,
             title=interview.title,
             created_at=interview.created_at,
-            application_status=application.status,
+            stage=application.stage,
             job_id=job.id,
             job_title=job.title,
             company_id=job.company_id,
@@ -143,7 +143,7 @@ async def list_candidate_interviews(
             job_id=job.id,
             job_title=job.title,
             company_name=company.name,
-            application_status=application.status,
+            stage=application.stage,
         )
         for interview, application, job, company in results
     ]
@@ -182,16 +182,33 @@ async def mark_interview_complete(
 
     interview, application, job = result_row
 
-    if application.status != ApplicationStatus.interview_booked:
+    if application.stage != ApplicationStage.interview:
         raise HTTPException(
             status_code=400,
             detail=(
-                f"Cannot mark complete: application is in status "
-                f"'{application.status.value}', expected 'interview_booked'."
+                f"Cannot mark complete: application is in stage "
+                f"'{application.stage.value}', expected 'interview'."
             ),
         )
+    already_done = await db.scalar(
+        select(ApplicationEvent.id).where(
+            ApplicationEvent.application_id == application.id,
+            ApplicationEvent.type == EventType.interview_done.value,
+        )
+    )
+    if already_done is not None:
+        raise HTTPException(
+            status_code=409, detail="This interview is already marked complete."
+        )
 
-    application.status = ApplicationStatus.interview_completed
+    db.add(
+        ApplicationEvent(
+            application_id=application.id,
+            type=EventType.interview_done.value,
+            actor_user_id=user_id,
+            payload={"interview_id": str(interview.id)},
+        )
+    )
     enqueue_application_sync_event(db, application.id)
 
     await create_activity_event(
@@ -229,7 +246,7 @@ async def mark_interview_complete(
         location=interview.location,
         title=interview.title,
         created_at=interview.created_at,
-        application_status=application.status,
+        stage=application.stage,
         job_id=job.id,
         job_title=job.title,
         company_id=job.company_id,

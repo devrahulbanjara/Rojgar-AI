@@ -66,12 +66,13 @@ from app.modules.recruiter_chat.tools import (
     serialize_job_option,
 )
 from app.modules.recruiter_preferences.models import RecruiterPreference
-from app.shared.enums import ApplicationStatus, JobStatus
+from app.modules.applications.models import Review
+from app.shared.enums import ApplicationStage, JobStatus
 from app.shared.text_safety import flag_bias, redact_pii
 
 CANDIDATE_SEARCH_EXCLUDED_STATUSES: tuple[str, ...] = (
-    ApplicationStatus.rejected.value,
-    ApplicationStatus.offer_declined.value,
+    ApplicationStage.rejected.value,
+    ApplicationStage.withdrawn.value,
 )
 
 CANCEL_KEYWORDS: tuple[str, ...] = (
@@ -129,15 +130,12 @@ EDITABLE_JOB_FIELDS: frozenset[str] = frozenset(
         "salary_min",
         "salary_max",
         "currency",
-        "expires_at",
-        "overview",
-        "responsibilities",
-        "requirements",
-        "preferred_qualifications",
-        "benefits",
-        "auto_shortlist",
-        "shortlist_threshold",
-        "required_years_of_experience",
+        "closes_at",
+        "description",
+        "must_haves",
+        "nice_to_haves",
+        "category",
+        "employment_type",
     }
 )
 
@@ -585,15 +583,12 @@ class JobEditPatchPayload(BaseModel):
     salary_min: int | None
     salary_max: int | None
     currency: str | None
-    expires_at: str | None
-    overview: str | None
-    responsibilities: list[str] | None
-    requirements: list[str] | None
-    preferred_qualifications: list[str] | None
-    benefits: list[str] | None
-    auto_shortlist: bool | None
-    shortlist_threshold: int | None
-    required_years_of_experience: int | None
+    closes_at: str | None
+    description: str | None
+    must_haves: list[str] | None
+    nice_to_haves: list[str] | None
+    category: str | None
+    employment_type: str | None
 
 
 class JobEditPatchSchema(BaseModel):
@@ -975,16 +970,12 @@ def _job_to_editable_context(job: Job) -> dict[str, Any]:
         "salary_max": job.salary_max,
         "currency": job.currency,
         "status": effective_job_status(job),
-        "expires_at": job.expires_at.isoformat() if job.expires_at else None,
-        "overview": _sanitize_freeform(job.overview),
-        "responsibilities": _sanitize_freeform(job.responsibilities or []),
-        "requirements": _sanitize_freeform(job.requirements or []),
-        "preferred_qualifications": _sanitize_freeform(
-            job.preferred_qualifications or []
-        ),
-        "benefits": _sanitize_freeform(job.benefits or []),
-        "auto_shortlist": job.auto_shortlist,
-        "shortlist_threshold": job.shortlist_threshold,
+        "closes_at": job.closes_at.isoformat() if job.closes_at else None,
+        "description": _sanitize_freeform(job.description),
+        "must_haves": _sanitize_freeform(job.must_haves or []),
+        "nice_to_haves": _sanitize_freeform(job.nice_to_haves or []),
+        "category": job.category.value if job.category else None,
+        "employment_type": job.employment_type.value if job.employment_type else None,
     }
 
 
@@ -1283,10 +1274,10 @@ def _job_query_filter(message: str) -> str | None:
     text = message.lower()
     if "draft" in text:
         return JobStatus.draft.value
-    if "expired" in text:
-        return JobStatus.expired.value
-    if "active" in text:
-        return JobStatus.active.value
+    if "expired" in text or "closed" in text:
+        return JobStatus.closed.value
+    if "active" in text or "open" in text:
+        return JobStatus.open.value
     return None
 
 
@@ -1622,31 +1613,21 @@ def _format_job_description(job: Job) -> str:
         meta.append(f"**Salary:** {salary}")
     lines.append("  ".join(meta))
 
-    if job.overview:
-        lines.append("\n### Overview")
-        lines.append(job.overview)
+    if job.description:
+        lines.append("")
+        lines.append(job.description)
 
-    if job.responsibilities:
-        lines.append("\n### Responsibilities")
-        for item in job.responsibilities:
+    if job.must_haves:
+        lines.append("\n### Must-haves")
+        for item in job.must_haves:
             lines.append(f"- {item}")
 
-    if job.requirements:
-        lines.append("\n### Requirements")
-        for item in job.requirements:
+    if job.nice_to_haves:
+        lines.append("\n### Nice to have")
+        for item in job.nice_to_haves:
             lines.append(f"- {item}")
 
-    if job.preferred_qualifications:
-        lines.append("\n### Preferred Qualifications")
-        for item in job.preferred_qualifications:
-            lines.append(f"- {item}")
-
-    if job.benefits:
-        lines.append("\n### Benefits")
-        for item in job.benefits:
-            lines.append(f"- {item}")
-
-    if not any([job.overview, job.responsibilities, job.requirements]):
+    if not any([job.description, job.must_haves]):
         lines.append("\n*No detailed description has been added to this job yet.*")
 
     return "\n".join(lines)
@@ -1721,11 +1702,11 @@ async def _handle_candidate_count(
     total_applications = int(total_applications or 0)
 
     status_rows = await db.execute(
-        select(Application.status, func.count(Application.id))
+        select(Application.stage, func.count(Application.id))
         .select_from(Application)
         .join(Job, Job.id == Application.job_id)
         .where(Job.company_id == company_id)
-        .group_by(Application.status)
+        .group_by(Application.stage)
     )
     by_status: dict[str, int] = {
         row[0].value if hasattr(row[0], "value") else str(row[0]): int(row[1])
@@ -1766,7 +1747,14 @@ async def _handle_candidate_count(
 
 
 _CANDIDATE_LIST_MAX_ROWS = 30
-_VALID_LIST_STATUSES: frozenset[str] = frozenset(s.value for s in ApplicationStatus)
+
+
+def _review_fit(review: Review | None) -> str | None:
+    """Fit shown to recruiters: only for finished, unflagged reviews."""
+    return review.fit if review is not None and review.state == "done" else None
+
+
+_VALID_LIST_STATUSES: frozenset[str] = frozenset(s.value for s in ApplicationStage)
 
 
 def _classifier_status_filter(state: dict[str, Any]) -> str | None:
@@ -1798,13 +1786,14 @@ async def _handle_candidate_list(
     status_filter = _classifier_status_filter(state)
 
     base_stmt = (
-        select(Application, UserModel, Job)
+        select(Application, UserModel, Job, Review)
         .join(UserModel, UserModel.id == Application.user_id)
         .join(Job, Job.id == Application.job_id)
+        .outerjoin(Review, Review.application_id == Application.id)
         .where(Job.company_id == company_id)
     )
     if status_filter is not None:
-        base_stmt = base_stmt.where(Application.status == status_filter)
+        base_stmt = base_stmt.where(Application.stage == status_filter)
 
     base_stmt = base_stmt.order_by(Application.created_at.desc()).limit(
         _CANDIDATE_LIST_MAX_ROWS
@@ -1824,7 +1813,7 @@ async def _handle_candidate_list(
         return _serialize_response(ChatResponseType.text, reply_text)
 
     candidates: list[dict[str, Any]] = []
-    for application, applicant, job in rows:
+    for application, applicant, job, review in rows:
         full_name = application.shared_full_name or applicant.full_name
         candidates.append(
             {
@@ -1833,8 +1822,8 @@ async def _handle_candidate_list(
                 "avatar_url": applicant.avatar_url,
                 "full_name": full_name,
                 "applied_for_job": job.title,
-                "application_status": application.status.value,
-                "score": application.score,
+                "application_status": application.stage.value,
+                "fit": _review_fit(review),
                 # Plain list, not semantic ranking → omit match score so the
                 # frontend skips the "%" badge.
                 "match_score": None,
@@ -1859,7 +1848,7 @@ async def _handle_candidate_list(
     lines = [headline]
     for i, c in enumerate(candidates, 1):
         status_label = c["application_status"].replace("_", " ")
-        score_part = f" (score: {c['score']})" if c.get("score") is not None else ""
+        score_part = f" (fit: {c['fit']})" if c.get("fit") else ""
         lines.append(
             f"{i}. **{c['full_name']}** — applied for {c['applied_for_job']}, "
             f"status: {status_label}{score_part}"
@@ -1947,16 +1936,17 @@ async def _handle_candidate_search(
 
     application_ids = [res["application_id"] for res in qdrant_results]
     stmt = (
-        select(Application, UserModel, Job)
+        select(Application, UserModel, Job, Review)
         .join(UserModel, UserModel.id == Application.user_id)
         .join(Job, Job.id == Application.job_id)
+        .outerjoin(Review, Review.application_id == Application.id)
         .where(
             Application.id.in_(application_ids),
             Job.company_id == company_id,
         )
     )
     rows = (await db.execute(stmt)).all()
-    row_map = {app.id: (app, user_row, job) for app, user_row, job in rows}
+    row_map = {app.id: (app, user_row, job, rev) for app, user_row, job, rev in rows}
 
     candidates: list[dict[str, Any]] = []
     for res in qdrant_results:
@@ -1964,7 +1954,7 @@ async def _handle_candidate_search(
         row = row_map.get(app_id)
         if row is None:
             continue
-        application, applicant, job = row
+        application, applicant, job, review = row
         full_name = application.shared_full_name or applicant.full_name
         candidates.append(
             {
@@ -1973,8 +1963,8 @@ async def _handle_candidate_search(
                 "avatar_url": applicant.avatar_url,
                 "full_name": full_name,
                 "applied_for_job": job.title,
-                "application_status": application.status.value,
-                "score": application.score,
+                "application_status": application.stage.value,
+                "fit": _review_fit(review),
                 "match_score": round(res["score"], 4),
                 "relevance": res.get("relevance", "high"),
             }
@@ -2004,7 +1994,7 @@ async def _handle_candidate_search(
     lines = [headline]
     for i, c in enumerate(high_relevance, 1):
         status = c["application_status"].replace("_", " ")
-        score_part = f" (score: {c['score']})" if c.get("score") is not None else ""
+        score_part = f" (fit: {c['fit']})" if c.get("fit") else ""
         lines.append(
             f"{i}. **{c['full_name']}** — applied for {c['applied_for_job']}, "
             f"status: {status}{score_part}"
@@ -2071,20 +2061,22 @@ async def _handle_candidate_followup(
 
     application, applicant, job = row
     full_name = application.shared_full_name or applicant.full_name
-    status_str = application.status.value.replace("_", " ")
+    status_str = application.stage.value.replace("_", " ")
+    review = await db.scalar(
+        select(Review).where(Review.application_id == application.id)
+    )
+    fit = _review_fit(review)
 
     lines = [f"**{full_name}**"]
     lines.append(f"- **Applied for:** {job.title}")
-    lines.append(f"- **Status:** {status_str}")
-    if application.score is not None:
-        lines.append(f"- **Score:** {application.score}")
+    lines.append(f"- **Stage:** {status_str}")
+    if fit:
+        lines.append(f"- **Fit:** {fit}")
     # Respect the candidate's sharing choice for this application.
     if application.share_email and application.shared_email_value:
         lines.append(f"- **Email:** {application.shared_email_value}")
-    if getattr(application, "strengths", None):
-        lines.append(f"- **Strengths:** {application.strengths}")
-    if getattr(application, "weaknesses", None):
-        lines.append(f"- **Weaknesses:** {application.weaknesses}")
+    if fit and review.summary:
+        lines.append(f"- **Summary:** {review.summary}")
 
     reply = "\n".join(lines)
     _append_history(state, "assistant", reply, response_type=ChatResponseType.text)

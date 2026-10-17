@@ -70,12 +70,11 @@ async def get_company_context(
                 "salary_min": job.salary_min,
                 "salary_max": job.salary_max,
                 "currency": job.currency,
-                "shortlist_threshold": job.shortlist_threshold,
-                "overview": job.overview,
-                "requirements": job.requirements,
-                "preferred_qualifications": job.preferred_qualifications,
-                "benefits": job.benefits,
-                "auto_shortlist": job.auto_shortlist,
+                "category": job.category.value,
+                "employment_type": job.employment_type.value,
+                "description": job.description,
+                "must_haves": job.must_haves,
+                "nice_to_haves": job.nice_to_haves,
             }
             for job in recent_jobs
         ],
@@ -106,14 +105,12 @@ async def get_source_job_context(
         "salary_min": job.salary_min,
         "salary_max": job.salary_max,
         "currency": job.currency,
-        "shortlist_threshold": job.shortlist_threshold,
         "status": job.status.value,
-        "overview": job.overview,
-        "responsibilities": job.responsibilities,
-        "requirements": job.requirements,
-        "preferred_qualifications": job.preferred_qualifications,
-        "benefits": job.benefits,
-        "auto_shortlist": job.auto_shortlist,
+        "category": job.category.value,
+        "employment_type": job.employment_type.value,
+        "description": job.description,
+        "must_haves": job.must_haves,
+        "nice_to_haves": job.nice_to_haves,
     }
 
 

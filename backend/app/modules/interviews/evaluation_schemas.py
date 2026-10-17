@@ -147,7 +147,7 @@ class BatchTranscribeCandidateResponse(BaseSchema):
     application_id: UUID
     job_id: UUID
     candidate_name: str
-    candidate_email: str
+    candidate_email: str | None = None
     latest_recording_id: UUID | None = None
     latest_recording_duration_seconds: int | None = None
     latest_recording_status: str | None = None

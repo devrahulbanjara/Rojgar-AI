@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.shared.enums import JobStatus, LocationType
+from app.shared.enums import EmploymentType, JobCategory, JobStatus, LocationType
 
 
 class SalaryEvidence(BaseModel):
@@ -37,19 +37,17 @@ class JobDraft(BaseModel):
     title: str = Field(default="", max_length=255)
     location: str | None
     location_type: LocationType
+    category: JobCategory = JobCategory.other
+    employment_type: EmploymentType = EmploymentType.full_time
     salary_min: int | None
     salary_max: int | None
     currency: str | None = Field(max_length=10)
     status: JobStatus
-    shortlist_threshold: int = Field(default=70, ge=0, le=100)
-    required_years_of_experience: int | None = None
 
-    overview: str = Field(default="", max_length=5000)
-    responsibilities: list[str] = Field(max_length=50)
-    requirements: list[str] = Field(max_length=50)
-    preferred_qualifications: list[str] = Field(max_length=30)
-    benefits: list[str] = Field(max_length=30)
-    auto_shortlist: bool = Field(default=False)
+    # Markdown job description (what the job is, the work, what it offers).
+    description: str = Field(default="", max_length=20000)
+    must_haves: list[str] = Field(max_length=6)
+    nice_to_haves: list[str] = Field(max_length=6)
 
     assumptions: list[str]
     missing_fields: list[str]
@@ -57,13 +55,7 @@ class JobDraft(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    @field_validator(
-        "responsibilities",
-        "requirements",
-        "preferred_qualifications",
-        "benefits",
-        mode="before",
-    )
+    @field_validator("must_haves", "nice_to_haves", mode="before")
     @classmethod
     def normalize_lists(cls, value: Any) -> list[str]:
         """Normalize list-like draft fields into trimmed string lists."""

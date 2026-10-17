@@ -95,13 +95,13 @@ async def get_job_by_id_for_company(
 
 
 def effective_job_status(job: Job) -> str:
-    """Return the effective job status, accounting for expiry."""
+    """Return the effective job status, accounting for the closing time."""
     if (
-        job.status == JobStatus.active
-        and job.expires_at is not None
-        and job.expires_at <= utcnow()
+        job.status == JobStatus.open
+        and job.closes_at is not None
+        and job.closes_at <= utcnow()
     ):
-        return JobStatus.expired.value
+        return JobStatus.closed.value
     return job.status.value
 
 
@@ -152,7 +152,7 @@ def serialize_job_option(job: Job) -> dict[str, Any]:
         "salary_min": job.salary_min,
         "salary_max": job.salary_max,
         "currency": job.currency,
-        "expires_at": job.expires_at.isoformat() if job.expires_at else None,
+        "closes_at": job.closes_at.isoformat() if job.closes_at else None,
     }
 
 
@@ -167,7 +167,7 @@ def serialize_job_list_item(job: Job) -> CompanyJobData:
         salary_min=job.salary_min,
         salary_max=job.salary_max,
         currency=job.currency,
-        expires_at=job.expires_at,
+        closes_at=job.closes_at,
         created_at=job.created_at,
         updated_at=job.updated_at,
     )
@@ -175,22 +175,22 @@ def serialize_job_list_item(job: Job) -> CompanyJobData:
 
 def build_job_counts(jobs: list[Job]) -> dict[str, int]:
     """Count company jobs by effective status."""
-    active = 0
-    expired = 0
+    open_ = 0
+    closed = 0
     draft = 0
 
     for job in jobs:
         current_status = effective_job_status(job)
-        if current_status == JobStatus.active.value:
-            active += 1
-        elif current_status == JobStatus.expired.value:
-            expired += 1
+        if current_status == JobStatus.open.value:
+            open_ += 1
+        elif current_status == JobStatus.closed.value:
+            closed += 1
         elif current_status == JobStatus.draft.value:
             draft += 1
 
     return {
-        "active": active,
-        "expired": expired,
+        "open": open_,
+        "closed": closed,
         "draft": draft,
         "total": len(jobs),
     }

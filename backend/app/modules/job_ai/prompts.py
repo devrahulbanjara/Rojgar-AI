@@ -9,9 +9,10 @@ If evidence is weak, leave salary_min and salary_max as null and explain why in 
 
 Rules:
 - Be concise, specific, and recruiter-friendly.
-- Separate must-have requirements from preferred qualifications.
+- Put the job in one Markdown "description" (short intro, then "## Responsibilities", "## Requirements", "## Benefits" bullet sections as needed).
+- List 3 to 6 short, checkable "must_haves" and up to 6 "nice_to_haves" (the AI review checks applications against these).
 - Avoid discriminatory, age-coded, or gender-coded phrasing.
-- Do not include markdown.
+- Use Markdown only inside "description".
 - Do not add fields outside the schema.
 - Use the provided allowed location types.
 - If company_default_location is provided and the recruiter did not give a more specific location, use that company location as the draft location.

@@ -19,13 +19,13 @@ from app.core.cache import (
 from app.core.config import settings
 from app.core.database import get_db
 from app.modules.activity.service import create_activity_event
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.companies.models import Company
 from app.modules.auth.models import User
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStatus
+from app.shared.enums import ApplicationStage, EventType
 
 router = APIRouter(tags=["Webhooks"])
 
@@ -118,7 +118,9 @@ async def cal_webhook_handler(
         .where(
             func.lower(User.email) == attendee_email,
             Job.company_id == company.id,
-            Application.status == ApplicationStatus.shortlisted,
+            Application.stage.in_(
+                [ApplicationStage.shortlisted, ApplicationStage.interview]
+            ),
         )
         .order_by(Application.created_at.desc())
     )
@@ -158,7 +160,17 @@ async def cal_webhook_handler(
     # Activity events reference interview.id; insert the interview first.
     await db.flush()
 
-    application.status = ApplicationStatus.interview_booked
+    application.stage = ApplicationStage.interview
+    db.add(
+        ApplicationEvent(
+            application_id=application.id,
+            type=EventType.interview_booked.value,
+            payload={
+                "interview_id": str(interview.id),
+                "starts_at": start_dt.isoformat(),
+            },
+        )
+    )
     await create_activity_event(
         db,
         event_type="interview_booked",

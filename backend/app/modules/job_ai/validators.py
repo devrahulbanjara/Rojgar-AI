@@ -49,11 +49,11 @@ def validate_job_draft(draft: JobDraft) -> list[str]:
     if not draft.title.strip():
         errors.append("Title is required")
 
-    if len(draft.responsibilities) == 0:
-        errors.append("At least one responsibility is required")
+    if not draft.description.strip():
+        errors.append("A description is required")
 
-    if len(draft.requirements) == 0:
-        errors.append("At least one requirement is required")
+    if len(draft.must_haves) == 0:
+        errors.append("At least one must-have is required")
 
     if draft.salary_min is not None and draft.salary_min < 0:
         errors.append("salary_min must be >= 0")
@@ -68,22 +68,14 @@ def validate_job_draft(draft: JobDraft) -> list[str]:
     ):
         errors.append("salary_min cannot exceed salary_max")
 
-    all_bullets = (
-        draft.responsibilities
-        + draft.requirements
-        + draft.preferred_qualifications
-        + draft.benefits
-    )
+    all_bullets = draft.must_haves + draft.nice_to_haves
     counts = Counter(item.strip().lower() for item in all_bullets if item.strip())
     duplicates = [text for text, count in counts.items() if count > 1]
     if duplicates:
         errors.append(f"Duplicate bullet points detected: {duplicates[:5]}")
 
     haystack = " ".join(
-        [draft.title, draft.overview]
-        + draft.responsibilities
-        + draft.requirements
-        + draft.preferred_qualifications
+        [draft.title, draft.description] + draft.must_haves + draft.nice_to_haves
     ).lower()
     for phrase in BANNED_PHRASES:
         if phrase in haystack:

@@ -7,7 +7,9 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.modules.interviews.models import Interview
-from app.shared.enums import ApplicationStatus
+from app.modules.applications.models import ApplicationEvent
+from app.modules.auth.models import User
+from app.shared.enums import ApplicationStage
 from tests.integration.helpers import (
     make_active_job,
     make_application,
@@ -49,7 +51,7 @@ async def _shortlisted(db):
     job = await make_active_job(db, company.id)
     user, resume = await make_candidate_with_resume(db, email="cal_cand@example.com")
     application = await make_application(
-        db, user.id, job.id, resume.id, status=ApplicationStatus.shortlisted
+        db, user.id, job.id, resume.id, ApplicationStage.shortlisted
     )
     await db.flush()
     return application
@@ -102,7 +104,14 @@ class TestCalWebhookSignature:
 
         assert resp.status_code == 200
         await db.refresh(application)
-        assert application.status == ApplicationStatus.interview_booked
+        assert application.stage == ApplicationStage.interview
+        booked = await db.scalar(
+            select(ApplicationEvent).where(
+                ApplicationEvent.application_id == application.id,
+                ApplicationEvent.type == "interview_booked",
+            )
+        )
+        assert booked is not None and booked.payload["interview_id"]
 
     async def test_misses_are_indistinguishable(self, client, db, cal_secret):
         await _shortlisted(db)
@@ -134,3 +143,41 @@ class TestCalWebhookSignature:
         )
 
         assert resp.status_code == 503
+
+
+async def test_mark_complete_writes_one_interview_done_event(client, db, cal_secret):
+    from tests.integration.helpers import auth_headers
+
+    application = await _shortlisted(db)
+    body = _payload("hiring@acme-hiring.com", "cal_cand@example.com", uid="done-1")
+    resp = await client.post(
+        URL,
+        content=body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Cal-Signature-256": _sign(body),
+        },
+    )
+    assert resp.status_code == 200
+    interview = await db.scalar(
+        select(Interview).where(Interview.application_id == application.id)
+    )
+    admin = await db.scalar(select(User).where(User.email == "cal_admin@example.com"))
+    first = await client.post(
+        f"/interviews/{interview.id}/complete", headers=auth_headers(admin.id)
+    )
+    assert first.status_code == 200, first.text
+    assert first.json()["data"]["stage"] == "interview"
+    again = await client.post(
+        f"/interviews/{interview.id}/complete", headers=auth_headers(admin.id)
+    )
+    assert again.status_code == 409
+    done = (
+        await db.scalars(
+            select(ApplicationEvent).where(
+                ApplicationEvent.application_id == application.id,
+                ApplicationEvent.type == "interview_done",
+            )
+        )
+    ).all()
+    assert len(done) == 1

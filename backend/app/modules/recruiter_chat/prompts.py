@@ -19,7 +19,7 @@ INTENT TAXONOMY (purpose-first):
 2. job_query
    Purpose: list, count, or filter the recruiter's OWN posted jobs.
    Signals: questions about company's job board state, status mix, openings, jobs that
-   are draft/active/expired, "what jobs", "how many openings", "any drafts".
+   are draft/open/closed, "what jobs", "how many openings", "any drafts".
    NOT this: viewing one specific job's full description → job_description.
 
 3. job_description
@@ -43,8 +43,8 @@ INTENT TAXONOMY (purpose-first):
 6. candidate_list
    Purpose: enumerate / display the company's candidates as a plain list,
    WITHOUT a skill/role/experience predicate. May optionally filter by
-   application status (applied, shortlisted, rejected, interview_booked,
-   interview_completed, offer, offer_accepted, offer_declined).
+   application stage (new, shortlisted, interview, offer, hired, rejected,
+   withdrawn).
    Signals: imperatives like "list", "show me", "display", "give me", "see
    everyone", "show all", "everyone who applied", "list rejected ones",
    "show me the shortlisted candidates".
@@ -96,7 +96,7 @@ DISAMBIGUATION MATRIX (frequent confusable pairs):
     "show shortlisted", "list rejected")
   * Includes a skill/role/seniority/attribute PREDICATE → candidate_search
     ("how many React devs", "find senior backend engineers", "anyone with ML")
-  * A status filter alone (applied/shortlisted/rejected/...) does NOT count as
+  * A status filter alone (new/shortlisted/rejected/...) does NOT count as
     a semantic predicate: still candidate_list, not candidate_search.
 
 - candidate_search vs candidate_followup → context test:
@@ -122,7 +122,7 @@ OUTPUT SCHEMA (JSON only, no prose):
   "target": "jobs" | "candidates" | "external" | "writing" | "none",
   "requires_predicate": true | false,
   "wants_list": true | false,
-  "status_filter": "applied" | "shortlisted" | "rejected" | "interview_booked" | "interview_completed" | "offer" | "offer_accepted" | "offer_declined" | null,
+  "status_filter": "new" | "shortlisted" | "interview" | "offer" | "hired" | "rejected" | "withdrawn" | null,
   "reason": "<one short clause explaining the decision>"
 }
 
@@ -197,17 +197,14 @@ location_type
 salary_min
 salary_max
 currency
-expires_at
-overview
-responsibilities
-requirements
-preferred_qualifications
-benefits
-auto_shortlist
-shortlist_threshold
-required_years_of_experience
+closes_at
+description
+must_haves
+nice_to_haves
+category
+employment_type
 
-Do NOT propose changes to the job's lifecycle status (draft/active/expired).
+Do NOT propose changes to the job's lifecycle status (draft/open/closed).
 Status changes must be done from the dashboard's dedicated lifecycle controls, not chat.
 
 Rules:
