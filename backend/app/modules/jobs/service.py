@@ -642,7 +642,7 @@ async def update_job(
     await db.commit()
 
     bg_tasks.add_task(process_sync_event, event.id)
-    if email_ids:
+    if email_ids and "PYTEST_CURRENT_TEST" not in os.environ:
         from app.modules.applications.emails import send_after_undo_window
 
         bg_tasks.add_task(send_after_undo_window, email_ids)

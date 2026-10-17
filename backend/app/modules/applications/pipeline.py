@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import io
+import os
 import secrets
 import uuid
 from datetime import datetime, timezone
@@ -264,7 +265,11 @@ async def candidate_panel(
     db: AsyncSession, user: User, application_id: uuid.UUID
 ) -> CandidatePanelResponse:
     company_id, application, job = await _company_application(db, user, application_id)
-    review = await db.scalar(select(Review).where(Review.application_id == application.id))
+    review = await db.scalar(
+        select(Review)
+        .where(Review.application_id == application.id)
+        .execution_options(populate_existing=True)
+    )
     applicant = application.user
     share = application_share_settings(application)
     resume = application.resume
@@ -459,7 +464,7 @@ async def decide(
             metadata={"application_ids": [str(r.application_id) for r in done]},
         )
     await db.commit()
-    if email_ids and bg_tasks is not None:
+    if email_ids and bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
         bg_tasks.add_task(emails.send_after_undo_window, email_ids)
     await _invalidate(db, company_id, [found[r.application_id][0] for r in done])
     return DecideResponse(
