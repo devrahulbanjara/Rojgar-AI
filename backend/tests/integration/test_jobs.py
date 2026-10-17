@@ -317,3 +317,136 @@ class TestJobV2Fields:
         assert data["category"] == {"value": "healthcare", "label": "Healthcare"}
         assert data["employment_type"] == "part_time"
         assert "knockout_answer" not in data["questions"][0]
+
+
+def _questions(n: int) -> list[dict]:
+    return [{"label": f"Question {i + 1}?", "type": "short_text"} for i in range(n)]
+
+
+class TestCvRequired:
+    async def test_default_follows_the_category(self, client, db):
+        admin, _ = await make_recruiter_admin(db, email="cvdefault@test.com")
+        expected = {
+            "banking_finance": True,
+            "healthcare": True,
+            "education": True,
+            "it_software": True,
+            "ngo_ingo": True,
+            "government_public": True,
+            "office_admin": True,
+            "hospitality_tourism": False,
+            "sales_retail": False,
+            "manufacturing": False,
+            "logistics_driving": False,
+            "construction_engineering": False,
+            "other": False,
+        }
+        for category, cv_required in expected.items():
+            resp = await client.post(
+                "/jobs/",
+                json={"title": "Job", "category": category},
+                headers=auth_headers(admin.id),
+            )
+            assert resp.status_code == 201, resp.text
+            assert resp.json()["data"]["cv_required"] is cv_required, category
+        resp = await client.post(
+            "/jobs/", json={"title": "No category"}, headers=auth_headers(admin.id)
+        )
+        assert resp.json()["data"]["cv_required"] is False
+
+    async def test_explicit_value_wins_and_can_be_changed(self, client, db):
+        admin, _ = await make_recruiter_admin(db, email="cvexplicit@test.com")
+        resp = await client.post(
+            "/jobs/",
+            json={"title": "Cook", "category": "it_software", "cv_required": False},
+            headers=auth_headers(admin.id),
+        )
+        job = resp.json()["data"]
+        assert job["cv_required"] is False
+        resp = await client.patch(
+            f"/jobs/{job['id']}",
+            json={"cv_required": True},
+            headers=auth_headers(admin.id),
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["data"]["cv_required"] is True
+        # Changing the category later keeps the team's choice.
+        resp = await client.patch(
+            f"/jobs/{job['id']}",
+            json={"category": "logistics_driving"},
+            headers=auth_headers(admin.id),
+        )
+        assert resp.json()["data"]["cv_required"] is True
+
+    async def test_five_questions_only_without_a_cv(self, client, db):
+        admin, _ = await make_recruiter_admin(db, email="cvquestions@test.com")
+        headers = auth_headers(admin.id)
+        ok = await client.post(
+            "/jobs/",
+            json={"title": "Driver", "cv_required": False, "questions": _questions(5)},
+            headers=headers,
+        )
+        assert ok.status_code == 201, ok.text
+        assert len(ok.json()["data"]["questions"]) == 5
+        too_many = await client.post(
+            "/jobs/",
+            json={"title": "Driver", "cv_required": False, "questions": _questions(6)},
+            headers=headers,
+        )
+        assert too_many.status_code == 400
+        with_cv = await client.post(
+            "/jobs/",
+            json={
+                "title": "Accountant",
+                "cv_required": True,
+                "questions": _questions(4),
+            },
+            headers=headers,
+        )
+        assert with_cv.status_code == 400
+        by_default = await client.post(
+            "/jobs/",
+            json={
+                "title": "Teller",
+                "category": "banking_finance",
+                "questions": _questions(4),
+            },
+            headers=headers,
+        )
+        assert by_default.status_code == 400
+
+    async def test_patch_checks_against_the_stored_job(self, client, db):
+        admin, _ = await make_recruiter_admin(db, email="cvpatch@test.com")
+        headers = auth_headers(admin.id)
+        job_id = (
+            await client.post(
+                "/jobs/",
+                json={
+                    "title": "Driver",
+                    "cv_required": False,
+                    "questions": _questions(5),
+                },
+                headers=headers,
+            )
+        ).json()["data"]["id"]
+        on = await client.patch(
+            f"/jobs/{job_id}", json={"cv_required": True}, headers=headers
+        )
+        assert on.status_code == 400
+        assert "at most 3 questions" in on.json()["message"]
+        both = await client.patch(
+            f"/jobs/{job_id}",
+            json={"cv_required": True, "questions": _questions(3)},
+            headers=headers,
+        )
+        assert both.status_code == 200, both.text
+
+        cv_job = (
+            await client.post(
+                "/jobs/", json={"title": "Clerk", "cv_required": True}, headers=headers
+            )
+        ).json()["data"]["id"]
+        more = await client.patch(
+            f"/jobs/{cv_job}", json={"questions": _questions(4)}, headers=headers
+        )
+        assert more.status_code == 400

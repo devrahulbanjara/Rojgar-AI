@@ -70,6 +70,8 @@ class PublicJob(PublicJobSummary):
     must_haves: list[str] = Field(default_factory=list)
     nice_to_haves: list[str] = Field(default_factory=list)
     questions: list[PublicQuestion] = Field(default_factory=list)
+    # Applying needs a CV (a PDF or a photo of a paper CV).
+    cv_required: bool = False
     # Name of the person whose share link was opened (?ref=), for "Shared by …".
     shared_by: str | None = None
 

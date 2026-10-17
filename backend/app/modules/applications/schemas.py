@@ -126,6 +126,8 @@ class PipelineItem(BaseSchema):
     # pending | done | failed | needs_person
     review_state: str
     flagged: bool = False
+    # False when the person applied with answers only.
+    has_cv: bool = False
     stage: ApplicationStage
     source: str
     referred_by: ReferrerRef | None = None

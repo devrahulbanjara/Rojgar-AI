@@ -35,6 +35,7 @@ from app.modules.jobs.schemas import (
     JobUpdate,
     SuggestMustHavesRequest,
     SuggestMustHavesResponse,
+    check_question_count,
 )
 from app.shared.enums import (
     ApplicationStage,
@@ -151,6 +152,7 @@ def _job_detail_response_from_row(
             "must_haves": job.must_haves or [],
             "nice_to_haves": job.nice_to_haves or [],
             "questions": job.questions or [],
+            "cv_required": job.cv_required,
             "applications_count": int(applications_count or 0),
             "created_at": job.created_at,
             "updated_at": job.updated_at,
@@ -198,6 +200,7 @@ async def create_job(
         must_haves=payload.must_haves or [],
         nice_to_haves=payload.nice_to_haves or [],
         questions=[q.model_dump(mode="json") for q in payload.questions or []],
+        cv_required=payload.cv_required,
     )
 
     if job.status == JobStatus.open and job.closes_at and job.closes_at <= _utcnow():
@@ -362,6 +365,15 @@ async def update_job(
         await on_job_opened(db, company_id, job.id)
 
     closed_reason = update_data.pop("closed_reason", None)
+    if update_data.get("cv_required") is None:
+        update_data.pop("cv_required", None)
+    try:
+        check_question_count(
+            len(payload.questions if "questions" in update_data else job.questions),
+            update_data.get("cv_required", job.cv_required),
+        )
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if "questions" in update_data:
         update_data["questions"] = [
             q.model_dump(mode="json") for q in payload.questions or []

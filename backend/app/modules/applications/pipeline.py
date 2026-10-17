@@ -223,6 +223,7 @@ async def job_pipeline(
                 fit=visible_fit(review),
                 review_state=review.state if review else ReviewState.pending.value,
                 flagged=flagged,
+                has_cv=application.resume_id is not None,
                 stage=application.stage,
                 source=application.source,
                 referred_by=_referrer_ref(referrer),

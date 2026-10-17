@@ -324,6 +324,20 @@ class TestQuickAddReferrersExport:
         )
         assert dup.status_code == 409
 
+    async def test_quick_add_needs_no_cv_even_when_the_job_does(self, client, db):
+        admin, company = await make_recruiter_admin(db, email="admin_qacv@t.com")
+        job = await make_active_job(db, company.id, cv_required=True)
+        resp = await client.post(
+            f"/recruiter/v2/jobs/{job.id}/candidates",
+            data={"full_name": "Maya Rai", "phone": "9841111222", "source": "walk_in"},
+            headers=auth_headers(admin.id),
+        )
+        assert resp.status_code == 201, resp.text
+        pipeline = await client.get(
+            f"/recruiter/v2/jobs/{job.id}/pipeline", headers=auth_headers(admin.id)
+        )
+        assert pipeline.json()["data"]["items"][0]["has_cv"] is False
+
     async def test_referrer_links_and_export(self, client, db):
         admin, job, apps = await _job_with_apps(db, "ref", 2)
         created = await client.post(

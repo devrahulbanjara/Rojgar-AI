@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -20,6 +21,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.modules.companies.models import Company
 from app.shared.enums import (
+    CV_REQUIRED_CATEGORIES,
     EmploymentType,
     JobCategory,
     JobStatus,
@@ -90,7 +92,13 @@ class Job(Base):
     nice_to_haves: Mapped[list[str]] = mapped_column(
         ARRAY(String), nullable=False, default=list, server_default="{}"
     )
-    # Up to 3: [{"label": str, "type": "short_text" | "yes_no", "required": bool}]
+    # Applying needs a CV file. Left unset, it follows the category
+    # (CV_REQUIRED_CATEGORIES). Team quick add never needs one.
+    cv_required: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false"
+    )
+    # Up to 3 (5 when no CV is required):
+    # [{"label": str, "type": "short_text" | "yes_no", "required": bool}]
     questions: Mapped[list[dict]] = mapped_column(
         JSONB, nullable=False, default=list, server_default="[]"
     )
@@ -143,6 +151,14 @@ class JobSyncEvent(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+@event.listens_for(Job, "before_insert")
+def _default_cv_required(_mapper, _connection, target: Job) -> None:
+    if target.cv_required is None:
+        target.cv_required = (
+            target.category or JobCategory.other
+        ) in CV_REQUIRED_CATEGORIES
 
 
 @event.listens_for(Job, "before_insert")

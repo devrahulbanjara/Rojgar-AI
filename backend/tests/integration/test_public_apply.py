@@ -20,7 +20,7 @@ from app.modules.jobs.models import JobReferrer
 from app.modules.public.models import JobSuggestion, MagicLinkToken
 from app.modules.public.tokens import hash_magic_token
 from app.modules.resumes.models import Resume
-from app.shared.enums import JobStatus
+from app.shared.enums import JobCategory, JobStatus
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
@@ -453,6 +453,47 @@ class TestGuestApply:
         )
         assert application.source == "referral"
         assert application.referrer_id == referrer.id
+
+
+class TestCvRequired:
+    async def test_job_page_says_whether_a_cv_is_needed(self, client, db):
+        _, company = await make_recruiter_admin(db, email="cvr0@test.com")
+        office = await make_active_job(
+            db, company.id, category=JobCategory.office_admin
+        )
+        driver = await make_active_job(
+            db, company.id, category=JobCategory.logistics_driving
+        )
+        page = (await client.get(f"/public/jobs/{office.slug}")).json()["data"]
+        assert page["cv_required"] is True
+        page = (await client.get(f"/public/jobs/{driver.slug}")).json()["data"]
+        assert page["cv_required"] is False
+
+    async def test_no_cv_is_rejected_when_the_job_needs_one(self, client, db, outbox):
+        _, company = await make_recruiter_admin(db, email="cvr1@test.com")
+        job = await make_active_job(db, company.id, cv_required=True)
+        resp = await _apply(client, job.slug, cv=None)
+        assert resp.status_code == 422
+        body = resp.json()
+        assert body["message"] == (
+            "This job needs a CV. A clear photo of a paper CV is fine."
+        )
+        assert body["errors"][0]["code"] == "cv_required"
+        count = await db.scalar(
+            select(func.count(Application.id)).where(Application.job_id == job.id)
+        )
+        assert count == 0 and outbox == []
+
+        photo = await _apply(client, job.slug, cv=("cv.png", PNG, "image/png"))
+        assert photo.status_code == 201, photo.text
+
+    async def test_no_cv_is_fine_when_the_job_does_not_need_one(
+        self, client, db, outbox
+    ):
+        _, company = await make_recruiter_admin(db, email="cvr2@test.com")
+        job = await make_active_job(db, company.id, cv_required=False)
+        resp = await _apply(client, job.slug, cv=None)
+        assert resp.status_code == 201, resp.text
 
 
 class TestStatusAndWithdraw:

@@ -83,6 +83,7 @@ from app.shared.normalize import normalize_mobile
 
 TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 SUGGESTIONS_PER_REFERRER_PER_DAY = 20
+CV_REQUIRED_MESSAGE = "This job needs a CV. A clear photo of a paper CV is fine."
 
 _WITHDRAWABLE = {
     ApplicationStage.new,
@@ -187,6 +188,7 @@ async def get_public_job(
         must_haves=job.must_haves or [],
         nice_to_haves=job.nice_to_haves or [],
         questions=[PublicQuestion.model_validate(q) for q in job.questions or []],
+        cv_required=job.cv_required,
         shared_by=shared_by,
     )
 
@@ -394,7 +396,8 @@ async def submit_guest_application(
     client_ip: str,
     bg_tasks: BackgroundTasks,
 ) -> GuestApplicationCreated:
-    """Apply without an account: name + (email or phone) + answers, CV optional."""
+    """Apply without an account: name + mobile + answers, and a CV when the
+    job asks for one."""
     if not consent:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -416,6 +419,11 @@ async def submit_guest_application(
 
     await _verify_turnstile(turnstile_token, client_ip)
     job = await _load_open_job(db, slug)
+    if job.cv_required and cv is None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={"code": "cv_required", "message": CV_REQUIRED_MESSAGE},
+        )
     answers = parse_answers(answers_json, list(job.questions or []))
     cv_file = await cv_text.read_cv_upload(cv) if cv is not None else None
 

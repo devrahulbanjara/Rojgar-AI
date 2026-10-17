@@ -7,6 +7,7 @@ from pydantic import Field, field_validator, model_validator
 from app.core.schemas import BaseSchema
 from app.modules.jobs.protected_grounds import CriterionWarning
 from app.shared.enums import (
+    CV_REQUIRED_CATEGORIES,
     EmploymentType,
     JobCategory,
     JobStatus,
@@ -15,7 +16,23 @@ from app.shared.enums import (
 )
 
 MAX_CRITERIA = 6
+# A CV says most of what a business needs; without one, a few more questions.
 MAX_QUESTIONS = 3
+MAX_QUESTIONS_NO_CV = 5
+
+
+def max_questions(cv_required: bool) -> int:
+    return MAX_QUESTIONS if cv_required else MAX_QUESTIONS_NO_CV
+
+
+def check_question_count(count: int, cv_required: bool) -> None:
+    limit = max_questions(cv_required)
+    if count > limit:
+        raise ValueError(
+            f"at most {limit} questions when a CV is required"
+            if cv_required
+            else f"at most {limit} questions"
+        )
 
 
 class JobQuestion(BaseSchema):
@@ -61,7 +78,11 @@ class JobBase(BaseSchema):
     description: str | None = Field(default=None, max_length=20000)
     must_haves: list[str] | None = None
     nice_to_haves: list[str] | None = None
-    questions: list[JobQuestion] | None = Field(default=None, max_length=MAX_QUESTIONS)
+    questions: list[JobQuestion] | None = Field(
+        default=None, max_length=MAX_QUESTIONS_NO_CV
+    )
+    # None on create: follows the category (CV_REQUIRED_CATEGORIES).
+    cv_required: bool | None = None
 
     _criteria = field_validator("must_haves", "nice_to_haves")(
         lambda cls, v: _clean_criteria(v)
@@ -91,6 +112,13 @@ class JobCreate(JobBase):
     currency: str = Field(default="NPR", max_length=10)  # type: ignore[assignment]
     status: Literal[JobStatus.draft, JobStatus.open] = JobStatus.draft  # type: ignore[assignment]
 
+    @model_validator(mode="after")
+    def _cv_default_and_question_count(self) -> "JobCreate":
+        if self.cv_required is None:
+            self.cv_required = self.category in CV_REQUIRED_CATEGORIES
+        check_question_count(len(self.questions or []), self.cv_required)
+        return self
+
 
 class JobUpdate(JobBase):
     """Only provided fields change. Closing: status=closed + closed_reason
@@ -102,6 +130,9 @@ class JobUpdate(JobBase):
     def _closing_needs_reason(self) -> "JobUpdate":
         if self.status == JobStatus.closed and self.closed_reason is None:
             raise ValueError("closing a job needs closed_reason: hired or cancelled")
+        # Only what's sent here; the service also checks against the stored job.
+        if self.questions is not None and self.cv_required is not None:
+            check_question_count(len(self.questions), self.cv_required)
         return self
 
 
@@ -159,6 +190,7 @@ class JobDetailResponse(BaseSchema):
     must_haves: list[str] = Field(default_factory=list)
     nice_to_haves: list[str] = Field(default_factory=list)
     questions: list[JobQuestion] = Field(default_factory=list)
+    cv_required: bool = False
     applications_count: int = 0
     # Company members only: applications per source.
     source_counts: dict[str, int] | None = None

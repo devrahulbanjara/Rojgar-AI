@@ -46,6 +46,20 @@ JOB_CATEGORY_LABELS: dict[JobCategory, str] = {
     JobCategory.other: "Other",
 }
 
+# Jobs in these categories ask for a CV unless the team turns it off. Drivers,
+# cooks, cleaners, shop and factory staff are often hired without one.
+CV_REQUIRED_CATEGORIES = frozenset(
+    {
+        JobCategory.banking_finance,
+        JobCategory.healthcare,
+        JobCategory.education,
+        JobCategory.it_software,
+        JobCategory.ngo_ingo,
+        JobCategory.government_public,
+        JobCategory.office_admin,
+    }
+)
+
 
 class JobStatus(str, Enum):
     draft = "draft"
