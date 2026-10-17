@@ -15,7 +15,6 @@ from app.core.cache import (
 )
 from app.core.schemas import BaseSchema
 from app.core.swr_cache import swr_get, swr_set
-from app.infrastructures.qdrant.service import qdrant_service
 from app.modules.applications.models import Application, ApplicationSyncEvent
 from app.modules.applications.sync import (
     process_sync_event as process_application_sync_event,
@@ -64,14 +63,6 @@ def _effective_job_status(job: Job) -> JobStatus:
 
 def _warnings_for(job: Job) -> list[CriterionWarning]:
     return check_protected_grounds(job.must_haves, job.nice_to_haves, job.questions)
-
-
-async def _compute_and_store_jd_embedding(job: Job) -> None:
-    """Compute Gemini embedding for job description text and store on the row."""
-    from app.infrastructures.ai.service import ai_service
-
-    text = qdrant_service._build_job_document(job)
-    job.jd_embedding = await ai_service.get_embeddings(text)
 
 
 async def close_due_jobs(db: AsyncSession) -> int:
@@ -217,7 +208,6 @@ async def create_job(
 
     if job.status == JobStatus.open:
         await ensure_can_open_job(db, company_id)
-        await _compute_and_store_jd_embedding(job)
 
     db.add(job)
     await db.flush()  # Generates job.id without committing yet
@@ -399,8 +389,10 @@ async def update_job(
         job.closed_reason = closed_reason
         job.closed_at = _utcnow()
 
-    if job.status == JobStatus.open and _JD_FIELDS & set(update_data):
-        await _compute_and_store_jd_embedding(job)
+    if _JD_FIELDS & set(update_data):
+        # Recomputed by the next review (ml_rank.ensure_embeddings), outside
+        # this request and its transaction.
+        job.jd_embedding = None
 
     email_ids: list[uuid.UUID] = []
     closed_out = 0

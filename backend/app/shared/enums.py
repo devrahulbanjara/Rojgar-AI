@@ -119,6 +119,8 @@ class ReviewState(str, Enum):
     done = "done"
     failed = "failed"
     needs_person = "needs_person"
+    # The business has no reviews left this month; runs when it gets more.
+    waiting_for_quota = "waiting_for_quota"
 
 
 class Fit(str, Enum):

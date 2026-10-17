@@ -138,6 +138,8 @@ class JobPipelineResponse(BaseSchema):
     counts: StageCounts
     # Applications whose review is still running ("2 reviewed · 1 reviewing").
     reviewing: int = 0
+    # Reviews waiting because the business has no reviews left this month.
+    waiting_for_quota: int = 0
     reviewed: int = 0
     items: list[PipelineItem] = Field(default_factory=list)
 

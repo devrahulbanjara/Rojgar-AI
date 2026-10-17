@@ -223,8 +223,14 @@ async def job_pipeline(
         job=PipelineJob.model_validate(job),
         counts=counts,
         reviewing=int(by_state.get(ReviewState.pending.value, 0)),
+        waiting_for_quota=int(by_state.get(ReviewState.waiting_for_quota.value, 0)),
         reviewed=int(
-            sum(n for s, n in by_state.items() if s != ReviewState.pending.value)
+            sum(
+                n
+                for s, n in by_state.items()
+                if s
+                not in (ReviewState.pending.value, ReviewState.waiting_for_quota.value)
+            )
         ),
         items=items,
     )

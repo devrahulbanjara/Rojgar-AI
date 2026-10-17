@@ -13,6 +13,11 @@ when the job closes. Triage keeps the cost per applicant low:
 Every quote is verified against the text; fit and rank are computed in code
 (rubric.py). The review never changes an application's stage.
 
+Each review that needs the model counts against the business's reviews
+(entitlements.claim_review: job pass, then the monthly allowance, then extra
+reviews). With none left the review waits (`waiting_for_quota`) and runs once
+the business has reviews again (`resume_waiting_reviews`).
+
 Idempotent (a finished review is never redone unless a person asks) and safe
 to run twice at once (attempts are claimed with compare-and-set). Failures are
 retried up to `review_max_attempts`, then the review goes to a person.
@@ -31,8 +36,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, release_connection
 from app.modules.applications.models import Application, ApplicationEvent, Review
+from app.modules.entitlements import service as entitlements
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
 from app.modules.review import rubric
@@ -81,6 +87,7 @@ class _RetryableError(Exception):
 @dataclass
 class _Inputs:
     application_id: uuid.UUID
+    job_id: uuid.UUID
     attempts: int
     job_title: str
     criteria: list[tuple[str, str]]
@@ -113,7 +120,7 @@ def ensure_review(db: AsyncSession, application_id: uuid.UUID) -> Review:
 
 async def _load_inputs(db: AsyncSession, application_id: uuid.UUID) -> _Inputs | None:
     """Load everything the review needs and render it to plain text."""
-    from app.modules.review.ml_rank import ml_signal
+    from app.modules.review.ml_rank import ensure_embeddings, ml_signal
 
     application = await db.scalar(
         select(Application)
@@ -150,12 +157,18 @@ async def _load_inputs(db: AsyncSession, application_id: uuid.UUID) -> _Inputs |
     )
     answers = list(application.screening_answers or [])
     try:
+        # Missing vectors (new or edited job, new CV) are filled here, with no
+        # transaction open while the embedding model runs.
+        await release_connection(db)
+        await ensure_embeddings(db, job, application)
+        await db.commit()
         tiebreak = await asyncio.to_thread(ml_signal, job, application)
     except Exception:  # noqa: BLE001 - tie-break only; never blocks a review
         logger.exception("ML tie-break failed for application {}", application_id)
         tiebreak = None
     return _Inputs(
         application_id=application_id,
+        job_id=job.id,
         attempts=review.attempts,
         job_title=job.title,
         criteria=criteria_for(job),
@@ -189,6 +202,28 @@ async def _claim(db: AsyncSession, application_id: uuid.UUID, attempts: int) -> 
     claimed = result.scalar_one_or_none() is not None
     await db.commit()
     return claimed
+
+
+def _needs_model(inputs: _Inputs) -> bool:
+    """Whether the triage will call the model (knockouts and empty
+    applications are decided in code and cost nothing)."""
+    return bool(inputs.blind_text.strip()) and not rubric.failed_knockouts(
+        inputs.questions, inputs.answers
+    )
+
+
+async def _wait_for_quota(db: AsyncSession, inputs: _Inputs) -> None:
+    """Park the review until the business has reviews; the attempt is not used."""
+    await db.execute(
+        update(Review)
+        .where(
+            Review.application_id == inputs.application_id,
+            Review.state == ReviewState.pending.value,
+        )
+        .values(state=ReviewState.waiting_for_quota.value, attempts=inputs.attempts)
+        .execution_options(synchronize_session=False)
+    )
+    await db.commit()
 
 
 async def _evaluate(
@@ -388,11 +423,13 @@ async def review_application(
     delay = settings.review_retry_delay_seconds if retry_delay is None else retry_delay
     max_attempts = max(1, settings.review_max_attempts)
 
+    quota: entitlements.ReviewClaim | None = None
     while True:
         inputs = await _load_inputs(db, application_id)
         if inputs is None:
             return None
         if inputs.attempts >= max_attempts:
+            await _release(db, inputs, quota)
             await _save(
                 db,
                 application_id,
@@ -403,6 +440,13 @@ async def review_application(
             return ReviewState.needs_person.value
         if not await _claim(db, application_id, inputs.attempts):
             return None  # another worker owns this attempt
+        if quota is None and _needs_model(inputs):
+            quota = await entitlements.claim_review(db, inputs.job_id)
+            await db.commit()
+            if quota is None:
+                await _wait_for_quota(db, inputs)
+                await _invalidate(db, application_id)
+                return ReviewState.waiting_for_quota.value
         try:
             async with _gate():
                 outcome = await _evaluate(inputs, reviewer, guardrail)
@@ -417,6 +461,7 @@ async def review_application(
             )
             if exhausted:
                 reason = FLAG_UNCHECKED if "guardrail" in str(exc) else FLAG_FAILED
+                await _release(db, inputs, quota)
                 await _save(
                     db,
                     application_id,
@@ -428,6 +473,9 @@ async def review_application(
             # Exponential backoff: provider rate limits are per minute.
             await asyncio.sleep(delay * 2**inputs.attempts)
             continue
+        if not outcome.usages:
+            # e.g. the safety check flagged the CV: the model never ran.
+            await _release(db, inputs, quota)
         model = ",".join(sorted({u.model for u in outcome.usages})) or reviewer.name
         await _save(db, application_id, outcome, model)
         await _invalidate(db, application_id)
@@ -439,6 +487,67 @@ async def review_application(
             outcome.triage,
         )
         return outcome.state
+
+
+async def _release(
+    db: AsyncSession, inputs: _Inputs, quota: entitlements.ReviewClaim | None
+) -> None:
+    """Give back a counted review that did not happen."""
+    if quota is not None:
+        await entitlements.release_review(db, inputs.job_id, quota)
+        await db.commit()
+
+
+async def resume_waiting_reviews(
+    company_id: uuid.UUID | None = None,
+    *,
+    db: AsyncSession | None = None,
+    **review_kwargs,
+) -> list[uuid.UUID]:
+    """Put reviews that waited for quota back in line and run them.
+
+    Call after a business gets reviews (pass, plan, top-up) and periodically
+    for the new month. Reviews with still no quota go back to waiting without
+    calling the model.
+    """
+    if db is None:
+        async with AsyncSessionLocal() as session:
+            return await resume_waiting_reviews(company_id, db=session, **review_kwargs)
+    stmt = (
+        update(Review)
+        .where(Review.state == ReviewState.waiting_for_quota.value)
+        .values(state=ReviewState.pending.value)
+        .returning(Review.application_id)
+        .execution_options(synchronize_session=False)
+    )
+    if company_id is not None:
+        stmt = stmt.where(
+            Review.application_id.in_(
+                select(Application.id)
+                .join(Job, Job.id == Application.job_id)
+                .where(Job.company_id == company_id)
+            )
+        )
+    ids = list((await db.execute(stmt)).scalars())
+    await db.commit()
+    for application_id in ids:
+        try:
+            await review_application(application_id, db=db, **review_kwargs)
+        except Exception:  # noqa: BLE001 - keep going through the rest
+            logger.exception("Waiting review failed for {}", application_id)
+    return ids
+
+
+async def waiting_review_loop(interval_seconds: int = 1800) -> None:
+    """Every half hour, retry reviews that waited for quota (new month, etc.)."""
+    while True:
+        await asyncio.sleep(interval_seconds)
+        try:
+            resumed = await resume_waiting_reviews()
+            if resumed:
+                logger.info("Retried {} review(s) waiting for quota.", len(resumed))
+        except Exception:  # noqa: BLE001 - the loop must keep running
+            logger.exception("Waiting review sweep failed")
 
 
 async def rereview(db: AsyncSession, application_id: uuid.UUID) -> None:

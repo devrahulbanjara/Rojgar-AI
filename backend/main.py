@@ -44,7 +44,7 @@ from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
 from app.modules.review.ml_rank import assert_model_available
-from app.modules.review.service import recover_pending_reviews
+from app.modules.review.service import recover_pending_reviews, waiting_review_loop
 
 setup_logging()
 
@@ -80,6 +80,8 @@ async def lifespan(app: FastAPI):
     daemon_task = asyncio.create_task(sync_daemon_loop())
     # interview reminders 24 h / 1 h ahead (one worker sends, DB lock)
     reminder_task = asyncio.create_task(reminder_loop())
+    # every 30 min — reviews that waited for quota (new month, top-up)
+    quota_task = asyncio.create_task(waiting_review_loop())
     # hourly — closes jobs past their closing time
     job_expiry_scheduler = create_job_expiry_scheduler()
     job_expiry_scheduler.start()
@@ -87,7 +89,7 @@ async def lifespan(app: FastAPI):
     yield
 
     job_expiry_scheduler.shutdown(wait=False)
-    for task in (daemon_task, reminder_task, startup_backlog_task):
+    for task in (daemon_task, reminder_task, quota_task, startup_backlog_task):
         task.cancel()
         try:
             await task

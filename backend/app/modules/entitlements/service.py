@@ -53,12 +53,12 @@ from app.modules.entitlements.schemas import (
     PriceItem,
 )
 from app.modules.jobs.models import Job
-from app.shared.enums import JobStatus
+from app.shared.enums import JobStatus, ReviewState
 
 # Billing months follow Nepal time.
 BILLING_TZ = ZoneInfo("Asia/Kathmandu")
 # Review.state while the company is out of reviews.
-REVIEW_WAITING_FOR_QUOTA = "waiting_for_quota"
+REVIEW_WAITING_FOR_QUOTA = ReviewState.waiting_for_quota.value
 
 ReviewClaim = Literal["pass", "plan", "extra"]
 

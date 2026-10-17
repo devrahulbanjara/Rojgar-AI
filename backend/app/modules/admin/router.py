@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, status
 
 from app.core.dependencies import DbSession, OwnerContext, PlatformAdmin, UUIDPath
 from app.core.rate_limit import RateLimit, client_ip
@@ -40,9 +40,9 @@ async def approvals(
 
 @admin.post("/businesses/{business_id}/approve", summary="Approve a business")
 async def approve(
-    business_id: UUIDPath, _: PlatformAdmin, db: DbSession
+    business_id: UUIDPath, _: PlatformAdmin, db: DbSession, bg: BackgroundTasks
 ) -> UnifiedResponse[None]:
-    await service.approve(db, business_id)
+    await service.approve(db, business_id, bg)
     return ResponseBuilder.success(message="Approved.")
 
 
@@ -51,9 +51,13 @@ async def approve(
     summary="Ask the owner for more information (SMS and email)",
 )
 async def request_info(
-    business_id: UUIDPath, payload: MessageRequest, _: PlatformAdmin, db: DbSession
+    business_id: UUIDPath,
+    payload: MessageRequest,
+    _: PlatformAdmin,
+    db: DbSession,
+    bg: BackgroundTasks,
 ) -> UnifiedResponse[None]:
-    await service.request_info(db, business_id, payload.message)
+    await service.request_info(db, business_id, payload.message, bg)
     return ResponseBuilder.success(message="Message sent.")
 
 
@@ -61,9 +65,13 @@ async def request_info(
     "/businesses/{business_id}/reject", summary="Reject a business with a reason"
 )
 async def reject(
-    business_id: UUIDPath, payload: ReasonRequest, _: PlatformAdmin, db: DbSession
+    business_id: UUIDPath,
+    payload: ReasonRequest,
+    _: PlatformAdmin,
+    db: DbSession,
+    bg: BackgroundTasks,
 ) -> UnifiedResponse[None]:
-    await service.reject(db, business_id, payload.reason)
+    await service.reject(db, business_id, payload.reason, bg)
     return ResponseBuilder.success(message="Rejected.")
 
 
@@ -84,15 +92,19 @@ async def businesses(
     summary="Suspend a business; its public pages stop showing",
 )
 async def suspend(
-    business_id: UUIDPath, payload: ReasonRequest, user: PlatformAdmin, db: DbSession
+    business_id: UUIDPath,
+    payload: ReasonRequest,
+    user: PlatformAdmin,
+    db: DbSession,
+    bg: BackgroundTasks,
 ) -> UnifiedResponse[None]:
-    await service.suspend(db, business_id, user, payload.reason)
+    await service.suspend(db, business_id, user, payload.reason, bg)
     return ResponseBuilder.success(message="Suspended.")
 
 
 @admin.post("/businesses/{business_id}/restore", summary="Lift a suspension")
 async def restore(
-    business_id: UUIDPath, _: PlatformAdmin, db: DbSession
+    business_id: UUIDPath, _: PlatformAdmin, db: DbSession, bg: BackgroundTasks
 ) -> UnifiedResponse[None]:
     await service.restore(db, business_id)
     return ResponseBuilder.success(message="Restored.")
@@ -146,8 +158,9 @@ async def mark_received(
     payload: MarkReceivedRequest,
     user: PlatformAdmin,
     db: DbSession,
+    bg: BackgroundTasks,
 ) -> UnifiedResponse[None]:
-    await service.mark_received(db, payment_id, user, payload.reference)
+    await service.mark_received(db, payment_id, user, payload.reference, bg)
     return ResponseBuilder.success(message="Marked as received.")
 
 

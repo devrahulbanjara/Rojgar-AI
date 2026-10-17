@@ -4,7 +4,7 @@ import hashlib
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,7 @@ from app.infrastructures.sms.service import send_sms
 from app.infrastructures.storage.service import storage_service
 from app.modules.admin import billing
 from app.modules.admin.models import JobReport, JobTakedown, ManualPayment
+from app.modules.review.service import resume_waiting_reviews
 from app.modules.admin.schemas import (
     ApprovalItem,
     BusinessRow,
@@ -61,16 +62,23 @@ async def _owners(db: AsyncSession, company_id: uuid.UUID) -> list[User]:
     return list(rows)
 
 
-async def _tell_owners(
-    db: AsyncSession, company: Company, sms: str, subject: str, html: str
+async def _owner_contacts(
+    db: AsyncSession, company: Company
+) -> tuple[set[str], set[str]]:
+    """The business phone plus each owner's phone, and the owners' emails."""
+    owners = await _owners(db, company.id)
+    phones = {p for p in {company.phone} | {o.phone for o in owners} if p}
+    return phones, {o.email for o in owners if o.email}
+
+
+async def _send_to_owners(
+    phones: set[str], emails: set[str], sms: str, subject: str, html: str
 ) -> None:
-    """SMS to the business phone and email to each owner who has one."""
-    phones = {company.phone} | {o.phone for o in await _owners(db, company.id)}
-    for phone in {p for p in phones if p}:
+    """Background task: runs after the response, with no transaction open."""
+    for phone in phones:
         await send_sms(phone, sms)
-    for owner in await _owners(db, company.id):
-        if owner.email:
-            await EmailService.send_generic_email(owner.email, subject, html)
+    for email in emails:
+        await EmailService.send_generic_email(email, subject, html)
 
 
 def _audit(db, *, action: str, message: str, company: Company, **extra):
@@ -132,7 +140,7 @@ def _require_status(company: Company, *allowed: BusinessStatus) -> None:
         )
 
 
-async def approve(db: AsyncSession, business_id: str) -> None:
+async def approve(db: AsyncSession, business_id: str, bg: BackgroundTasks) -> None:
     company = await _business(db, business_id)
     _require_status(company, BusinessStatus.pending, BusinessStatus.rejected)
     company.status = BusinessStatus.active
@@ -144,11 +152,13 @@ async def approve(db: AsyncSession, business_id: str) -> None:
         message=f"Approved {company.name}",
         company=company,
     )
+    phones, emails = await _owner_contacts(db, company)
     await db.commit()
     await invalidate_company_detail_caches(db, str(company.id))
-    await _tell_owners(
-        db,
-        company,
+    bg.add_task(
+        _send_to_owners,
+        phones,
+        emails,
         f"{settings.product_name}: {company.name} is approved. Your jobs can go live now.",
         f"{company.name} is approved",
         f"<p>{company.name} is approved on {settings.product_name}. "
@@ -156,7 +166,9 @@ async def approve(db: AsyncSession, business_id: str) -> None:
     )
 
 
-async def request_info(db: AsyncSession, business_id: str, message: str) -> None:
+async def request_info(
+    db: AsyncSession, business_id: str, message: str, bg: BackgroundTasks
+) -> None:
     company = await _business(db, business_id)
     _require_status(company, BusinessStatus.pending)
     company.status_reason = message
@@ -167,11 +179,13 @@ async def request_info(db: AsyncSession, business_id: str, message: str) -> None
         company=company,
         reason=message,
     )
+    phones, emails = await _owner_contacts(db, company)
     await db.commit()
     await invalidate_company_detail_caches(db, str(company.id))
-    await _tell_owners(
-        db,
-        company,
+    bg.add_task(
+        _send_to_owners,
+        phones,
+        emails,
         f"{settings.product_name}: we need a little more to approve {company.name}. "
         f"{message}",
         f"One more step to approve {company.name}",
@@ -180,7 +194,9 @@ async def request_info(db: AsyncSession, business_id: str, message: str) -> None
     )
 
 
-async def reject(db: AsyncSession, business_id: str, reason: str) -> None:
+async def reject(
+    db: AsyncSession, business_id: str, reason: str, bg: BackgroundTasks
+) -> None:
     company = await _business(db, business_id)
     _require_status(company, BusinessStatus.pending)
     company.status = BusinessStatus.rejected
@@ -192,11 +208,13 @@ async def reject(db: AsyncSession, business_id: str, reason: str) -> None:
         company=company,
         reason=reason,
     )
+    phones, emails = await _owner_contacts(db, company)
     await db.commit()
     await invalidate_company_detail_caches(db, str(company.id))
-    await _tell_owners(
-        db,
-        company,
+    bg.add_task(
+        _send_to_owners,
+        phones,
+        emails,
         f"{settings.product_name}: {company.name} wasn't approved. {reason}",
         f"{company.name} wasn't approved",
         f"<p>{company.name} wasn't approved on {settings.product_name}.</p><p>{reason}</p>",
@@ -260,7 +278,9 @@ async def _invalidate_public_job_pages(db: AsyncSession, company_id: uuid.UUID) 
         await invalidate_job_detail_caches(str(job_id))
 
 
-async def suspend(db: AsyncSession, business_id: str, admin: User, reason: str) -> None:
+async def suspend(
+    db: AsyncSession, business_id: str, admin: User, reason: str, bg: BackgroundTasks
+) -> None:
     company = await _business(db, business_id)
     _require_status(company, BusinessStatus.active, BusinessStatus.pending)
     company.status = BusinessStatus.suspended
@@ -275,12 +295,14 @@ async def suspend(db: AsyncSession, business_id: str, admin: User, reason: str) 
         company=company,
         reason=reason,
     )
+    phones, emails = await _owner_contacts(db, company)
     await db.commit()
     await invalidate_company_detail_caches(db, str(company.id))
     await _invalidate_public_job_pages(db, company.id)
-    await _tell_owners(
-        db,
-        company,
+    bg.add_task(
+        _send_to_owners,
+        phones,
+        emails,
         f"{settings.product_name}: {company.name} is suspended and its jobs are hidden. {reason}",
         f"{company.name} is suspended",
         f"<p>{company.name} is suspended on {settings.product_name} and its jobs are hidden.</p>"
@@ -503,7 +525,11 @@ async def payments_overview(db: AsyncSession) -> PaymentsOverview:
 
 
 async def mark_received(
-    db: AsyncSession, payment_id: str, admin: User, reference: str | None
+    db: AsyncSession,
+    payment_id: str,
+    admin: User,
+    reference: str | None,
+    bg: BackgroundTasks,
 ) -> None:
     payment = await db.get(ManualPayment, uuid.UUID(payment_id), with_for_update=True)
     if payment is None:
@@ -531,3 +557,5 @@ async def mark_received(
     )
     await db.commit()
     await invalidate_company_detail_caches(db, str(company.id))
+    # Reviews that waited for quota can run now.
+    bg.add_task(resume_waiting_reviews, company.id)
