@@ -31,8 +31,9 @@ import app.modules.outreach.models  # noqa: F401
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
-from app.modules.auth.enums import UserRole
+from app.modules.auth.enums import BusinessStatus, MembershipRole
 from app.modules.auth.models import User
+from app.modules.companies.models import Company, CompanyMembership
 
 SEED_PASSWORD = "Password123"
 
@@ -41,20 +42,19 @@ SEED_USERS: list[dict] = [
     {
         "full_name": "E2E Candidate",
         "email": "e2e.candidate@test.dev",
-        "primary_role": UserRole.candidate,
         "is_onboarded": True,
     },
     {
         "full_name": "E2E Candidate (no onboard)",
         "email": "e2e.candidate.fresh@test.dev",
-        "primary_role": UserRole.candidate,
         "is_onboarded": False,
     },
     {
         "full_name": "E2E Recruiter Admin",
         "email": "e2e.recruiter@test.dev",
-        "primary_role": UserRole.recruiter_admin,
         "is_onboarded": True,
+        # Owner of an approved business.
+        "owns": "E2E Business",
     },
 ]
 
@@ -67,17 +67,26 @@ async def main() -> None:
             res = await db.execute(select(User).where(User.email == spec["email"]))
             if res.scalar_one_or_none():
                 continue
-            db.add(
-                User(
-                    full_name=spec["full_name"],
-                    email=spec["email"],
-                    password_hash=password_hash,
-                    primary_role=spec["primary_role"],
-                    is_email_verified=True,
-                    is_onboarded=spec["is_onboarded"],
-                    is_deleted=False,
-                )
+            user = User(
+                full_name=spec["full_name"],
+                email=spec["email"],
+                password_hash=password_hash,
+                is_email_verified=True,
+                is_onboarded=spec["is_onboarded"],
+                is_deleted=False,
             )
+            db.add(user)
+            if spec.get("owns"):
+                company = Company(name=spec["owns"], status=BusinessStatus.active)
+                db.add(company)
+                await db.flush()
+                db.add(
+                    CompanyMembership(
+                        user_id=user.id,
+                        company_id=company.id,
+                        role=MembershipRole.owner,
+                    )
+                )
             created += 1
         await db.commit()
         print(

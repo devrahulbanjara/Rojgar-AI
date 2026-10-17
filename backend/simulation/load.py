@@ -24,13 +24,9 @@ def _seeded_accounts() -> dict[str, list[tuple[str, str]]]:
     pwd = creds.get("default_password", PASSWORD)
     out: dict[str, list[tuple[str, str]]] = {"candidate": [], "recruiter": []}
     for acc in creds["accounts"]:
-        role = acc.get("primary_role")
-        if role == "candidate":
+        if acc.get("applicant"):
             out["candidate"].append((acc["email"], pwd))
-        elif (
-            role in ("recruiter", "recruiter_admin")
-            and acc.get("membership_status", "active") == "active"
-        ):
+        elif acc.get("membership_role") and acc.get("business_status") != "pending":
             out["recruiter"].append((acc["email"], pwd))
     return out
 
