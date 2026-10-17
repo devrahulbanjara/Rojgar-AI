@@ -606,6 +606,11 @@ def _app_to_list_item(app: Application) -> ApplicationListItem:
     )
 
 
+def _shared_email(application: Application) -> str | None:
+    """Candidate email as recruiters may see it (None when not shared)."""
+    return application.shared_email_value if application.share_email else None
+
+
 def _recruiter_safe_resume(application: Application) -> ResumeResponse | None:
     """Resume as shown to recruiters, honouring the candidate's share settings."""
     if not application.resume:
@@ -724,7 +729,7 @@ async def _build_company_applications(
             created_at=application.created_at,
             updated_at=application.updated_at,
             applicant_name=application.shared_full_name or applicant.full_name,
-            applicant_email=application.shared_email_value or applicant.email,
+            applicant_email=_shared_email(application),
             applicant_avatar_url=application.shared_avatar_url,
             job_title=job.title,
             job_id=job.id,
@@ -800,7 +805,7 @@ async def _build_company_candidates(
             grouped[str(applicant.id)] = {
                 "candidate_id": applicant.id,
                 "applicant_name": application.shared_full_name or applicant.full_name,
-                "applicant_email": application.shared_email_value or applicant.email,
+                "applicant_email": _shared_email(application),
                 "applicant_avatar_url": application.shared_avatar_url,
                 "latest_application_id": application.id,
                 "latest_status": application.status,
@@ -1573,6 +1578,9 @@ async def respond_to_offer(
     )
 
 
+_SEMANTIC_SEARCH_MAX_HITS = 500
+
+
 async def semantic_search_candidates(
     db: AsyncSession,
     user: User,
@@ -1589,11 +1597,13 @@ async def semantic_search_candidates(
     """
     company_id = await _get_active_company_id(db, user)
 
+    # Fetch enough hits to cover the requested page (previously limit=size,
+    # so every page after the first was empty).
     qdrant_results = await qdrant_service.search_applications(
         query=query,
         company_id=uuid.UUID(str(company_id)),
         statuses=statuses,
-        limit=size,
+        limit=min(page * size, _SEMANTIC_SEARCH_MAX_HITS),
     )
 
     if not qdrant_results:
@@ -1601,11 +1611,12 @@ async def semantic_search_candidates(
 
     application_ids = [res["application_id"] for res in qdrant_results]
 
+    # Re-check tenancy in SQL; never rely on the vector store filter alone.
     stmt = (
         select(Application, User, Job)
         .join(User, User.id == Application.user_id)
         .join(Job, Job.id == Application.job_id)
-        .where(Application.id.in_(application_ids))
+        .where(Application.id.in_(application_ids), Job.company_id == company_id)
     )
     rows = (await db.execute(stmt)).all()
 
@@ -1625,7 +1636,7 @@ async def semantic_search_candidates(
                 application_id=application.id,
                 candidate_id=applicant.id,
                 applicant_name=application.shared_full_name or applicant.full_name,
-                applicant_email=application.shared_email_value or applicant.email,
+                applicant_email=_shared_email(application),
                 applicant_avatar_url=application.shared_avatar_url,
                 job_title=job.title,
                 job_id=job.id,
@@ -1733,7 +1744,7 @@ async def find_similar_candidates(
                 application_id=application.id,
                 candidate_id=applicant.id,
                 applicant_name=application.shared_full_name or applicant.full_name,
-                applicant_email=application.shared_email_value or applicant.email,
+                applicant_email=_shared_email(application),
                 applicant_avatar_url=application.shared_avatar_url,
                 job_title=job.title,
                 job_id=job.id,

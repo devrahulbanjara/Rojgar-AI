@@ -500,7 +500,11 @@ async def search_jobs(
             )
         )
 
-    return final_jobs, len(final_jobs) if page == 1 else total_count
+    # total_count is Qdrant's match count. Only fall back to counting rows
+    # when this page came back short (i.e. there is no further page).
+    if len(final_jobs) < size:
+        return final_jobs, (page - 1) * size + len(final_jobs)
+    return final_jobs, max(total_count, page * size)
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
@@ -570,7 +574,30 @@ async def get_job_detail(
         soft_ttl=300,
         hard_ttl=3600,
     )
-    return JobDetailResponse.model_validate(payload)
+    response = JobDetailResponse.model_validate(payload)
+    if response.status == JobStatus.draft and not await _is_company_member(
+        db, user, response.company_id
+    ):
+        # Drafts are private to the company until published.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found."
+        )
+    return response
+
+
+async def _is_company_member(
+    db: AsyncSession, user: User | None, company_id: uuid.UUID
+) -> bool:
+    if user is None:
+        return False
+    membership_id = await db.scalar(
+        select(CompanyMembership.id).where(
+            CompanyMembership.user_id == user.id,
+            CompanyMembership.company_id == company_id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+    return membership_id is not None
 
 
 async def update_job(

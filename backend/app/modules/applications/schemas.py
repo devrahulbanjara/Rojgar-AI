@@ -171,7 +171,7 @@ class RecruiterApplicationView(BaseSchema):
     created_at: datetime
     updated_at: datetime
     applicant_name: str
-    applicant_email: str
+    applicant_email: str | None = None
     applicant_avatar_url: str | None = None
     job_title: str
     job_id: UUID
@@ -206,7 +206,7 @@ class RecruiterCandidateInterviewView(BaseSchema):
 class RecruiterCandidateListItem(BaseSchema):
     candidate_id: UUID
     applicant_name: str
-    applicant_email: str
+    applicant_email: str | None = None
     applicant_avatar_url: str | None = None
     latest_application_id: UUID
     latest_status: ApplicationStatus
@@ -268,7 +268,7 @@ class SemanticCandidateSearchResult(BaseSchema):
     application_id: UUID
     candidate_id: UUID
     applicant_name: str
-    applicant_email: str
+    applicant_email: str | None = None
     applicant_avatar_url: str | None = None
     job_title: str
     job_id: UUID
@@ -295,7 +295,7 @@ class SimilarCandidateResult(BaseSchema):
     application_id: UUID
     candidate_id: UUID
     applicant_name: str
-    applicant_email: str
+    applicant_email: str | None = None
     applicant_avatar_url: str | None = None
     job_title: str
     job_id: UUID
