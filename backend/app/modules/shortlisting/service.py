@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -237,7 +238,9 @@ async def _run_ml_bouncer_backfill_task(job_id: uuid.UUID, database_url: str) ->
                     await db.commit()
                     return
 
-                ml_scores = score_applications(job, applications)
+                ml_scores = await asyncio.to_thread(
+                    score_applications, job, applications
+                )
                 for app, ml_score in zip(applications, ml_scores, strict=True):
                     _apply_ml_score(app, ml_score)
 
@@ -297,7 +300,9 @@ async def score_application_ml_bouncer(
             if job is None or not job.auto_shortlist:
                 return
 
-            ml_score = score_applications(job, [application])[0]
+            ml_score = (
+                await asyncio.to_thread(score_applications, job, [application])
+            )[0]
             _apply_ml_score(application, ml_score)
             enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
             await db.commit()
@@ -484,7 +489,9 @@ async def run_two_stage_for_expired_job(
         ]
         if unscored:
             for app, ml_score in zip(
-                unscored, score_applications(job, unscored), strict=True
+                unscored,
+                await asyncio.to_thread(score_applications, job, unscored),
+                strict=True,
             ):
                 _apply_ml_score(app, ml_score)
             enqueue_application_sync_events(
@@ -656,7 +663,8 @@ async def evaluate_single_application(
     from app.modules.shortlisting.ml_bouncer import score_applications
 
     try:
-        _apply_ml_score(application, score_applications(job, [application])[0])
+        ml_scores = await asyncio.to_thread(score_applications, job, [application])
+        _apply_ml_score(application, ml_scores[0])
     except Exception:
         logger.exception("ML bouncer scoring failed for application {}", application_id)
         _apply_ml_score(application, None)

@@ -151,6 +151,10 @@ def extract_features(job: Job, application: Application) -> list[float] | None:
 def score_applications(job: Job, applications: list[Application]) -> list[float | None]:
     """Run the ML bouncer on a batch of applications.
 
+    CPU-bound and synchronous (TF-IDF + scikit-learn): async callers must run
+    it via `asyncio.to_thread`. Applications must be fully loaded (no lazy
+    loads happen off the event loop).
+
     Returns a probability [0-1] per application, or None where the model cannot
     produce a trustworthy score (model file missing, or required inputs missing).
     The score is used to rank applications; it never rejects anyone on its own.

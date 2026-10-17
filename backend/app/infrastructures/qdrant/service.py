@@ -1,3 +1,5 @@
+import asyncio
+import threading
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -40,6 +42,7 @@ class QdrantService:
             api_key=settings.qdrant_api_key,
         )
         self._sparse_embedder: Any | None = None
+        self._sparse_embedder_lock = threading.Lock()
 
     def _get_sparse_embedder(self) -> Any:
         """Lazily build the BM25 sparse embedder used for candidate hybrid search.
@@ -48,12 +51,13 @@ class QdrantService:
         Initialising at import time would slow boot and surprise the test suite
         when no model directory exists yet.
         """
-        if self._sparse_embedder is None:
-            from fastembed import SparseTextEmbedding
+        with self._sparse_embedder_lock:
+            if self._sparse_embedder is None:
+                from fastembed import SparseTextEmbedding
 
-            self._sparse_embedder = SparseTextEmbedding(
-                model_name=settings.candidate_sparse_model
-            )
+                self._sparse_embedder = SparseTextEmbedding(
+                    model_name=settings.candidate_sparse_model
+                )
         return self._sparse_embedder
 
     def _build_sparse_vector(self, text: str) -> models.SparseVector:
@@ -70,8 +74,22 @@ class QdrantService:
             values=embedding.values.tolist(),
         )
 
+    async def _abuild_sparse_vector(self, text: str) -> models.SparseVector:
+        """Non-blocking BM25 vector: fastembed is CPU-bound and synchronous."""
+        return await asyncio.to_thread(self._build_sparse_vector, text)
+
     async def initialize(self) -> None:
         """Robust initialization: create collections and payload indexes."""
+        if (
+            settings.recruiter_chat_hybrid_search_enabled
+            or settings.jobs_hybrid_search_enabled
+        ):
+            try:
+                # Load (and on first boot download) the BM25 model off the event
+                # loop so the first search request doesn't stall the server.
+                await asyncio.to_thread(self._get_sparse_embedder)
+            except Exception as exc:
+                logger.error("Sparse embedder preload failed: {}", exc)
         try:
             await self._ensure_job_collection()
             await self._ensure_candidate_collection()
@@ -396,7 +414,7 @@ class QdrantService:
             }
 
             if settings.jobs_hybrid_search_enabled:
-                sparse_vector = self._build_sparse_vector(text_content)
+                sparse_vector = await self._abuild_sparse_vector(text_content)
                 vector_payload: dict[str, Any] = {
                     DENSE_VECTOR_NAME: dense_vector,
                     SPARSE_VECTOR_NAME: sparse_vector,
@@ -453,7 +471,7 @@ class QdrantService:
             }
 
             if settings.recruiter_chat_hybrid_search_enabled:
-                sparse_vector = self._build_sparse_vector(text_content)
+                sparse_vector = await self._abuild_sparse_vector(text_content)
                 vector_payload: dict[str, Any] = {
                     CANDIDATE_DENSE_NAME: dense_vector,
                     CANDIDATE_SPARSE_NAME: sparse_vector,
@@ -638,7 +656,7 @@ class QdrantService:
     ) -> tuple[list[dict], int]:
         """Dense + BM25 prefetch fused via RRF, with strict→fallback escalation."""
         dense_vector = await ai_service.get_embeddings(query)
-        sparse_vector = self._build_sparse_vector(query)
+        sparse_vector = await self._abuild_sparse_vector(query)
 
         strict_response = await self.client.query_points(
             collection_name=self.collection_name,
@@ -841,7 +859,7 @@ class QdrantService:
         (see `_tag_relevance`).
         """
         dense_vector = await ai_service.get_embeddings(query)
-        sparse_vector = self._build_sparse_vector(query)
+        sparse_vector = await self._abuild_sparse_vector(query)
         prefetch_limit = settings.candidate_hybrid_prefetch_limit
         # Pull `prefetch_limit` so the relevance filter has a healthy candidate
         # pool to truncate, even though the caller only wants `limit` final hits.

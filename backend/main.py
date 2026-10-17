@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI):
     if settings.environment == "prod":
         # Refuse to serve with a missing ML pre-filter model rather than
         # silently mis-scoring every application.
-        assert_model_available()
+        await asyncio.to_thread(assert_model_available)
     # vector store — job/candidate search and recruiter chat
     await qdrant_service.initialize()
     # LangGraph runner — job drafting AI
