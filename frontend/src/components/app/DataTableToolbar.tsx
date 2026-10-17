@@ -108,7 +108,6 @@ function FacetFilter<T>({
                     key={option.value}
                     value={`${option.label} ${option.value}`}
                     onSelect={() => toggle(option.value)}
-                    role="menuitemcheckbox"
                     aria-checked={checked}
                   >
                     <span

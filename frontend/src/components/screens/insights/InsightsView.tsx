@@ -57,7 +57,7 @@ const replyColumns: ColumnDef<InsightsJobReply>[] = [
     accessorKey: 'title',
     header: 'Job',
     cell: ({ row }) => (
-      <span className="block max-w-[11rem] truncate font-medium text-foreground sm:max-w-xs">
+      <span className="block max-w-[7.5rem] truncate font-medium text-foreground sm:max-w-xs">
         {row.original.title}
       </span>
     ),
@@ -77,14 +77,12 @@ const replyColumns: ColumnDef<InsightsJobReply>[] = [
     id: 'median_days',
     accessorFn: (row) => row.median_days ?? undefined,
     header: 'Half hear back in',
-    meta: { label: 'Half hear back in' },
     sortUndefined: 'last',
     cell: ({ row }) => <span className="tabular-nums">{formatDays(row.original.median_days)}</span>,
   },
   {
     accessorKey: 'waiting',
     header: 'Waiting',
-    meta: { label: 'Waiting for a reply' },
     cell: ({ row }) => (
       <span className={cn('tabular-nums', row.original.waiting > 0 && 'font-medium text-primary')}>
         {row.original.waiting}
@@ -116,19 +114,21 @@ function ReplySection({ data, allJobs }: { data: InsightsData; allJobs: boolean 
       title="How fast you reply"
       className="lg:col-span-2"
       headline={
-        <p className="text-sm text-muted-foreground">
-          {data.median_reply_days == null ? (
-            'No replies yet.'
-          ) : (
-            <>
-              Half of applicants hear back within{' '}
-              <span className="font-heading text-2xl font-light text-foreground tabular-nums">
-                {formatDays(data.median_reply_days)}
-              </span>
-            </>
-          )}
-          {waiting ? ` · ${waiting} waiting for a reply` : null}
-        </p>
+        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+          <p>
+            {data.median_reply_days == null ? (
+              'No replies yet.'
+            ) : (
+              <>
+                Half of applicants hear back within{' '}
+                <span className="font-heading text-2xl font-light whitespace-nowrap text-foreground tabular-nums">
+                  {formatDays(data.median_reply_days)}
+                </span>
+              </>
+            )}
+          </p>
+          {waiting ? <p>{waiting} waiting for a reply</p> : null}
+        </div>
       }
       table={{
         columns: ['Job', 'Half hear back in', 'Waiting', 'Longest wait'],
@@ -150,7 +150,6 @@ function ReplySection({ data, allJobs }: { data: InsightsData; allJobs: boolean 
               data={data.replies}
               getRowId={(row) => row.job_id}
               getRowHref={(row) => `/recruiter/jobs/${row.job_id}`}
-              initialSorting={[{ id: 'median_days', desc: true }]}
               searchPlaceholder="Search jobs"
               filters={[{ column: 'status', title: 'Status' }]}
               pageSizes={[5, 10, 25]}
@@ -166,7 +165,7 @@ function InsightsSkeleton() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {[0, 1, 2, 3].map((i) => (
-        <Skeleton key={i} className={cn('h-72 rounded-xl', i === 3 && 'lg:col-span-2')} />
+        <Skeleton key={i} className={cn('h-72 rounded-xl', i >= 2 && 'lg:col-span-2')} />
       ))}
     </div>
   )
@@ -199,7 +198,7 @@ export function InsightsView() {
       <PageHeader
         breadcrumb={[{ label: 'Insights' }]}
         title="Insights"
-        facts={data ? [`${data.total.toLocaleString()} applications`] : undefined}
+        facts={data?.total ? [`${data.total.toLocaleString()} applications`] : undefined}
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -245,7 +244,7 @@ export function InsightsView() {
         >
           <ProgressChart progress={data.progress} />
           <SourcesChart sources={data.sources} />
-          <WeeklyChart weekly={data.weekly} className="lg:col-span-2" />
+          <WeeklyChart weekly={data.weekly} rangeTo={data.range_to} className="lg:col-span-2" />
           <ReplySection data={data} allJobs={jobId === ALL_JOBS} />
         </div>
       )}

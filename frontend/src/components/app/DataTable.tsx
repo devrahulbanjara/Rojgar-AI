@@ -346,7 +346,7 @@ export function DataTable<T>({
                       key={header.id}
                       aria-sort={ariaSort(column.getIsSorted(), column.getCanSort())}
                       className={cn(
-                        'sticky top-(--dt-sticky-top) z-10 h-10 bg-card text-xs text-muted-foreground shadow-[inset_0_-1px_0_var(--border)]',
+                        'z-10 h-10 md:sticky md:top-(--dt-sticky-top) bg-card text-xs text-muted-foreground shadow-[inset_0_-1px_0_var(--border)]',
                         column.id === '_select' && 'w-10',
                         column.columnDef.meta?.className,
                       )}

@@ -3,7 +3,7 @@
 import { type ReactNode, useId, useSyncExternalStore } from 'react'
 
 import { cn } from '@/lib/utils'
-import { format, parseISO } from 'date-fns'
+import { differenceInCalendarDays, format, parseISO } from 'date-fns'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from 'recharts'
 
 import {
@@ -64,6 +64,20 @@ function useAnimate(): boolean {
     subscribeMotion,
     () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     () => false,
+  )
+}
+
+function subscribeWide(onChange: () => void) {
+  const query = window.matchMedia('(min-width: 640px)')
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+
+function useWide(): boolean {
+  return useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia('(min-width: 640px)').matches,
+    () => true,
   )
 }
 
@@ -195,6 +209,7 @@ function HorizontalBars({
           fill={`var(--color-${dataKey})`}
           radius={[0, 4, 4, 0]}
           barSize={20}
+          minPointSize={2}
           isAnimationActive={animate}
           animationDuration={400}
         >
@@ -242,18 +257,26 @@ export function SourcesChart({ sources }: { sources: InsightsData['sources'] }) 
 
 export function WeeklyChart({
   weekly,
+  rangeTo,
   className,
 }: {
   weekly: InsightsData['weekly']
+  /** Last day counted; the week containing it is labelled "so far" unless complete. */
+  rangeTo: string
   className?: string
 }) {
   const animate = useAnimate()
   const id = useId().replace(/:/g, '')
-  const data = weekly.map((row) => ({
-    label: format(parseISO(row.week_start), 'd MMM'),
-    week: format(parseISO(row.week_start), 'd MMM yyyy'),
-    count: row.count,
-  }))
+  const lastDay = parseISO(rangeTo)
+  const data = weekly.map((row) => {
+    const start = parseISO(row.week_start)
+    const partial = differenceInCalendarDays(lastDay, start) < 6
+    return {
+      label: format(start, 'd MMM'),
+      week: `${format(start, 'd MMM yyyy')}${partial ? ' (so far)' : ''}`,
+      count: row.count,
+    }
+  })
   const busiest = data.reduce((best, row) => (row.count > best.count ? row : best), data[0])
   return (
     <ChartCard
@@ -266,7 +289,7 @@ export function WeeklyChart({
       }}
     >
       <ChartContainer config={COUNT_CONFIG} className="aspect-auto h-56 w-full">
-        <AreaChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+        <AreaChart data={data} margin={{ left: 0, right: 24, top: 8, bottom: 0 }}>
           <defs>
             <linearGradient id={`fill-${id}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--color-count)" stopOpacity={0.25} />
@@ -293,7 +316,7 @@ export function WeeklyChart({
           />
           <Area
             dataKey="count"
-            type="monotone"
+            type="linear"
             stroke="var(--color-count)"
             strokeWidth={2}
             fill={`url(#fill-${id})`}
@@ -333,11 +356,13 @@ export function ProgressChart({ progress }: { progress: InsightsData['progress']
 }
 
 export function ReplyChart({ replies }: { replies: InsightsJobReply[] }) {
+  const wide = useWide()
   const data = replies
     .filter((row) => row.median_days != null)
+    .sort((a, b) => (b.median_days ?? 0) - (a.median_days ?? 0))
     .slice(0, 8)
     .map((row) => ({
-      label: truncate(row.title, 18),
+      label: truncate(row.title, wide ? 34 : 13),
       full: row.title,
       days: row.median_days ?? 0,
     }))
@@ -351,7 +376,7 @@ export function ReplyChart({ replies }: { replies: InsightsJobReply[] }) {
         data={data}
         config={DAYS_CONFIG}
         dataKey="days"
-        labelWidth={132}
+        labelWidth={wide ? 240 : 124}
         valueLabel={(value) => formatDays(value)}
       />
     </div>

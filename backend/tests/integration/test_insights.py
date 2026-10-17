@@ -140,7 +140,8 @@ async def test_median_reply_time_uses_first_decision(client, db):
     assert by_title["Fast"]["median_days"] == 1.0
     assert by_title["Fast"]["waiting"] == 1
     assert by_title["Fast"]["oldest_waiting_days"] == 4
-    assert [row["title"] for row in data["replies"]] == ["Slow", "Fast"]
+    # Slow: replies take 3 days. Fast: replies in 1 day, but someone has waited 4.
+    assert [row["title"] for row in data["replies"]] == ["Fast", "Slow"]
     assert data["median_reply_days"] == 2.0  # median of 1, 3, 8, 1
 
 
