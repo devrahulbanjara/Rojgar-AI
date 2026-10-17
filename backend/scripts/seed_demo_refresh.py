@@ -45,11 +45,14 @@ async def refresh() -> None:
             await conn.execute(
                 text(
                     """
-                    SELECT a.id, u.full_name, u.email, j.title
+                    SELECT a.id, u.full_name, u.email, j.title, j.posted_by
                     FROM applications a
                     JOIN jobs j ON j.id = a.job_id
                     JOIN users u ON u.id = a.user_id
                     WHERE j.company_id = :c AND a.stage = 'interview'
+                      AND NOT EXISTS (
+                        SELECT 1 FROM interviews d
+                        WHERE d.application_id = a.id AND d.status = 'done')
                     ORDER BY (u.email = :cand) DESC, a.created_at
                     """
                 ),
@@ -60,14 +63,19 @@ async def refresh() -> None:
         slots += [(1, TOMORROW_SLOTS[1])] + [
             (d, "11:00") for d in range(2, 2 + len(booked))
         ]
-        for (app_id, name, email, title), (day, hhmm) in zip(booked, slots):
+        for (app_id, name, email, title, interviewer), (day, hhmm) in zip(
+            booked, slots, strict=False
+        ):
             start_sql = (
                 "((date_trunc('day', now() AT TIME ZONE 'Asia/Kathmandu') "
                 "+ make_interval(days => :d) + CAST(:t AS time)) AT TIME ZONE 'Asia/Kathmandu')"
             )
             params = {"a": app_id, "d": day, "t": time.fromisoformat(hhmm)}
             exists = await conn.scalar(
-                text("SELECT id FROM interviews WHERE application_id = :a"),
+                text(
+                    "SELECT id FROM interviews WHERE application_id = :a "
+                    "AND status = 'booked'"
+                ),
                 {"a": app_id},
             )
             if exists:
@@ -75,24 +83,32 @@ async def refresh() -> None:
                     text(
                         f"UPDATE interviews SET start_time = {start_sql}, "
                         f"end_time = {start_sql} + interval '45 minutes', "
-                        "location = :loc, timezone = 'Asia/Kathmandu' WHERE application_id = :a"
+                        "location = :loc, timezone = 'Asia/Kathmandu', "
+                        "reminder_24h_sent_at = NULL, reminder_1h_sent_at = NULL "
+                        "WHERE application_id = :a AND status = 'booked'"
                     ),
                     {**params, "loc": MEET_LINK},
                 )
             else:
                 await conn.execute(
                     text(
-                        "INSERT INTO interviews (id, application_id, candidate_name, candidate_email, "
-                        "start_time, end_time, timezone, location, title, created_at) VALUES "
-                        f"(gen_random_uuid(), :a, :n, :e, {start_sql}, {start_sql} + interval '45 minutes', "
-                        "'Asia/Kathmandu', :loc, :ti, now())"
+                        "INSERT INTO interviews (id, application_id, company_id, "
+                        "interviewer_user_id, candidate_name, candidate_email, "
+                        "start_time, end_time, timezone, location, title, status, "
+                        "ics_uid, sequence, created_at, updated_at) VALUES "
+                        "(gen_random_uuid(), :a, :c, :iv, :n, :e, "
+                        f"{start_sql}, {start_sql} + interval '45 minutes', "
+                        "'Asia/Kathmandu', :loc, :ti, 'booked', "
+                        "'demo-' || gen_random_uuid() || '@rojgarai', 0, now(), now())"
                     ),
                     {
                         **params,
+                        "c": company_id,
+                        "iv": interviewer,
                         "n": name,
                         "e": email,
                         "loc": MEET_LINK,
-                        "ti": f"Interview · {title}",
+                        "ti": f"Interview: {title}",
                     },
                 )
 
@@ -119,15 +135,16 @@ async def refresh() -> None:
             {"c": company_id},
         )
 
-        # Reviews: every new applicant is reviewed, except one CV flagged for a
-        # person to check and one review still running.
+        # Reviews: seeded reviews are finished, except one CV flagged for a
+        # person to check and one review still running. Applicants seeded with
+        # no review stay pending; the server reviews them on start-up.
         await conn.execute(
             text(
                 """
-                UPDATE application_reviews r SET state = 'done', flag_reason = NULL,
-                    fit = coalesce(r.fit, 'possible')
+                UPDATE application_reviews r SET state = 'done', flag_reason = NULL
                 FROM applications a JOIN jobs j ON j.id = a.job_id
                 WHERE r.application_id = a.id AND j.company_id = :c AND a.stage = 'new'
+                  AND r.fit IS NOT NULL
                 """
             ),
             {"c": company_id},
@@ -200,12 +217,21 @@ async def refresh() -> None:
         await conn.execute(
             text(
                 """
+                WITH due AS (
+                    SELECT i.id, row_number() OVER (ORDER BY i.start_time) AS n
+                    FROM interviews i
+                    JOIN applications a ON a.id = i.application_id
+                    JOIN jobs j ON j.id = a.job_id
+                    WHERE j.category <> 'it_software' AND i.status = 'booked'
+                      AND i.start_time < now()
+                )
                 UPDATE interviews i SET
-                    start_time = date_trunc('day', now()) + interval '1 day 5 hours',
-                    end_time = date_trunc('day', now()) + interval '1 day 5 hours 30 minutes'
-                FROM applications a JOIN jobs j ON j.id = a.job_id
-                WHERE i.application_id = a.id AND j.category <> 'it_software'
-                  AND i.start_time < now()
+                    start_time = date_trunc('day', now()) + interval '1 day 4 hours'
+                        + due.n * interval '1 hour',
+                    end_time = date_trunc('day', now()) + interval '1 day 4 hours 30 minutes'
+                        + due.n * interval '1 hour',
+                    reminder_24h_sent_at = NULL, reminder_1h_sent_at = NULL
+                FROM due WHERE i.id = due.id
                 """
             )
         )

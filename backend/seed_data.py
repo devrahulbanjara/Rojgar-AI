@@ -57,9 +57,10 @@ from app.shared.enums import (
 from app.shared.normalize import normalize_phone
 
 
-class ApplicationStatus(str, Enum):
-    """v1 statuses. The application matrices below are written in these and
-    mapped to v2 stages (docs/RECRUITER_FLOW.md, migration 2017037b521a)."""
+class Outcome(str, Enum):
+    """Where each demo application's story ends. The application matrices below
+    are written in these; each maps to a stage plus the timeline events that
+    led there (an interview that happened, an offer that was turned down)."""
 
     applied = "applied"
     shortlisted = "shortlisted"
@@ -71,55 +72,46 @@ class ApplicationStatus(str, Enum):
     offer_declined = "offer_declined"
 
 
-class ShortlistStatus(str, Enum):
-    """v1 job knob kept only so the data blocks below read unchanged; ignored."""
-
-    not_started = "not_started"
-    in_progress = "in_progress"
-    completed = "completed"
-    failed = "failed"
-
-
-STAGE_BY_STATUS: dict[ApplicationStatus, ApplicationStage] = {
-    ApplicationStatus.applied: ApplicationStage.new,
-    ApplicationStatus.shortlisted: ApplicationStage.shortlisted,
-    ApplicationStatus.interview_booked: ApplicationStage.interview,
-    ApplicationStatus.interview_completed: ApplicationStage.interview,
-    ApplicationStatus.offer: ApplicationStage.offer,
-    ApplicationStatus.offer_accepted: ApplicationStage.hired,
-    ApplicationStatus.offer_declined: ApplicationStage.withdrawn,
-    ApplicationStatus.rejected: ApplicationStage.rejected,
+STAGE_BY_OUTCOME: dict[Outcome, ApplicationStage] = {
+    Outcome.applied: ApplicationStage.new,
+    Outcome.shortlisted: ApplicationStage.shortlisted,
+    Outcome.interview_booked: ApplicationStage.interview,
+    Outcome.interview_completed: ApplicationStage.interview,
+    Outcome.offer: ApplicationStage.offer,
+    Outcome.offer_accepted: ApplicationStage.hired,
+    Outcome.offer_declined: ApplicationStage.withdrawn,
+    Outcome.rejected: ApplicationStage.rejected,
 }
 # Stages walked through before landing on the target (for stage_changed events).
-STAGE_PATH: dict[ApplicationStatus, list[ApplicationStage]] = {
-    ApplicationStatus.applied: [],
-    ApplicationStatus.shortlisted: [ApplicationStage.shortlisted],
-    ApplicationStatus.interview_booked: [
+STAGE_PATH: dict[Outcome, list[ApplicationStage]] = {
+    Outcome.applied: [],
+    Outcome.shortlisted: [ApplicationStage.shortlisted],
+    Outcome.interview_booked: [
         ApplicationStage.shortlisted,
         ApplicationStage.interview,
     ],
-    ApplicationStatus.interview_completed: [
+    Outcome.interview_completed: [
         ApplicationStage.shortlisted,
         ApplicationStage.interview,
     ],
-    ApplicationStatus.offer: [
+    Outcome.offer: [
         ApplicationStage.shortlisted,
         ApplicationStage.interview,
         ApplicationStage.offer,
     ],
-    ApplicationStatus.offer_accepted: [
+    Outcome.offer_accepted: [
         ApplicationStage.shortlisted,
         ApplicationStage.interview,
         ApplicationStage.offer,
         ApplicationStage.hired,
     ],
-    ApplicationStatus.offer_declined: [
+    Outcome.offer_declined: [
         ApplicationStage.shortlisted,
         ApplicationStage.interview,
         ApplicationStage.offer,
         ApplicationStage.withdrawn,
     ],
-    ApplicationStatus.rejected: [ApplicationStage.rejected],
+    Outcome.rejected: [ApplicationStage.rejected],
 }
 # Rotated over seeded tech applications so the "source" column has variety.
 TECH_SOURCES = [
@@ -131,8 +123,8 @@ TECH_SOURCES = [
     ApplicationSource.viber,
     ApplicationSource.qr,
 ]
-# application id -> (v1 status, score) for the activity/audit history passes.
-LEGACY_BY_APP: dict[uuid.UUID, tuple[ApplicationStatus, int | None]] = {}
+# application id -> (outcome, score) for the activity/audit history passes.
+OUTCOME_BY_APP: dict[uuid.UUID, tuple[Outcome, int | None]] = {}
 
 COMMON_PW = hash_password("Password@123")
 DEFAULT_LOGIN_PASSWORD = "Password@123"
@@ -348,7 +340,6 @@ COMPANIES = [
                     "6 months paid maternity leave and 15 days paternity leave",
                     "Company-sponsored attendance at one international tech conference per year",
                 ],
-                "shortlist_threshold": 65,
             },
             {
                 "title": "Lead Frontend Engineer – Mobile Banking Platform (React Native / Next.js)",
@@ -396,7 +387,6 @@ COMPANIES = [
                     "NPR 15,000 annual learning allowance (courses, books, subscriptions)",
                     "Gym membership reimbursement up to NPR 5,000/month",
                 ],
-                "shortlist_threshold": 60,
             },
             {
                 "title": "DevOps & Cloud Infrastructure Engineer (AWS / Kubernetes)",
@@ -445,7 +435,6 @@ COMPANIES = [
                     "Annual health checkup and accident insurance",
                     "Company equipment: MacBook Pro M3, external monitor, and peripherals",
                 ],
-                "shortlist_threshold": 60,
             },
             {
                 "title": "QA Automation Engineer – Payment Gateway Testing",
@@ -495,7 +484,6 @@ COMPANIES = [
                     "Team lunch every Friday at the office",
                     "Annual company retreat within Nepal",
                 ],
-                "shortlist_threshold": 55,
             },
         ],
     },
@@ -581,7 +569,6 @@ COMPANIES = [
                     "Health insurance covering self and immediate family",
                     "Flexible work: core hours 10am–3pm with async flexibility otherwise",
                 ],
-                "shortlist_threshold": 70,
             },
             {
                 "title": "Data Engineer – Healthcare Analytics Pipeline (Spark / dbt / Airflow)",
@@ -630,7 +617,6 @@ COMPANIES = [
                     "Subsidized lunch at the Kumaripati office",
                     "Team off-site trips (one per quarter within Nepal)",
                 ],
-                "shortlist_threshold": 60,
             },
             {
                 "title": "Full Stack Engineer – AI Product Platform (FastAPI + React)",
@@ -680,7 +666,6 @@ COMPANIES = [
                     "NPR 15,000 learning budget per year",
                     "Hybrid flexibility: 2–3 days in Kumaripati office, rest remote",
                 ],
-                "shortlist_threshold": 60,
             },
             {
                 "title": "Computer Vision Engineer – Agricultural Pest Detection (Edge AI)",
@@ -732,7 +717,6 @@ COMPANIES = [
                     "Health insurance (self + family)",
                     "Flexible hours with core time 10am–2pm",
                 ],
-                "shortlist_threshold": 65,
             },
         ],
     },
@@ -798,7 +782,6 @@ COMPANIES = [
                     "Health insurance for family",
                     "Hybrid work: 3 days office, 2 days remote",
                 ],
-                "shortlist_threshold": 65,
             },
         ],
     },
@@ -861,7 +844,6 @@ COMPANIES = [
                     "Comprehensive health insurance",
                     "International training opportunities",
                 ],
-                "shortlist_threshold": 70,
             },
         ],
     },
@@ -924,7 +906,6 @@ COMPANIES = [
                     "Festival bonuses",
                     "Health insurance",
                 ],
-                "shortlist_threshold": 65,
             },
         ],
     },
@@ -2281,8 +2262,8 @@ APPLICATIONS = [
         0,
         0,
         92,
-        "Excellent match. 7 years backend experience with deep FastAPI and PostgreSQL expertise at F1Soft — directly relevant to payment systems. Strong distributed systems knowledge (idempotency, saga patterns). Has led teams and mentored engineers. Education from Pulchowk Campus. Near-perfect fit for this role.",
-        ApplicationStatus.interview_booked,
+        "7 yrs Python backend at F1Soft: FastAPI, PostgreSQL, idempotent payment flows; led and mentored a team",
+        Outcome.interview_booked,
         {},
     ),
     (
@@ -2291,8 +2272,8 @@ APPLICATIONS = [
         0,
         0,
         58,
-        "Moderate match. 3 years full-stack experience with some FastAPI backend work, but lacks the depth needed for a senior payment systems role. No fintech domain experience. PostgreSQL skills are present but not at the advanced query optimization level required. Could be a stretch candidate.",
-        ApplicationStatus.rejected,
+        "3 yrs full-stack with some FastAPI and PostgreSQL; no payments or senior backend work shown",
+        Outcome.rejected,
         {},
     ),
     (
@@ -2301,8 +2282,8 @@ APPLICATIONS = [
         0,
         0,
         42,
-        "Weak match. Suraj is a data engineer, not a backend application engineer. While he has Python and SQL skills, his experience is in ETL/data pipelines rather than building transactional microservices. No FastAPI, distributed systems, or fintech application experience.",
-        ApplicationStatus.rejected,
+        "Data engineer: Python, SQL, ETL pipelines; no FastAPI services or transaction systems shown",
+        Outcome.rejected,
         {"share_phone": False, "share_links": False},
     ),
     (
@@ -2311,8 +2292,8 @@ APPLICATIONS = [
         0,
         0,
         88,
-        "Strong fit. Nischal brings platform reliability depth, solid fintech production experience, and excellent debugging examples. The panel moved him forward quickly and completed an interview loop on the historical backend opening.",
-        ApplicationStatus.interview_booked,
+        "Platform reliability in fintech production: on-call, tracing, incident debugging; Python services",
+        Outcome.interview_booked,
         {},
     ),
     # Job 1: Lead Frontend Engineer (React Native / Next.js)
@@ -2322,8 +2303,8 @@ APPLICATIONS = [
         1,
         1,
         78,
-        "Strong match. Nisha has 3 years of full-stack experience with significant React, Next.js, and React Native work. Built a real-time mobile app and improved Lighthouse scores significantly. Lacks the 6+ years required and team leadership experience for a 'Lead' title, but technical skills are solid and she could grow into the role quickly.",
-        ApplicationStatus.interview_booked,
+        "3 yrs React, Next.js and React Native; shipped a real-time mobile app; no team lead role shown",
+        Outcome.interview_booked,
         {"share_avatar": False},
     ),
     (
@@ -2332,8 +2313,8 @@ APPLICATIONS = [
         1,
         1,
         35,
-        "Weak match. Aashish is primarily a backend engineer. While he has strong Python skills, he has no demonstrated frontend, React, or React Native experience. This is a frontend-focused leadership role that does not align with his expertise.",
-        ApplicationStatus.rejected,
+        "Backend engineer: Python and APIs; no React or React Native work shown",
+        Outcome.rejected,
         {},
     ),
     # Job 2: DevOps & Cloud Infrastructure Engineer (AWS / Kubernetes)
@@ -2343,8 +2324,8 @@ APPLICATIONS = [
         2,
         0,
         55,
-        "Partial match. Rajan has 2 years of DevOps experience with Docker, basic Terraform, and AWS fundamentals. However, the role requires 4+ years and deep Kubernetes expertise, multi-region AWS management, and experience with financial compliance (PCI-DSS). He is too junior for the seniority level required but shows potential for a more junior DevOps role.",
-        ApplicationStatus.rejected,
+        "2 yrs DevOps: Docker, basic Terraform, AWS; no Kubernetes at scale or PCI-DSS work shown",
+        Outcome.rejected,
         {"share_phone": False, "share_location": False},
     ),
     (
@@ -2353,8 +2334,8 @@ APPLICATIONS = [
         2,
         0,
         48,
-        "Partial match. While Aashish lists Docker, Kubernetes, and AWS as skills, his primary career trajectory is backend engineering. He has not held a dedicated DevOps or infrastructure role. His experience is more as a consumer of infrastructure rather than a builder/maintainer of it.",
-        ApplicationStatus.rejected,
+        "Lists Docker, Kubernetes, AWS as skills; roles are backend engineering, not infrastructure",
+        Outcome.rejected,
         {},
     ),
     # Job 3: QA Automation Engineer
@@ -2364,8 +2345,8 @@ APPLICATIONS = [
         3,
         1,
         38,
-        "Weak match. Rajan is a DevOps engineer with CI/CD experience but has no dedicated QA automation background. He understands testing at a pipeline level but has not built test suites, used Playwright/Selenium, or worked on structured QA processes. Missing core QA skills.",
-        ApplicationStatus.rejected,
+        "CI/CD pipelines in DevOps roles; no Playwright, Selenium or test-suite ownership shown",
+        Outcome.rejected,
         {"share_email": False, "share_headline_summary": False},
     ),
     (
@@ -2374,8 +2355,8 @@ APPLICATIONS = [
         3,
         0,
         45,
-        "Partial match. Nisha has Pytest and Vitest experience from her full-stack work, but her testing is developer-level, not QA-specialist level. No Playwright or Postman automation experience. She could pivot to QA but would need ramp-up time.",
-        ApplicationStatus.rejected,
+        "Pytest and Vitest as a developer; no Playwright or Postman automation shown",
+        Outcome.rejected,
         {},
     ),
     (
@@ -2384,8 +2365,8 @@ APPLICATIONS = [
         3,
         2,
         33,
-        "Weak match. Aashish is a strong backend engineer, but this role requires dedicated QA automation ownership, test strategy leadership, and hands-on browser/API test suite design. His developer testing experience is useful but not enough for a specialist QA role.",
-        ApplicationStatus.rejected,
+        "Developer testing in backend roles; no QA test strategy or browser/API test suites shown",
+        Outcome.rejected,
         {"share_avatar": False},
     ),
     # --- Leapfrog AI Jobs ---
@@ -2396,8 +2377,8 @@ APPLICATIONS = [
         0,
         0,
         95,
-        "Outstanding match. Dipika has 5 years of ML engineering experience with deep NLP expertise — fine-tuned BERT/RoBERTa, built Nepali-language pipelines, and has hands-on LLM experience. M.Sc. in AI from KU with a publication in low-resource NLP. She has deployed models on edge devices and used MLflow. Also has Nepali language skills. Almost tailor-made for this role.",
-        ApplicationStatus.interview_booked,
+        "5 yrs ML: fine-tuned BERT/RoBERTa, Nepali NLP pipelines, LLM work, MLflow; M.Sc. AI (KU)",
+        Outcome.interview_booked,
         {},
     ),
     (
@@ -2406,8 +2387,8 @@ APPLICATIONS = [
         0,
         1,
         28,
-        "Poor match. Aashish is a backend engineer with no ML, NLP, or LLM experience. While he has strong Python skills, the role requires deep knowledge of transformers, fine-tuning, and ML engineering practices that are entirely outside his background.",
-        ApplicationStatus.rejected,
+        "Python backend engineer; no ML, NLP or model fine-tuning shown",
+        Outcome.rejected,
         {"share_phone": False},
     ),
     (
@@ -2416,8 +2397,8 @@ APPLICATIONS = [
         0,
         1,
         32,
-        "Poor match. Suraj is a data engineer with pipeline experience but no ML model training, NLP, or LLM expertise. His data skills are relevant to data preprocessing but not to the core model engineering work required.",
-        ApplicationStatus.rejected,
+        "Data pipelines in Python and SQL; no model training, NLP or LLM work shown",
+        Outcome.rejected,
         {},
     ),
     # Job 1: Data Engineer – Healthcare Analytics Pipeline
@@ -2427,8 +2408,8 @@ APPLICATIONS = [
         1,
         0,
         90,
-        "Excellent match. Suraj has 4 years of data engineering experience at Cotiviti Nepal with direct healthcare analytics pipeline experience. Deep expertise in Airflow, dbt, and Snowflake. Built FHIR data ingestion adapters and implemented Great Expectations. Healthcare data standards knowledge (FHIR, HL7) is a standout. Ideal candidate.",
-        ApplicationStatus.interview_booked,
+        "4 yrs healthcare data at Cotiviti: Airflow, dbt, Snowflake, FHIR ingestion, Great Expectations",
+        Outcome.interview_booked,
         {},
     ),
     (
@@ -2437,8 +2418,8 @@ APPLICATIONS = [
         1,
         1,
         40,
-        "Weak match. Dipika is an ML engineer, not a data engineer. She has some data pipeline experience from building training datasets, but lacks Airflow, dbt, Snowflake, or formal data engineering skills. The overlap is limited to Python and general data handling.",
-        ApplicationStatus.rejected,
+        "ML engineer who built training datasets; no Airflow, dbt or Snowflake shown",
+        Outcome.rejected,
         {"share_avatar": False, "share_links": False},
     ),
     (
@@ -2447,8 +2428,8 @@ APPLICATIONS = [
         1,
         2,
         44,
-        "Partial overlap. Aashish has strong backend data handling experience and good SQL fundamentals, but the role requires deeper ownership of orchestration, warehouse modeling, and analytics engineering practices than his profile currently demonstrates.",
-        ApplicationStatus.rejected,
+        "Strong SQL and backend data handling; no orchestration or warehouse modelling shown",
+        Outcome.rejected,
         {"share_phone": False},
     ),
     (
@@ -2457,8 +2438,8 @@ APPLICATIONS = [
         2,
         1,
         64,
-        "Good platform and systems depth, but the panel preferred candidates with stronger direct product feature ownership and frontend collaboration examples for this full-stack SaaS role.",
-        ApplicationStatus.rejected,
+        "Python platform and systems work; little React or product feature ownership shown",
+        Outcome.rejected,
         {"share_phone": False, "share_links": False},
     ),
     (
@@ -2467,8 +2448,8 @@ APPLICATIONS = [
         1,
         0,
         25,
-        "Poor match. Rajan is a junior DevOps engineer with no data engineering experience. He has basic Python scripting skills but no knowledge of Airflow, dbt, Spark, Snowflake, or healthcare data standards. Not a viable candidate for this role.",
-        ApplicationStatus.rejected,
+        "Junior DevOps with Python scripts; no Airflow, dbt, Spark or Snowflake shown",
+        Outcome.rejected,
         {"share_profile_all": False},
     ),
     # Job 2: Full Stack Engineer – AI Product Platform
@@ -2478,8 +2459,8 @@ APPLICATIONS = [
         2,
         0,
         85,
-        "Strong match. Nisha has 3 years of direct full-stack experience with FastAPI and React (TypeScript). She built a multi-tenant RBAC system, which is directly relevant. Her SaaS product experience at Braindigit is a great fit for this greenfield SaaS platform. She has WebSocket experience and knows Docker. Missing only ML integration experience, which is a 'preferred' qualification.",
-        ApplicationStatus.interview_booked,
+        "3 yrs FastAPI + React (TypeScript) SaaS; built multi-tenant RBAC, WebSockets, Docker; no ML integration",
+        Outcome.interview_booked,
         {},
     ),
     (
@@ -2488,8 +2469,8 @@ APPLICATIONS = [
         2,
         0,
         72,
-        "Good match. Aashish has strong FastAPI and Python backend skills, but his frontend experience is limited. He could handle the backend portion well but would need to ramp up on React/TypeScript. His 7 years of backend experience and system design skills are valuable, but this is a full-stack role requiring equal frontend proficiency.",
-        ApplicationStatus.interview_booked,
+        "7 yrs FastAPI and Python backend, system design; little React or TypeScript shown",
+        Outcome.interview_booked,
         {},
     ),
     (
@@ -2498,8 +2479,8 @@ APPLICATIONS = [
         2,
         1,
         30,
-        "Poor match. Rajan's experience is in DevOps and infrastructure, not application development. He has basic Python scripting skills but no FastAPI, React, or full-stack product development experience. Does not meet the core requirements.",
-        ApplicationStatus.rejected,
+        "DevOps and infrastructure; no FastAPI, React or product development shown",
+        Outcome.rejected,
         {"share_phone": False, "share_headline_summary": False},
     ),
     # Job 3: Computer Vision Engineer – Agricultural Pest Detection
@@ -2509,8 +2490,8 @@ APPLICATIONS = [
         3,
         1,
         88,
-        "Excellent match. Dipika has direct computer vision experience — built a crop disease detection model with YOLOv8 and deployed it on Raspberry Pi for agricultural use. She has edge deployment experience with ONNX quantization. Her work at Fusemachines on agriculture AI and at KU's AI lab is directly relevant. One of the strongest candidates we could find for this niche role in Nepal.",
-        ApplicationStatus.interview_booked,
+        "Crop disease model with YOLOv8 on Raspberry Pi; ONNX quantization for edge; agriculture AI at Fusemachines",
+        Outcome.interview_booked,
         {},
     ),
     (
@@ -2519,8 +2500,8 @@ APPLICATIONS = [
         3,
         1,
         22,
-        "Very poor match. Suraj is a data engineer with no computer vision, PyTorch, or edge deployment experience. His skill set is entirely in data pipelines and SQL, with no overlap with the CV requirements of this role.",
-        ApplicationStatus.rejected,
+        "Data pipelines and SQL; no computer vision, PyTorch or edge deployment shown",
+        Outcome.rejected,
         {},
     ),
     (
@@ -2529,8 +2510,8 @@ APPLICATIONS = [
         3,
         0,
         20,
-        "Very poor match. Rajan is a junior DevOps engineer with no machine learning, computer vision, or Python ML library experience. The role requires deep CV expertise that is entirely outside his background.",
-        ApplicationStatus.rejected,
+        "Junior DevOps; no machine learning or computer vision shown",
+        Outcome.rejected,
         {"share_location": False, "share_email": False},
     ),
     # --- Sastodeal Jobs ---
@@ -2541,8 +2522,8 @@ APPLICATIONS = [
         0,
         0,
         89,
-        "Strong match. Aashish has 7 years backend experience with Python/Django at F1Soft. While his experience is in fintech rather than e-commerce, his technical depth in PostgreSQL, Redis, and API design translates well. Strong candidate for marketplace platform work.",
-        ApplicationStatus.offer_accepted,
+        "7 yrs Python/Django backend at F1Soft: PostgreSQL, Redis, API design; fintech, not e-commerce",
+        Outcome.offer_accepted,
         {},
     ),
     (
@@ -2551,8 +2532,8 @@ APPLICATIONS = [
         0,
         0,
         92,
-        "Excellent match. Nischal has direct e-commerce experience at Daraz and Sastodeal. Built seller dashboards, integrated payment gateways, and optimized checkout flows. Perfect domain fit and strong technical skills in React, Node.js, and PostgreSQL.",
-        ApplicationStatus.offer,
+        "E-commerce at Daraz and Sastodeal: seller dashboards, payment gateways, checkout; React, Node.js",
+        Outcome.offer,
         {},
     ),
     (
@@ -2561,8 +2542,8 @@ APPLICATIONS = [
         0,
         0,
         76,
-        "Good match. Prabesh has strong backend API and integration experience. While his background is more in merchant APIs than e-commerce, his technical skills align well with marketplace platform needs.",
-        ApplicationStatus.interview_completed,
+        "Backend APIs and merchant integrations; no marketplace or e-commerce work shown",
+        Outcome.interview_completed,
         {},
     ),
     (
@@ -2571,8 +2552,8 @@ APPLICATIONS = [
         0,
         0,
         58,
-        "Moderate match. Nisha has full-stack experience but lacks e-commerce domain knowledge and the senior-level depth needed for this role.",
-        ApplicationStatus.rejected,
+        "Full-stack web work; no e-commerce or senior backend role shown",
+        Outcome.rejected,
         {},
     ),
     # --- Verisk Jobs ---
@@ -2583,8 +2564,8 @@ APPLICATIONS = [
         0,
         0,
         94,
-        "Outstanding match. Binod has 6 years data engineering experience with direct fintech analytics background at F1Soft. Deep expertise in Airflow, dbt, Spark, and Snowflake. His payments analytics work translates perfectly to insurance data pipelines.",
-        ApplicationStatus.offer_accepted,
+        "6 yrs data engineering at F1Soft: Airflow, dbt, Spark, Snowflake for payments analytics",
+        Outcome.offer_accepted,
         {},
     ),
     (
@@ -2593,8 +2574,8 @@ APPLICATIONS = [
         0,
         0,
         88,
-        "Excellent match. Suraj has healthcare data engineering experience at Cotiviti Nepal with Airflow, dbt, and Snowflake expertise. Direct healthcare domain knowledge is a strong advantage for insurance analytics.",
-        ApplicationStatus.offer_declined,
+        "Healthcare data engineering at Cotiviti: Airflow, dbt, Snowflake",
+        Outcome.offer_declined,
         {},
     ),
     (
@@ -2603,8 +2584,8 @@ APPLICATIONS = [
         0,
         0,
         62,
-        "Partial match. Aashish has strong backend and SQL skills but lacks the data engineering orchestration and warehouse modeling depth required for this role.",
-        ApplicationStatus.applied,
+        "Strong backend and SQL; no orchestration or warehouse modelling shown",
+        Outcome.applied,
         {},
     ),
     # --- Khalti Jobs ---
@@ -2615,8 +2596,8 @@ APPLICATIONS = [
         0,
         0,
         96,
-        "Perfect match. Kritika has 3 years Flutter experience building fintech mobile apps at IME Digital. Direct experience with payment flows, biometric auth, and mobile wallet features. Ideal candidate for Khalti.",
-        ApplicationStatus.offer,
+        "3 yrs Flutter fintech apps at IME Digital: payment flows, biometric login, wallet features",
+        Outcome.offer,
         {},
     ),
     (
@@ -2625,8 +2606,8 @@ APPLICATIONS = [
         0,
         0,
         45,
-        "Poor match. Samikshya is a frontend web engineer with React and Next.js experience but no mobile development or Flutter background.",
-        ApplicationStatus.rejected,
+        "React and Next.js web frontend; no Flutter or mobile apps shown",
+        Outcome.rejected,
         {},
     ),
     (
@@ -2635,8 +2616,8 @@ APPLICATIONS = [
         0,
         0,
         68,
-        "Moderate match. Nisha has some React Native experience from her full-stack work but lacks the Flutter expertise and fintech mobile domain knowledge needed.",
-        ApplicationStatus.applied,
+        "Some React Native in full-stack roles; no Flutter or fintech mobile work shown",
+        Outcome.applied,
         {},
     ),
 ]
@@ -2657,11 +2638,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 185000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": True,
-            "shortlist_threshold": 68,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=12),
+            "closes_at": NOW + timedelta(days=12),
             "overview": "Own developer-platform APIs, observability tooling, and production diagnostics that keep F1Soft's payment workloads healthy.",
             "responsibilities": [
                 "Build internal platform APIs and tooling for backend teams",
@@ -2695,11 +2672,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 178000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": False,
-            "shortlist_threshold": 64,
-            "shortlist_status": ShortlistStatus.not_started,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=18),
+            "closes_at": NOW + timedelta(days=18),
             "overview": "Lead the shared frontend platform that powers banking portals, recruiter tools, and internal admin surfaces.",
             "responsibilities": [
                 "Maintain shared UI foundations across web products",
@@ -2731,11 +2704,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 195000,
             "currency": "NPR",
             "status": JobStatus.draft,
-            "auto_shortlist": False,
-            "shortlist_threshold": 70,
-            "shortlist_status": ShortlistStatus.not_started,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=28),
+            "closes_at": NOW + timedelta(days=28),
             "overview": "Draft role for the next wave of payment analytics and streaming infrastructure work.",
             "responsibilities": [
                 "Design warehouse ingestion jobs",
@@ -2763,11 +2732,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 215000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": True,
-            "shortlist_threshold": 70,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=16),
+            "closes_at": NOW + timedelta(days=16),
             "overview": "Own merchant onboarding APIs, partner integrations, webhook delivery, and the internal tooling that supports commercial rollout for F1Soft's payment products.",
             "responsibilities": [
                 "Build and maintain merchant-facing APIs and partner onboarding flows",
@@ -2801,11 +2766,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 220000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": True,
-            "shortlist_threshold": 72,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=21),
+            "closes_at": NOW + timedelta(days=21),
             "overview": "Build the data platform that powers transaction risk analytics, merchant monitoring, and finance-ready reporting across F1Soft's payment operations.",
             "responsibilities": [
                 "Develop ingestion and warehouse models for risk and transaction analytics",
@@ -2839,11 +2800,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 285000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": False,
-            "shortlist_threshold": 74,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=24),
+            "closes_at": NOW + timedelta(days=24),
             "overview": "Lead a cross-functional payments platform team spanning backend services, platform reliability, and delivery execution for F1Soft's core transaction products.",
             "responsibilities": [
                 "Lead a multi-disciplinary engineering team delivering payment infrastructure and internal platform capabilities",
@@ -2879,11 +2836,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 230000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": True,
-            "shortlist_threshold": 72,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=10),
+            "closes_at": NOW + timedelta(days=10),
             "overview": "Build ranking, search, and recruiter-assistant automation features for a fast-growing hiring product.",
             "responsibilities": [
                 "Build retrieval and ranking systems for jobs and candidates",
@@ -2915,11 +2868,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 165000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": False,
-            "shortlist_threshold": 62,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=15),
+            "closes_at": NOW + timedelta(days=15),
             "overview": "Strengthen release quality for recruiter tooling, candidate flows, and interview management surfaces.",
             "responsibilities": [
                 "Design automation coverage for critical flows",
@@ -2949,11 +2898,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 155000,
             "currency": "NPR",
             "status": JobStatus.draft,
-            "auto_shortlist": False,
-            "shortlist_threshold": 65,
-            "shortlist_status": ShortlistStatus.not_started,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=25),
+            "closes_at": NOW + timedelta(days=25),
             "overview": "Draft role focused on acquisition funnels, landing pages, and experiment-driven product growth.",
             "responsibilities": [
                 "Ship experiments across landing pages and conversion funnels",
@@ -2983,11 +2928,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 230000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": True,
-            "shortlist_threshold": 65,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=20),
+            "closes_at": NOW + timedelta(days=20),
             "overview": "Build core marketplace systems for Nepal's largest e-commerce platform.",
             "responsibilities": [
                 "Design Django REST APIs for catalog and checkout",
@@ -3021,11 +2962,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 250000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": True,
-            "shortlist_threshold": 70,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=25),
+            "closes_at": NOW + timedelta(days=25),
             "overview": "Build large-scale data pipelines for insurance analytics.",
             "responsibilities": [
                 "Design Spark jobs processing 10TB+ daily",
@@ -3059,11 +2996,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_max": 200000,
             "currency": "NPR",
             "status": JobStatus.open,
-            "auto_shortlist": True,
-            "shortlist_threshold": 65,
-            "shortlist_status": ShortlistStatus.in_progress,
-            "final_shortlist_completed": False,
-            "expires_at": NOW + timedelta(days=18),
+            "closes_at": NOW + timedelta(days=18),
             "overview": "Own Khalti mobile app used by 5 million Nepalis.",
             "responsibilities": [
                 "Develop Flutter app for iOS and Android",
@@ -3089,6 +3022,8 @@ EXTRA_COMPANY_JOBS = {
 }
 
 PLATFORM_ADMIN = {"full_name": "Rojgar AI Support", "email": "admin@rojgarai.app"}
+# The product owner's own staff login (no business).
+OWNER_PLATFORM_ADMIN = {"full_name": "Rahul Banjara", "email": "rdbanjara07@gmail.com"}
 
 # A business that signed up and waits in the approvals queue.
 PENDING_BUSINESS = {
@@ -3111,8 +3046,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 0,
         "score": 71,
-        "feedback": "Strong backend fundamentals and clear communication. Needs one more round to verify observability depth and production debugging breadth.",
-        "status": ApplicationStatus.applied,
+        "review_summary": "Python backend services and API debugging; no Grafana/Prometheus or incident work shown",
+        "status": Outcome.applied,
         "created_days_ago": 9,
         "updated_days_ago": 1,
     },
@@ -3122,8 +3057,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 1,
         "score": 78,
-        "feedback": "Good systems mindset and practical platform work. Ready for shortlist review and outreach preparation.",
-        "status": ApplicationStatus.shortlisted,
+        "review_summary": "Platform tooling for backend teams in Python and PostgreSQL; some metrics and alerting",
+        "status": Outcome.shortlisted,
         "created_days_ago": 8,
         "updated_days_ago": 1,
         "email_state": "drafted",
@@ -3134,8 +3069,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 0,
         "score": 84,
-        "feedback": "Excellent fit. Strong engineering leadership and sound incident response examples. Interview invite already prepared.",
-        "status": ApplicationStatus.interview_booked,
+        "review_summary": "Led an engineering team; incident response examples; Python services with tracing",
+        "status": Outcome.interview_booked,
         "created_days_ago": 10,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3148,8 +3083,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 0,
         "score": 54,
-        "feedback": "Good technical base, but the profile is more data-platform oriented than reliability engineering. We will not move forward for this role.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Data-platform work in Python and SQL; no observability stack or on-call shown",
+        "status": Outcome.rejected,
         "created_days_ago": 7,
         "updated_days_ago": 1,
         "email_state": "discarded",
@@ -3160,8 +3095,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "frontend_platform_active",
         "resume_index": 1,
         "score": None,
-        "feedback": None,
-        "status": ApplicationStatus.applied,
+        "review_summary": None,
+        "status": Outcome.applied,
         "created_days_ago": 4,
         "updated_days_ago": 4,
     },
@@ -3171,8 +3106,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "frontend_platform_active",
         "resume_index": 0,
         "score": 63,
-        "feedback": "Interesting frontend portfolio and product sense. Still in initial recruiter review.",
-        "status": ApplicationStatus.applied,
+        "review_summary": "React and Next.js product UI; no design-system ownership shown",
+        "status": Outcome.applied,
         "created_days_ago": 5,
         "updated_days_ago": 2,
     },
@@ -3182,8 +3117,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "frontend_platform_active",
         "resume_index": 1,
         "score": 57,
-        "feedback": "Solid frontend execution, but design-system depth is not yet strong enough for this senior platform role.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "DevOps and CI/CD work; no frontend platform or design-system ownership shown",
+        "status": Outcome.rejected,
         "created_days_ago": 6,
         "updated_days_ago": 1,
         "email_state": "approved",
@@ -3194,8 +3129,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 0,
         "score": 86,
-        "feedback": "Excellent production ownership examples, strong architectural judgment, and clear communication. Interview loop completed successfully and Priya is aligning feedback for final decision.",
-        "status": ApplicationStatus.interview_completed,
+        "review_summary": "Owned production APIs: PostgreSQL, Redis, incident debugging; led backend design reviews",
+        "status": Outcome.interview_completed,
         "created_days_ago": 13,
         "updated_days_ago": 1,
         "email_state": "sent",
@@ -3209,8 +3144,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 0,
         "score": 93,
-        "feedback": "Top-tier fit for the platform reliability role. Strong observability depth, incident leadership, and practical examples from fintech and SaaS environments. Offer approved by the hiring panel.",
-        "status": ApplicationStatus.offer,
+        "review_summary": "Observability lead in fintech and SaaS: tracing, SLOs, incident command; Python platform APIs",
+        "status": Outcome.offer_accepted,
         "created_days_ago": 16,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3224,8 +3159,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 1,
         "score": 58,
-        "feedback": "Strong data engineering profile, but the team felt the candidate was more aligned to analytics platform work than reliability and observability ownership.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Data engineering (Airflow, dbt); no reliability or observability ownership shown",
+        "status": Outcome.rejected,
         "created_days_ago": 9,
         "updated_days_ago": 2,
         "email_state": "sent",
@@ -3236,8 +3171,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "platform_observability_active",
         "resume_index": 0,
         "score": None,
-        "feedback": None,
-        "status": ApplicationStatus.applied,
+        "review_summary": None,
+        "status": Outcome.applied,
         "created_days_ago": 2,
         "updated_days_ago": 2,
     },
@@ -3247,8 +3182,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "frontend_platform_active",
         "resume_index": 0,
         "score": 89,
-        "feedback": "Strong design-system depth, clear frontend platform ownership, and excellent examples of cross-team rollout. Priya approved the interview invite immediately after review.",
-        "status": ApplicationStatus.interview_booked,
+        "review_summary": "Built and rolled out a design system across teams; React, TypeScript, Storybook",
+        "status": Outcome.interview_booked,
         "created_days_ago": 7,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3261,8 +3196,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "frontend_platform_active",
         "resume_index": 1,
         "score": 41,
-        "feedback": "Strong AI profile overall, but this frontend platform role needs hands-on design-system ownership and React architecture depth that are not present here.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "ML and NLP work; no React architecture or design-system ownership shown",
+        "status": Outcome.rejected,
         "created_days_ago": 5,
         "updated_days_ago": 2,
         "email_state": "sent",
@@ -3273,8 +3208,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "frontend_platform_active",
         "resume_index": 1,
         "score": 47,
-        "feedback": "Candidate has good analytical thinking but too little direct frontend engineering depth for this senior platform opening.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Analytics and SQL; little frontend engineering shown",
+        "status": Outcome.rejected,
         "created_days_ago": 6,
         "updated_days_ago": 3,
         "email_state": "approved",
@@ -3285,8 +3220,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 0,
         "score": 90,
-        "feedback": "Excellent fit for partner APIs and merchant operations. Clear experience with webhook reliability, onboarding flows, and business-facing tooling.",
-        "status": ApplicationStatus.interview_booked,
+        "review_summary": "Partner APIs: webhook retries, merchant onboarding flows, internal ops tooling",
+        "status": Outcome.interview_booked,
         "created_days_ago": 8,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3299,8 +3234,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 2,
         "score": 84,
-        "feedback": "Strong API architecture fundamentals, relevant fintech context, and much better alignment after Priya reviewed the merchant-focused resume variant. Interview booked for a final product-and-integrations round.",
-        "status": ApplicationStatus.interview_booked,
+        "review_summary": "Fintech API design and integrations; Python, PostgreSQL; merchant-facing APIs in one role",
+        "status": Outcome.interview_booked,
         "created_days_ago": 9,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3313,8 +3248,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 1,
         "score": 69,
-        "feedback": "Strong reliability and platform ownership, but Priya is still deciding whether the candidate is product-facing enough for merchant integrations.",
-        "status": ApplicationStatus.applied,
+        "review_summary": "Platform reliability and Python services; no merchant or partner integrations shown",
+        "status": Outcome.applied,
         "created_days_ago": 6,
         "updated_days_ago": 1,
     },
@@ -3324,8 +3259,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 1,
         "score": 38,
-        "feedback": "Impressive frontend background, but the role is backend-heavy and needs deep API and integration ownership.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Frontend in React and Next.js; no backend API or integration ownership shown",
+        "status": Outcome.rejected,
         "created_days_ago": 5,
         "updated_days_ago": 2,
         "email_state": "sent",
@@ -3336,8 +3271,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 1,
         "score": None,
-        "feedback": None,
-        "status": ApplicationStatus.applied,
+        "review_summary": None,
+        "status": Outcome.applied,
         "created_days_ago": 3,
         "updated_days_ago": 3,
     },
@@ -3347,8 +3282,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 0,
         "score": 83,
-        "feedback": "Strong product engineering and cross-functional communication. Priya completed the interview loop and captured feedback for final calibration.",
-        "status": ApplicationStatus.interview_completed,
+        "review_summary": "Full-stack product work with FastAPI APIs; worked with partner and ops teams",
+        "status": Outcome.interview_completed,
         "created_days_ago": 11,
         "updated_days_ago": 1,
         "email_state": "sent",
@@ -3362,8 +3297,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 0,
         "score": 46,
-        "feedback": "Shows good operations instincts, but the role needs more direct backend API ownership and external integration depth.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Operations and CI/CD; no backend API or external integration ownership shown",
+        "status": Outcome.rejected,
         "created_days_ago": 7,
         "updated_days_ago": 2,
         "email_state": "approved",
@@ -3374,8 +3309,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "merchant_integrations_active",
         "resume_index": 0,
         "score": 66,
-        "feedback": "Interesting systems background and good SQL thinking. Priya kept the profile while validating product-facing API experience.",
-        "status": ApplicationStatus.applied,
+        "review_summary": "SQL and data systems; one internal API, no external partner integrations shown",
+        "status": Outcome.applied,
         "created_days_ago": 4,
         "updated_days_ago": 1,
     },
@@ -3385,8 +3320,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "risk_analytics_active",
         "resume_index": 0,
         "score": 95,
-        "feedback": "Best fit in the pipeline for risk analytics. Strong fintech data background, warehouse practices, and communication with business stakeholders. Offer prepared after final panel alignment.",
-        "status": ApplicationStatus.offer,
+        "review_summary": "Fintech data: warehouse models, dbt, risk and finance reporting for business teams",
+        "status": Outcome.offer,
         "created_days_ago": 15,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3400,8 +3335,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "risk_analytics_active",
         "resume_index": 0,
         "score": 84,
-        "feedback": "Strong data engineering depth and good stakeholder communication. Interview invite approved and waiting on final scheduling.",
-        "status": ApplicationStatus.interview_booked,
+        "review_summary": "Data engineering: Airflow, dbt, Snowflake; reporting for business stakeholders",
+        "status": Outcome.interview_booked,
         "created_days_ago": 10,
         "updated_days_ago": 1,
         "email_state": "approved",
@@ -3414,8 +3349,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "risk_analytics_active",
         "resume_index": 0,
         "score": 62,
-        "feedback": "Excellent platform engineer, but the role needs deeper analytics engineering and warehouse modeling than the current profile demonstrates.",
-        "status": ApplicationStatus.shortlisted,
+        "review_summary": "Platform engineering in Python; no analytics engineering or warehouse modelling shown",
+        "status": Outcome.shortlisted,
         "created_days_ago": 7,
         "updated_days_ago": 1,
         "email_state": "drafted",
@@ -3426,8 +3361,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "risk_analytics_active",
         "resume_index": 0,
         "score": 68,
-        "feedback": "Strong systems thinker with solid SQL fundamentals. Priya is still calibrating whether the candidate is best placed in backend or analytics platform work.",
-        "status": ApplicationStatus.applied,
+        "review_summary": "Solid SQL and backend systems; no analytics platform or warehouse work shown",
+        "status": Outcome.applied,
         "created_days_ago": 5,
         "updated_days_ago": 1,
     },
@@ -3437,8 +3372,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "risk_analytics_active",
         "resume_index": 1,
         "score": 43,
-        "feedback": "Good API and integrations background, but the opening is too data-platform heavy for the candidate's current strengths.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "API and integrations background; no data platform or warehouse work shown",
+        "status": Outcome.rejected,
         "created_days_ago": 6,
         "updated_days_ago": 2,
         "email_state": "discarded",
@@ -3449,8 +3384,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "risk_analytics_active",
         "resume_index": 1,
         "score": None,
-        "feedback": None,
-        "status": ApplicationStatus.applied,
+        "review_summary": None,
+        "status": Outcome.applied,
         "created_days_ago": 2,
         "updated_days_ago": 2,
     },
@@ -3460,8 +3395,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "risk_analytics_active",
         "resume_index": 0,
         "score": 45,
-        "feedback": "The ML experience is strong, but this job needs deeper warehouse and analytics platform ownership than model-engineering work.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "ML model engineering; no warehouse or analytics platform ownership shown",
+        "status": Outcome.rejected,
         "created_days_ago": 7,
         "updated_days_ago": 2,
         "email_state": "sent",
@@ -3472,8 +3407,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "engineering_manager_active",
         "resume_index": 1,
         "score": 87,
-        "feedback": "Strong technical leadership signals, clear team mentorship examples, and credible fintech depth. Bikash shortlisted the profile while aligning final people-management expectations with the hiring panel.",
-        "status": ApplicationStatus.shortlisted,
+        "review_summary": "Mentored engineers and led a backend team in fintech; Python payment systems",
+        "status": Outcome.shortlisted,
         "created_days_ago": 12,
         "updated_days_ago": 1,
         "email_state": "drafted",
@@ -3484,8 +3419,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "engineering_manager_active",
         "resume_index": 1,
         "score": 73,
-        "feedback": "Excellent platform leadership instincts, but Bikash is still deciding whether the profile is people-management ready or stronger as a senior IC leader.",
-        "status": ApplicationStatus.applied,
+        "review_summary": "Led platform reliability work as a senior engineer; no people management shown",
+        "status": Outcome.applied,
         "created_days_ago": 8,
         "updated_days_ago": 1,
     },
@@ -3495,8 +3430,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "engineering_manager_active",
         "resume_index": 1,
         "score": 84,
-        "feedback": "Strong stakeholder-facing engineering experience and solid product judgment. Interview scheduled to validate team leadership and organizational planning depth.",
-        "status": ApplicationStatus.interview_booked,
+        "review_summary": "Worked with business stakeholders on products; led a small team; planning and delivery",
+        "status": Outcome.interview_booked,
         "created_days_ago": 9,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3509,8 +3444,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "engineering_manager_active",
         "resume_index": 0,
         "score": 59,
-        "feedback": "Strong product engineer, but the hiring panel decided the role needs more people-management and backend leadership depth than this profile currently shows.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Product engineering in React and FastAPI; no people management or backend lead role shown",
+        "status": Outcome.rejected,
         "created_days_ago": 7,
         "updated_days_ago": 2,
         "email_state": "sent",
@@ -3521,8 +3456,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "engineering_manager_active",
         "resume_index": 1,
         "score": 52,
-        "feedback": "Impressive frontend leadership background, but this opening requires a backend/platform-oriented manager with fintech systems exposure.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Led a frontend team; no backend platform or fintech systems shown",
+        "status": Outcome.rejected,
         "created_days_ago": 6,
         "updated_days_ago": 2,
         "email_state": "approved",
@@ -3533,8 +3468,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "engineering_manager_active",
         "resume_index": 0,
         "score": None,
-        "feedback": None,
-        "status": ApplicationStatus.applied,
+        "review_summary": None,
+        "status": Outcome.applied,
         "created_days_ago": 2,
         "updated_days_ago": 2,
     },
@@ -3544,8 +3479,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "applied_ai_active",
         "resume_index": 0,
         "score": 94,
-        "feedback": "Outstanding match. Strong data and ML systems experience, excellent product framing, and direct relevance to ranking and retrieval use cases.",
-        "status": ApplicationStatus.offer,
+        "review_summary": "Data and ML systems: ranking and retrieval pipelines, Python, embeddings",
+        "status": Outcome.offer,
         "created_days_ago": 14,
         "updated_days_ago": 1,
         "email_state": "sent",
@@ -3559,8 +3494,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "applied_ai_active",
         "resume_index": 0,
         "score": 79,
-        "feedback": "Good backend architecture depth and promising product thinking. Ready for shortlist outreach after one more calibration pass.",
-        "status": ApplicationStatus.shortlisted,
+        "review_summary": "Backend architecture in Python; some search features; no ML ranking shown",
+        "status": Outcome.shortlisted,
         "created_days_ago": 11,
         "updated_days_ago": 2,
         "email_state": "drafted",
@@ -3571,8 +3506,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "applied_ai_active",
         "resume_index": 1,
         "score": None,
-        "feedback": None,
-        "status": ApplicationStatus.applied,
+        "review_summary": None,
+        "status": Outcome.applied,
         "created_days_ago": 3,
         "updated_days_ago": 3,
     },
@@ -3582,8 +3517,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "qa_automation_active",
         "resume_index": 1,
         "score": 82,
-        "feedback": "Clear QA ownership examples and strong automation coverage strategy. Interview completed successfully; evaluation submitted.",
-        "status": ApplicationStatus.interview_completed,
+        "review_summary": "Built automated test suites in CI and planned test coverage for product releases",
+        "status": Outcome.interview_completed,
         "created_days_ago": 12,
         "updated_days_ago": 0,
         "email_state": "sent",
@@ -3597,8 +3532,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "qa_automation_active",
         "resume_index": 1,
         "score": 77,
-        "feedback": "Good cross-functional QA communication and reliable automation approach. Interview booked for later this week.",
-        "status": ApplicationStatus.interview_booked,
+        "review_summary": "Automated tests for ML pipelines; worked across product and dev teams",
+        "status": Outcome.interview_booked,
         "created_days_ago": 9,
         "updated_days_ago": 1,
         "email_state": "approved",
@@ -3611,8 +3546,8 @@ LIVE_APPLICATIONS = [
         "job_seed_key": "qa_automation_active",
         "resume_index": 1,
         "score": 49,
-        "feedback": "Strong engineering profile overall, but not enough direct automation ownership for this staff-level QA opening.",
-        "status": ApplicationStatus.rejected,
+        "review_summary": "Strong engineering profile; no dedicated test automation ownership shown",
+        "status": Outcome.rejected,
         "created_days_ago": 8,
         "updated_days_ago": 2,
         "email_state": "sent",
@@ -3947,7 +3882,7 @@ def add_event(
 def add_history(
     db,
     application: Application,
-    legacy: ApplicationStatus,
+    legacy: Outcome,
     *,
     created_at: datetime,
     decided_at: datetime,
@@ -4018,7 +3953,7 @@ def add_history(
             )
         previous = stage
         when += step
-    if legacy == ApplicationStatus.interview_completed:
+    if legacy == Outcome.interview_completed:
         add_event(db, application.id, EventType.interview_done, decided_at)
 
 
@@ -4084,7 +4019,12 @@ def build_credentials_document() -> dict:
             "full_name": PLATFORM_ADMIN["full_name"],
             "email": PLATFORM_ADMIN["email"],
             "platform_admin": True,
-        }
+        },
+        {
+            "full_name": OWNER_PLATFORM_ADMIN["full_name"],
+            "email": OWNER_PLATFORM_ADMIN["email"],
+            "platform_admin": True,
+        },
     ]
 
     for company in COMPANIES + NONTECH_COMPANIES:
@@ -4279,7 +4219,7 @@ async def seed_company(
             poster.id,
             job_data,
             status=job_data["status"],
-            closes_at=job_data.get("expires_at"),
+            closes_at=job_data.get("closes_at"),
             category=company_data.get("category", JobCategory.it_software),
         )
         job.created_at = NOW - timedelta(
@@ -4426,7 +4366,7 @@ async def seed_applications(
         job_expiry = job.closed_at or EXPIRED_DATE
         app_created = job_expiry - timedelta(days=days_before_expiry)
         app_updated = min(NOW - timedelta(days=1), job_expiry - timedelta(days=1))
-        stage = STAGE_BY_STATUS[target_status]
+        stage = STAGE_BY_OUTCOME[target_status]
         source = TECH_SOURCES[application_counter % len(TECH_SOURCES)].value
         actor_id = job.posted_by
 
@@ -4455,7 +4395,7 @@ async def seed_applications(
         )
         db.add(application)
         await db.flush()
-        LEGACY_BY_APP[application.id] = (target_status, score)
+        OUTCOME_BY_APP[application.id] = (target_status, score)
         variant = cand_data["resume_variants"][resume_idx]
         checks = seeded_checks(
             job.must_haves, candidate_cv_text(cand_data, variant), score
@@ -4481,7 +4421,7 @@ async def seed_applications(
             email_sent=True,
             source=source,
         )
-        if target_status in {ApplicationStatus.rejected, ApplicationStatus.shortlisted}:
+        if target_status in {Outcome.rejected, Outcome.shortlisted}:
             email_counter += 1
         db.add(
             ApplicationSyncEvent(
@@ -4491,8 +4431,8 @@ async def seed_applications(
         application_counter += 1
 
         if target_status in {
-            ApplicationStatus.interview_booked,
-            ApplicationStatus.interview_completed,
+            Outcome.interview_booked,
+            Outcome.interview_completed,
         }:
             interview_counter += 1
             interview_base = app_created + timedelta(
@@ -4503,6 +4443,7 @@ async def seed_applications(
                 id=uuid.uuid4(),
                 application_id=application.id,
                 company_id=job.company_id,
+                interviewer_user_id=job.posted_by,
                 ics_uid=f"interview-{uuid.uuid4()}@rojgarai",
                 candidate_name=candidate_user.full_name,
                 candidate_email=candidate_user.email,
@@ -4574,7 +4515,7 @@ async def seed_live_pipeline_data(
         shared_snapshot = build_shared_snapshot(candidate_user, candidate_data, share)
 
         legacy = spec["status"]
-        stage = STAGE_BY_STATUS[legacy]
+        stage = STAGE_BY_OUTCOME[legacy]
         source = spec.get(
             "source", TECH_SOURCES[application_counter % len(TECH_SOURCES)].value
         )
@@ -4611,7 +4552,7 @@ async def seed_live_pipeline_data(
         )
         application_counter += 1
 
-        LEGACY_BY_APP[application.id] = (legacy, spec.get("score"))
+        OUTCOME_BY_APP[application.id] = (legacy, spec.get("score"))
         variant = candidate_data["resume_variants"][spec["resume_index"]]
         checks = seeded_checks(
             job.must_haves,
@@ -4622,7 +4563,7 @@ async def seed_live_pipeline_data(
             db,
             application,
             fit=fit_from_score(spec.get("score")) or _fit_from_checks(checks),
-            summary=cap_summary(spec.get("feedback")),
+            summary=cap_summary(spec.get("review_summary")),
             checks=checks,
             rank_score=float(spec["score"])
             if spec.get("score") is not None
@@ -4638,8 +4579,7 @@ async def seed_live_pipeline_data(
             actor_id=actor_id,
             job_title=job.title,
             company_name=company_data["name"],
-            email_sent=spec.get("email_state") == "sent"
-            or legacy == ApplicationStatus.rejected,
+            email_sent=spec.get("email_state") == "sent" or legacy == Outcome.rejected,
             source=source,
         )
         if spec.get("email_state") == "sent":
@@ -4688,7 +4628,7 @@ async def seed_live_pipeline_data(
             interview_counter += 1
 
         if spec.get("create_scorecard") and interview_days_offset is not None:
-            must_haves = [r for r in (job.requirements or []) if r.strip()][:6]
+            must_haves = [r for r in (job.must_haves or []) if r.strip()][:6]
             candidate_score = float(spec.get("score") or 75)
             rating = 4 if candidate_score >= 85 else 3 if candidate_score >= 70 else 2
             db.add(
@@ -4701,6 +4641,14 @@ async def seed_live_pipeline_data(
                 )
             )
             interview.status = "done"
+            add_event(
+                db,
+                application.id,
+                EventType.interview_done,
+                interview.end_time,
+                actor_id=company_context["recruiters"][0].id,
+                interview_id=str(interview.id),
+            )
             scorecard_counter += 1
 
     await db.flush()
@@ -4711,24 +4659,24 @@ async def seed_live_pipeline_data(
 
 
 def _status_activity_copy(
-    status: ApplicationStatus, company_name: str, job_title: str
+    status: Outcome, company_name: str, job_title: str
 ) -> tuple[str, str]:
-    if status == ApplicationStatus.shortlisted:
+    if status == Outcome.shortlisted:
         return (
             f"Shortlisted for {job_title}",
             f"{company_name} shortlisted you for the next stage.",
         )
-    if status == ApplicationStatus.interview_booked:
+    if status == Outcome.interview_booked:
         return (
             f"Interview stage opened for {job_title}",
             f"{company_name} moved your application into the interview stage.",
         )
-    if status == ApplicationStatus.interview_completed:
+    if status == Outcome.interview_completed:
         return (
             f"Interview completed for {job_title}",
             f"Your interview loop for {job_title} has been completed.",
         )
-    if status == ApplicationStatus.offer:
+    if status == Outcome.offer:
         return (
             f"Offer stage reached for {job_title}",
             f"{company_name} recorded an offer outcome for your application.",
@@ -4886,10 +4834,10 @@ async def seed_preferences_and_activity(
         )
         activity_counter += 1
 
-        legacy_status, _legacy_score = LEGACY_BY_APP.get(
-            application.id, (ApplicationStatus.applied, None)
+        legacy_status, _legacy_score = OUTCOME_BY_APP.get(
+            application.id, (Outcome.applied, None)
         )
-        if legacy_status != ApplicationStatus.applied:
+        if legacy_status != Outcome.applied:
             candidate_title, candidate_description = _status_activity_copy(
                 legacy_status,
                 company.name,
@@ -5676,8 +5624,8 @@ async def seed_audit_history(
             request_method="POST",
         )
 
-        legacy_status, _score = LEGACY_BY_APP.get(
-            application.id, (ApplicationStatus.applied, None)
+        legacy_status, _score = OUTCOME_BY_APP.get(
+            application.id, (Outcome.applied, None)
         )
         transition_time = application.created_at + timedelta(days=1)
         previous_stage = ApplicationStage.new
@@ -5728,11 +5676,11 @@ async def seed_audit_history(
             request_method="POST",
         )
         if (
-            LEGACY_BY_APP.get(application.id, (ApplicationStatus.applied, None))[0]
+            OUTCOME_BY_APP.get(application.id, (Outcome.applied, None))[0]
             in {
-                ApplicationStatus.interview_completed,
-                ApplicationStatus.offer,
-                ApplicationStatus.rejected,
+                Outcome.interview_completed,
+                Outcome.offer,
+                Outcome.rejected,
             }
             and interview.end_time <= NOW
         ):
@@ -5880,8 +5828,6 @@ NONTECH_COMPANIES = [
         "location": "Kamaladi, Kathmandu",
         "website_url": "https://www.himalayanbank.com",
         "domain": "himalayanbank.com",
-        "cal_booking_url": None,
-        "cal_organizer_email": None,
         "description": "One of Nepal's leading commercial banks with branches across the country.",
         "admin": {
             "full_name": "Sunita Shrestha",
@@ -6071,8 +6017,6 @@ NONTECH_COMPANIES = [
         "location": "Kantipath, Kathmandu",
         "website_url": "https://www.grandecityhospital.example.np",
         "domain": "grandecityhospital.example.np",
-        "cal_booking_url": None,
-        "cal_organizer_email": None,
         "description": "A 200-bed multi-specialty hospital in central Kathmandu.",
         "admin": {
             "full_name": "Rekha Gurung",
@@ -6184,8 +6128,6 @@ NONTECH_COMPANIES = [
         "location": "Hattiban, Lalitpur",
         "website_url": "https://www.littleangels.example.np",
         "domain": "littleangels.example.np",
-        "cal_booking_url": None,
-        "cal_organizer_email": None,
         "description": "A K-12 English-medium school in Lalitpur.",
         "admin": {
             "full_name": "Mohan Bhattarai",
@@ -6272,8 +6214,6 @@ NONTECH_COMPANIES = [
         "location": "Thamel, Kathmandu",
         "website_url": "https://www.hotelthamelpark.example.np",
         "domain": "hotelthamelpark.example.np",
-        "cal_booking_url": None,
-        "cal_organizer_email": None,
         "description": "A 60-room boutique hotel in the heart of Thamel.",
         "admin": {
             "full_name": "Ramesh Shrestha",
@@ -6434,8 +6374,6 @@ NONTECH_COMPANIES = [
         "location": "Maharajgunj, Kathmandu",
         "website_url": "https://www.bhatbhateni.example.np",
         "domain": "bhatbhateni.example.np",
-        "cal_booking_url": None,
-        "cal_organizer_email": None,
         "description": "Nepal's largest supermarket chain.",
         "admin": {
             "full_name": "Sita Adhikari",
@@ -6583,8 +6521,6 @@ NONTECH_COMPANIES = [
         "location": "Sanepa, Lalitpur",
         "website_url": "https://www.upaya.example.np",
         "domain": "upaya.example.np",
-        "cal_booking_url": None,
-        "cal_organizer_email": None,
         "description": "Same-day cargo and parcel delivery across the Kathmandu valley.",
         "admin": {
             "full_name": "Kiran Shakya",
@@ -6682,11 +6618,11 @@ NONTECH_COMPANIES = [
     },
 ]
 
-_LEGACY_FOR_STAGE = {
-    ApplicationStage.new: ApplicationStatus.applied,
-    ApplicationStage.shortlisted: ApplicationStatus.shortlisted,
-    ApplicationStage.interview: ApplicationStatus.interview_booked,
-    ApplicationStage.rejected: ApplicationStatus.rejected,
+_OUTCOME_FOR_STAGE = {
+    ApplicationStage.new: Outcome.applied,
+    ApplicationStage.shortlisted: Outcome.shortlisted,
+    ApplicationStage.interview: Outcome.interview_booked,
+    ApplicationStage.rejected: Outcome.rejected,
 }
 
 
@@ -6720,7 +6656,6 @@ async def _person(db, spec: dict) -> User:
         email=email,
         phone=normalize_phone(spec["phone"]),
         password_hash=None,
-        primary_role=UserRole.candidate,
         is_email_verified=False,
         is_onboarded=True,
     )
@@ -6736,9 +6671,7 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
     counts = {"applications": 0, "no_cv": 0, "referrers": 0, "knockouts": 0}
     for company_data in NONTECH_COMPANIES:
         admin_info = company_data["admin"]
-        admin = make_user(
-            admin_info["full_name"], admin_info["email"], UserRole.recruiter_admin
-        )
+        admin = make_user(admin_info["full_name"], admin_info["email"])
         db.add(admin)
         await db.flush()
         company = Company(
@@ -6748,25 +6681,26 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
             location=company_data["location"],
             website_url=company_data["website_url"],
             domain=company_data["domain"],
-            cal_booking_url=company_data["cal_booking_url"],
-            cal_organizer_email=company_data["cal_organizer_email"],
             description=company_data["description"],
+            status=BusinessStatus.active,
+            verified_at=NOW - timedelta(days=200),
+            created_by_user_id=admin.id,
         )
         db.add(company)
         await db.flush()
         db.add(
             make_membership(
-                admin.id, company.id, MembershipRole.admin, admin_info["job_title"]
+                admin.id, company.id, MembershipRole.owner, admin_info["job_title"]
             )
         )
         recruiters = []
         for rec in company_data["recruiters"]:
-            user = make_user(rec["full_name"], rec["email"], UserRole.recruiter)
+            user = make_user(rec["full_name"], rec["email"])
             db.add(user)
             await db.flush()
             db.add(
                 make_membership(
-                    user.id, company.id, MembershipRole.recruiter, rec["job_title"]
+                    user.id, company.id, MembershipRole.manager, rec["job_title"]
                 )
             )
             recruiters.append(user)
@@ -6849,7 +6783,7 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
                 db.add(application)
                 await db.flush()
                 counts["applications"] += 1
-                LEGACY_BY_APP[application.id] = (_LEGACY_FOR_STAGE[stage], None)
+                OUTCOME_BY_APP[application.id] = (_OUTCOME_FOR_STAGE[stage], None)
 
                 source_text = "\n".join(
                     [spec.get("cv") or "", *(a["answer"] for a in answers)]
@@ -6923,7 +6857,7 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
                     fit=fit,
                     triage=triage,
                 )
-                legacy = _LEGACY_FOR_STAGE[stage]
+                legacy = _OUTCOME_FOR_STAGE[stage]
                 when = created + timedelta(days=1)
                 previous = ApplicationStage.new
                 for step in STAGE_PATH[legacy]:
@@ -6962,14 +6896,16 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
                         )
                     previous = step
                     when += timedelta(hours=20)
-                if spec.get("interview_in_days") is not None and person.email:
+                if spec.get("interview_in_days") is not None:
                     start = NOW.replace(hour=5) + timedelta(
                         days=spec["interview_in_days"]
                     )
                     interview = Interview(
                         id=uuid.uuid4(),
                         application_id=application.id,
-                        cal_booking_uid=f"seed-nontech-{uuid.uuid4().hex[:12]}",
+                        company_id=company.id,
+                        interviewer_user_id=poster.id,
+                        ics_uid=f"seed-nontech-{uuid.uuid4().hex[:12]}@rojgarai",
                         candidate_name=person.full_name,
                         candidate_email=person.email,
                         start_time=start,
@@ -7057,7 +6993,7 @@ def _certificate_png() -> bytes:
     return out.getvalue()
 
 
-def _simple_job(company_id, posted_by, title, location, overview, status) -> Job:
+def _simple_job(company_id, posted_by, title, location, description, status) -> Job:
     return Job(
         company_id=company_id,
         posted_by=posted_by,
@@ -7065,12 +7001,8 @@ def _simple_job(company_id, posted_by, title, location, overview, status) -> Job
         location=location,
         location_type=LocationType.onsite,
         status=status,
-        overview=overview,
-        responsibilities=[],
-        requirements=[],
-        preferred_qualifications=[],
-        benefits=[],
-        expires_at=NOW + timedelta(days=30),
+        description=description,
+        closes_at=NOW + timedelta(days=30) if status == JobStatus.open else None,
     )
 
 
@@ -7084,6 +7016,11 @@ async def seed_platform(db, company_contexts: list[dict]) -> None:
     staff = make_user(PLATFORM_ADMIN["full_name"], PLATFORM_ADMIN["email"])
     staff.is_platform_admin = True
     db.add(staff)
+    owner_staff = make_user(
+        OWNER_PLATFORM_ADMIN["full_name"], OWNER_PLATFORM_ADMIN["email"]
+    )
+    owner_staff.is_platform_admin = True
+    db.add(owner_staff)
 
     owner_info = PENDING_BUSINESS["owner"]
     owner = make_user(owner_info["full_name"], owner_info["email"])
@@ -7120,7 +7057,7 @@ async def seed_platform(db, company_contexts: list[dict]) -> None:
 
     first, second = company_contexts[0], company_contexts[1]
     open_job = next(
-        job for job in first["extra_jobs"].values() if job.status == JobStatus.active
+        job for job in first["extra_jobs"].values() if job.status == JobStatus.open
     )
     db.add(
         JobReport(
@@ -7140,7 +7077,7 @@ async def seed_platform(db, company_contexts: list[dict]) -> None:
             "Kathmandu",
             "Door-to-door sales. Candidates must pay a refundable deposit of "
             "Rs 5,000 for the product kit before joining.",
-            JobStatus.active,
+            JobStatus.open,
         )
     )
 
@@ -7299,13 +7236,6 @@ async def seed() -> None:
                 )
             )
         ) or 0
-        pending_requests = (
-            await db.scalar(
-                select(func.count(CompanyMembership.id)).where(
-                    CompanyMembership.status == MembershipStatus.pending
-                )
-            )
-        ) or 0
         print("\n" + "=" * 70)
         print("✅ SEEDING COMPLETE!")
         print("=" * 70)
@@ -7314,10 +7244,9 @@ async def seed() -> None:
             f"({len(NONTECH_COMPANIES)} non-tech)"
         )
         print(
-            f"  Recruiters          : {sum(len(c['recruiters']) for c in COMPANIES + NONTECH_COMPANIES)}"
+            f"  Team members        : {sum(len(c['recruiters']) for c in COMPANIES + NONTECH_COMPANIES)}"
         )
         print(f"  Waiting for approval: {pending_businesses} business")
-        print(f"  Membership requests : {pending_requests} pending")
         print(
             f"  Jobs                : {total_jobs} "
             + str({k.value: v for k, v in jobs_by_status.items()})
@@ -7349,17 +7278,20 @@ async def seed() -> None:
         print()
         print(f"  🔑 Login credentials for all accounts: {DEFAULT_LOGIN_PASSWORD}")
         print()
-        print(f"  📧 Platform admin: {PLATFORM_ADMIN['email']}")
+        print(
+            f"  📧 Platform admins: {PLATFORM_ADMIN['email']}, "
+            f"{OWNER_PLATFORM_ADMIN['email']}"
+        )
         print(
             f"  📧 Waiting for approval: {PENDING_BUSINESS['owner']['email']} "
             f"({PENDING_BUSINESS['name']})"
         )
         print()
-        print("  📧 Recruiter Admin logins:")
+        print("  📧 Business owner logins:")
         for c in COMPANIES + NONTECH_COMPANIES:
             print(f"     • {c['admin']['email']} ({c['name']})")
         print()
-        print("  📧 Recruiter logins:")
+        print("  📧 Team member (manager) logins:")
         for c in COMPANIES + NONTECH_COMPANIES:
             for r in c["recruiters"]:
                 print(f"     • {r['email']} ({c['name']})")
