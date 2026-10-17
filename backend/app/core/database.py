@@ -63,3 +63,14 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+async def release_connection(db: AsyncSession) -> None:
+    """End the current transaction so its pooled connection is returned.
+
+    Call before a slow external call (LLM, embeddings, HTTP, SMTP) that does
+    not need the transaction. Loaded objects stay usable because sessions use
+    ``expire_on_commit=False``; the next query checks out a connection again.
+    """
+    if db.in_transaction():
+        await db.commit()
