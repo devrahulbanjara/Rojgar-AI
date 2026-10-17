@@ -10,7 +10,12 @@ from app.infrastructures.guardrails import guardrails_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.auth.models import User
 from app.modules.jobs.models import Job
-from app.modules.resume_gap.helpers import filter_grounded
+from app.modules.resume_gap.helpers import (
+    filter_grounded,
+    resume_support_text,
+    skill_is_evidenced,
+    unsupported_claims,
+)
 from app.modules.resume_gap.providers.groq_provider import GroqGapAnalysisProvider
 from app.modules.resume_gap.schemas import (
     AutoPatchRequest,
@@ -27,6 +32,11 @@ from app.shared.schemas import EducationBase, ExperienceBase, SkillBase
 _provider = GroqGapAnalysisProvider()
 CACHE_TTL_SECONDS = 600
 PENDING_PATCH_TTL_SECONDS = 1800
+
+
+def _gap_cache_key(user_id: UUID, resume_id: UUID, job_id: UUID) -> str:
+    """Per-user cache key; ownership is always checked before it is read."""
+    return f"resume_gap:{user_id}:{resume_id}:{job_id}"
 
 
 def _pending_patch_key(user_id: UUID, resume_id: UUID, job_id: UUID) -> str:
@@ -52,7 +62,7 @@ async def consume_pending_patch(
         return False
     await resumes_service.update_resume(db, user, str(resume_id), update)
     await redis_service.delete(key)
-    await redis_service.delete(f"resume_gap:{resume_id}:{job_id}")
+    await redis_service.delete(_gap_cache_key(user.id, resume_id, job_id))
     return True
 
 
@@ -180,13 +190,14 @@ async def analyze_gaps(
     payload: GapAnalysisRequest,
 ) -> GapAnalysisResult:
     """Run gap analysis for a resume against a target job."""
-    cache_key = f"resume_gap:{payload.resume_id}:{payload.job_id}"
+    # Ownership first: the cache must never answer for someone else's resume.
+    resume = await _load_resume(db, payload.resume_id, user.id)
+    job = await _load_job(db, payload.job_id)
+
+    cache_key = _gap_cache_key(user.id, payload.resume_id, payload.job_id)
     cached = await redis_service.get(cache_key)
     if cached:
         return GapAnalysisResult.model_validate_json(cached)
-
-    resume = await _load_resume(db, payload.resume_id, user.id)
-    job = await _load_job(db, payload.job_id)
 
     # Pre-flight prompt-injection check on candidate-controlled resume text.
     # Block before the gap-analysis LLM ever sees it.
@@ -242,20 +253,27 @@ async def auto_patch_resume(
         source="resume_gap.auto_patch",
     )
 
+    # Use the server-side gap analysis (cached from the analyze step); the
+    # client-supplied gap_result is not trusted as LLM input.
+    gap_result = await analyze_gaps(
+        db,
+        user,
+        GapAnalysisRequest(resume_id=payload.resume_id, job_id=payload.job_id),
+    )
+    resume_data = _serialize_resume(resume)
+    support = resume_support_text(resume_data)
     patch = await _provider.build_patch(
-        resume_data=_serialize_resume(resume),
-        gap_result=payload.gap_result,
+        resume_data=resume_data,
+        gap_result=gap_result,
     )
     logger.info(
-        "auto_patch raw LLM output | resume_id={} headline_len={} summary_len={} "
-        "skills={} experience_patches={} headline_preview={!r} summary_preview={!r}",
+        "auto_patch LLM output | resume_id={} headline_len={} summary_len={} "
+        "skills={} experience_patches={}",
         payload.resume_id,
         len(patch.headline),
         len(patch.summary),
         len(patch.skills),
         [(p.index, len(p.description)) for p in patch.experience_patches],
-        patch.headline[:80],
-        patch.summary[:120],
     )
 
     existing_skills = [skill.skill_name for skill in resume.skills]
@@ -263,6 +281,7 @@ async def auto_patch_resume(
     merged_skills: list[SkillBase] = []
     seen: set[str] = set()
     added_skill_names: list[str] = []
+    rejected_claims: list[str] = []
     MAX_NEW_SKILLS = 5
     MAX_TOTAL_SKILLS = 30
     for skill_name in patch.skills:
@@ -278,6 +297,10 @@ async def auto_patch_resume(
         else:
             if len(added_skill_names) >= MAX_NEW_SKILLS:
                 continue
+            # A new skill must already be evidenced in the candidate's own text.
+            if not skill_is_evidenced(normalized, support):
+                rejected_claims.append(normalized)
+                continue
             seen.add(key)
             merged_skills.append(SkillBase(skill_name=normalized))
             added_skill_names.append(normalized)
@@ -291,6 +314,16 @@ async def auto_patch_resume(
 
     new_headline = patch.headline.strip()[:120]
     new_summary = patch.summary.strip()[:400]
+    # Frozen-facts enforcement in code, not just in the prompt: rewrites may not
+    # introduce numbers or technologies the resume never mentions.
+    for field_name, value in (("headline", new_headline), ("summary", new_summary)):
+        problems = unsupported_claims(value, support)
+        if problems:
+            rejected_claims.extend(problems)
+            if field_name == "headline":
+                new_headline = ""
+            else:
+                new_summary = ""
     current_headline = (resume.headline or "").strip()
     current_summary = (resume.summary or "").strip()
 
@@ -311,7 +344,18 @@ async def auto_patch_resume(
         existing_bullets = list(resume.experiences[exp_patch.index].description or [])
         if cleaned_bullets == existing_bullets:
             continue
+        problems = unsupported_claims(" ".join(cleaned_bullets), support)
+        if problems:
+            rejected_claims.extend(problems)
+            continue
         patched_descriptions[exp_patch.index] = cleaned_bullets
+
+    if rejected_claims:
+        logger.info(
+            "auto_patch dropped unsupported AI claims | resume_id={} count={}",
+            payload.resume_id,
+            len(rejected_claims),
+        )
 
     merged_skill_names = [s.skill_name for s in merged_skills]
     skills_changed = merged_skill_names != existing_skills

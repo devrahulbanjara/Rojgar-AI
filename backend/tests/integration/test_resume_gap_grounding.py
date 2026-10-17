@@ -121,12 +121,13 @@ class TestCitationSpanGuardrail:
         assert kept == []
         assert [i.area for i in dropped] == ["Kubernetes"]
 
-    def test_legacy_unevidenced_item_passes_through(self):
-        # Cached pre-guardrail items have no evidence_source; do not drop them.
-        legacy = GapItem(area="Legacy", severity="low", suggestion="…")
-        kept, dropped = filter_grounded([legacy], RESUME, JOB)
-        assert [i.area for i in kept] == ["Legacy"]
-        assert dropped == []
+    def test_unevidenced_item_is_dropped(self):
+        # An item with no evidence source cannot be verified, so it is dropped;
+        # otherwise the model could bypass grounding by leaving it blank.
+        unevidenced = GapItem(area="Legacy", severity="low", suggestion="…")
+        kept, dropped = filter_grounded([unevidenced], RESUME, JOB)
+        assert kept == []
+        assert [i.area for i in dropped] == ["Legacy"]
 
     def test_partial_substring_in_long_resume_bullet(self):
         # Item quotes a real fragment from inside a resume bullet.
