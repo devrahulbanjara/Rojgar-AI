@@ -342,6 +342,10 @@ function SignupContent() {
   const passwordStrength = getPasswordStrength(creds.password)
   const [resendCooldown, setResendCooldown] = useState(0)
   const resendTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // The account is created before the company step. If that step fails (e.g.
+  // name taken), a retry must reuse the setup token instead of signing up
+  // again, which would fail with "email already registered" and strand them.
+  const pendingSetupTokenRef = useRef<{ role: string; token: string } | null>(null)
 
   useEffect(() => {
     return () => {
@@ -452,8 +456,13 @@ function SignupContent() {
     }
 
     try {
-      let finalSetupToken = ''
-      if (isOAuth) {
+      let finalSetupToken =
+        pendingSetupTokenRef.current?.role === 'recruiter_admin'
+          ? pendingSetupTokenRef.current.token
+          : ''
+      if (finalSetupToken) {
+        // Account already created on a previous attempt.
+      } else if (isOAuth) {
         const signupResult = await googleRegister({
           signup_token: setupToken,
           primary_role: 'recruiter_admin',
@@ -487,6 +496,7 @@ function SignupContent() {
         }
         finalSetupToken = signupResult.data.setup_token
       }
+      pendingSetupTokenRef.current = { role: 'recruiter_admin', token: finalSetupToken }
 
       await registerCompany({
         setup_token: finalSetupToken,
@@ -525,8 +535,11 @@ function SignupContent() {
     }
 
     try {
-      let finalSetupToken = ''
-      if (isOAuth) {
+      let finalSetupToken =
+        pendingSetupTokenRef.current?.role === 'recruiter' ? pendingSetupTokenRef.current.token : ''
+      if (finalSetupToken) {
+        // Account already created on a previous attempt.
+      } else if (isOAuth) {
         const signupResult = await googleRegister({
           signup_token: setupToken,
           primary_role: 'recruiter',
@@ -553,6 +566,7 @@ function SignupContent() {
         }
         finalSetupToken = (data as { setup_token: string }).setup_token
       }
+      pendingSetupTokenRef.current = { role: 'recruiter', token: finalSetupToken }
 
       await requestJoinCompany({
         setup_token: finalSetupToken,
