@@ -30,10 +30,9 @@
 
 :root {
   --navbar-height: 68px;
-
   --radius: 1rem;
 
-  /* Neutral, warm surfaces with one accent (ConvexHire blue). */
+  /* One accent (ConvexHire blue) on calm, warm neutrals. */
   --background: #f5f5f4;
   --foreground: #1c1917;
   --card: #ffffff;
@@ -53,19 +52,24 @@
   --input: #e7e5e4;
   --ring: #93b4f5;
 
-  /* Status pills: soft background + readable text (WCAG AA on the bg). */
-  --status-applied-bg: #f5f5f4;
-  --status-applied-fg: #57534e;
-  --status-review-bg: #fef3c7;
-  --status-review-fg: #92400e;
-  --status-interview-bg: #dbeafe;
-  --status-interview-fg: #1e40af;
-  --status-offer-bg: #dcfce7;
-  --status-offer-fg: #166534;
-  --status-hired-bg: #166534;
-  --status-hired-fg: #ffffff;
-  --status-closed-bg: #f5f5f4;
-  --status-closed-fg: #78716c;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #44403c;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff4ff;
+  --sidebar-accent-foreground: #1d4ed8;
+  --sidebar-border: #e7e5e4;
+  --sidebar-ring: #93b4f5;
+
+  /* Semantic tones (pills, fit meters, deltas). Text passes WCAG AA on bg. */
+  --tone-success: #15803d;
+  --tone-success-bg: #dcfce7;
+  --tone-warning: #b45309;
+  --tone-warning-bg: #fef3c7;
+  --tone-danger: #b91c1c;
+  --tone-danger-bg: #fee2e2;
+  --tone-neutral: #57534e;
+  --tone-neutral-bg: #f0efee;
 }
 
 .dark {
@@ -87,6 +91,24 @@
   --border: #292524;
   --input: #292524;
   --ring: #1d4ed8;
+
+  --sidebar: #1c1917;
+  --sidebar-foreground: #e7e5e4;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #93c5fd;
+  --sidebar-border: #292524;
+  --sidebar-ring: #1d4ed8;
+
+  --tone-success: #4ade80;
+  --tone-success-bg: #14532d;
+  --tone-warning: #fbbf24;
+  --tone-warning-bg: #451a03;
+  --tone-danger: #f87171;
+  --tone-danger-bg: #450a0a;
+  --tone-neutral: #d6d3d1;
+  --tone-neutral-bg: #292524;
 }
 
 @theme inline {
@@ -117,18 +139,23 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --color-status-applied: var(--status-applied-bg);
-  --color-status-applied-foreground: var(--status-applied-fg);
-  --color-status-review: var(--status-review-bg);
-  --color-status-review-foreground: var(--status-review-fg);
-  --color-status-interview: var(--status-interview-bg);
-  --color-status-interview-foreground: var(--status-interview-fg);
-  --color-status-offer: var(--status-offer-bg);
-  --color-status-offer-foreground: var(--status-offer-fg);
-  --color-status-hired: var(--status-hired-bg);
-  --color-status-hired-foreground: var(--status-hired-fg);
-  --color-status-closed: var(--status-closed-bg);
-  --color-status-closed-foreground: var(--status-closed-fg);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-success: var(--tone-success);
+  --color-success-bg: var(--tone-success-bg);
+  --color-warning: var(--tone-warning);
+  --color-warning-bg: var(--tone-warning-bg);
+  --color-danger: var(--tone-danger);
+  --color-danger-bg: var(--tone-danger-bg);
+  --color-neutral: var(--tone-neutral);
+  --color-neutral-bg: var(--tone-neutral-bg);
 }
 
 /*
