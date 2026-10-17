@@ -74,7 +74,7 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
           notes,
         },
       }).unwrap()
-      notify.success(`Scorecard saved for ${interview.candidate.name}`)
+      notify.success(`Notes saved for ${interview.candidate.name}`)
       onDone()
     } catch {
       notify.error("Couldn't save the scorecard. Try again.")
@@ -111,7 +111,7 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
           </div>
         ))}
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">Hire?</p>
+          <p className="text-sm font-medium text-foreground">Would you hire them?</p>
           <FilterChips
             label="Recommendation"
             value={recommendation}
@@ -155,7 +155,7 @@ export function ScorecardDialog({
         className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
       >
         <DialogHeader>
-          <DialogTitle>{interview ? `Scorecard · ${interview.candidate.name}` : ''}</DialogTitle>
+          <DialogTitle>{interview ? `How did it go with ${interview.candidate.name}?` : ''}</DialogTitle>
         </DialogHeader>
         {interview ? (
           <ScorecardForm

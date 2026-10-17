@@ -140,7 +140,7 @@ export default function PrivacyPolicyPage() {
                 A short review of each application against the employer&apos;s criteria (fit and a
                 one-line reason), shown only to the employer. A person makes every decision.
               </li>
-              <li>Interview scorecards written by the employer&apos;s interviewers</li>
+              <li>Interview notes written by the employer&apos;s interviewers</li>
             </ul>
             <h3 className="legal__section-subtitle">2.3 Information collected automatically</h3>
             <ul className="legal__list">

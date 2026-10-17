@@ -28,7 +28,7 @@ import { ScorecardDialog } from './ScorecardDialog'
 type GroupKey = 'earlier' | 'today' | 'tomorrow' | 'week' | 'later'
 
 const GROUPS: { key: GroupKey; label: string }[] = [
-  { key: 'earlier', label: 'Waiting for a scorecard' },
+  { key: 'earlier', label: 'Tell us how it went' },
   { key: 'today', label: 'Today' },
   { key: 'tomorrow', label: 'Tomorrow' },
   { key: 'week', label: 'This week' },
@@ -98,10 +98,10 @@ function Row({
       <div className="flex shrink-0 items-center gap-2">
         {interview.scorecard_state === 'due' ? (
           <Button size="sm" onClick={() => onScorecard(interview)}>
-            Add scorecard
+            How did it go?
           </Button>
         ) : interview.scorecard_state === 'done' ? (
-          <StatusPill tone="success">Scorecard in</StatusPill>
+          <StatusPill tone="success">Notes added</StatusPill>
         ) : (
           <>
             <Button
@@ -152,7 +152,7 @@ function InterviewsSkeleton() {
   )
 }
 
-/** Agenda: interviews grouped by day, with Join / Reschedule, then "Add scorecard" once over. */
+/** Agenda: interviews grouped by day, with Join / Reschedule, then "How did it go?" once over. */
 export function InterviewsView() {
   const { data, isLoading, isError, isFetching, refetch } = useListInterviewsQuery(
     { range: 'upcoming' },
@@ -183,7 +183,7 @@ export function InterviewsView() {
           interviews.length
             ? [
                 todayCount ? `${todayCount} today` : 'None today',
-                dueCount ? `${dueCount} waiting for a scorecard` : null,
+                dueCount ? `${dueCount} waiting for your notes` : null,
               ]
             : undefined
         }

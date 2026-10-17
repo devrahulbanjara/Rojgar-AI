@@ -56,7 +56,7 @@ function InterviewRow({ interview, now }: { interview: RecruiterHomeInterview; n
       </Link>
       {over ? (
         <Button asChild size="sm" variant="outline" className="ml-auto">
-          <Link href="/recruiter/interviews">Add scorecard</Link>
+          <Link href="/recruiter/interviews">How did it go?</Link>
         </Button>
       ) : isUrl(interview.location) ? (
         <Button asChild size="sm" className="ml-auto">
