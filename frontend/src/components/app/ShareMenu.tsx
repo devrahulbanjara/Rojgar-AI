@@ -4,9 +4,9 @@ import { useRef } from 'react'
 
 import { notify } from '@/lib/notify'
 import { type ShareableJob, applyUrl, facebookPost, linkedInPost } from '@/lib/shareLinks'
-import { Check, Copy, Download, Share2 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 
+import { CheckIcon, CopyIcon, DownloadIcon, ShareIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -34,14 +34,15 @@ function CopyRow({ label, value, what }: { label: string; value: string; what: s
         <p className="truncate text-xs text-muted-foreground">{value.split('\n')[0]}</p>
       </div>
       <Button size="sm" variant="outline" onClick={() => void copy(value, what)}>
-        <Copy />
-        Copy
+        <CopyIcon />
+        CopyIcon
       </Button>
     </div>
   )
 }
 
-export function ShareJobDialog({ job, trigger }: { job: ShareableJob; trigger?: React.ReactNode }) {
+/** Share a job: apply link, LinkedIn/Facebook post text, Merojob link, QR. */
+export function ShareMenu({ job, trigger }: { job: ShareableJob; trigger?: React.ReactNode }) {
   const qrRef = useRef<HTMLCanvasElement>(null)
   const directLink = applyUrl(job.slug, 'direct')
 
@@ -59,7 +60,7 @@ export function ShareJobDialog({ job, trigger }: { job: ShareableJob; trigger?: 
       <DialogTrigger asChild>
         {trigger ?? (
           <Button size="sm" variant="outline" aria-label={`Share ${job.title}`}>
-            <Share2 />
+            <ShareIcon />
             Share
           </Button>
         )}
@@ -88,12 +89,12 @@ export function ShareJobDialog({ job, trigger }: { job: ShareableJob; trigger?: 
           </div>
           <div className="flex flex-col gap-2">
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Check className="size-4 text-status-offer-foreground" />
+              <CheckIcon className="size-4 text-status-offer-foreground" />
               For posters and job fairs
             </p>
             <Button size="sm" variant="outline" onClick={downloadQr}>
-              <Download />
-              Download QR
+              <DownloadIcon />
+              DownloadIcon QR
             </Button>
           </div>
         </div>
@@ -101,3 +102,6 @@ export function ShareJobDialog({ job, trigger }: { job: ShareableJob; trigger?: 
     </Dialog>
   )
 }
+
+/** @deprecated Use ShareMenu. */
+export const ShareJobDialog = ShareMenu

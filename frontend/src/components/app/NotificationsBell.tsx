@@ -9,8 +9,8 @@ import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
 } from '@/store/services/notificationsApi'
-import { Bell } from 'lucide-react'
 
+import { BellIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
@@ -30,7 +30,7 @@ export function NotificationsBell() {
           className="relative"
           aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
         >
-          <Bell />
+          <BellIcon className="size-5" />
           {unread ? (
             <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
           ) : null}

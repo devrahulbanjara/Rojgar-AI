@@ -2,12 +2,12 @@ import Link from 'next/link'
 
 import { ago, closingLabel } from '@/lib/dates'
 import type { RecruiterHomeRole } from '@/store/services/dashboardApi'
-import { Share2 } from 'lucide-react'
 
+import { ShareIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 
 import { ActionTile } from './ActionTile'
-import { ShareJobDialog } from './ShareJobDialog'
+import { ShareMenu } from './ShareMenu'
 import { JobStatusPill } from './StatusPill'
 
 /** One role and the work waiting on it, Hirely-style. */
@@ -39,7 +39,7 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
           </div>
         </div>
         {isOpen ? (
-          <ShareJobDialog
+          <ShareMenu
             job={{
               slug: role.share_slug,
               title: role.title,
@@ -49,7 +49,7 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
             }}
             trigger={
               <Button variant="ghost" size="icon-sm" aria-label={`Share ${role.title}`}>
-                <Share2 />
+                <ShareIcon />
               </Button>
             }
           />

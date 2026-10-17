@@ -16,8 +16,14 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react'
 
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SortIcon,
+} from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -36,53 +42,20 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-import { EntityAvatar } from './EntityAvatar'
-
 /** Header button with a small sort arrow. */
 export function SortableHeader<T>({ column, label }: { column: Column<T>; label: string }) {
   const sorted = column.getIsSorted()
-  const Icon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown
+  const Icon = sorted === 'asc' ? ArrowUpIcon : sorted === 'desc' ? ArrowDownIcon : SortIcon
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="xs"
       onClick={() => column.toggleSorting(sorted === 'asc')}
-      className="-ml-1 inline-flex items-center gap-1 rounded px-1 text-xs font-medium hover:text-foreground"
+      className="-ml-2 text-xs font-medium text-muted-foreground hover:text-foreground"
     >
       {label}
       <Icon className={cn('size-3', !sorted && 'opacity-40')} />
-    </button>
-  )
-}
-
-/** First cell: avatar/thumbnail + bold name + muted meta. */
-export function PrimaryCell({
-  name,
-  meta,
-  src,
-  kind = 'person',
-  href,
-}: {
-  name: string
-  meta?: ReactNode
-  src?: string | null
-  kind?: 'person' | 'company'
-  href?: string
-}) {
-  const body = (
-    <span className="flex min-w-0 items-center gap-3">
-      <EntityAvatar name={name} src={src} kind={kind} className="size-8" />
-      <span className="flex min-w-0 flex-col">
-        <span className="truncate font-medium text-foreground">{name}</span>
-        {meta ? <span className="truncate text-xs text-muted-foreground">{meta}</span> : null}
-      </span>
-    </span>
-  )
-  return href ? (
-    <Link href={href} className="hover:underline">
-      {body}
-    </Link>
-  ) : (
-    body
+    </Button>
   )
 }
 
@@ -95,6 +68,16 @@ export function RowLink({ href, children = 'Open' }: { href: string; children?: 
     >
       {children} →
     </Link>
+  )
+}
+
+/** Sticky bar shown while rows are selected: "3 selected · [Shortlist] [Reject]". */
+export function BulkBar({ count, children }: { count: number; children: ReactNode }) {
+  return (
+    <div className="sticky top-16 z-10 flex items-center gap-3 border-b bg-card px-4 py-2">
+      <span className="text-sm font-medium">{count} selected</span>
+      <div className="flex items-center gap-2">{children}</div>
+    </div>
   )
 }
 
@@ -170,12 +153,9 @@ export function DataTable<T>({
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
       {bulkActions && selected.length > 0 ? (
-        <div className="sticky top-16 z-10 flex items-center gap-3 border-b bg-card px-4 py-2">
-          <span className="text-sm font-medium">{selected.length} selected</span>
-          <div className="flex items-center gap-2">
-            {bulkActions(selected, () => setRowSelection({}))}
-          </div>
-        </div>
+        <BulkBar count={selected.length}>
+          {bulkActions(selected, () => setRowSelection({}))}
+        </BulkBar>
       ) : null}
       <Table>
         <TableHeader>
@@ -249,7 +229,7 @@ export function DataTable<T>({
                 disabled={!table.getCanPreviousPage()}
                 aria-label="Previous page"
               >
-                <ChevronLeft />
+                <ChevronLeftIcon />
               </Button>
               <Button
                 variant="outline"
@@ -258,7 +238,7 @@ export function DataTable<T>({
                 disabled={!table.getCanNextPage()}
                 aria-label="Next page"
               >
-                <ChevronRight />
+                <ChevronRightIcon />
               </Button>
             </div>
           </div>

@@ -10,7 +10,7 @@ const toneFor = (pct: number) =>
       : { text: 'text-danger', bar: 'bg-danger' }
 
 /** "8/10 ▬ 80%" — fraction, thin bar, percent, coloured by threshold. */
-export function FitMeter({ score, outOf = 100 }: { score: number | null; outOf?: number }) {
+export function ScoreBar({ score, outOf = 100 }: { score: number | null; outOf?: number }) {
   if (score == null) return <span className="text-xs text-muted-foreground">—</span>
   const pct = Math.round((score / outOf) * 100)
   const tone = toneFor(pct)
@@ -21,6 +21,29 @@ export function FitMeter({ score, outOf = 100 }: { score: number | null; outOf?:
         <span className={cn('block h-full rounded-full', tone.bar)} style={{ width: `${pct}%` }} />
       </span>
       <span className={tone.text}>{pct}%</span>
+    </span>
+  )
+}
+
+/** @deprecated Use ScoreBar. */
+export const FitMeter = ScoreBar
+
+/** Compact fit pill for dense rows: "8/10", tinted by threshold. */
+export function FitPill({ score, outOf = 100 }: { score: number | null; outOf?: number }) {
+  if (score == null) return <span className="text-xs text-muted-foreground">—</span>
+  const pct = Math.round((score / outOf) * 100)
+  const tint =
+    pct >= 70
+      ? 'bg-success-bg text-success'
+      : pct >= 40
+        ? 'bg-warning-bg text-warning'
+        : 'bg-danger-bg text-danger'
+  return (
+    <span
+      className={cn('inline-flex rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', tint)}
+      title={`${pct}% fit`}
+    >
+      {Math.round(pct / 10)}/10
     </span>
   )
 }
