@@ -30,24 +30,6 @@ def _sniff_image(head: bytes) -> tuple[str, str] | None:
     return None
 
 
-def _sniff_audio(head: bytes) -> tuple[str, str] | None:
-    if head.startswith(b"\x1a\x45\xdf\xa3"):
-        return "webm", "audio/webm"
-    if head.startswith(b"OggS"):
-        return "ogg", "audio/ogg"
-    if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
-        return "wav", "audio/wav"
-    if head[4:8] == b"ftyp":
-        return "m4a", "audio/mp4"
-    if head.startswith(b"ID3") or (
-        len(head) > 1 and head[0] == 0xFF and (head[1] & 0xE0) == 0xE0
-    ):
-        return "mp3", "audio/mpeg"
-    if head.startswith(b"fLaC"):
-        return "flac", "audio/flac"
-    return None
-
-
 async def _read_head(file: UploadFile, size: int = 16) -> bytes:
     await file.seek(0)
     head = await file.read(size)
@@ -205,12 +187,6 @@ class StorageService:
             key = key.removeprefix("files/")
         return key or None
 
-    def _extract_extension(self, filename: str | None) -> str:
-        """Extract file extension from filename."""
-        if filename and "." in filename:
-            return filename.rsplit(".", 1)[-1].lower()
-        return "jpg"
-
     def _get_file_size(self, file: UploadFile) -> int:
         """Get file size without consuming the stream."""
         current_position = file.file.tell()
@@ -218,44 +194,6 @@ class StorageService:
         size = file.file.tell()
         file.file.seek(current_position)
         return size
-
-    async def upload_audio(self, file: UploadFile, folder: str) -> tuple[str, str]:
-        """
-        Upload audio file. Returns (public_url, s3_key).
-        Accepts webm, ogg, wav, mp4/m4a, mp3 and flac, detected from the file
-        content. Max 200MB.
-        """
-        sniffed = _sniff_audio(await _read_head(file))
-        if sniffed is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unsupported audio format.",
-            )
-        extension, content_type = sniffed
-
-        max_bytes = 200 * 1024 * 1024
-        file_size = self._get_file_size(file)
-        if file_size > max_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Audio file exceeds 200MB limit.",
-            )
-
-        file_key = f"{folder}/{uuid.uuid4()}.{extension}"
-        await file.seek(0)
-
-        try:
-            await self._put(file.file, file_key, content_type)
-        except Exception as exc:
-            logger.exception("Audio upload failed for key {}: {}", file_key, exc)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Upload failed. Please try again later.",
-            ) from exc
-
-        url = self._public_url(file_key)
-        logger.info("Storage: Uploaded audio {}", url)
-        return url, file_key
 
     async def upload_private_document(
         self, data: bytes, folder: str, *, extension: str, content_type: str
