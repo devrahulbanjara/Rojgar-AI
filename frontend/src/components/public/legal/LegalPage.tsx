@@ -1,39 +1,30 @@
-import { Fragment, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import Link from 'next/link'
 
 import { cn } from '@/lib/utils'
 
-import { CalendarIcon, ChevronRightIcon, ClockIcon, ShieldCheckIcon } from '@/components/icons'
+import { ChevronRightIcon } from '@/components/icons'
 
 import { LegalToc, type LegalTocItem } from './LegalToc'
 
-export type { LegalTocItem }
-
-export type LegalMetaIcon = 'calendar' | 'clock' | 'shield'
-export type LegalMeta = { icon: LegalMetaIcon; label: string }
 export type LegalRelated = { href: string; label: string }
 
-const META_ICONS: Record<LegalMetaIcon, typeof CalendarIcon> = {
-  calendar: CalendarIcon,
-  clock: ClockIcon,
-  shield: ShieldCheckIcon,
-}
-
-/** Shared layout for every legal page: hero, sticky contents, prose and related links. */
+/** Shared layout for every legal page: title, sticky contents, prose and related links. */
 export function LegalPage({
   title,
-  meta = [],
+  updated,
   toc = [],
   related = [],
   summary,
   children,
 }: {
   title: string
-  meta?: LegalMeta[]
+  /** e.g. "Updated 17 October 2026" */
+  updated: string
   toc?: LegalTocItem[]
   related?: LegalRelated[]
-  /** Plain summary line shown in the tinted callout above the policy. */
+  /** The policy in a few plain lines, in a tinted box above it. */
   summary?: ReactNode
   children: ReactNode
 }) {
@@ -43,24 +34,7 @@ export function LegalPage({
         <h1 className="font-heading text-4xl leading-[1.1] font-bold tracking-tight text-balance text-foreground sm:text-5xl">
           {title}
         </h1>
-        {meta.length > 0 ? (
-          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            {meta.map((item, index) => {
-              const Icon = META_ICONS[item.icon]
-              return (
-                <Fragment key={`${item.icon}-${index}`}>
-                  {index > 0 ? (
-                    <span className="size-1 rounded-full bg-border" aria-hidden="true" />
-                  ) : null}
-                  <span className="inline-flex items-center gap-2">
-                    <Icon className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                    {item.label}
-                  </span>
-                </Fragment>
-              )
-            })}
-          </div>
-        ) : null}
+        <p className="mt-4 text-sm text-muted-foreground">{updated}</p>
       </header>
 
       <div

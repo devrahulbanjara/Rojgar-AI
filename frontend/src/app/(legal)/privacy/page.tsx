@@ -1,369 +1,189 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { BRAND } from '@/lib/brand'
+
 import { LegalPage } from '@/components/public/legal/LegalPage'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description:
-    'Learn how Rojgar AI collects, uses, and protects your personal data in accordance with the Privacy Act 2075 (2018) and the Electronic Transactions Act 2063 of Nepal.',
+  title: 'Privacy',
+  description: `What ${BRAND.name} collects when you apply for a job or hire, who sees it, and how to delete it.`,
 }
 
 const TOC = [
-  { id: 'about', label: 'About This Policy' },
-  { id: 'data-we-collect', label: 'Data We Collect' },
-  { id: 'how-we-use', label: 'How We Use Your Data' },
-  { id: 'legal-basis', label: 'Legal Basis (Nepal Law)' },
-  { id: 'sharing', label: 'Sharing Your Data' },
-  { id: 'retention', label: 'Data Retention' },
-  { id: 'your-rights', label: 'Your Rights' },
-  { id: 'security', label: 'Security Measures' },
-  { id: 'cookies', label: 'Cookies' },
-  { id: 'children', label: "Children's Privacy" },
-  { id: 'changes', label: 'Changes to This Policy' },
-  { id: 'contact', label: 'Contact Us' },
+  { id: 'collect', label: 'What we collect' },
+  { id: 'use', label: 'How we use it' },
+  { id: 'who-sees', label: 'Who sees it' },
+  { id: 'keep', label: 'How long we keep it' },
+  { id: 'choices', label: 'Your choices' },
+  { id: 'safety', label: 'Keeping it safe' },
+  { id: 'children', label: 'Age' },
+  { id: 'changes', label: 'Changes' },
+  { id: 'contact', label: 'Contact' },
 ]
 
 const RELATED = [
-  { href: '/cookies', label: 'Cookie Policy' },
-  { href: '/terms', label: 'Terms & Conditions' },
-  { href: '/copyright', label: 'Copyright Notice' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/cookies', label: 'Cookies' },
 ]
 
-export default function PrivacyPolicyPage() {
+export default function PrivacyPage() {
   return (
     <LegalPage
-      title="Privacy Policy"
-      meta={[
-        { icon: 'calendar', label: 'Effective: 1 Falgun 2081 BS (13 February 2025)' },
-        { icon: 'clock', label: 'Last updated: 1 Falgun 2081 BS' },
-        { icon: 'shield', label: 'Governed by Nepal Law' },
-      ]}
+      title="Privacy"
+      updated="Updated 17 October 2026"
       toc={TOC}
       related={RELATED}
       summary={
-        <>
-          <strong>Summary:</strong> Rojgar AI is operated by Rojgar AI, registered in Nepal. We
-          collect only the personal data necessary to provide our job-board services and do so in
-          compliance with the <strong>Privacy Act 2075 (2018)</strong> and the{' '}
-          <strong>Electronic Transactions Act 2063 (2006)</strong> of Nepal. We never sell your
-          data.
-        </>
+        <ul className="flex list-disc flex-col gap-1 pl-5">
+          <li>Your application goes only to the business you applied to.</li>
+          <li>AI helps the business review it, but it never decides alone.</li>
+          <li>You can withdraw and delete your application from your status link at any time.</li>
+          <li>We never sell your information or use it for ads.</li>
+        </ul>
       }
     >
-      <section id="about">
-        <h2>1. About This Policy</h2>
+      <section id="collect">
+        <h2>What we collect</h2>
         <p>
-          This Privacy Policy describes how Rojgar AI (&quot;Rojgar AI&quot;, &quot;we&quot;,
-          &quot;us&quot;, &quot;our&quot;) collects, uses, stores, and discloses information about
-          you when you use our website at <strong>rojgarai.app</strong> and the services we provide
-          (collectively, the &quot;Service&quot;).
+          {BRAND.name} helps businesses in Nepal hire. A business posts a job and shares one link;
+          people apply through that link.
         </p>
+        <h3>When you apply for a job</h3>
+        <ul>
+          <li>Your name and mobile number</li>
+          <li>Your email, if you give it</li>
+          <li>Your CV or a photo of it, if you add one</li>
+          <li>Your answers to the job&apos;s questions</li>
+          <li>Where you found the job (for example Facebook), and who shared the link with you</li>
+        </ul>
+        <h3>When someone suggests you for a job</h3>
+        <p>Your name and mobile number, their name, and the note they wrote about you.</p>
+        <h3>When you hire with {BRAND.name}</h3>
+        <ul>
+          <li>Your name, mobile number and email</li>
+          <li>
+            Your business&apos;s name, type, district and phone, and its PAN or registration
+            certificate if you add it
+          </li>
+          <li>Your team, jobs, notes, interviews and decisions</li>
+          <li>What you bought and your bank transfer reference</li>
+        </ul>
+        <h3>When you use the website</h3>
         <p>
-          By accessing or using our Service, you acknowledge that you have read, understood, and
-          agreed to this Privacy Policy. If you do not agree, please discontinue use of the Service.
-        </p>
-        <p>
-          This Policy is governed by and construed in accordance with the laws of Nepal, including
-          the <strong>Privacy Act 2075 (2018)</strong>, the{' '}
-          <strong>Electronic Transactions Act 2063 (2006)</strong>, and any applicable regulations
-          issued thereunder.
+          Your IP address and browser details go into our server logs. We use them only to keep the
+          service working and safe.
         </p>
       </section>
 
-      <section id="data-we-collect">
-        <h2>2. Data We Collect</h2>
-        <h3>2.1 Information you provide directly</h3>
+      <section id="use">
+        <h2>How we use it</h2>
         <ul>
-          <li>Full name, email address, and password when you register an account</li>
+          <li>To send your application to the business you applied to.</li>
           <li>
-            The CV you send with an application and your answers to the employer&apos;s questions
+            To read your CV and answers with AI and compare them with what the job needs, so the
+            business sees a short reason next to each application. AI helps the business review
+            every application, but it never decides alone. Every hiring decision is made by a
+            person.
           </li>
-          <li>Profile photo (optional)</li>
-          <li>Contact details such as phone number and location</li>
-          <li>Job applications and any content you submit during the apply flow</li>
-          <li>Payment and billing details if you subscribe to a paid plan</li>
-          <li>Communications you send to us via contact forms, email, or support tickets</li>
-        </ul>
-        <h3>2.2 Information generated by AI</h3>
-        <ul>
-          <li>
-            A short review of each application against the employer&apos;s criteria (fit and a
-            one-line reason), shown only to the employer. A person makes every decision.
-          </li>
-          <li>Interview notes written by the employer&apos;s interviewers</li>
-        </ul>
-        <h3>2.3 Information collected automatically</h3>
-        <ul>
-          <li>IP address and approximate geolocation (country/city)</li>
-          <li>Browser type, operating system, and device information</li>
-          <li>
-            Pages visited, time spent, and click-stream data via cookies and similar technologies
-          </li>
-          <li>Referring URLs and search queries that led you to our site</li>
-        </ul>
-        <h3>2.4 Information from third parties</h3>
-        <ul>
-          <li>Profile data from LinkedIn or Google if you choose to sign up via OAuth</li>
-          <li>
-            Publicly available professional information you have made visible on other platforms
-          </li>
-        </ul>
-      </section>
-
-      <section id="how-we-use">
-        <h2>3. How We Use Your Data</h2>
-        <p>We use your personal data strictly for the following purposes:</p>
-        <ul>
-          <li>To create and manage your account and deliver the Service</li>
-          <li>To forward your application materials to prospective employers on your behalf</li>
-          <li>
-            To review each application against the employer&apos;s criteria and help the employer
-            search the applications they received
-          </li>
-          <li>To let you book an interview time and to tell you what the employer decided</li>
-          <li>To invoice companies on paid plans</li>
-          <li>To send you transactional notifications (application updates, password resets)</li>
-          <li>To prevent fraud, abuse, and security incidents</li>
-          <li>To comply with legal obligations under Nepal law</li>
+          <li>To text and email you about your application: received, interview, decision.</li>
+          <li>To text the person someone suggested, with the job link.</li>
+          <li>To stop fake jobs, spam and misuse.</li>
+          <li>To bill businesses.</li>
         </ul>
         <p>
-          <strong>AI processing:</strong> Your resume and application data may be processed by AI
-          models to generate scores, feedback, and suggestions. Contact details (email, phone,
-          links) are removed before your resume reaches screening models. AI output is a{' '}
-          <strong>recommendation only</strong>: a recruiter reviews and confirms every shortlisting
-          or rejection decision, and every outreach email and job edit, before it takes effect.
-        </p>
-        <p>
-          We do <strong>not</strong> make solely automated decisions about your application. You can
-          ask the hiring company for a human review of any decision by replying to their email or
-          contacting us.
+          We <strong>never sell</strong> your information and never use it for advertising.
         </p>
       </section>
 
-      <section id="legal-basis">
-        <h2>4. Legal Basis Under Nepal Law</h2>
-        <p>
-          Under the <strong>Privacy Act 2075 (2018)</strong> of Nepal, we rely on the following
-          lawful grounds to process your personal data:
-        </p>
+      <section id="who-sees">
+        <h2>Who sees it</h2>
         <ul>
           <li>
-            <strong>Consent:</strong> For optional communications such as marketing emails and push
-            notifications. You may withdraw consent at any time.
+            <strong>The business you applied to</strong> and the people in its team. Other
+            businesses don&apos;t see your application.
           </li>
           <li>
-            <strong>Contractual necessity:</strong> To perform the agreement between you and Rojgar
-            AI when you register and use the Service.
+            <strong>Services that run {BRAND.name} for us:</strong> Amazon Web Services (file
+            storage and AI), Google Gemini and Groq (AI), LlamaIndex (reading CVs), Qdrant (search),
+            Sparrow SMS (text messages) and our email provider. Some of them are outside Nepal. They
+            may use your information only to provide their service to us.
           </li>
           <li>
-            <strong>Legitimate interest:</strong> For fraud prevention, security monitoring, and
-            improving the Service, provided these interests do not override your fundamental rights.
-          </li>
-          <li>
-            <strong>Legal obligation:</strong> Where processing is required to comply with
-            applicable Nepal legislation or a lawful order of a competent authority.
-          </li>
-        </ul>
-        <p>
-          The Electronic Transactions Act 2063 (2006) further governs the legal validity of
-          electronic records, digital signatures, and online transactions conducted through the
-          Service.
-        </p>
-      </section>
-
-      <section id="sharing">
-        <h2>5. Sharing Your Data</h2>
-        <p>We share your personal data with third parties only in the following circumstances:</p>
-        <ul>
-          <li>
-            <strong>Employers / Hirers:</strong> Your application materials are shared with the
-            employer to whom you apply. Employers are bound by their own privacy policies; we
-            recommend reviewing them before applying.
-          </li>
-          <li>
-            <strong>Service providers:</strong> Sub-processors for hosting, storage, email delivery
-            and AI processing (Amazon Web Services, Supabase, Upstash, Qdrant, Groq, Google Gemini,
-            Anthropic via AWS Bedrock, LlamaIndex, Tavily), some of which process data outside
-            Nepal.
-          </li>
-          <li>
-            <strong>Legal requirements:</strong> When required by a court order, regulatory
-            authority, or law enforcement agency in Nepal acting under lawful authority.
-          </li>
-          <li>
-            <strong>Business transfers:</strong> In the event of a merger, acquisition, or sale of
-            all or substantially all of our assets, we will notify you before your data is
-            transferred and becomes subject to a new privacy policy.
-          </li>
-        </ul>
-        <p>
-          We <strong>never sell, rent, or trade</strong> your personal information to any third
-          party.
-        </p>
-      </section>
-
-      <section id="retention">
-        <h2>6. Data Retention</h2>
-        <p>
-          We retain your personal data for as long as your account remains active or as necessary to
-          provide the Service. Specifically:
-        </p>
-        <ul>
-          <li>
-            Account data is retained for the duration of your account and for up to{' '}
-            <strong>2 years</strong> after account deletion for legal and dispute-resolution
-            purposes.
-          </li>
-          <li>
-            Application records may be retained for up to <strong>1 year</strong> after the closure
-            of a job listing to allow employers to respond to regulatory enquiries.
-          </li>
-          <li>
-            Financial records are retained for <strong>5 years</strong> as required by the{' '}
-            <strong>Income Tax Act 2058 (2002)</strong> and the{' '}
-            <strong>Value Added Tax Act 2052 (1995)</strong> of Nepal.
-          </li>
-          <li>
-            Server logs are retained for no more than <strong>90 days</strong> in anonymised or
-            aggregated form.
+            <strong>Courts or police</strong>, only when Nepal law requires us to share it.
           </li>
         </ul>
       </section>
 
-      <section id="your-rights">
-        <h2>7. Your Rights</h2>
-        <p>
-          Under the <strong>Privacy Act 2075 (2018)</strong> and the Constitution of Nepal (Article
-          28, Right to Privacy), you have the following rights in relation to your personal data:
-        </p>
+      <section id="keep">
+        <h2>How long we keep it</h2>
         <ul>
           <li>
-            <strong>Right to access:</strong> Request a copy of the personal data we hold about you.
+            An application stays until you withdraw it, you ask us to delete it, or the business
+            deletes it. When you withdraw, we delete your CV and details for that job straight away.
+          </li>
+          <li>Server logs are deleted after 30 days.</li>
+          <li>Payment records are kept as long as Nepal&apos;s tax law requires.</li>
+        </ul>
+      </section>
+
+      <section id="choices">
+        <h2>Your choices</h2>
+        <ul>
+          <li>
+            <strong>See your applications:</strong> open the status link we sent you by SMS or
+            email, or <Link href="/signin">sign in with your email</Link>.
           </li>
           <li>
-            <strong>Right to rectification:</strong> Request correction of inaccurate or incomplete
-            data.
+            <strong>Withdraw and delete:</strong> use &quot;Withdraw application&quot; on the status
+            page.
           </li>
           <li>
-            <strong>Right to erasure:</strong> Request deletion of your personal data, subject to
-            our legal retention obligations.
-          </li>
-          <li>
-            <strong>Right to restrict processing:</strong> Ask us to limit how we use your data in
-            certain circumstances.
-          </li>
-          <li>
-            <strong>Right to data portability:</strong> Receive your account data in a structured,
-            machine-readable format.
-          </li>
-          <li>
-            <strong>Right to object:</strong> Object to processing based on legitimate interests or
-            direct marketing.
-          </li>
-          <li>
-            <strong>Right to withdraw consent:</strong> Withdraw consent at any time without
-            affecting the lawfulness of prior processing.
+            <strong>Get a copy, fix a mistake or delete everything:</strong> email{' '}
+            <a href={`mailto:${BRAND.email}`}>{BRAND.email}</a>. We reply within 30 days.
           </li>
         </ul>
         <p>
-          To exercise any of these rights, email us at <strong>privacy@rojgarai.app</strong>. We
-          will respond within <strong>30 days</strong> as required under Nepal law. You also have
-          the right to lodge a complaint with the{' '}
-          <strong>
-            Department of Information Technology, Ministry of Communication and Information
-            Technology, Government of Nepal
-          </strong>
-          .
+          These rights come from Nepal&apos;s <strong>Privacy Act 2075 (2018)</strong>.
         </p>
       </section>
 
-      <section id="security">
-        <h2>8. Security Measures</h2>
-        <p>
-          We implement industry-standard technical and organisational measures to protect your
-          personal data against unauthorised access, disclosure, alteration, or destruction,
-          including:
-        </p>
+      <section id="safety">
+        <h2>Keeping it safe</h2>
         <ul>
-          <li>TLS 1.3 encryption for all data in transit</li>
-          <li>AES-256 encryption for data at rest</li>
-          <li>Argon2 password hashing</li>
-          <li>Role-based access controls limiting employee access to personal data</li>
+          <li>Every page and file is sent over an encrypted connection (HTTPS).</li>
+          <li>Passwords are stored only as a secure hash, never as plain text.</li>
+          <li>A business can see only the applications for its own jobs.</li>
           <li>
-            AI guardrails including prompt injection detection, PII redaction before AI processing,
-            and hallucination prevention via Frozen Facts
+            CVs are checked for hidden instructions meant to trick the AI, and flagged for a person
+            to look at.
           </li>
-          <li>Rate limiting and duplicate-request protection on all API endpoints</li>
-          <li>Regular security audits and penetration testing</li>
-          <li>Multi-factor authentication for all administrative accounts</li>
         </ul>
-        <p>
-          In the event of a personal data breach that is likely to result in a risk to your rights
-          and freedoms, we will notify you and the competent authority within{' '}
-          <strong>72 hours</strong> of becoming aware of the breach.
-        </p>
-      </section>
-
-      <section id="cookies">
-        <h2>9. Cookies</h2>
-        <p>
-          We use cookies and similar tracking technologies to operate and improve the Service.
-          Please refer to our <Link href="/cookies">Cookie Policy</Link> for full details on the
-          cookies we use, their purpose, and how to manage your preferences.
-        </p>
+        <p>If your information is ever exposed, we will tell you as soon as we know.</p>
       </section>
 
       <section id="children">
-        <h2>10. Children&apos;s Privacy</h2>
+        <h2>Age</h2>
         <p>
-          The Service is not directed to individuals under the age of <strong>16 years</strong>, and
-          we do not knowingly collect personal data from children. Under the{' '}
-          <strong>Children&apos;s Act 2075 (2018)</strong> of Nepal, if we become aware that a child
-          under 16 has provided us personal data without verifiable parental consent, we will
-          promptly delete it. If you believe a child has submitted information to us, please contact
-          privacy@rojgarai.app.
+          {BRAND.name} is for people aged 16 and over. If we learn that someone younger has applied,
+          we delete their application.
         </p>
       </section>
 
       <section id="changes">
-        <h2>11. Changes to This Policy</h2>
+        <h2>Changes</h2>
         <p>
-          We may update this Privacy Policy from time to time to reflect changes in our practices or
-          applicable Nepal law. When we make material changes, we will notify you by email (to the
-          address on file) or by posting a prominent notice on the Service at least{' '}
-          <strong>15 days</strong> before the changes take effect. The &quot;Last updated&quot; date
-          at the top of this page will always reflect the most recent revision.
-        </p>
-        <p>
-          Your continued use of the Service after the effective date constitutes acceptance of the
-          revised Policy.
+          When we change this page we update the date at the top. If a change affects how we use
+          your information, we tell signed-in users by email first.
         </p>
       </section>
 
       <section id="contact">
-        <h2>12. Contact Us</h2>
+        <h2>Contact</h2>
         <p>
-          If you have any questions, concerns, or requests regarding this Privacy Policy or our data
-          practices, please contact our Data Protection Officer:
+          Questions or requests: <a href={`mailto:${BRAND.email}`}>{BRAND.email}</a>. {BRAND.name}{' '}
+          is based in Kathmandu, Nepal.
         </p>
-        <ul>
-          <li>
-            <strong>Company:</strong> Rojgar AI
-          </li>
-          <li>
-            <strong>Registration:</strong> Registered under the Companies Act 2063 (2006), Nepal
-          </li>
-          <li>
-            <strong>Address:</strong> Kathmandu, Bagmati Province, Nepal
-          </li>
-          <li>
-            <strong>Email:</strong> privacy@rojgarai.app
-          </li>
-          <li>
-            <strong>Phone:</strong> +977-1-XXXXXXX
-          </li>
-        </ul>
       </section>
     </LegalPage>
   )
