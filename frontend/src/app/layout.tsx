@@ -6,11 +6,11 @@ import '@/app/globals.css'
 import LenisProvider from '@/providers/LenisProvider'
 import StoreProvider from '@/providers/StoreProvider'
 
-import BackendConnectionBanner from '@/components/common/BackendConnectionBanner'
+import { OfflineBar } from '@/components/app/OfflineBar'
+import { SiteLayout } from '@/components/app/SiteLayout'
 // ToasterNoSSR is a Client Component that uses dynamic(ssr:false) internally,
 // which is the correct pattern for Server Component layouts.
 import ToasterNoSSR from '@/components/common/ToasterNoSSR'
-import MainLayout from '@/components/layout/MainLayout'
 
 import '@/styles/main.scss'
 
@@ -66,9 +66,9 @@ export default function RootLayout({
           Skip to main content
         </a>
         <StoreProvider>
-          <BackendConnectionBanner />
+          <OfflineBar />
           <LenisProvider>
-            <MainLayout>{children}</MainLayout>
+            <SiteLayout>{children}</SiteLayout>
           </LenisProvider>
           <ToasterNoSSR />
         </StoreProvider>

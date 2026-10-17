@@ -11,6 +11,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 import { AccountMenu } from './AccountMenu'
 import { AppSidebar } from './AppSidebar'
+import { NotificationsBell } from './NotificationsBell'
 import { TopBar } from './TopBar'
 
 /** Recruiter/admin shell: AppSidebar + TopBar around the page. */
@@ -50,7 +51,8 @@ export function CandidateShell({ children }: { children: ReactNode }) {
           <Link href="/me/applications" className="shrink-0">
             <Logo className="h-6" />
           </Link>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <NotificationsBell />
             <AccountMenu showName={false} />
           </div>
         </div>

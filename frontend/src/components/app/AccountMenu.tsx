@@ -66,21 +66,21 @@ export function AccountMenu({ showName = true }: { showName?: boolean }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem asChild>
-          <Link href={isRecruiter ? '/recruiter/profile' : '/me/applications'}>
+          <Link href={isRecruiter ? '/recruiter/settings' : '/me/applications'}>
             <UserIcon />
-            Profile
+            {isRecruiter ? 'Profile' : 'My applications'}
           </Link>
         </DropdownMenuItem>
         {role === 'recruiter_admin' ? (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/recruiter/company/settings">
+              <Link href="/recruiter/settings/company">
                 <CompanyIcon />
                 Company
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/recruiter/team?tab=audit">
+              <Link href="/recruiter/audit">
                 <AuditIcon />
                 Audit log
               </Link>

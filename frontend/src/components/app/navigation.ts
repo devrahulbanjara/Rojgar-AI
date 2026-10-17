@@ -20,7 +20,7 @@ export type NavItem = {
 export const RECRUITER_NAV: NavItem[] = [
   { label: 'Today', href: '/recruiter', icon: TodayIcon, exact: true },
   { label: 'Jobs', href: '/recruiter/jobs', icon: JobsIcon },
-  { label: 'Candidates', href: '/recruiter/talent', icon: CandidatesIcon },
+  { label: 'Candidates', href: '/recruiter/candidates', icon: CandidatesIcon },
   { label: 'Interviews', href: '/recruiter/interviews', icon: InterviewsIcon },
   { label: 'Team', href: '/recruiter/team', icon: TeamIcon, adminOnly: true },
 ]
