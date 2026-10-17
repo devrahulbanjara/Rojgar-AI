@@ -160,7 +160,9 @@ async def signup(
 async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
     """Decode token from email link and create verified user (+ company/membership if applicable)."""
     data = decode_pending_signup_token(payload.token)
-    if not data:
+    # Only tokens delivered by email prove inbox ownership. "setup" tokens are
+    # returned in the signup API response and must never create a user.
+    if not data or not str(data.get("type", "")).startswith("pending_"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired verification link. Please sign up again.",
