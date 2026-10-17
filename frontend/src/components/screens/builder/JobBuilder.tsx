@@ -5,21 +5,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import {
+  AssistantError,
   CAPABILITIES,
+  type DraftFields,
   EMPLOYMENT_TYPES,
   type EmploymentType,
   JOB_CATEGORIES,
   type Job,
   type JobCategory,
-  type JobDraft,
   type JobInput,
   type JobQuestion,
   type JobTemplate,
   WORK_TYPES,
   type WorkType,
-  discardLegacyDraft,
   getJobTemplates,
-  loadLegacyDraft,
+  loadDraft,
   protectedGroundWarning,
   streamJobDraft,
   suggestMustHaves,
@@ -102,9 +102,9 @@ function fromJob(job: Job): Form {
   }
 }
 
-function applyDraft(form: Form, draft: JobDraft): Form {
+function applyDraft(form: Form, draft: DraftFields): Form {
   const next = { ...form }
-  for (const [key, value] of Object.entries(draft) as [keyof JobDraft, unknown][]) {
+  for (const [key, value] of Object.entries(draft) as [keyof DraftFields, unknown][]) {
     if (value === undefined || value === null || value === '') continue
     if (Array.isArray(value) && !value.length) continue
     ;(next as Record<string, unknown>)[key] = value
@@ -186,7 +186,9 @@ export function JobBuilder({
   const [closesOn, setClosesOn] = useState(format(addDays(new Date(), 30), 'yyyy-MM-dd'))
   const example = useRotatingExample()
   const saveChain = useRef<Promise<unknown>>(Promise.resolve())
-  const legacyDraftId = useRef<string | null>(draftId ?? null)
+  const [assistantDraftId, setAssistantDraftId] = useState<string | null>(draftId ?? null)
+  const [reply, setReply] = useState<{ text: string; followUp: boolean } | null>(null)
+  const [assistantError, setAssistantError] = useState<string | null>(null)
 
   // Load the job being edited once.
   useEffect(() => {
@@ -198,10 +200,10 @@ export function JobBuilder({
     setLoaded(true)
   }, [existing.data, loaded])
 
-  // "Continue" on an old AI draft from the Jobs list.
+  // "Continue" on a saved assistant draft from the Jobs list.
   useEffect(() => {
     if (!draftId) return
-    void loadLegacyDraft(draftId).then((draft) => {
+    void loadDraft(draftId).then((draft) => {
       if (draft) {
         setForm((f) => applyDraft(f, draft))
         setDirty(true)
@@ -231,10 +233,6 @@ export function JobBuilder({
           if (!jobId) {
             setJobId(saved.id)
             window.history.replaceState(null, '', `/recruiter/jobs/${saved.id}/edit`)
-            if (legacyDraftId.current) {
-              discardLegacyDraft(legacyDraftId.current)
-              legacyDraftId.current = null
-            }
           }
           setSavedAt(new Date())
           setStatus(saved.status)
@@ -278,22 +276,35 @@ export function JobBuilder({
   }, [loaded])
 
   async function fillFromBrief() {
-    if (!brief.trim()) return
+    if (!brief.trim() || drafting) return
     setDrafting(true)
     setDraftText('')
+    setReply(null)
+    setAssistantError(null)
     try {
-      const { draft } = await streamJobDraft(
-        { message: brief, draft_id: jobId },
+      const turn = await streamJobDraft(
+        {
+          message: brief,
+          draft_id: assistantDraftId,
+          draft: dirty || jobId ? { ...form, location: form.location || null } : undefined,
+        },
         { onToken: (text) => setDraftText((t) => t + text) },
       )
+      setAssistantDraftId(turn.draft_id)
       setForm((f) => {
-        const next = applyDraft(f, draft)
+        const next = applyDraft(f, turn.draft)
         if (!next.must_haves.length) next.must_haves = suggestMustHaves(next.description)
         return next
       })
+      setReply(turn.reply ? { text: turn.reply, followUp: turn.follow_up } : null)
+      setBrief('')
       setDirty(true)
-    } catch {
-      notify.error("Couldn't fill it in. Write the details below instead.")
+    } catch (error) {
+      setAssistantError(
+        error instanceof AssistantError
+          ? error.message
+          : "Couldn't fill it in. Write the details below instead.",
+      )
     } finally {
       setDrafting(false)
     }
@@ -407,14 +418,26 @@ export function JobBuilder({
       >
         <section id="describe" className="flex scroll-mt-24 flex-col gap-5">
           <h2 className="font-heading text-base font-semibold">The job</h2>
-          {isNew ? (
+          {status === 'draft' ? (
             <div className="flex flex-col gap-2">
-              <FormField id="brief" label="Describe the job">
+              {reply?.followUp ? (
+                <p className="flex items-start gap-2 text-sm font-medium">
+                  <AiSpark className="mt-0.5" />
+                  {reply.text}
+                </p>
+              ) : null}
+              <FormField id="brief" label={reply?.followUp ? 'Your answer' : 'Describe the job'}>
                 <Textarea
                   id="brief"
                   value={brief}
                   onChange={(event) => setBrief(event.target.value)}
-                  placeholder={example}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                      event.preventDefault()
+                      void fillFromBrief()
+                    }
+                  }}
+                  placeholder={reply?.followUp ? '' : example}
                   rows={3}
                   className="bg-background"
                 />
@@ -429,11 +452,14 @@ export function JobBuilder({
                   Fill in the form
                 </Button>
                 {drafting ? (
-                  <AiText className="text-sm">
-                    {draftText ? 'Writing…' : 'Reading your notes…'}
+                  <AiText className="line-clamp-1 text-sm">
+                    {draftText ? draftText.slice(-80) : 'Reading your notes…'}
                   </AiText>
+                ) : reply && !reply.followUp ? (
+                  <p className="text-sm text-muted-foreground">{reply.text}</p>
                 ) : null}
               </div>
+              {assistantError ? <p className="text-sm text-destructive">{assistantError}</p> : null}
             </div>
           ) : null}
 

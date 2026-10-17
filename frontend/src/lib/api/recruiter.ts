@@ -14,7 +14,6 @@ import type {
   RecruiterCandidateDetailView,
 } from '@/store/services/applicationsApi'
 import { type ApiResponse, baseApi } from '@/store/services/baseApi'
-import { type JobAIDraftPayload, jobAiApi } from '@/store/services/jobAiApi'
 import type { JobDetail, JobStatus as LegacyJobStatus } from '@/store/services/jobsApi'
 import { updateAccessToken } from '@/store/slices/authSlice'
 import type { FetchArgs } from '@reduxjs/toolkit/query'
@@ -25,8 +24,8 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL
 
 /** What the backend can do today. Flip these as the new endpoints ship. */
 export const CAPABILITIES = {
-  /** B3 assistant SSE endpoints (job draft streaming + "Ask about this candidate"). */
-  assistant: false,
+  /** Assistant SSE endpoints (job draft + "Ask about this candidate"). */
+  assistant: true,
   /** POST notes on an application. */
   notes: false,
   /** Recruiter can mark an offer as hired (today only the candidate accepts). */
@@ -272,10 +271,23 @@ export type JobDraft = Partial<
   >
 >
 
+export type QuoteSource = 'cv' | 'answers' | 'review' | 'scorecards' | 'activity'
+
 export type CandidateAnswer = {
   answer: string
-  quotes: string[]
-  suggested_action?: DecisionAction
+  quotes: { text: string; source: QuoteSource }[]
+  /** Rendered as a normal button that calls decide. */
+  suggested_action: { action: DecisionAction; application_ids: string[] } | null
+  cv_available: boolean
+}
+
+export type JobDraftTurn = {
+  draft_id: string
+  reply: string
+  /** When true, `reply` is a question the recruiter should answer. */
+  follow_up: boolean
+  draft: JobDraft
+  sources: { title: string | null; url: string }[]
 }
 
 // ---------------------------------------------------------------------------
@@ -625,24 +637,6 @@ export function jobFacts(
     WORK_TYPES.find((w) => w.value === job.work_type)?.label,
     formatSalary(job.salary_min, job.salary_max, job.currency),
   ]
-}
-
-function draftFromLegacy(draft: JobAIDraftPayload): JobDraft {
-  return {
-    title: draft.title || undefined,
-    location: draft.location,
-    work_type: draft.location_type,
-    salary_min: draft.salary_min,
-    salary_max: draft.salary_max,
-    currency: draft.currency || 'NPR',
-    description: descriptionFromLegacy({
-      overview: draft.overview,
-      responsibilities: draft.responsibilities,
-      benefits: draft.benefits,
-    }),
-    must_haves: draft.requirements.slice(0, 6),
-    nice_to_haves: draft.preferred_qualifications.slice(0, 6),
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1139,23 +1133,51 @@ export const undo = (eventId: string) =>
   store.dispatch(recruiterApi.endpoints.undo.initiate(eventId)).unwrap()
 
 // ---------------------------------------------------------------------------
-// Assistant (SSE): events `token` {text}, `final` {draft} | {answer, quotes, suggested_action?}
+// Assistant (SSE): `token` {text}… then `final` {…} or `error` {code, message}
 // ---------------------------------------------------------------------------
 
 type StreamHandlers = { onToken?: (text: string) => void; signal?: AbortSignal }
+
+export type AssistantErrorCode =
+  | 'busy'
+  | 'timeout'
+  | 'unavailable'
+  | 'invalid'
+  | 'blocked'
+  | 'network'
+
+/** A friendly message to show inline where the answer would be. */
+export class AssistantError extends Error {
+  constructor(
+    public code: AssistantErrorCode,
+    message: string,
+  ) {
+    super(message)
+  }
+}
+
+const NETWORK_MESSAGE = "Couldn't reach the assistant. Check your connection and try again."
 
 async function streamSse<T>(
   url: string,
   body: unknown,
   { onToken, signal }: StreamHandlers,
 ): Promise<T> {
-  const response = await authedFetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-    body: JSON.stringify(body),
-    signal,
-  })
-  if (!response.ok || !response.body) throw new Error(`Request failed (${response.status})`)
+  let response: Response
+  try {
+    response = await authedFetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      body: JSON.stringify(body),
+      signal,
+    })
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') throw error
+    throw new AssistantError('network', NETWORK_MESSAGE)
+  }
+  if (response.status === 429)
+    throw new AssistantError('busy', 'Too many questions at once. Wait a minute and try again.')
+  if (!response.ok || !response.body) throw new AssistantError('unavailable', NETWORK_MESSAGE)
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
@@ -1177,79 +1199,78 @@ async function streamSse<T>(
         const parsed = JSON.parse(data.join('\n')) as Record<string, unknown>
         if (event === 'token' && typeof parsed.text === 'string') onToken?.(parsed.text)
         else if (event === 'final') final = parsed as T
-        else if (event === 'error') throw new Error(String(parsed.message ?? 'Stream failed'))
+        else if (event === 'error')
+          throw new AssistantError(
+            (parsed.code as AssistantErrorCode) ?? 'unavailable',
+            String(parsed.message ?? NETWORK_MESSAGE),
+          )
       }
       boundary = buffer.indexOf('\n\n')
     }
     if (done) break
   }
-  if (!final) throw new Error('The answer was cut off.')
+  if (!final) throw new AssistantError('timeout', 'The answer was cut off. Try again.')
   return final
 }
 
-const sleep = (ms: number, signal?: AbortSignal) =>
-  new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(resolve, ms)
-    signal?.addEventListener('abort', () => {
-      clearTimeout(timer)
-      reject(new DOMException('Aborted', 'AbortError'))
-    })
-  })
+// The assistant names categories by label ("Banking & Finance").
+const categoryFromLabel = (label: string | null | undefined): JobCategory | null =>
+  JOB_CATEGORIES.find((c) => c.label === label)?.value ?? null
+const categoryLabel = (value: JobCategory | null | undefined): string | null =>
+  JOB_CATEGORIES.find((c) => c.value === value)?.label ?? null
 
-/**
- * Turn a few words or a pasted description into job fields.
- * Fallback: the current job_ai draft endpoint (create → poll → delete the temporary draft).
- */
-export async function streamJobDraft(
-  { message, draft_id }: { message: string; draft_id?: string | null },
-  handlers: StreamHandlers = {},
-): Promise<{ draft: JobDraft }> {
-  if (CAPABILITIES.assistant) {
-    return streamSse<{ draft: JobDraft }>(
-      `${API}/assistant/job-draft`,
-      { message, draft_id },
-      handlers,
-    )
-  }
-  const created = await store
-    .dispatch(
-      jobAiApi.endpoints.createJobAIDraft.initiate({ rough_description: message, mode: 'create' }),
-    )
-    .unwrap()
-  const id = created.data.id
-  try {
-    for (let attempt = 0; attempt < 90; attempt += 1) {
-      const record = await store
-        .dispatch(
-          jobAiApi.endpoints.getJobAIDraft.initiate(id, { forceRefetch: true, subscribe: false }),
-        )
-        .unwrap()
-      const data = record.data
-      if (data.status === 'failed') throw new Error('Drafting failed')
-      if (data.latest_draft && data.status !== 'drafting')
-        return { draft: draftFromLegacy(data.latest_draft) }
-      await sleep(1500, handlers.signal)
-    }
-    throw new Error('Drafting took too long')
-  } finally {
-    void store.dispatch(jobAiApi.endpoints.deleteJobAIDraft.initiate(id))
-  }
+type WireDraft = Omit<JobDraft, 'category'> & {
+  category?: string | null
+  questions?: JobQuestion[]
 }
 
-/** Fields from a legacy AI draft (Jobs list "Continue" links: /recruiter/jobs/new?draftId=…). */
-export async function loadLegacyDraft(draftId: string): Promise<JobDraft | null> {
+function fromWireDraft(
+  wire: WireDraft | null | undefined,
+): JobDraft & { questions?: JobQuestion[] } {
+  if (!wire) return {}
+  return { ...wire, category: categoryFromLabel(wire.category) }
+}
+
+export type DraftFields = JobDraft & { questions?: JobQuestion[] }
+
+/**
+ * One turn with the job-draft assistant. Sends the page's current fields as
+ * `draft` so the recruiter's edits are kept.
+ */
+export async function streamJobDraft(
+  { message, draft_id, draft }: { message: string; draft_id?: string | null; draft?: DraftFields },
+  handlers: StreamHandlers = {},
+): Promise<Omit<JobDraftTurn, 'draft'> & { draft: DraftFields }> {
+  const wire = draft
+    ? {
+        ...draft,
+        category: categoryLabel(draft.category),
+        questions: draft.questions?.filter((q) => q.label.trim()),
+        must_haves: draft.must_haves?.filter((m) => m.trim()),
+      }
+    : undefined
+  const final = await streamSse<Omit<JobDraftTurn, 'draft'> & { draft: WireDraft }>(
+    `${API}/assistant/job-draft`,
+    { message, draft_id: draft_id ?? undefined, draft: wire },
+    handlers,
+  )
+  return { ...final, draft: fromWireDraft(final.draft) }
+}
+
+/** A saved assistant draft (Jobs list "Continue": /recruiter/jobs/new?draftId=…). */
+export async function loadDraft(draftId: string): Promise<DraftFields | null> {
   try {
-    const record = await store
-      .dispatch(jobAiApi.endpoints.getJobAIDraft.initiate(draftId, { subscribe: false }))
-      .unwrap()
-    return record.data.latest_draft ? draftFromLegacy(record.data.latest_draft) : null
+    const response = await authedFetch(`${API}/assistant/job-draft/${draftId}`)
+    if (!response.ok) return null
+    const body = (await response.json()) as ApiResponse<{ draft: WireDraft | null }>
+    return body.data?.draft ? fromWireDraft(body.data.draft) : null
   } catch {
     return null
   }
 }
 
-export function discardLegacyDraft(draftId: string) {
-  void store.dispatch(jobAiApi.endpoints.deleteJobAIDraft.initiate(draftId))
+type WireAnswer = Omit<CandidateAnswer, 'suggested_action'> & {
+  suggested_action: { action: 'shortlist' | 'reject' | 'email'; application_ids: string[] } | null
 }
 
 export async function streamCandidateQuestion(
@@ -1257,12 +1278,40 @@ export async function streamCandidateQuestion(
   { message }: { message: string },
   handlers: StreamHandlers = {},
 ): Promise<CandidateAnswer> {
-  if (!CAPABILITIES.assistant) throw new Error('Coming soon')
-  return streamSse<CandidateAnswer>(
-    `${API}/assistant/applications/${applicationId}/ask`,
+  const final = await streamSse<WireAnswer>(
+    `${API}/assistant/candidates/${applicationId}`,
     { message },
     handlers,
   )
+  const action = final.suggested_action
+  return {
+    ...final,
+    quotes: final.quotes ?? [],
+    // "email" has no decision button; the panel's contact links cover it.
+    suggested_action:
+      action && action.action !== 'email'
+        ? { action: action.action, application_ids: action.application_ids }
+        : null,
+  }
+}
+
+export type AssistantMessage = {
+  role: 'user' | 'assistant'
+  content: string
+  created_at: string
+  quotes: CandidateAnswer['quotes']
+}
+
+/** Earlier questions and answers about this candidate. */
+export async function getCandidateHistory(applicationId: string): Promise<AssistantMessage[]> {
+  try {
+    const response = await authedFetch(`${API}/assistant/candidates/${applicationId}`)
+    if (!response.ok) return []
+    const body = (await response.json()) as ApiResponse<{ messages: AssistantMessage[] }>
+    return body.data?.messages ?? []
+  } catch {
+    return []
+  }
 }
 
 // ---------------------------------------------------------------------------
