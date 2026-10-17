@@ -1,12 +1,12 @@
 """Re-embed everything with the local embedding model. Idempotent, local only.
 
-1. Qdrant collections built for another vector size are recreated.
-2. jobs.jd_embedding and applications.resume_embedding are filled where they
-   are missing or come from another model (``--force``: every row).
-3. Every open job and every application is upserted to Qdrant; points whose
-   job or application is gone (or no longer open) are deleted.
-4. Outbox events queued before the run are marked done (this run covers them),
-   so the sync daemon stops retrying them.
+1. The applicant collection is recreated if it was built for another size.
+2. jobs.jd_embedding and applications.resume_embedding (the ML tie-break) are
+   filled where missing or from another model (``--force``: every row).
+3. Every application is upserted to Qdrant; points whose application is gone
+   are deleted.
+4. Application outbox events queued before the run are marked done (this run
+   covers them), so the sync daemon stops retrying them.
 
     uv run python scripts/reindex_embeddings.py [--force]
 """
@@ -27,9 +27,9 @@ from app.core.destructive_guard import assert_local_target
 from app.infrastructures.ai.service import EMBEDDING_DIM, EMBEDDING_MODEL, ai_service
 from app.infrastructures.qdrant.service import qdrant_service
 from app.modules.applications.models import Application, ApplicationSyncEvent, Review
-from app.modules.jobs.models import Job, JobSyncEvent
+from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
-from app.modules.review.ml_rank import blind_resume_text
+from app.modules.review.ml_rank import _build_jd_text, blind_resume_text
 from app.shared.enums import SyncStatus
 
 CHUNK = 32
@@ -73,9 +73,8 @@ async def save_vectors(db, model, column: str, rows: list, vectors: list) -> Non
     await db.commit()
 
 
-async def reindex_jobs(force: bool) -> tuple[int, int, set[str]]:
-    embedded = indexed = 0
-    searchable: set[str] = set()
+async def reindex_jobs(force: bool) -> int:
+    embedded = 0
     last_id = None
     while True:
         async with AsyncSessionLocal() as db:
@@ -85,17 +84,13 @@ async def reindex_jobs(force: bool) -> tuple[int, int, set[str]]:
             jobs = list((await db.scalars(stmt)).all())
             await db.commit()  # no transaction open while the model runs
             if not jobs:
-                return embedded, indexed, searchable
+                return embedded
             last_id = jobs[-1].id
-
-            open_jobs = [j for j in jobs if qdrant_service._job_is_searchable(j)]
-            indexed += await qdrant_service.upsert_jobs(open_jobs)
-            searchable.update(str(j.id) for j in open_jobs)
 
             stale = [j for j in jobs if _stale(j.jd_embedding, force)]
             if stale:
                 vectors = await ai_service.embed_many(
-                    [qdrant_service._build_job_document(j) for j in stale]
+                    [_build_jd_text(j) for j in stale]
                 )
                 await save_vectors(db, Job, "jd_embedding", stale, vectors)
                 embedded += len(stale)
@@ -145,41 +140,29 @@ async def reindex_applications(force: bool) -> tuple[int, int, set[str]]:
                 embedded += len(stale)
 
 
-async def settle_outbox(before: datetime) -> tuple[int, int]:
+async def settle_outbox(before: datetime) -> int:
     """Events queued before this run are covered by it."""
-    open_states = [SyncStatus.PENDING, SyncStatus.FAILED]
     async with AsyncSessionLocal() as db:
-        jobs = await db.execute(
-            update(JobSyncEvent)
-            .where(JobSyncEvent.status.in_(open_states))
-            .where(JobSyncEvent.created_at < before)
-            .values(status=SyncStatus.COMPLETED, error_message=None)
-        )
-        apps = await db.execute(
+        result = await db.execute(
             update(ApplicationSyncEvent)
-            .where(ApplicationSyncEvent.status.in_(open_states))
+            .where(
+                ApplicationSyncEvent.status.in_([SyncStatus.PENDING, SyncStatus.FAILED])
+            )
             .where(ApplicationSyncEvent.created_at < before)
             .values(status=SyncStatus.COMPLETED, error_message=None)
         )
         await db.commit()
-    return jobs.rowcount, apps.rowcount
+    return result.rowcount
 
 
 async def main(force: bool) -> None:
     started = datetime.now(UTC)
     t0 = time.monotonic()
     print(f"Embedding model: {EMBEDDING_MODEL} ({EMBEDDING_DIM} dims)")
-    recreated = await qdrant_service.initialize()
-    if recreated:
-        print(f"Recreated Qdrant collections: {', '.join(recreated)}")
+    if await qdrant_service.initialize():
+        print(f"Recreated Qdrant collection {qdrant_service.candidate_collection_name}")
 
-    job_vectors, jobs_indexed, open_ids = await reindex_jobs(force)
-    stale_jobs = await _all_point_ids(qdrant_service.collection_name) - open_ids
-    await _delete_points(qdrant_service.collection_name, stale_jobs)
-    print(
-        f"Jobs: {job_vectors} vector(s) written, {jobs_indexed} indexed, "
-        f"{len(stale_jobs)} stale point(s) removed"
-    )
+    print(f"Jobs: {await reindex_jobs(force)} vector(s) written")
 
     app_vectors, apps_indexed, app_ids = await reindex_applications(force)
     collection = qdrant_service.candidate_collection_name
@@ -189,12 +172,8 @@ async def main(force: bool) -> None:
         f"Applications: {app_vectors} CV vector(s) written, {apps_indexed} indexed, "
         f"{len(stale_apps)} stale point(s) removed"
     )
-
-    job_events, app_events = await settle_outbox(started)
-    print(
-        f"Outbox: {job_events} job and {app_events} application event(s) settled. "
-        f"Done in {time.monotonic() - t0:.1f}s."
-    )
+    settled = await settle_outbox(started)
+    print(f"Outbox: {settled} event(s) settled. Done in {time.monotonic() - t0:.1f}s.")
 
 
 if __name__ == "__main__":

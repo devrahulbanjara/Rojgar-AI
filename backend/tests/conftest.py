@@ -21,7 +21,6 @@ settings.db_port = settings.test_db_port
 settings.db_name = settings.test_db_name
 settings.qdrant_url = settings.test_qdrant_url
 settings.qdrant_api_key = settings.test_qdrant_api_key or ""
-settings.qdrant_collection_name = f"test_{settings.test_db_name}_jobs"
 settings.qdrant_candidate_collection_name = f"test_{settings.test_db_name}_candidates"
 
 from app.core.database import Base, get_db  # noqa: E402 - after the test settings
@@ -48,13 +47,6 @@ def disable_side_effects(monkeypatch_session):
     monkeypatch_session.setattr(settings, "sms_enabled", True)
 
     import app.infrastructures.qdrant.service as _qdrant_mod
-
-    async def _mock_search_jobs(**_kwargs):
-        return [], 0
-
-    monkeypatch_session.setattr(
-        _qdrant_mod.qdrant_service, "search_jobs", _mock_search_jobs
-    )
 
     async def _mock_search_applications(**_kwargs):
         return []

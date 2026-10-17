@@ -1,4 +1,4 @@
-"""Retry policy for the Qdrant outbox (job and application sync events).
+"""Retry policy for the Qdrant outbox (application sync events).
 
 A failed event is retried with exponential backoff (1, 2, 4, 8, 16 minutes)
 and parked after ``MAX_ATTEMPTS``. The attempt count lives in the event's

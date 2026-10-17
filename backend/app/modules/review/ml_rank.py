@@ -224,6 +224,13 @@ async def compute_resume_embedding(resume) -> list[float] | None:
     return await ai_service.get_embeddings(text) if text.strip() else None
 
 
+async def compute_job_embedding(job: Job) -> list[float] | None:
+    """Embedding of the job text the tie-break compares CVs with."""
+    from app.infrastructures.ai.service import ai_service
+
+    return await ai_service.get_embeddings(_build_jd_text(job))
+
+
 async def ensure_embeddings(db, job: Job, application: Application) -> None:
     """Fill a missing (or other-model) job/CV vector before `ml_signal`.
 
@@ -234,13 +241,9 @@ async def ensure_embeddings(db, job: Job, application: Application) -> None:
     from sqlalchemy import update
     from sqlalchemy.orm.attributes import set_committed_value
 
-    from app.infrastructures.ai.service import ai_service
-    from app.infrastructures.qdrant.service import qdrant_service
-
     pending: list[tuple[Job | Application, str, list[float] | None]] = []
     if not _usable(job.jd_embedding):
-        text = qdrant_service._build_job_document(job)
-        pending.append((job, "jd_embedding", await ai_service.get_embeddings(text)))
+        pending.append((job, "jd_embedding", await compute_job_embedding(job)))
     if not _usable(application.resume_embedding):
         vector = await compute_resume_embedding(application.resume)
         pending.append((application, "resume_embedding", vector))

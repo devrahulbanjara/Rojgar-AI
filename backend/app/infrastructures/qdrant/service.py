@@ -2,7 +2,6 @@ import asyncio
 import os
 import threading
 import uuid
-from datetime import UTC, datetime
 from typing import Any
 
 from loguru import logger
@@ -12,9 +11,7 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 from app.core.config import settings
 from app.infrastructures.ai.service import EmbeddingError, ai_service, short_error
 
-QDRANT_NO_EXPIRY_TS = 32503680000  # year 3000, good enough for human nonsense
-
-# Named vector keys shared by both hybrid collections (jobs + candidates).
+# Named vector keys of the applicant collection.
 # Server-side IDF on `sparse` (`Modifier.IDF`) means we upload raw TF; Qdrant
 # computes IDF at query time.
 DENSE_VECTOR_NAME = "dense"
@@ -43,18 +40,10 @@ def _rescale_cosine(score: float) -> float:
     return min(1.0, max(0.0, scaled))
 
 
-def _expires_at_to_ts(value: datetime | None) -> int:
-    """Convert an optional expiry datetime to an integer timestamp for Qdrant."""
-    if value is None:
-        return QDRANT_NO_EXPIRY_TS
-    return int(value.timestamp())
-
-
 class QdrantService:
-    """Qdrant-backed vector storage for jobs and candidate applications."""
+    """Qdrant-backed hybrid search over a business's applications."""
 
     def __init__(self) -> None:
-        self.collection_name = settings.qdrant_collection_name
         self.candidate_collection_name = settings.qdrant_candidate_collection_name
         self.client = AsyncQdrantClient(
             url=settings.qdrant_url,
@@ -64,7 +53,7 @@ class QdrantService:
         self._sparse_embedder_lock = threading.Lock()
 
     def _get_sparse_embedder(self) -> Any:
-        """Lazily build the BM25 sparse embedder used for candidate hybrid search.
+        """Lazily build the BM25 sparse embedder used for applicant search.
 
         `fastembed` downloads the BM25 vocab on first use and caches it locally.
         Initialising at import time would slow boot and surprise the test suite
@@ -105,10 +94,10 @@ class QdrantService:
     async def _abuild_sparse_vector(self, text: str) -> models.SparseVector:
         return (await self._abuild_sparse_vectors([text]))[0]
 
-    async def initialize(self) -> list[str]:
-        """Create collections and payload indexes; preload the local models.
+    async def initialize(self) -> bool:
+        """Create the collection and payload indexes; preload the local models.
 
-        Returns the collections that were (re)created empty, e.g. after the
+        Returns True when the collection was (re)created empty, e.g. after the
         embedding model changed size: run `scripts/reindex_embeddings.py`.
         """
         try:
@@ -121,53 +110,39 @@ class QdrantService:
             await asyncio.to_thread(ai_service.preload_embeddings)
         except Exception as exc:
             logger.warning("Embedding model preload failed: {}", short_error(exc))
-        created: list[str] = []
+        created = False
         try:
-            if await self._ensure_job_collection():
-                created.append(self.collection_name)
-            if await self._ensure_candidate_collection():
-                created.append(self.candidate_collection_name)
-            await self._ensure_job_indexes()
+            created = await self._ensure_collection(self.candidate_collection_name)
             await self._ensure_candidate_indexes()
         except Exception as exc:
             logger.warning("Qdrant init failed: {}", short_error(exc))
         if created:
             logger.warning(
-                "Qdrant collections {} are new and empty. Run "
-                "`uv run python scripts/reindex_embeddings.py` to fill them.",
-                created,
+                "Qdrant collection '{}' is new and empty. Run "
+                "`uv run python scripts/reindex_embeddings.py` to fill it.",
+                self.candidate_collection_name,
             )
         return created
 
-    def _dense_params(self) -> models.VectorParams:
-        return models.VectorParams(
-            size=ai_service.embedding_dim, distance=models.Distance.COSINE
-        )
-
-    async def _schema_is_current(self, name: str, hybrid: bool) -> bool:
+    async def _schema_is_current(self, name: str) -> bool:
         """True when the collection has the vector layout and size we write."""
         params = (await self.client.get_collection(name)).config.params
         vectors = getattr(params, "vectors", None)
         sparse = getattr(params, "sparse_vectors", None) or {}
-        if hybrid:
-            if not (
-                isinstance(vectors, dict)
-                and DENSE_VECTOR_NAME in vectors
-                and SPARSE_VECTOR_NAME in sparse
-            ):
-                return False
-            dense = vectors[DENSE_VECTOR_NAME]
-        else:
-            if isinstance(vectors, dict):
-                return False
-            dense = vectors
-        return getattr(dense, "size", None) == ai_service.embedding_dim
+        if not (
+            isinstance(vectors, dict)
+            and DENSE_VECTOR_NAME in vectors
+            and SPARSE_VECTOR_NAME in sparse
+        ):
+            return False
+        return vectors[DENSE_VECTOR_NAME].size == ai_service.embedding_dim
 
-    async def _ensure_hybrid_collection(self, name: str, *, hybrid: bool) -> bool:
-        """Create `name`, or drop and recreate it when its schema or vector size
-        no longer matches (e.g. a new embedding model). True when (re)created."""
+    async def _ensure_collection(self, name: str) -> bool:
+        """Create `name` (dense + BM25), or drop and recreate it when its layout
+        or vector size no longer matches (e.g. a new embedding model). True
+        when (re)created."""
         if await self.client.collection_exists(name):
-            if await self._schema_is_current(name, hybrid):
+            if await self._schema_is_current(name):
                 return False
             logger.warning(
                 "Qdrant collection '{}' was built for another embedding model "
@@ -176,135 +151,52 @@ class QdrantService:
                 ai_service.embedding_dim,
             )
             await self.client.delete_collection(name)
-
-        if hybrid:
-            await self.client.create_collection(
-                collection_name=name,
-                vectors_config={DENSE_VECTOR_NAME: self._dense_params()},
-                sparse_vectors_config={
-                    SPARSE_VECTOR_NAME: models.SparseVectorParams(
-                        modifier=models.Modifier.IDF,
-                    ),
-                },
-            )
-        else:
-            await self.client.create_collection(
-                collection_name=name, vectors_config=self._dense_params()
-            )
+        await self.client.create_collection(
+            collection_name=name,
+            vectors_config={
+                DENSE_VECTOR_NAME: models.VectorParams(
+                    size=ai_service.embedding_dim, distance=models.Distance.COSINE
+                )
+            },
+            sparse_vectors_config={
+                SPARSE_VECTOR_NAME: models.SparseVectorParams(
+                    modifier=models.Modifier.IDF
+                )
+            },
+        )
         logger.info(
-            "Qdrant collection '{}' created ({} dims{}).",
+            "Qdrant collection '{}' created ({} dims + BM25).",
             name,
             ai_service.embedding_dim,
-            " + BM25" if hybrid else "",
         )
         return True
 
-    async def _ensure_job_collection(self) -> bool:
-        return await self._ensure_hybrid_collection(
-            self.collection_name, hybrid=settings.jobs_hybrid_search_enabled
-        )
-
-    async def _ensure_candidate_collection(self) -> bool:
-        return await self._ensure_hybrid_collection(
-            self.candidate_collection_name, hybrid=True
-        )
-
-    async def _ensure_payload_indexes(
-        self,
-        collection_name: str,
-        *,
-        keyword_fields: list[str],
-        integer_fields: list[str],
-        text_fields: list[str] | None = None,
-    ) -> None:
-        """Ensure the configured payload indexes exist for a collection."""
-        for field in keyword_fields:
-            try:
-                await self.client.create_payload_index(
-                    collection_name=collection_name,
-                    field_name=field,
-                    field_schema=models.PayloadSchemaType.KEYWORD,
-                )
-            except UnexpectedResponse as e:
-                if "already exists" not in str(e).lower():
-                    logger.warning(
-                        "Could not create keyword index on {}.{}: {}",
-                        collection_name,
-                        field,
-                        e,
-                    )
-
-        for field in integer_fields:
-            try:
-                await self.client.create_payload_index(
-                    collection_name=collection_name,
-                    field_name=field,
-                    field_schema=models.PayloadSchemaType.INTEGER,
-                )
-            except UnexpectedResponse as e:
-                if "already exists" not in str(e).lower():
-                    logger.warning(
-                        "Could not create integer index on {}.{}: {}",
-                        collection_name,
-                        field,
-                        e,
-                    )
-
-        for field in text_fields or []:
-            try:
-                await self.client.create_payload_index(
-                    collection_name=collection_name,
-                    field_name=field,
-                    field_schema=models.TextIndexParams(
-                        type=models.TextIndexType.TEXT,
-                        tokenizer=models.TokenizerType.WORD,
-                        min_token_len=2,
-                        max_token_len=20,
-                        lowercase=True,
-                    ),
-                )
-            except UnexpectedResponse as e:
-                if "already exists" not in str(e).lower():
-                    logger.warning(
-                        "Could not create text index on {}.{}: {}",
-                        collection_name,
-                        field,
-                        e,
-                    )
-
-    async def _ensure_job_indexes(self) -> None:
-        """Ensure payload indexes exist for the job collection."""
-        keywords = ["status", "location_type", "company_id"]
-        integers = ["salary_min", "salary_max", "expires_at_ts"]
-        texts = ["location"]
-        await self._ensure_payload_indexes(
-            self.collection_name,
-            keyword_fields=keywords,
-            integer_fields=integers,
-            text_fields=texts,
-        )
-        logger.info("Qdrant job payload indexes verified.")
-
     async def _ensure_candidate_indexes(self) -> None:
-        """Ensure payload indexes exist for the candidate-application collection."""
-        keywords = ["company_id", "job_id", "user_id", "application_status", "fit"]
-        integers = ["updated_at_ts"]
-        await self._ensure_payload_indexes(
-            self.candidate_collection_name,
-            keyword_fields=keywords,
-            integer_fields=integers,
-        )
-        logger.info("Qdrant candidate payload indexes verified.")
-
-    def _build_job_document(self, job) -> str:
-        """Concatenate all relevant job text for optimal semantic matching."""
-        parts = [
-            f"TITLE: {job.title}",
-            f"DESCRIPTION: {job.description or ''}",
-            f"MUST HAVE: {', '.join(job.must_haves or [])}",
-            f"NICE TO HAVE: {', '.join(job.nice_to_haves or [])}",
+        """Payload indexes for the filters applicant search uses."""
+        name = self.candidate_collection_name
+        fields = [
+            *(
+                (f, models.PayloadSchemaType.KEYWORD)
+                for f in (
+                    "company_id",
+                    "job_id",
+                    "user_id",
+                    "application_status",
+                    "fit",
+                )
+            ),
+            ("updated_at_ts", models.PayloadSchemaType.INTEGER),
         ]
-        return "\n\n".join(parts)
+        for field, schema in fields:
+            try:
+                await self.client.create_payload_index(
+                    collection_name=name, field_name=field, field_schema=schema
+                )
+            except UnexpectedResponse as exc:
+                if "already exists" not in str(exc).lower():
+                    logger.warning(
+                        "Could not index {}.{}: {}", name, field, short_error(exc)
+                    )
 
     def _build_application_document(self, application, job, review=None) -> str:
         """Serialise an application and its resume into searchable plain text."""
@@ -351,73 +243,14 @@ class QdrantService:
         ]
         return "\n\n".join(parts)
 
-    async def _vectors(
-        self, texts: list[str], *, hybrid: bool
-    ) -> list[dict[str, Any] | list[float]]:
-        """Dense (+ BM25 sparse) vectors for documents, batched."""
+    async def _vectors(self, texts: list[str]) -> list[dict[str, Any]]:
+        """Dense + BM25 sparse vectors for documents, batched."""
         dense = await ai_service.embed_many(texts, "passage")
-        if not hybrid:
-            return list(dense)
         sparse = await self._abuild_sparse_vectors(texts)
         return [
             {DENSE_VECTOR_NAME: d, SPARSE_VECTOR_NAME: sp}
             for d, sp in zip(dense, sparse, strict=True)
         ]
-
-    @staticmethod
-    def _job_is_searchable(job) -> bool:
-        from app.shared.enums import JobStatus
-
-        return job.status == JobStatus.open and (
-            job.closes_at is None or job.closes_at > datetime.now(UTC)
-        )
-
-    async def upsert_jobs(self, jobs: list) -> int:
-        """Embed open jobs and store them with filterable metadata.
-
-        Jobs that are not open (or already past their closing time) are
-        skipped. Errors propagate so the outbox marks the event for retry.
-        Returns the number of points written.
-        """
-        jobs = [job for job in jobs if self._job_is_searchable(job)]
-        if not jobs:
-            return 0
-        vectors = await self._vectors(
-            [self._build_job_document(job) for job in jobs],
-            hybrid=settings.jobs_hybrid_search_enabled,
-        )
-        await self.client.upsert(
-            collection_name=self.collection_name,
-            points=[
-                models.PointStruct(
-                    id=str(job.id),
-                    vector=vector,
-                    payload={
-                        "company_id": str(job.company_id),
-                        "status": job.status.value,
-                        "location": job.location or "",
-                        "location_type": job.location_type.value
-                        if job.location_type
-                        else None,
-                        "salary_min": job.salary_min,
-                        "salary_max": job.salary_max,
-                        "expires_at_ts": _expires_at_to_ts(job.closes_at),
-                    },
-                )
-                for job, vector in zip(jobs, vectors, strict=True)
-            ],
-        )
-        return len(jobs)
-
-    async def upsert_job(self, job) -> None:
-        await self.upsert_jobs([job])
-
-    async def delete_job(self, job_id: uuid.UUID) -> None:
-        """Remove a job vector from Qdrant (errors propagate to the outbox)."""
-        await self.client.delete(
-            collection_name=self.collection_name,
-            points_selector=models.PointIdsList(points=[str(job_id)]),
-        )
 
     async def upsert_applications(self, rows: list[tuple]) -> int:
         """Embed and upsert `(application, job, review)` rows, batched.
@@ -428,8 +261,7 @@ class QdrantService:
         if not rows:
             return 0
         vectors = await self._vectors(
-            [self._build_application_document(a, j, r) for a, j, r in rows],
-            hybrid=True,
+            [self._build_application_document(a, j, r) for a, j, r in rows]
         )
         points = []
         for (application, job, review), vector in zip(rows, vectors, strict=True):
@@ -465,266 +297,6 @@ class QdrantService:
             collection_name=self.candidate_collection_name,
             points_selector=models.PointIdsList(points=[str(application_id)]),
         )
-
-    async def search_jobs(
-        self,
-        query: str,
-        location: str | None = None,
-        location_type: str | None = None,
-        salary_min: int | None = None,
-        salary_max: int | None = None,
-        page: int = 1,
-        size: int = 10,
-    ) -> tuple[list[dict], int]:
-        """
-        Perform job search with simple filter parameters.
-
-        Routes to a hybrid (dense + BM25 sparse, RRF) path when
-        `jobs_hybrid_search_enabled` is set, otherwise to the legacy dense-only
-        path. Both paths preserve the strict→fallback escalation: if filters
-        reduce the strict result set below `size`, fill the rest from a
-        fallback query that drops the soft filters but keeps active/non-expired
-        gates and tags those hits with `is_fallback=True`.
-
-        Args:
-            query: Semantic search query string
-            location: Free-text location filter (tokenized substring match)
-            location_type: Filter by location type (e.g., "remote", "onsite", "hybrid")
-            salary_min: Minimum salary filter (job's max salary must be >= this)
-            salary_max: Maximum salary filter (job's min salary must be <= this)
-            page: Page number (1-indexed)
-            size: Results per page
-
-        Returns:
-            Tuple of (results list, total count)
-        """
-        now_ts = int(datetime.now(UTC).timestamp())
-
-        active_condition = models.FieldCondition(
-            key="status", match=models.MatchValue(value="open")
-        )
-        expires_condition = models.FieldCondition(
-            key="expires_at_ts",
-            range=models.Range(gt=now_ts),
-        )
-        base_must: list[models.Condition] = [active_condition, expires_condition]
-
-        filters: list[models.Condition] = []
-        if location:
-            filters.append(
-                models.FieldCondition(
-                    key="location",
-                    match=models.MatchText(text=location),
-                )
-            )
-        if location_type:
-            filters.append(
-                models.FieldCondition(
-                    key="location_type",
-                    match=models.MatchValue(value=location_type),
-                )
-            )
-        if salary_min is not None:
-            filters.append(
-                models.FieldCondition(
-                    key="salary_max",
-                    range=models.Range(gte=salary_min),
-                )
-            )
-        if salary_max is not None:
-            filters.append(
-                models.FieldCondition(
-                    key="salary_min",
-                    range=models.Range(lte=salary_max),
-                )
-            )
-
-        strict_filter = (
-            models.Filter(must=base_must + filters)
-            if filters
-            else models.Filter(must=base_must)
-        )
-        fallback_filter = (
-            models.Filter(must=base_must, must_not=filters) if filters else None
-        )
-
-        offset = (page - 1) * size
-
-        if settings.jobs_hybrid_search_enabled:
-            return await self._search_jobs_hybrid(
-                query=query,
-                strict_filter=strict_filter,
-                fallback_filter=fallback_filter,
-                size=size,
-                offset=offset,
-                page=page,
-            )
-        return await self._search_jobs_dense_only(
-            query=query,
-            strict_filter=strict_filter,
-            fallback_filter=fallback_filter,
-            size=size,
-            offset=offset,
-            page=page,
-        )
-
-    def _job_prefetch(
-        self,
-        *,
-        dense_vector: list[float],
-        sparse_vector: models.SparseVector,
-        query_filter: models.Filter,
-    ) -> list[models.Prefetch]:
-        """Build the dense + sparse prefetch pair for a hybrid jobs query."""
-        prefetch_limit = settings.jobs_hybrid_prefetch_limit
-        return [
-            models.Prefetch(
-                query=dense_vector,
-                using=DENSE_VECTOR_NAME,
-                filter=query_filter,
-                limit=prefetch_limit,
-            ),
-            models.Prefetch(
-                query=sparse_vector,
-                using=SPARSE_VECTOR_NAME,
-                filter=query_filter,
-                limit=prefetch_limit,
-            ),
-        ]
-
-    async def _search_jobs_hybrid(
-        self,
-        *,
-        query: str,
-        strict_filter: models.Filter,
-        fallback_filter: models.Filter | None,
-        size: int,
-        offset: int,
-        page: int,
-    ) -> tuple[list[dict], int]:
-        """Dense + BM25 prefetch fused via RRF, with strict→fallback escalation."""
-        dense_vector = await ai_service.embed_query(query)
-        sparse_vector = await self._abuild_sparse_vector(query)
-
-        strict_response = await self.client.query_points(
-            collection_name=self.collection_name,
-            prefetch=self._job_prefetch(
-                dense_vector=dense_vector,
-                sparse_vector=sparse_vector,
-                query_filter=strict_filter,
-            ),
-            query=models.FusionQuery(fusion=models.Fusion.RRF),
-            limit=size,
-            offset=offset,
-            with_payload=False,
-        )
-
-        results = [
-            {"job_id": uuid.UUID(str(hit.id)), "score": hit.score, "is_fallback": False}
-            for hit in strict_response.points
-        ]
-
-        count_res = await self.client.count(
-            collection_name=self.collection_name,
-            count_filter=strict_filter,
-        )
-        strict_count = count_res.count
-
-        if fallback_filter is not None and len(results) < size:
-            shortfall = size - len(results)
-            fallback_offset = max(0, ((page - 1) * size) - strict_count)
-
-            fallback_response = await self.client.query_points(
-                collection_name=self.collection_name,
-                prefetch=self._job_prefetch(
-                    dense_vector=dense_vector,
-                    sparse_vector=sparse_vector,
-                    query_filter=fallback_filter,
-                ),
-                query=models.FusionQuery(fusion=models.Fusion.RRF),
-                limit=shortfall,
-                offset=fallback_offset,
-                with_payload=False,
-            )
-            results.extend(
-                {
-                    "job_id": uuid.UUID(str(hit.id)),
-                    "score": hit.score,
-                    "is_fallback": True,
-                }
-                for hit in fallback_response.points
-            )
-            fallback_count_res = await self.client.count(
-                collection_name=self.collection_name,
-                count_filter=fallback_filter,
-            )
-            total = strict_count + fallback_count_res.count
-        else:
-            total = strict_count
-
-        return results, total
-
-    async def _search_jobs_dense_only(
-        self,
-        *,
-        query: str,
-        strict_filter: models.Filter,
-        fallback_filter: models.Filter | None,
-        size: int,
-        offset: int,
-        page: int,
-    ) -> tuple[list[dict], int]:
-        """Legacy dense-only path used when `jobs_hybrid_search_enabled` is off."""
-        vector = await ai_service.embed_query(query)
-
-        strict_response = await self.client.query_points(
-            collection_name=self.collection_name,
-            query=vector,
-            query_filter=strict_filter,
-            limit=size,
-            offset=offset,
-            with_payload=False,
-        )
-        results = [
-            {"job_id": uuid.UUID(str(hit.id)), "score": hit.score, "is_fallback": False}
-            for hit in strict_response.points
-        ]
-
-        count_res = await self.client.count(
-            collection_name=self.collection_name,
-            count_filter=strict_filter,
-        )
-        strict_count = count_res.count
-
-        if fallback_filter is not None and len(results) < size:
-            shortfall = size - len(results)
-            fallback_offset = max(0, ((page - 1) * size) - strict_count)
-
-            fallback_response = await self.client.query_points(
-                collection_name=self.collection_name,
-                query=vector,
-                query_filter=fallback_filter,
-                limit=shortfall,
-                offset=fallback_offset,
-                with_payload=False,
-            )
-            results.extend(
-                {
-                    "job_id": uuid.UUID(str(hit.id)),
-                    "score": hit.score,
-                    "is_fallback": True,
-                }
-                for hit in fallback_response.points
-            )
-            fallback_count_res = await self.client.count(
-                collection_name=self.collection_name,
-                count_filter=fallback_filter,
-            )
-            total = strict_count + fallback_count_res.count
-        else:
-            total = strict_count
-
-        return results, total
 
     async def search_applications(
         self,

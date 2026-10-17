@@ -80,7 +80,6 @@ jobs:
       AWS_SECRET_ACCESS_KEY_SHORTLISTING: ${{ secrets.AWS_SECRET_ACCESS_KEY_SHORTLISTING }}
       QDRANT_URL: ${{ secrets.QDRANT_URL }}
       QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
-      QDRANT_COLLECTION_NAME: rojgarai
       REDIS_URL: ${{ secrets.REDIS_URL }}
       LANGSMITH_TRACING: "false"
       LANGSMITH_ENDPOINT: https://api.smith.langchain.com

@@ -91,13 +91,11 @@ class Settings(BaseSettings):
     # Qdrant
     qdrant_url: str
     qdrant_api_key: str
-    qdrant_collection_name: str
     qdrant_candidate_collection_name: str = "candidate_applications"
 
     # Qdrant (local test, docker-compose qdrant-test)
     test_qdrant_url: str = "http://localhost:6335"
     test_qdrant_api_key: str | None = None
-    test_qdrant_collection_name: str = "eval_jobs_test"
 
     # LLM APIs
     groq_api_key: str
@@ -177,10 +175,6 @@ class Settings(BaseSettings):
     assistant_guard_timeout_seconds: float = 6.0
     # Turns (question + answer) kept per thread and sent to the model.
     assistant_history_turns: int = 8
-
-    # Public jobs hybrid search
-    jobs_hybrid_search_enabled: bool = True
-    jobs_hybrid_prefetch_limit: int = 50
 
     # Derived URLs
     @property
