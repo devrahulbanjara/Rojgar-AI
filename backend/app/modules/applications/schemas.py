@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.core.schemas import BaseSchema
 from app.modules.activity.schemas import ActivityEventResponse
@@ -34,20 +34,66 @@ class CandidateShareSettings(BaseSchema):
     share_headline_summary: bool
 
 
+# Statuses a recruiter may set. offer_accepted / offer_declined are the
+# candidate's answer (POST /applications/{id}/offer/respond) and "applied" is
+# the initial state, so recruiters can never set those directly.
+RECRUITER_SETTABLE_STATUSES = frozenset(
+    {
+        ApplicationStatus.shortlisted,
+        ApplicationStatus.rejected,
+        ApplicationStatus.interview_booked,
+        ApplicationStatus.interview_completed,
+        ApplicationStatus.offer,
+    }
+)
+
+# current status -> statuses a recruiter may move it to
+RECRUITER_STATUS_TRANSITIONS: dict[ApplicationStatus, frozenset[ApplicationStatus]] = {
+    ApplicationStatus.applied: frozenset(
+        {ApplicationStatus.shortlisted, ApplicationStatus.rejected}
+    ),
+    ApplicationStatus.shortlisted: frozenset(
+        {
+            ApplicationStatus.rejected,
+            ApplicationStatus.interview_booked,
+            ApplicationStatus.interview_completed,
+            ApplicationStatus.offer,
+        }
+    ),
+    ApplicationStatus.rejected: frozenset({ApplicationStatus.shortlisted}),
+    ApplicationStatus.interview_booked: frozenset(
+        {ApplicationStatus.interview_completed, ApplicationStatus.rejected}
+    ),
+    ApplicationStatus.interview_completed: frozenset(
+        {ApplicationStatus.offer, ApplicationStatus.rejected}
+    ),
+    ApplicationStatus.offer: frozenset({ApplicationStatus.rejected}),
+    ApplicationStatus.offer_accepted: frozenset(),
+    ApplicationStatus.offer_declined: frozenset(),
+}
+
+
 class UpdateApplicationStatusRequest(BaseSchema):
     """Company/recruiter updates the application status.
 
     Only the following values are accepted:
-    shortlisted, rejected, interview_completed, offer
+    shortlisted, rejected, interview_booked, interview_completed, offer
     """
 
     status: ApplicationStatus = Field(
         ...,
         description=(
             "New status. Allowed values: shortlisted, rejected, "
-            "interview_completed, offer."
+            "interview_booked, interview_completed, offer."
         ),
     )
+
+    @field_validator("status")
+    @classmethod
+    def _recruiter_settable(cls, value: ApplicationStatus) -> ApplicationStatus:
+        if value not in RECRUITER_SETTABLE_STATUSES:
+            raise ValueError(f"Recruiters cannot set status '{value.value}'.")
+        return value
 
 
 class UpdateApplicationReviewRequest(BaseSchema):

@@ -47,6 +47,7 @@ from app.modules.applications.schemas import (
     SimilarCandidateResult,
     SimilarCandidatesResponse,
     UpdateApplicationReviewRequest,
+    RECRUITER_STATUS_TRANSITIONS,
     UpdateApplicationStatusRequest,
 )
 from app.modules.applications.sync import (
@@ -1212,6 +1213,18 @@ async def update_application_status(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This application's job does not belong to your company.",
+        )
+
+    current = ApplicationStatus(application.status)
+    if current == payload.status:
+        return ApplicationResponse.model_validate(application)
+    if payload.status not in RECRUITER_STATUS_TRANSITIONS.get(current, frozenset()):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Cannot change status from '{current.value}' "
+                f"to '{payload.status.value}'."
+            ),
         )
 
     company = await db.scalar(select(Company).where(Company.id == company_id))
