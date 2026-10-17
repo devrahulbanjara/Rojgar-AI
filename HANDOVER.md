@@ -11,12 +11,12 @@ Everything below is what was asked for in the revamp session, what is done, what
 |---|---|---|
 | `ConvexHire-wt-b1` / `wave/b1` | Data model v2: stages (new, shortlisted, interview, offer, hired, rejected, withdrawn), Review table with must-have checks + verified quotes, Event timeline, referrers ("suggest someone"), sector templates, quick add, CSV export, protected-ground filter, cheap triage review, non-tech Nepal seed data | **MERGED** into `production-hardening` (commit `c7f9f77e`, alembic chain `e8dd80fa`, adapter switch `92292149`, bugfix `b3fed4a0`). |
 | `ConvexHire-wt-b4` / `wave/b4` | People without global roles; business roles Owner / Manager / Interviewer; phone OTP sign-up; create business → pending → platform approval; invite-only teams; `/admin` panel (approvals, businesses, reports, payments) | **MERGED** into `production-hardening` (commit `d2d4677d`, alembic chain `448c86788f39` chained to `2017037b521a`, all 8 conflicts resolved). |
-| `ConvexHire-wt-f4` / `wave/f4` | Public side: Nepali/English toggle, phone-first apply, photo CVs, "suggest someone" page, QR poster, careers page, landing + pricing for small businesses, `/me/applications` shell fix | In progress (next to merge) |
-| `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | In progress (merge after f4) |
+| `ConvexHire-wt-f4` / `wave/f4` | Public side: Nepali/English toggle, phone-first apply, photo CVs, "suggest someone" page, QR poster, careers page, landing + pricing for small businesses, `/me/applications` shell fix | **MERGED** into `production-hardening` (commit `cb674dc5`, alembic chain `e1267236faf8` chained to `448c86788f39`, all 7 conflicts resolved). |
+| `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | In progress (next to merge) |
 
 To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline production-hardening..HEAD` (same for b4, f4, f5).
 
-## Session Update — Multi-Model Handover (2026-10-17 17:15)
+## Session Update — Multi-Model Handover (2026-10-17 17:30)
 
 ### What Claude Opus 4.6 (Thinking) did:
 1. **Handover analysis & strategy:** Analyzed repo status, commit logs across `production-hardening` and the 4 branches, merge base divergences, and confirmed merge order.
@@ -52,26 +52,26 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
 5. **Runtime bugfix:**
    - Fixed missing positional `scope` argument in `_per_ip` rate-limiter on recommend endpoint (`backend/app/modules/public/router.py`): commit `b3fed4a0`.
 6. **Executed and completed `wave/b4` merge (commit `d2d4677d`):**
-   - Resolved 8 conflicted files:
-     - `backend/app/modules/applications/router.py`: Replaced deprecated `CandidateUser` with `CurrentUser`.
-     - `backend/app/modules/dashboards/home.py`: Combined b1 `ApplicationEvent, Review` with b4 `MembershipRole, MembershipStatus`.
-     - `backend/app/modules/dashboards/schemas.py`: Retained `ApplicationStage` and b4 admin dashboard response schemas.
-     - `backend/app/modules/dashboards/service.py`: Reconciled dashboard imports and retained recruiter admin dashboard service handlers.
-     - `backend/app/modules/public/service.py`: Combined imports, integrated `is_publicly_visible` job checks with `job_is_open`.
-     - `backend/seed_data.py`: Merged b1's `NONTECH_COMPANIES` with b4's `PLATFORM_ADMIN`, `PENDING_BUSINESS`, and query logic.
-     - `backend/tests/integration/helpers.py`: Combined imports for `Review` and `BusinessStatus`.
-     - `backend/tests/integration/test_applications.py`: Preserved both test suites.
-   - **Alembic chain updated:** Pointed `448c86788f39` `down_revision` to `2017037b521a`. Verified single head: `448c86788f39 (head)`.
+   - Resolved 8 conflicted files: `applications/router.py`, `dashboards/home.py`, `dashboards/schemas.py`, `dashboards/service.py`, `public/service.py`, `seed_data.py`, `helpers.py`, `test_applications.py`.
+   - Chained migration `448c86788f39` -> `2017037b521a`. Verified single head: `448c86788f39 (head)`.
+7. **Executed and completed `wave/f4` merge (commit `cb674dc5`):**
+   - Resolved 7 conflicted files:
+     - `public/notify.py`: Wired `notify_applicant` to `app.infrastructures.sms.service.send_sms`.
+     - `public/router.py`: Reconciled phone-first guest apply, deduplicated `/recommend` endpoint, preserved `CurrentUser`.
+     - `public/schemas.py`: Reconciled `Stage` literal, `InterviewInfo`, `PublicCategory`, and `RecommendRequest`/`RecommendSent`.
+     - `public/service.py`: Reconciled `_STAGE` mapping, `JobSuggestion` with `JobReferrer`, status link via SMS/email, and `list_my_applications`.
+     - `test_public_apply.py`: Reconciled v2 pipeline assertion and preserved `TestSuggestSomeone`.
+     - `layout.tsx`: Applied `LocaleProvider`, `getLocale`, Devanagari font variable, and `lang={locale}`.
+     - `AccountMenu.tsx`: Preserved session role definitions with optional `to` route.
+   - Chained migration `e1267236faf8` -> `448c86788f39`. Verified single head: `e1267236faf8 (head)`.
 
-### Next steps for subsequent sessions / immediate continuation:
-1. Merge `wave/f4`: `git merge --no-ff wave/f4`.
-   - Reconcile public pages with b1's data model (`JobReferrer`, nullable emails, `send_sms`, `ApplicationStage`).
-2. Merge `wave/f5`: `git merge --no-ff wave/f5`.
+### Next steps for immediate continuation:
+1. Merge `wave/f5`: `git merge --no-ff wave/f5`.
    - Fix candidate panel imports (`CallButtons` -> `ContactButtons`).
-3. Run gates:
+2. Run gates:
    - Backend: `cd backend && uv run pytest -p no:cacheprovider -o addopts="" -q`
    - Frontend: `cd frontend && npx tsc --noEmit && npx -y pnpm@10 build`
-4. Merge `production-hardening` into `main`: `git checkout main && git merge production-hardening`.
+3. Merge `production-hardening` into `main`: `git checkout main && git merge production-hardening`.
 
 ## How to merge the rest (in this order)
 
