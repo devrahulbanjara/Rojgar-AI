@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import uuid
@@ -26,6 +27,16 @@ def verify_password(hashed: str | None, plain: str) -> bool:
         return ph.verify(hashed, plain)
     except VerifyMismatchError:
         return False
+
+
+async def hash_password_async(password: str) -> str:
+    """Argon2 is deliberately slow (~50-100 ms of CPU): hash off the event loop."""
+    return await asyncio.to_thread(hash_password, password)
+
+
+async def verify_password_async(hashed: str | None, plain: str) -> bool:
+    """Verify off the event loop so one login does not stall every request."""
+    return await asyncio.to_thread(verify_password, hashed, plain)
 
 
 def create_tokens(user_id: str) -> tuple[dict, str, datetime]:

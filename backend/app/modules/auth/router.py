@@ -15,12 +15,10 @@ from fastapi import (
 )
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi_limiter.depends import RateLimiter
-from pyrate_limiter import Duration, Limiter, Rate
 
 from app.core.config import settings
 from app.core.dependencies import CurrentUser, DbSession
-from app.core.rate_limit import client_identifier
+from app.core.rate_limit import RateLimit
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.infrastructures.storage.service import storage_service
 from app.modules.auth import service
@@ -50,14 +48,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     "/signup",
     status_code=status.HTTP_201_CREATED,
     summary="Stage 1 of local signup: validates credentials and sends verification email",
-    dependencies=[
-        Depends(
-            RateLimiter(
-                limiter=Limiter(Rate(5, Duration.MINUTE * 5)),
-                identifier=client_identifier,
-            )
-        )
-    ],
+    dependencies=[Depends(RateLimit("auth.signup", 5, 300, per_email=3))],
 )
 async def signup(
     payload: SignupRequest,
@@ -76,13 +67,7 @@ async def signup(
 @router.post(
     "/verify-email",
     summary="Complete account creation after email verification",
-    dependencies=[
-        Depends(
-            RateLimiter(
-                limiter=Limiter(Rate(10, Duration.MINUTE)), identifier=client_identifier
-            )
-        )
-    ],
+    dependencies=[Depends(RateLimit("auth.verify_email", 10, 60))],
 )
 async def verify_email(
     payload: VerifyEmailRequest, db: DbSession
@@ -95,13 +80,7 @@ async def verify_email(
 @router.post(
     "/login",
     summary="Authenticate with email and password, return access and refresh tokens",
-    dependencies=[
-        Depends(
-            RateLimiter(
-                limiter=Limiter(Rate(10, Duration.MINUTE)), identifier=client_identifier
-            )
-        )
-    ],
+    dependencies=[Depends(RateLimit("auth.login", 10, 60, per_email=5))],
 )
 async def login(
     payload: LoginRequest, response: Response, db: DbSession
@@ -118,13 +97,7 @@ async def login(
 @router.post(
     "/refresh",
     summary="Refresh expired access token using refresh token cookie",
-    dependencies=[
-        Depends(
-            RateLimiter(
-                limiter=Limiter(Rate(30, Duration.MINUTE)), identifier=client_identifier
-            )
-        )
-    ],
+    dependencies=[Depends(RateLimit("auth.refresh", 30, 60))],
 )
 async def refresh(
     response: Response,
@@ -157,14 +130,7 @@ async def logout(
 @router.post(
     "/forgot-password",
     summary="Initiate password reset flow: sends reset link to email",
-    dependencies=[
-        Depends(
-            RateLimiter(
-                limiter=Limiter(Rate(3, Duration.MINUTE * 10)),
-                identifier=client_identifier,
-            )
-        )
-    ],
+    dependencies=[Depends(RateLimit("auth.forgot_password", 3, 600, per_email=2))],
 )
 async def forgot_password(
     payload: ForgotPasswordRequest,
@@ -181,13 +147,7 @@ async def forgot_password(
 @router.post(
     "/reset-password",
     summary="Complete password reset using token from reset link",
-    dependencies=[
-        Depends(
-            RateLimiter(
-                limiter=Limiter(Rate(5, Duration.MINUTE)), identifier=client_identifier
-            )
-        )
-    ],
+    dependencies=[Depends(RateLimit("auth.reset_password", 5, 60))],
 )
 async def reset_password(
     payload: ResetPasswordRequest, db: DbSession
@@ -404,14 +364,7 @@ async def google_callback(
     "/google/register",
     status_code=status.HTTP_201_CREATED,
     summary="Complete two-phase Google signup: consume signup_token and create account",
-    dependencies=[
-        Depends(
-            RateLimiter(
-                limiter=Limiter(Rate(5, Duration.MINUTE * 5)),
-                identifier=client_identifier,
-            )
-        )
-    ],
+    dependencies=[Depends(RateLimit("auth.google_register", 5, 300))],
 )
 async def google_register(
     payload: GoogleRegisterRequest,

@@ -4,6 +4,8 @@ import asyncio
 import hashlib
 import json
 import random
+from array import array
+from collections import OrderedDict
 from collections.abc import AsyncIterator
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Type, TypeVar
@@ -31,6 +33,8 @@ AI_UNAVAILABLE_MESSAGE = (
 # never waits ~80s for an answer that will fail anyway.
 _RETRY_WAIT_BUDGET_SECONDS = 12.0
 _MAX_SINGLE_RETRY_WAIT_SECONDS = 6.0
+# In-process embedding cache entries (float32, ~12 KB each at 3072 dims).
+_EMBEDDING_LRU_SIZE = 256
 
 
 def _retry_after_seconds(exc: Exception) -> float | None:
@@ -173,6 +177,8 @@ class AIService:
 
     def __init__(self) -> None:
         self._embeddings: GoogleGenerativeAIEmbeddings | _FakeEmbeddings | None = None
+        self._embedding_lru: OrderedDict[str, array] = OrderedDict()
+        self._embedding_inflight: dict[str, asyncio.Future] = {}
 
         # LLM provider (currently Groq, easily swappable to OpenAI)
         # SDK retries off: `_create_with_retries` owns retry/backoff so waits are
@@ -204,22 +210,54 @@ class AIService:
     async def get_embeddings(self, text: str) -> list[float]:
         """Return a float vector for the given text using the configured provider.
 
-        Results are cached in Redis keyed by a hash of the input text.
-        Cache TTL is 1 hour — covers repeated searches within a session
-        while keeping embeddings fresh as profiles / queries change.
+        Cached in Redis (1 hour) and in a small in-process LRU, so the same
+        text is embedded once even when Redis is off. Concurrent requests for
+        the same uncached text share one provider call.
         """
         from app.infrastructures.redis.service import redis_service
 
-        cache_key = f"embedding:{hashlib.sha256(text.encode()).hexdigest()[:16]}"
+        digest = hashlib.sha256(text.encode()).hexdigest()[:32]
+        local = self._embedding_lru.get(digest)
+        if local is not None:
+            self._embedding_lru.move_to_end(digest)
+            return local.tolist()
+
+        cache_key = f"embedding:{digest}"
         cached = await redis_service.get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            vector = json.loads(cached)
+            self._remember_embedding(digest, vector)
+            return vector
 
-        embeddings_client = self._get_embeddings_client()
-        vector = await embeddings_client.aembed_query(text)
+        pending = self._embedding_inflight.get(digest)
+        if pending is not None:
+            return list(await asyncio.shield(pending))
 
+        future: asyncio.Future = asyncio.get_running_loop().create_future()
+        self._embedding_inflight[digest] = future
+        try:
+            vector = await self._get_embeddings_client().aembed_query(text)
+        except Exception as exc:
+            future.set_exception(exc)
+            future.exception()  # waiters re-raise it; no "never retrieved" noise
+            raise
+        else:
+            future.set_result(vector)
+        finally:
+            self._embedding_inflight.pop(digest, None)
+            if not future.done():  # caller was cancelled mid-call
+                future.cancel()
+
+        self._remember_embedding(digest, vector)
         await redis_service.set(cache_key, json.dumps(vector), ttl_seconds=3600)
         return vector
+
+    def _remember_embedding(self, digest: str, vector: list[float]) -> None:
+        """Keep a float32 copy in the in-process LRU (about 12 KB per vector)."""
+        self._embedding_lru[digest] = array("f", vector)
+        self._embedding_lru.move_to_end(digest)
+        while len(self._embedding_lru) > _EMBEDDING_LRU_SIZE:
+            self._embedding_lru.popitem(last=False)
 
     def _build_chat_model(
         self,

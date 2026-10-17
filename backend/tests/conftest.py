@@ -78,6 +78,11 @@ def disable_side_effects(monkeypatch_session):
         # Paid CV parsing (LlamaExtract) is skipped when no key is configured.
         monkeypatch_session.setattr(settings, "llama_cloud_api_key", None)
 
+    # Per-client limits are switched off for the suite; test_rate_limit.py
+    # turns them back on. Recruiter chat still uses fastapi-limiter.
+    original_rate_limit = settings.rate_limit_enabled
+    settings.rate_limit_enabled = False
+
     # Bypass in-memory rate limiter so tests don't hit per-IP request caps.
     # Must match the original signature (self, request, response) so FastAPI
     # injects the Starlette types correctly and doesn't treat param names as
@@ -92,6 +97,7 @@ def disable_side_effects(monkeypatch_session):
     monkeypatch_session.setattr(_limiter_mod.RateLimiter, "__call__", _noop_rate_limit)
 
     yield
+    settings.rate_limit_enabled = original_rate_limit
     settings.send_emails = original_send_emails
     settings.redis_url = original_redis_url
 

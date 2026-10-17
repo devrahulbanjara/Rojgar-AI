@@ -21,8 +21,8 @@ from app.core.security import (
     decode_pending_signup_token,
     decode_refresh_token,
     decode_signup_token,
-    hash_password,
-    verify_password,
+    hash_password_async,
+    verify_password_async,
 )
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.redis.service import redis_service
@@ -108,7 +108,7 @@ async def change_password(
 ) -> None:
     """Change the user's password and revoke all refresh tokens."""
     if user.password_hash:
-        if not payload.current_password or not verify_password(
+        if not payload.current_password or not await verify_password_async(
             user.password_hash, payload.current_password
         ):
             raise HTTPException(
@@ -116,7 +116,7 @@ async def change_password(
                 detail="Current password is incorrect.",
             )
 
-    user.password_hash = hash_password(payload.new_password)
+    user.password_hash = await hash_password_async(payload.new_password)
     await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
     await db.commit()
 
@@ -137,7 +137,7 @@ async def signup(
     pending_data = {
         "full_name": payload.full_name,
         "email": payload.email,
-        "password_hash": hash_password(payload.password),
+        "password_hash": await hash_password_async(payload.password),
         "primary_role": payload.primary_role.value,
     }
 
@@ -288,7 +288,9 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
     )
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(user.password_hash, payload.password):
+    if not user or not await verify_password_async(
+        user.password_hash, payload.password
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
@@ -447,7 +449,9 @@ async def login_swagger(db: AsyncSession, payload: OAuth2PasswordRequestForm) ->
     )
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(user.password_hash, payload.password):
+    if not user or not await verify_password_async(
+        user.password_hash, payload.password
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
@@ -628,7 +632,7 @@ async def reset_password(db: AsyncSession, payload: ResetPasswordRequest) -> dic
             status_code=status.HTTP_400_BAD_REQUEST, detail="Reset token has expired"
         )
 
-    user.password_hash = hash_password(payload.new_password)
+    user.password_hash = await hash_password_async(payload.new_password)
     user.password_reset_token = None
     user.password_reset_expires_at = None
 

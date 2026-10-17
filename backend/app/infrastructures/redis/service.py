@@ -98,6 +98,30 @@ class RedisService:
             logger.error("Redis SET NX failed for key {}: {}", key, exc)
             return False
 
+    @property
+    def enabled(self) -> bool:
+        """True when a Redis client is connected."""
+        return self._client is not None
+
+    async def incr_window(self, key: str, ttl_seconds: int) -> int | None:
+        """Increment a counter that expires ``ttl_seconds`` after it was created.
+
+        Returns the new value, or None when Redis is unavailable (the caller
+        falls back to its own counter).
+        """
+        if not self._client:
+            return None
+        full_key = self._build_key(key)
+        try:
+            async with self._client.pipeline(transaction=True) as pipe:
+                pipe.set(full_key, 0, ex=ttl_seconds, nx=True)
+                pipe.incr(full_key)
+                _, value = await pipe.execute()
+            return int(value)
+        except Exception as exc:
+            logger.error("Redis INCR failed for key {}: {}", key, exc)
+            return None
+
     async def delete(self, key: str) -> None:
         """Delete a specific key (used for event-driven invalidation)."""
         await self.delete_many(key)

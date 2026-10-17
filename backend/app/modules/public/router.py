@@ -13,13 +13,11 @@ from fastapi import (
     status,
 )
 from fastapi.responses import RedirectResponse
-from fastapi_limiter.depends import RateLimiter
 from pydantic import EmailStr, TypeAdapter, ValidationError
-from pyrate_limiter import Duration, Limiter, Rate
 
 from app.core.config import settings
 from app.core.dependencies import CandidateUser, DbSession
-from app.core.rate_limit import client_identifier, client_ip
+from app.core.rate_limit import RateLimit, client_ip
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.public import service
 from app.modules.public.schemas import (
@@ -40,13 +38,8 @@ router = APIRouter(tags=["Public apply"])
 _EMAIL = TypeAdapter(EmailStr)
 
 
-def _per_ip(times: int, seconds: int):
-    return Depends(
-        RateLimiter(
-            limiter=Limiter(Rate(times, Duration.SECOND * seconds)),
-            identifier=client_identifier,
-        )
-    )
+def _per_ip(scope: str, times: int, seconds: int, per_email: int | None = None):
+    return Depends(RateLimit(f"public.{scope}", times, seconds, per_email=per_email))
 
 
 @router.get("/public/jobs/{slug}", summary="Public job page (open jobs only)")
@@ -62,7 +55,7 @@ async def get_careers_page(slug: str, db: DbSession) -> UnifiedResponse[CareersP
 @router.post(
     "/public/cv-prefill",
     summary="Read name/email/phone/links from a CV to fill the apply form",
-    dependencies=[_per_ip(20, 60)],
+    dependencies=[_per_ip("cv_prefill", 20, 60)],
 )
 async def cv_prefill(cv: Annotated[UploadFile, File()]) -> UnifiedResponse[CvPrefill]:
     return ResponseBuilder.success(data=await service.prefill_cv(cv))
@@ -72,7 +65,7 @@ async def cv_prefill(cv: Annotated[UploadFile, File()]) -> UnifiedResponse[CvPre
     "/public/jobs/{slug}/applications",
     status_code=status.HTTP_201_CREATED,
     summary="Apply without an account",
-    dependencies=[_per_ip(10, 600)],
+    dependencies=[_per_ip("apply", 10, 600, per_email=3)],
 )
 async def apply_as_guest(
     slug: str,
@@ -116,7 +109,7 @@ async def apply_as_guest(
 @router.get(
     "/public/applications/status",
     summary="Application status from the emailed link",
-    dependencies=[_per_ip(60, 60)],
+    dependencies=[_per_ip("status", 60, 60)],
 )
 async def application_status(
     db: DbSession, token: Annotated[str, Query(min_length=10, max_length=2000)]
@@ -127,7 +120,7 @@ async def application_status(
 @router.post(
     "/public/applications/withdraw",
     summary="Withdraw an application and delete its data",
-    dependencies=[_per_ip(10, 600)],
+    dependencies=[_per_ip("withdraw", 10, 600)],
 )
 async def withdraw(
     payload: StatusTokenRequest, db: DbSession
@@ -140,7 +133,7 @@ async def withdraw(
 @router.post(
     "/public/auth/magic-link",
     summary="Email a one-time sign-in link (same response for any email)",
-    dependencies=[_per_ip(5, 900)],
+    dependencies=[_per_ip("magic_link", 5, 900, per_email=3)],
 )
 async def request_magic_link(
     payload: MagicLinkRequest, db: DbSession
@@ -152,7 +145,7 @@ async def request_magic_link(
 @router.get(
     "/public/auth/magic",
     summary="Open a sign-in link: sets the session cookie and redirects",
-    dependencies=[_per_ip(20, 600)],
+    dependencies=[_per_ip("magic_open", 20, 600)],
 )
 async def open_magic_link(
     db: DbSession, token: Annotated[str, Query(min_length=10, max_length=200)]
