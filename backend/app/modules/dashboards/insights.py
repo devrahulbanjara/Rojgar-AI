@@ -1,14 +1,9 @@
 """Recruiter Insights: where applicants come from, weekly volume, reply speed and
 hiring progress. Every number is one aggregate SQL query over the company's jobs.
 
-SWAP POINTS for the coming schema (``Application.stage`` + an ``Event`` table):
-- ``_status_rank`` reads ``Application.status``; map ``stage`` instead
-  (new/rejected/withdrawn 0, shortlisted 1, interview 1-2, offer 3, hired 4).
-- ``_event_ranks`` and ``_first_decisions`` read ``activity_events``; point them
-  at ``Event`` rows of type ``stage_changed`` (payload stage) instead.
-- ``_first_decisions`` falls back to ``applications.updated_at`` for decided
-  applications without an event; drop that once ``decided_at``/Events exist.
-- ``WAITING_STATUSES`` becomes ``stage == 'new'``.
+Progress and reply speed read the application timeline (``application_events``):
+the furthest stage a ``stage_changed`` event reached, interviews, and the first
+time a person moved an application out of New.
 """
 
 from __future__ import annotations
@@ -23,14 +18,13 @@ from pydantic import BaseModel
 from sqlalchemy import and_, case, func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.activity.models import ActivityEvent
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.auth.models import User
 from app.modules.dashboards.home import _resolve_tz
 from app.modules.dashboards.service import _get_company_context
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStage, JobStatus
+from app.shared.enums import ApplicationStage, EventType, JobStatus
 
 Source = Literal[
     "linkedin",
@@ -66,17 +60,11 @@ STATUS_RANK = {
     ApplicationStage.offer: 3,
     ApplicationStage.hired: 4,
 }
+# Timeline events that prove a stage was reached (besides stage_changed "to").
 EVENT_RANK = {
-    "application_shortlisted": 1,
-    "application_interview_booked": 1,
-    "interview_booked": 1,
-    "application_interview_completed": 2,
-    "application_offer": 3,
-    "application_offer_declined": 3,
-    "application_offer_accepted": 4,
+    EventType.interview_booked.value: 1,
+    EventType.interview_done.value: 2,
 }
-# The first time a person answered the candidate: shortlist or reject.
-DECISION_EVENTS = ("application_shortlisted", "application_rejected")
 
 
 class InsightsJob(BaseModel):
@@ -136,18 +124,27 @@ def _status_rank():
 
 
 def _event_ranks():
-    """Highest stage each application ever reached according to its events."""
+    """Highest stage each application ever reached according to its timeline."""
+    moved_to = ApplicationEvent.payload["to"].astext
     rank = case(
-        *((ActivityEvent.event_type == key, rank) for key, rank in EVENT_RANK.items()),
+        *(
+            (
+                and_(
+                    ApplicationEvent.type == EventType.stage_changed.value,
+                    moved_to == stage.value,
+                ),
+                stage_rank,
+            )
+            for stage, stage_rank in STATUS_RANK.items()
+            if stage_rank
+        ),
+        *((ApplicationEvent.type == key, r) for key, r in EVENT_RANK.items()),
         else_=0,
     )
     return (
-        select(ActivityEvent.application_id, func.max(rank).label("rank"))
-        .where(
-            ActivityEvent.application_id.is_not(None),
-            ActivityEvent.event_type.in_(EVENT_RANK),
-        )
-        .group_by(ActivityEvent.application_id)
+        select(ApplicationEvent.application_id, func.max(rank).label("rank"))
+        .where(ApplicationEvent.type.in_([EventType.stage_changed.value, *EVENT_RANK]))
+        .group_by(ApplicationEvent.application_id)
         .subquery("event_ranks")
     )
 
@@ -166,16 +163,18 @@ def _interview_ranks(now: datetime):
 
 
 def _first_decisions():
+    """The first time a person moved each application out of New."""
     return (
         select(
-            ActivityEvent.application_id,
-            func.min(ActivityEvent.created_at).label("decided_at"),
+            ApplicationEvent.application_id,
+            func.min(ApplicationEvent.created_at).label("decided_at"),
         )
         .where(
-            ActivityEvent.application_id.is_not(None),
-            ActivityEvent.event_type.in_(DECISION_EVENTS),
+            ApplicationEvent.type == EventType.stage_changed.value,
+            ApplicationEvent.payload["from"].astext == ApplicationStage.new.value,
+            ApplicationEvent.payload["to"].astext != ApplicationStage.withdrawn.value,
         )
-        .group_by(ActivityEvent.application_id)
+        .group_by(ApplicationEvent.application_id)
         .subquery("first_decisions")
     )
 
@@ -264,9 +263,10 @@ async def _reply_times(
 ) -> tuple[float | None, list[JobReply]]:
     decisions = _first_decisions()
     waiting = Application.stage.in_(WAITING_STATUSES)
+    # Seeded or imported applications can be past New without an event.
     decided_at = func.coalesce(
         decisions.c.decided_at,
-        case((~waiting, Application.updated_at), else_=None),
+        case((~waiting, Application.decided_at), else_=None),
     )
     days = func.extract("epoch", decided_at - Application.created_at) / 86400.0
     median = func.percentile_cont(0.5).within_group(days)

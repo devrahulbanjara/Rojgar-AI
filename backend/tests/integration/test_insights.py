@@ -1,8 +1,8 @@
 from datetime import UTC, datetime, timedelta
 
-from app.modules.activity.models import ActivityEvent
+from app.modules.applications.models import ApplicationEvent
 from app.modules.interviews.models import Interview
-from app.shared.enums import ApplicationStatus as S
+from app.shared.enums import ApplicationStage as S
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
@@ -15,9 +15,9 @@ NOW = datetime.now(UTC)
 URL = "/dashboards/insights"
 
 
-async def _apply(db, job, n, status=S.applied, *, days_ago=1, **fields):
+async def _apply(db, job, n, stage=S.new, *, days_ago=1, **fields):
     user, resume = await make_candidate_with_resume(db, f"i{n}-{job.id}@test.com")
-    application = await make_application(db, user.id, job.id, resume.id, status)
+    application = await make_application(db, user.id, job.id, resume.id, stage)
     application.created_at = NOW - timedelta(days=days_ago)
     application.updated_at = NOW
     for key, value in fields.items():
@@ -26,14 +26,13 @@ async def _apply(db, job, n, status=S.applied, *, days_ago=1, **fields):
     return application
 
 
-async def _event(db, application, event_type, at):
+async def _moved(db, application, to: S, at, from_: S = S.new):
+    """A person's decision on the timeline."""
     db.add(
-        ActivityEvent(
+        ApplicationEvent(
             application_id=application.id,
-            job_id=application.job_id,
-            event_type=event_type,
-            audience="candidate",
-            title=event_type,
+            type="stage_changed",
+            payload={"from": from_.value, "to": to.value},
             created_at=at,
         )
     )
@@ -51,10 +50,12 @@ async def test_hiring_progress_counts_are_cumulative(client, db):
     job = await make_active_job(db, company.id)
     await _apply(db, job, 1)
     await _apply(db, job, 2, S.shortlisted)
-    await _apply(db, job, 3, S.interview_completed)
+    await _apply(db, job, 3, S.interview)
     await _apply(db, job, 4, S.offer)
-    await _apply(db, job, 5, S.offer_accepted)
-    await _apply(db, job, 6, S.offer_declined)
+    await _apply(db, job, 5, S.hired)
+    # Turned the offer down.
+    declined = await _apply(db, job, 6, S.withdrawn)
+    await _moved(db, declined, S.offer, NOW - timedelta(hours=1), S.interview)
     # Rejected after an interview that already happened: still counts as interviewed.
     rejected_late = await _apply(db, job, 7, S.rejected)
     db.add(
@@ -72,7 +73,7 @@ async def test_hiring_progress_counts_are_cumulative(client, db):
     )
     # Rejected after an offer, known only from the event history.
     rejected_after_offer = await _apply(db, job, 8, S.rejected)
-    await _event(db, rejected_after_offer, "application_offer", NOW)
+    await _moved(db, rejected_after_offer, S.offer, NOW, S.interview)
     await _apply(db, job, 9, S.rejected)
     await db.flush()
 
@@ -118,21 +119,15 @@ async def test_median_reply_time_uses_first_decision(client, db):
 
     for n, days in enumerate([1, 3, 8]):
         application = await _apply(db, slow, n, S.rejected, days_ago=10)
-        await _event(
-            db,
-            application,
-            "application_rejected",
-            application.created_at + timedelta(days=days),
+        await _moved(
+            db, application, S.rejected, application.created_at + timedelta(days=days)
         )
-    shortlisted = await _apply(db, fast, 10, S.interview_booked, days_ago=10)
-    await _event(
-        db,
-        shortlisted,
-        "application_shortlisted",
-        shortlisted.created_at + timedelta(days=1),
+    shortlisted = await _apply(db, fast, 10, S.interview, days_ago=10)
+    await _moved(
+        db, shortlisted, S.shortlisted, shortlisted.created_at + timedelta(days=1)
     )
     # A later stage change must not move the first reply.
-    await _event(db, shortlisted, "application_rejected", NOW)
+    await _moved(db, shortlisted, S.interview, NOW, S.shortlisted)
     await _apply(db, fast, 11, days_ago=4)  # still waiting
 
     data = await _get(client, admin)
