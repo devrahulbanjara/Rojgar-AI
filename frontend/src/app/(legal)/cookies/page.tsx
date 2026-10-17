@@ -25,7 +25,7 @@ export default function CookiePolicyPage() {
   return (
     <div className="legal">
       <Image
-        src="/bg/bg-ui-v4.svg"
+        src="/bg/bg-ui-v4.webp"
         alt=""
         width={700}
         height={700}
@@ -33,7 +33,7 @@ export default function CookiePolicyPage() {
         aria-hidden="true"
       />
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={640}
         height={640}

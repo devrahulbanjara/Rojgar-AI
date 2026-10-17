@@ -115,7 +115,7 @@ function OnboardingForm() {
     <main className="auth">
       {/* Background decorations matching the auth pages */}
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={700}
         height={700}
@@ -124,7 +124,7 @@ function OnboardingForm() {
         priority={false}
       />
       <Image
-        src="/bg/bg-ui-v5.svg"
+        src="/bg/bg-ui-v5.webp"
         alt=""
         width={650}
         height={650}

@@ -187,7 +187,7 @@ export default function Pricing() {
     <section className="pricing" id="pricing">
       {/* Background SVG - bottom right */}
       <Image
-        src="/bg/bg-ui-v5.svg"
+        src="/bg/bg-ui-v5.webp"
         alt=""
         width={680}
         height={680}

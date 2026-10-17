@@ -30,7 +30,7 @@ export default function ExploreCategories() {
     <section className="explore">
       {/* Right side bg decoration */}
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={600}
         height={800}
