@@ -27,7 +27,6 @@ async def create_activity_event(
     application_id: uuid.UUID | None = None,
     job_id: uuid.UUID | None = None,
     interview_id: uuid.UUID | None = None,
-    draft_id: uuid.UUID | None = None,
     actor_user_id: uuid.UUID | None = None,
     metadata: dict | None = None,
     create_in_app_notification: bool = True,
@@ -44,7 +43,6 @@ async def create_activity_event(
         application_id=application_id,
         job_id=job_id,
         interview_id=interview_id,
-        draft_id=draft_id,
         actor_user_id=actor_user_id,
         metadata_json=metadata,
     )

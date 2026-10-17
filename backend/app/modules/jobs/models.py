@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
-    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -14,16 +13,18 @@ from sqlalchemy import (
     func,
     select,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.companies.models import Company
 from app.shared.slugs import job_slug
 from app.shared.enums import (
+    EmploymentType,
+    JobCategory,
     JobStatus,
     LocationType,
-    ShortlistStatus,
     SyncAction,
     SyncStatus,
 )
@@ -48,47 +49,53 @@ class Job(Base):
     )
     salary_min: Mapped[int | None] = mapped_column(Integer)
     salary_max: Mapped[int | None] = mapped_column(Integer)
-    currency: Mapped[str] = mapped_column(String(10), server_default="USD")
-    status: Mapped[JobStatus] = mapped_column(nullable=False, server_default="draft")
-    auto_shortlist: Mapped[bool] = mapped_column(
-        Boolean, default=False, server_default="false"
+    currency: Mapped[str] = mapped_column(String(10), server_default="NPR")
+    category: Mapped[JobCategory] = mapped_column(
+        SAEnum(JobCategory, name="jobcategory"),
+        nullable=False,
+        default=JobCategory.other,
+        server_default=JobCategory.other.value,
+        index=True,
     )
-    shortlist_status: Mapped[ShortlistStatus] = mapped_column(
-        nullable=False, server_default="not_started"
+    employment_type: Mapped[EmploymentType] = mapped_column(
+        SAEnum(EmploymentType, name="employmenttype"),
+        nullable=False,
+        default=EmploymentType.full_time,
+        server_default=EmploymentType.full_time.value,
     )
-    shortlist_threshold: Mapped[int] = mapped_column(
-        Integer, default=70, server_default="70", nullable=False
+    status: Mapped[JobStatus] = mapped_column(
+        SAEnum(JobStatus, name="jobstatus"),
+        nullable=False,
+        default=JobStatus.draft,
+        server_default=JobStatus.draft.value,
+        index=True,
     )
-    required_years_of_experience: Mapped[int | None] = mapped_column(
-        Integer, nullable=True
+    # hired | cancelled | expired, set when status becomes closed.
+    closed_reason: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    # Open jobs close themselves at this time (closed_reason = expired).
+    closes_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    # One Markdown field: what the job is, what the person does, what it offers.
+    description: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    # Short criteria the review checks (<= 6 each). Confirmed by the recruiter.
+    must_haves: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, server_default="{}"
+    )
+    nice_to_haves: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, server_default="{}"
+    )
+    # Up to 3: [{"label": str, "type": "short_text" | "yes_no", "required": bool}]
+    questions: Mapped[list[dict]] = mapped_column(
+        JSONB, nullable=False, default=list, server_default="[]"
     )
     jd_embedding: Mapped[list[float] | None] = mapped_column(
         ARRAY(Float), nullable=True
-    )
-    final_shortlist_completed: Mapped[bool] = mapped_column(
-        Boolean, default=False, server_default="false"
-    )
-    hiring_completed: Mapped[bool] = mapped_column(
-        Boolean, default=False, server_default="false", nullable=False
-    )
-    hired_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
-    )
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
-    )
-    overview: Mapped[str | None] = mapped_column(Text)
-    responsibilities: Mapped[list[str]] = mapped_column(
-        ARRAY(String), server_default="{}"
-    )
-    requirements: Mapped[list[str]] = mapped_column(ARRAY(String), server_default="{}")
-    preferred_qualifications: Mapped[list[str]] = mapped_column(
-        ARRAY(String), server_default="{}"
-    )
-    benefits: Mapped[list[str]] = mapped_column(ARRAY(String), server_default="{}")
-    # Up to 3 short questions shown on the public apply page.
-    screening_questions: Mapped[list[str]] = mapped_column(
-        ARRAY(String), server_default="{}", nullable=False, default=list
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

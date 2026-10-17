@@ -12,7 +12,6 @@ import app.modules.interviews.recording_model  # noqa: F401
 import app.modules.job_ai.models  # noqa: F401
 import app.modules.jobs.models  # noqa: F401
 import app.modules.notifications.models  # noqa: F401
-import app.modules.outreach.models  # noqa: F401
 import app.modules.profiles.models  # noqa: F401
 import app.modules.public.models  # noqa: F401
 import app.modules.recruiter_chat.models  # noqa: F401

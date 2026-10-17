@@ -21,7 +21,7 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.shared.enums import ApplicationStatus, SyncAction, SyncStatus
+from app.shared.enums import ApplicationStage, SyncAction, SyncStatus
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
@@ -39,25 +39,13 @@ class Application(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    resume_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("resumes.id", ondelete="RESTRICT"), nullable=False, index=True
+    # NULL when the candidate applied without a CV (answers only).
+    resume_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("resumes.id", ondelete="RESTRICT"), nullable=True, index=True
     )
-    score: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
-    strengths: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
-    weaknesses: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+    # Blind resume embedding; only an input to the review's rank_score.
     resume_embedding: Mapped[list[float] | None] = mapped_column(
         ARRAY(Float), nullable=True
-    )
-    ml_bouncer_score: Mapped[float | None] = mapped_column(Float, nullable=True)
-    # AI review lifecycle: pending | completed | failed | needs_human_review.
-    # Recruiter-facing only; never shown to the candidate.
-    ai_review_status: Mapped[str | None] = mapped_column(Text, nullable=True)
-    ai_review_attempts: Mapped[int] = mapped_column(
-        Integer, default=0, server_default="0", nullable=False
-    )
-    ai_flag_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
-    shortlist_notified: Mapped[bool] = mapped_column(
-        Boolean, default=False, server_default="false"
     )
     share_profile_all: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true", nullable=False
@@ -100,12 +88,22 @@ class Application(Base):
     )
     # [{"question": str, "answer": str}] for the job's screening questions.
     screening_answers: Mapped[list[dict] | None] = mapped_column(JSONB, nullable=True)
-    status: Mapped[ApplicationStatus] = mapped_column(
-        SAEnum(ApplicationStatus, name="applicationstatus"),
+    stage: Mapped[ApplicationStage] = mapped_column(
+        SAEnum(ApplicationStage, name="applicationstage"),
         nullable=False,
-        server_default="applied",
+        default=ApplicationStage.new,
+        server_default=ApplicationStage.new.value,
         index=True,
     )
+    # Who moved the application last, and when.
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    decided_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # not_a_fit | position_filled | no_response | other. Never shown to the candidate.
+    rejected_reason: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -117,9 +115,79 @@ class Application(Base):
         UniqueConstraint("job_id", "user_id", name="uq_application_job_user"),
     )
 
-    user: Mapped[User] = relationship(lazy="joined")
-    resume: Mapped[Resume] = relationship(lazy="joined")
+    user: Mapped[User] = relationship(lazy="joined", foreign_keys=[user_id])
+    resume: Mapped[Resume | None] = relationship(lazy="joined")
     job: Mapped[Job] = relationship(lazy="raise")
+    review: Mapped[Review | None] = relationship(
+        lazy="raise", uselist=False, back_populates="application"
+    )
+
+
+class Review(Base):
+    """The AI review of one application. Recruiter-facing only."""
+
+    __tablename__ = "application_reviews"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    # pending | done | failed | needs_person
+    state: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="pending", server_default="pending"
+    )
+    # strong | possible | weak; derived from `checks` in code, never by the model.
+    fit: Mapped[str | None] = mapped_column(String(10), nullable=True, index=True)
+    summary: Mapped[str | None] = mapped_column(String(140), nullable=True)
+    # [{"criterion", "kind": must|nice, "result": met|partly|missing, "evidence"}]
+    checks: Mapped[list[dict]] = mapped_column(
+        JSONB, nullable=False, default=list, server_default="[]"
+    )
+    flag_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Internal sort key within a fit bucket. Never shown.
+    rank_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    model: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    prompt_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    application: Mapped[Application] = relationship(
+        lazy="raise", back_populates="review"
+    )
+
+
+class ApplicationEvent(Base):
+    """Timeline of one application: stage changes, emails, notes, interviews."""
+
+    __tablename__ = "application_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # applied | stage_changed | email_scheduled | email_sent | interview_booked |
+    # interview_done | note | review_done
+    type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    # NULL actor = the system.
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    payload: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default="{}"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
 
 
 class ApplicationSyncEvent(Base):

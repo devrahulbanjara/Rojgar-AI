@@ -29,9 +29,6 @@ class ActivityEvent(Base):
     interview_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("interviews.id", ondelete="CASCADE"), nullable=True, index=True
     )
-    draft_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("email_drafts.id", ondelete="CASCADE"), nullable=True, index=True
-    )
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )

@@ -98,9 +98,12 @@ class EmailService:
     ) -> None:
         """Send an HTML email and raise on delivery failure.
 
-        Used where the caller records delivery (e.g. outreach `is_sent`), so a
-        failed SMTP call is never reported as a sent email.
+        Used where the caller records delivery (decision emails), so a failed
+        SMTP call is never reported as a sent email.
         """
+        if not settings.send_emails:
+            logger.info(f"Email sending disabled — skipping email to {to_email}")
+            return
         message = EmailMessage()
         message["From"] = f"{settings.app_name} <{settings.mail_from}>"
         message["To"] = to_email
