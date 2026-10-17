@@ -1,5 +1,7 @@
 import { BRAND } from '@/lib/brand'
 
+import { authNe } from './auth'
+
 import type { Dict } from './en'
 
 /** नेपाली. Words from docs/AGENT_BRIEF.md: व्यवसाय, टिम, जागिर, आवेदक. Never "सिफारिस". */
@@ -331,87 +333,5 @@ export const ne: Dict = {
     closing: 'आजै पहिलो जागिर पोस्ट गर्नुहोस्। निःशुल्क छ।',
   },
 
-  auth: {
-    or: 'वा',
-    email: 'इमेल',
-    password: 'पासवर्ड',
-    fullName: 'पूरा नाम',
-    emailRequired: 'इमेल लेख्नुहोस्।',
-    emailInvalid: 'सही इमेल लेख्नुहोस्।',
-    passwordRequired: 'पासवर्ड लेख्नुहोस्।',
-    nameRequired: 'नाम लेख्नुहोस्।',
-    weakPassword: 'अझ बलियो पासवर्ड राख्नुहोस्।',
-    rules: { length: '८+ अक्षर', cases: 'ठूलो र सानो अक्षर', number: 'एउटा अंक' },
-    google: 'Google बाट जारी राख्नुहोस्',
-    backToLogin: 'लग इनमा फर्कनुहोस्',
-    checkEmail: 'इमेल हेर्नुहोस्',
-    sentLink: (email: string) => `${email} मा लिंक पठाएका छौं।`,
-    resend: 'फेरि पठाउनुहोस्',
-    resendIn: (s: number) => `${s} सेकेन्डमा फेरि पठाउन सकिन्छ`,
-    changeEmail: 'इमेल बदल्नुहोस्',
-    login: {
-      title: 'लग इन',
-      submit: 'लग इन',
-      forgot: 'पासवर्ड बिर्सनुभयो?',
-      newHere: `${BRAND.name} मा नयाँ?`,
-      createAccount: 'व्यवसायको खाता बनाउनुहोस्',
-      applied: 'जागिरमा आवेदन दिनुभयो?',
-      getLink: 'साइन इन लिंक पाउनुहोस्',
-      verifyTitle: 'इमेल प्रमाणित गर्नुहोस्',
-      verifyLine: (email: string) => `${email} मा पठाएको लिंक खोल्नुहोस्, अनि लग इन गर्नुहोस्।`,
-      wrong: 'इमेल वा पासवर्ड मिलेन।',
-      failed: 'लग इन हुन सकेन। फेरि प्रयास गर्नुहोस्।',
-      deleted: 'यो खाता मेटाइएको छ।',
-      oauthFailed: 'Google बाट साइन इन पूरा भएन। फेरि प्रयास गर्नुहोस्।',
-      linkInvalid: 'साइन इन लिंकको समय सकियो। नयाँ लिंक माग्नुहोस्।',
-    },
-    signup: {
-      title: 'व्यवसायको खाता बनाउनुहोस्',
-      join: (company: string) => `${company} मा जोडिनुहोस्`,
-      workEmail: 'कामको इमेल',
-      workEmailRequired: 'कामको इमेल लेख्नुहोस्।',
-      business: 'व्यवसायको नाम',
-      businessRequired: 'व्यवसायको नाम लेख्नुहोस्।',
-      exists: (company: string) =>
-        `${company} पहिल्यै ${BRAND.name} मा छ। उहाँहरूको टिममा जोडिन अनुरोध गर्ने?`,
-      askJoin: (company: string) => `${company} मा जोडिन अनुरोध गर्नुहोस्`,
-      create: 'खाता बनाउनुहोस्',
-      haveAccount: 'पहिल्यै खाता छ?',
-      applying: 'जागिरमा आवेदन दिँदै हुनुहुन्छ?',
-      noAccount: 'तपाईंलाई खाता चाहिँदैन',
-      agree: 'अगाडि बढेर तपाईं यी कुरामा सहमत हुनुहुन्छ:',
-      and: 'र',
-      privacyPolicy: 'गोपनीयता नीति',
-      requestSent: 'अनुरोध पठाइयो',
-      approveLine: (company: string) =>
-        `${company} ले तपाईंको अनुरोध स्वीकार गर्नेछ। त्यतिन्जेल इमेल प्रमाणित गर्नुहोस्।`,
-      failed: 'खाता बन्न सकेन। फेरि प्रयास गर्नुहोस्।',
-      theBusiness: 'व्यवसाय',
-    },
-    magic: {
-      title: 'आफ्ना आवेदन हेर्नुहोस्',
-      email: 'आवेदन दिँदा राखेको इमेल',
-      submit: 'साइन इन लिंक इमेलमा पठाउनुहोस्',
-      hiring: 'भर्ना गर्दै हुनुहुन्छ?',
-      logInHere: 'यहाँ लग इन गर्नुहोस्',
-    },
-    forgot: { title: 'पासवर्ड रिसेट गर्नुहोस्', submit: 'रिसेट लिंक इमेलमा पठाउनुहोस्' },
-    reset: {
-      title: 'नयाँ पासवर्ड राख्नुहोस्',
-      newPassword: 'नयाँ पासवर्ड',
-      submit: 'पासवर्ड सेभ गर्नुहोस्',
-      done: 'पासवर्ड बदलियो',
-      newLink: 'नयाँ लिंक लिनुहोस्',
-      incomplete: 'यो लिंक अधुरो छ। नयाँ लिंक माग्नुहोस्।',
-      expired: 'यो लिंकको समय सकियो। नयाँ लिंक माग्नुहोस्।',
-    },
-    verify: {
-      checking: 'प्रमाणित गर्दै…',
-      moment: 'एकछिन।',
-      invalid: 'लिंक मिलेन',
-      incomplete: 'यो लिंक अधुरो छ।',
-      expired: 'यो लिंकको समय सकियो।',
-      done: 'इमेल प्रमाणित भयो',
-    },
-  },
+  auth: authNe,
 }

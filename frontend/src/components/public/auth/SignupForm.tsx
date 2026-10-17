@@ -20,6 +20,8 @@ import { Input } from '@/components/ui/input'
 
 import { AuthCard, AuthDivider } from './AuthCard'
 import { CheckEmail } from './CheckEmail'
+import { SwitchMethod, useAfterSignIn } from './LoginForm'
+import { PhoneCodeForm } from './PhoneCodeForm'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -31,6 +33,8 @@ export function SignupForm() {
   const nextUrl = getSafeRedirect(searchParams.get('next'))
 
   const [signup, { isLoading }] = useSignupMutation()
+  const afterSignIn = useAfterSignIn(nextUrl)
+  const [method, setMethod] = useState<'phone' | 'email'>('phone')
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -46,7 +50,7 @@ export function SignupForm() {
   function validate(): Errors {
     const next: Errors = {}
     if (!fullName.trim()) next.fullName = t.auth.nameRequired
-    if (!email.trim()) next.email = t.auth.signup.workEmailRequired
+    if (!email.trim()) next.email = t.auth.emailRequired
     else if (!EMAIL_RE.test(email.trim())) next.email = t.auth.emailInvalid
     if (!passwordMeetsRules(password)) next.password = t.auth.weakPassword
     return next
@@ -129,6 +133,9 @@ export function SignupForm() {
         </Alert>
       ) : null}
 
+      {method === 'phone' ? (
+        <PhoneCodeForm onSignedIn={(data) => afterSignIn(data.user)} />
+      ) : (
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
         <FormField id="fullName" label={t.auth.fullName} error={errors.fullName}>
           <Input
@@ -144,7 +151,7 @@ export function SignupForm() {
             }}
           />
         </FormField>
-        <FormField id="email" label={t.auth.signup.workEmail} error={errors.email}>
+        <FormField id="email" label={t.auth.email} error={errors.email}>
           <Input
             id="email"
             type="email"
@@ -179,6 +186,15 @@ export function SignupForm() {
           <span className="truncate">{t.auth.signup.create}</span>
         </Button>
       </form>
+      )}
+
+      <SwitchMethod
+        label={method === 'phone' ? t.auth.phone.useEmail : t.auth.phone.usePhone}
+        onClick={() => {
+          setFormError(null)
+          setMethod(method === 'phone' ? 'email' : 'phone')
+        }}
+      />
 
       <AuthDivider />
 

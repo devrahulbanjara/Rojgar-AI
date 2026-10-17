@@ -1,5 +1,7 @@
 import { BRAND } from '@/lib/brand'
 
+import { authEn } from './auth'
+
 /** English copy for the public side. `ne.ts` must have exactly the same shape. */
 export const en = {
   nav: {
@@ -328,89 +330,7 @@ export const en = {
     closing: 'Post your first job today. It’s free.',
   },
 
-  auth: {
-    or: 'or',
-    email: 'Email',
-    password: 'Password',
-    fullName: 'Full name',
-    emailRequired: 'Enter your email.',
-    emailInvalid: 'Enter a valid email.',
-    passwordRequired: 'Enter your password.',
-    nameRequired: 'Enter your name.',
-    weakPassword: 'Use a stronger password.',
-    rules: { length: '8+ characters', cases: 'Upper and lower case', number: 'A number' },
-    google: 'Continue with Google',
-    backToLogin: 'Back to log in',
-    checkEmail: 'Check your email',
-    sentLink: (email: string) => `We sent a link to ${email}.`,
-    resend: 'Resend',
-    resendIn: (s: number) => `Resend in ${s}s`,
-    changeEmail: 'Change email',
-    login: {
-      title: 'Log in',
-      submit: 'Log in',
-      forgot: 'Forgot password?',
-      newHere: `New to ${BRAND.name}?`,
-      createAccount: 'Create a business account',
-      applied: 'Applied for a job?',
-      getLink: 'Get a sign-in link',
-      verifyTitle: 'Verify your email',
-      verifyLine: (email: string) => `Open the link we sent to ${email}, then log in.`,
-      wrong: 'Wrong email or password.',
-      failed: 'Could not log in. Try again.',
-      deleted: 'This account was deleted.',
-      oauthFailed: 'Google sign-in did not finish. Try again.',
-      linkInvalid: 'That sign-in link has expired. Ask for a new one.',
-    },
-    signup: {
-      title: 'Create your business account',
-      join: (company: string) => `Join ${company}`,
-      workEmail: 'Work email',
-      workEmailRequired: 'Enter your work email.',
-      business: 'Business name',
-      businessRequired: 'Enter your business name.',
-      exists: (company: string) =>
-        `${company} is already on ${BRAND.name}. Ask to join their team?`,
-      askJoin: (company: string) => `Ask to join ${company}`,
-      create: 'Create account',
-      haveAccount: 'Already have an account?',
-      applying: 'Applying for a job?',
-      noAccount: "You don't need an account",
-      agree: 'By continuing you agree to the',
-      and: 'and',
-      privacyPolicy: 'Privacy Policy',
-      requestSent: 'Request sent',
-      approveLine: (company: string) =>
-        `${company} will approve your request. Meanwhile, verify your email.`,
-      failed: 'Could not create the account. Try again.',
-      theBusiness: 'the business',
-    },
-    magic: {
-      title: 'See your applications',
-      email: 'Email you applied with',
-      submit: 'Email me a sign-in link',
-      hiring: 'Hiring?',
-      logInHere: 'Log in here',
-    },
-    forgot: { title: 'Reset your password', submit: 'Email me a reset link' },
-    reset: {
-      title: 'Choose a new password',
-      newPassword: 'New password',
-      submit: 'Save password',
-      done: 'Password updated',
-      newLink: 'Get a new link',
-      incomplete: 'This link is incomplete. Ask for a new one.',
-      expired: 'This link has expired. Ask for a new one.',
-    },
-    verify: {
-      checking: 'Verifying…',
-      moment: 'One moment.',
-      invalid: 'Link not valid',
-      incomplete: 'This link is incomplete.',
-      expired: 'This link has expired.',
-      done: 'Email verified',
-    },
-  },
+  auth: authEn,
 }
 
 export type Dict = typeof en

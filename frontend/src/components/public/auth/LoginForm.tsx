@@ -18,6 +18,8 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'
 import { clearCredentials } from '@/store/slices/authSlice'
 
+import type { BaseUser } from '@/lib/types/user'
+
 import { FormField } from '@/components/app/FormField'
 import { PasswordInput } from '@/components/app/PasswordInput'
 import { AlertIcon, GoogleIcon } from '@/components/icons'
@@ -26,10 +28,27 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 import { AuthCard, AuthDivider } from './AuthCard'
+import { PhoneCodeForm } from './PhoneCodeForm'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 type Errors = { email?: string; password?: string }
+
+/** Where to go once signed in: the remembered page, ?next=, or the person's home. */
+export function useAfterSignIn(nextUrl: string | null) {
+  const router = useRouter()
+  return (user: BaseUser | null | undefined) =>
+    router.push(consumePostAuthRedirect() ?? nextUrl ?? homePathFor(user))
+}
+
+/** "Use email instead" / "Use mobile number instead" under the form. */
+export function SwitchMethod({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Button type="button" variant="link" className="h-auto self-center p-0" onClick={onClick}>
+      {label}
+    </Button>
+  )
+}
 
 export function LoginForm() {
   const t = useT()
@@ -44,6 +63,10 @@ export function LoginForm() {
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
   const [login, { isLoading }] = useLoginMutation()
+  const afterSignIn = useAfterSignIn(nextUrl)
+  const [method, setMethod] = useState<'phone' | 'email'>(
+    searchParams.get('email') ? 'email' : 'phone',
+  )
 
   const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [password, setPassword] = useState('')
@@ -94,9 +117,7 @@ export function LoginForm() {
         setFormError(result.message ?? t.auth.login.failed)
         return
       }
-      router.push(
-        consumePostAuthRedirect() ?? nextUrl ?? homePathFor(result.data?.user),
-      )
+      afterSignIn(result.data?.user)
     } catch (err) {
       const code = apiErrorCode(err)
       if (code === 'email_not_verified') {
@@ -160,7 +181,10 @@ export function LoginForm() {
         </Alert>
       ) : null}
 
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+      {method === 'phone' ? (
+        <PhoneCodeForm onSignedIn={(data) => afterSignIn(data.user)} />
+      ) : (
+            <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
         <FormField id="email" label={t.auth.email} error={errors.email}>
           <Input
             id="email"
@@ -207,6 +231,15 @@ export function LoginForm() {
           {t.auth.login.submit}
         </Button>
       </form>
+      )}
+
+      <SwitchMethod
+        label={method === 'phone' ? t.auth.phone.useEmail : t.auth.phone.usePhone}
+        onClick={() => {
+          setFormError(null)
+          setMethod(method === 'phone' ? 'email' : 'phone')
+        }}
+      />
 
       <AuthDivider />
 

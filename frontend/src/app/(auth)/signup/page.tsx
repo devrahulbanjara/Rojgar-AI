@@ -6,7 +6,7 @@ import { BRAND } from '@/lib/brand'
 
 import { SignupForm } from '@/components/public/auth/SignupForm'
 
-export const metadata: Metadata = { title: `Create your company account · ${BRAND.name}` }
+export const metadata: Metadata = { title: `Start hiring · ${BRAND.name}` }
 
 export default function SignupPage() {
   return (
