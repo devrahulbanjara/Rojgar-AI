@@ -23,6 +23,8 @@ export function BuilderLayout({
   onNext,
   nextLabel = 'Save & continue',
   nextLoading = false,
+  showStepCount = true,
+  showPrevious = true,
   children,
 }: {
   /** e.g. "Job setup" → "Job setup 60%". */
@@ -36,6 +38,10 @@ export function BuilderLayout({
   onNext: () => void
   nextLabel?: string
   nextLoading?: boolean
+  /** One-page builders (all sections on one scroll) hide "STEP 2 OF 4". */
+  showStepCount?: boolean
+  /** One-page builders hide the Previous button. */
+  showPrevious?: boolean
   children: ReactNode
 }) {
   const done = steps.filter((step) => step.complete).length
@@ -43,7 +49,7 @@ export function BuilderLayout({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-      <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+      <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">
             {title} {pct}%
@@ -82,22 +88,32 @@ export function BuilderLayout({
 
       <section className="flex min-w-0 flex-col gap-6 rounded-xl border bg-card p-6">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Step {current + 1} of {steps.length}
-          </p>
+          {showStepCount ? (
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Step {current + 1} of {steps.length}
+            </p>
+          ) : (
+            <span />
+          )}
           <p className="text-xs text-muted-foreground" aria-live="polite">
             {saving
               ? 'Saving…'
               : savedAt
-                ? `Saved · ${formatDistanceToNowStrict(savedAt)} ago`
+                ? / seconds?$/.test(formatDistanceToNowStrict(savedAt))
+                  ? 'Saved'
+                  : `Saved · ${formatDistanceToNowStrict(savedAt)} ago`
                 : null}
           </p>
         </div>
         {children}
         <div className="flex items-center justify-between gap-3 border-t pt-4">
-          <Button variant="outline" onClick={onPrevious} disabled={!onPrevious || current === 0}>
-            Previous
-          </Button>
+          {showPrevious ? (
+            <Button variant="outline" onClick={onPrevious} disabled={!onPrevious || current === 0}>
+              Previous
+            </Button>
+          ) : (
+            <span />
+          )}
           <Button onClick={onNext} loading={nextLoading}>
             {nextLabel}
           </Button>

@@ -74,6 +74,7 @@ export {
   FilePdf as FilePdfIcon,
   Calendar as CalendarIcon,
   Clock as ClockIcon,
+  ShieldCheck as ShieldCheckIcon,
   MapPin as LocationIcon,
   EnvelopeSimple as MailIcon,
   Phone as PhoneIcon,

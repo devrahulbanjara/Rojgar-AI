@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { Calendar, ChevronRight, Clock, ShieldCheck } from 'lucide-react'
+import { CalendarIcon, ChevronRightIcon, ClockIcon, ShieldCheckIcon } from '@/components/icons'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy - Rojgar AI',
@@ -52,17 +52,17 @@ export default function PrivacyPolicyPage() {
           <h1 className="legal__title">Privacy Policy</h1>
           <div className="legal__meta">
             <span className="legal__meta-item">
-              <Calendar aria-hidden="true" />
+              <CalendarIcon aria-hidden="true" />
               Effective: 1 Falgun 2081 BS (13 February 2025)
             </span>
             <span className="legal__meta-sep" aria-hidden="true" />
             <span className="legal__meta-item">
-              <Clock aria-hidden="true" />
+              <ClockIcon aria-hidden="true" />
               Last updated: 1 Falgun 2081 BS
             </span>
             <span className="legal__meta-sep" aria-hidden="true" />
             <span className="legal__meta-item">
-              <ShieldCheck aria-hidden="true" />
+              <ShieldCheckIcon aria-hidden="true" />
               Governed by Nepal Law
             </span>
           </div>
@@ -125,7 +125,8 @@ export default function PrivacyPolicyPage() {
             <ul className="legal__list">
               <li>Full name, email address, and password when you register an account</li>
               <li>
-                The CV you send with an application and your answers to the employer&apos;s questions
+                The CV you send with an application and your answers to the employer&apos;s
+                questions
               </li>
               <li>Profile photo (optional)</li>
               <li>Contact details such as phone number and location</li>
@@ -433,15 +434,15 @@ export default function PrivacyPolicyPage() {
           {/* Related policies */}
           <nav className="legal__related" aria-label="Related policies">
             <Link href="/cookies" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Cookie Policy
             </Link>
             <Link href="/terms" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Terms &amp; Conditions
             </Link>
             <Link href="/copyright" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Copyright Notice
             </Link>
           </nav>

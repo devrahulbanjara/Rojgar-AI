@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
+import { CalendarIcon, ChevronRightIcon, ShieldCheckIcon } from '@/components/icons'
 
 export const metadata: Metadata = {
   title: 'Terms & Conditions - Rojgar AI',
@@ -55,12 +55,12 @@ export default function TermsPage() {
           <h1 className="legal__title">Terms &amp; Conditions</h1>
           <div className="legal__meta">
             <span className="legal__meta-item">
-              <Calendar aria-hidden="true" />
+              <CalendarIcon aria-hidden="true" />
               Effective: 1 Falgun 2081 BS (13 February 2025)
             </span>
             <span className="legal__meta-sep" aria-hidden="true" />
             <span className="legal__meta-item">
-              <ShieldCheck aria-hidden="true" />
+              <ShieldCheckIcon aria-hidden="true" />
               Governed by Nepal Law
             </span>
           </div>
@@ -448,15 +448,15 @@ export default function TermsPage() {
 
           <nav className="legal__related" aria-label="Related policies">
             <Link href="/privacy" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Privacy Policy
             </Link>
             <Link href="/cookies" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Cookie Policy
             </Link>
             <Link href="/copyright" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Copyright Notice
             </Link>
           </nav>
