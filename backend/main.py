@@ -14,6 +14,7 @@ from app.core.job_expiry_scheduler import (
     run_job_expiry_startup_check,
 )
 from app.core.logging_config import setup_logging
+from app.core.body_limit import BodySizeLimitMiddleware
 from app.core.request_middleware import RequestContextMiddleware
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.core.tasks import sync_daemon_loop
@@ -105,6 +106,7 @@ app.add_middleware(
 app.add_middleware(
     RequestContextMiddleware
 )  # attaches request context to every request
+app.add_middleware(BodySizeLimitMiddleware)  # rejects oversized bodies early
 
 register_exception_handlers(app)  # registers global exception handlers
 

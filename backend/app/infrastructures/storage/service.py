@@ -10,6 +10,46 @@ from loguru import logger
 from app.core.config import settings
 
 
+# Magic-byte signatures -> (canonical extension, content type). The client's
+# filename and Content-Type are never trusted: a text/html payload stored as
+# ".png" in a public bucket would be served as HTML.
+def _sniff_image(head: bytes) -> tuple[str, str] | None:
+    if head.startswith(b"\xff\xd8\xff"):
+        return "jpg", "image/jpeg"
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png", "image/png"
+    if head[:6] in (b"GIF87a", b"GIF89a"):
+        return "gif", "image/gif"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "webp", "image/webp"
+    return None
+
+
+def _sniff_audio(head: bytes) -> tuple[str, str] | None:
+    if head.startswith(b"\x1a\x45\xdf\xa3"):
+        return "webm", "audio/webm"
+    if head.startswith(b"OggS"):
+        return "ogg", "audio/ogg"
+    if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
+        return "wav", "audio/wav"
+    if head[4:8] == b"ftyp":
+        return "m4a", "audio/mp4"
+    if head.startswith(b"ID3") or (
+        len(head) > 1 and head[0] == 0xFF and (head[1] & 0xE0) == 0xE0
+    ):
+        return "mp3", "audio/mpeg"
+    if head.startswith(b"fLaC"):
+        return "flac", "audio/flac"
+    return None
+
+
+async def _read_head(file: UploadFile, size: int = 16) -> bytes:
+    await file.seek(0)
+    head = await file.read(size)
+    await file.seek(0)
+    return head
+
+
 class StorageService:
     def __init__(self) -> None:
         self.bucket = settings.s3_bucket_name
@@ -31,21 +71,16 @@ class StorageService:
         """
         Upload image without ACLs. Public access handled by bucket policy.
         """
-        if not file.content_type or not file.content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="File must be an image type.",
-            )
-
-        extension = self._extract_extension(file.filename)
+        sniffed = _sniff_image(await _read_head(file))
         allowed_extensions = {
             ext.lower() for ext in settings.s3_allowed_image_extensions
         }
-        if extension not in allowed_extensions:
+        if sniffed is None or sniffed[0] not in allowed_extensions:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported image format.",
             )
+        extension, content_type = sniffed
 
         file_size = self._get_file_size(file)
         if file_size > settings.s3_max_upload_bytes:
@@ -63,17 +98,17 @@ class StorageService:
                 file.file,
                 self.bucket,
                 file_key,
-                ExtraArgs={"ContentType": file.content_type},
+                ExtraArgs={"ContentType": content_type},
             )
         except Exception as exc:
-            logger.exception("Storage upload failed for key %s: %s", file_key, exc)
+            logger.exception("Storage upload failed for key {}: {}", file_key, exc)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Upload failed. Please try again later.",
             ) from exc
 
         url = f"{settings.s3_base_url}/{file_key}"
-        logger.info("Storage: Uploaded %s", url)
+        logger.info("Storage: Uploaded {}", url)
         return url
 
     async def delete_image(self, image_url: str | None) -> None:
@@ -93,9 +128,9 @@ class StorageService:
                 Bucket=self.bucket,
                 Key=file_key,
             )
-            logger.info("Storage: Deleted %s", file_key)
+            logger.info("Storage: Deleted {}", file_key)
         except Exception as exc:
-            logger.error("Storage delete failed for key %s: %s", file_key, exc)
+            logger.error("Storage delete failed for key {}: {}", file_key, exc)
 
     def _extract_key(self, image_url: str) -> str | None:
         """Extract S3 key from full URL."""
@@ -120,16 +155,16 @@ class StorageService:
     async def upload_audio(self, file: UploadFile, folder: str) -> tuple[str, str]:
         """
         Upload audio file. Returns (public_url, s3_key).
-        Accepts webm, mp4, ogg, wav, m4a, mpeg, mpga.
-        Max 200MB.
+        Accepts webm, ogg, wav, mp4/m4a, mp3 and flac, detected from the file
+        content. Max 200MB.
         """
-        allowed = {"webm", "mp4", "ogg", "wav", "m4a", "mpeg", "mpga"}
-        extension = self._extract_extension(file.filename) or "webm"
-        if extension not in allowed:
+        sniffed = _sniff_audio(await _read_head(file))
+        if sniffed is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported audio format.",
             )
+        extension, content_type = sniffed
 
         max_bytes = 200 * 1024 * 1024
         file_size = self._get_file_size(file)
@@ -142,8 +177,6 @@ class StorageService:
         file_key = f"{folder}/{uuid.uuid4()}.{extension}"
         await file.seek(0)
 
-        content_type = file.content_type or f"audio/{extension}"
-
         try:
             await asyncio.to_thread(
                 self.client.upload_fileobj,
@@ -153,14 +186,14 @@ class StorageService:
                 ExtraArgs={"ContentType": content_type},
             )
         except Exception as exc:
-            logger.exception("Audio upload failed for key %s: %s", file_key, exc)
+            logger.exception("Audio upload failed for key {}: {}", file_key, exc)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Upload failed. Please try again later.",
             ) from exc
 
         url = f"{settings.s3_base_url}/{file_key}"
-        logger.info("Storage: Uploaded audio %s", url)
+        logger.info("Storage: Uploaded audio {}", url)
         return url, file_key
 
     async def generate_presigned_url(
@@ -176,7 +209,7 @@ class StorageService:
             )
             return url
         except Exception as exc:
-            logger.error("Failed to generate presigned URL for %s: %s", file_key, exc)
+            logger.error("Failed to generate presigned URL for {}: {}", file_key, exc)
             # Fallback to the public URL pattern just in case
             return f"{settings.s3_base_url}/{file_key}"
 
