@@ -189,18 +189,6 @@ class Settings(BaseSettings):
     jobs_hybrid_search_enabled: bool = True
     jobs_hybrid_prefetch_limit: int = 50
 
-    # HF Whisper transcription
-    hf_whisper_url: str = (
-        "https://devrahulbanjara-nepali-whisper-small.hf.space/transcribe"
-    )
-    hf_whisper_timeout_seconds: int = 300
-    hf_whisper_max_retries: int = 4
-    hf_whisper_retry_delays: tuple[int, ...] = (5, 15, 30, 60)
-    hf_whisper_token: str | None = None
-
-    # Cal.com webhook: HMAC-SHA256 secret configured on the Cal webhook.
-    cal_webhook_secret: str | None = None
-
     # Derived URLs
     @property
     def database_url(self) -> str:

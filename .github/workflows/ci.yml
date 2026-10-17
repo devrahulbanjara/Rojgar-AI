@@ -131,7 +131,7 @@ jobs:
       - name: Smoke-test runtime tools
         run: |
           docker run --rm --entrypoint sh rojgar-ai-backend:ci -c \
-            "test -s /app/ml_bouncer_model.pkl && ffmpeg -version >/dev/null"
+            "test -s /app/ml_bouncer_model.pkl"
 
   frontend:
     name: Frontend

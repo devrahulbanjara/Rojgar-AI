@@ -10,8 +10,7 @@ import app.modules.jobs.models  # noqa: F401
 import app.modules.applications.models  # noqa: F401
 import app.modules.job_ai.models  # noqa: F401
 import app.modules.interviews.models  # noqa: F401
-import app.modules.interviews.recording_model  # noqa: F401
-import app.modules.interviews.evaluation_models  # noqa: F401
+import app.modules.entitlements.models  # noqa: F401
 import app.modules.outreach.models  # noqa: F401
 from alembic import context
 from app.core.config import settings

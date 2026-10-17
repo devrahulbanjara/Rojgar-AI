@@ -25,8 +25,7 @@ MODEL_MODULES = [
     "app.modules.applications.models",
     "app.modules.job_ai.models",
     "app.modules.interviews.models",
-    "app.modules.interviews.recording_model",
-    "app.modules.interviews.evaluation_models",
+    "app.modules.entitlements.models",
     "app.modules.outreach.models",
     "app.modules.recruiter_chat.models",
     "app.modules.recruiter_preferences.models",
@@ -76,11 +75,11 @@ SUBSYSTEMS: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "Subsystem 5 - Interview Recording and Evaluation",
+        "Subsystem 5 - Interview Scheduling and Scorecards",
         [
-            "interview_recordings",
-            "job_evaluation_schemas",
-            "candidate_evaluation_scores",
+            "interviewer_availability",
+            "interview_invites",
+            "scorecards",
         ],
     ),
     (

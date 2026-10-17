@@ -364,6 +364,7 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "seaborn" },
     { name = "sqlalchemy", extra = ["asyncio"] },
+    { name = "tzdata" },
     { name = "weasyprint" },
 ]
 
@@ -419,6 +420,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.47" },
+    { name = "tzdata", specifier = ">=2025.2" },
     { name = "weasyprint", specifier = ">=68.1" },
 ]
 

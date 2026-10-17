@@ -48,6 +48,7 @@ dependencies = [
     "matplotlib>=3.10.9",
     "seaborn>=0.13.2",
     "pypdf>=5.4",
+    "tzdata>=2025.2",
 ]
 
 [tool.fastapi]
