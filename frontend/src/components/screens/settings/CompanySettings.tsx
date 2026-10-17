@@ -4,7 +4,6 @@ import { type FormEvent, useState } from 'react'
 
 import { PLANS, planPrice, usageLine, useGetCompanyPlanQuery } from '@/lib/api/company'
 import { parseApiError } from '@/lib/apiError'
-import { FLAGS } from '@/lib/flags'
 import { notify } from '@/lib/notify'
 import {
   type CompanyProfileData,
@@ -30,7 +29,6 @@ type Form = {
   location: string
   website_url: string
   description: string
-  cal_booking_url: string
 }
 
 const fromCompany = (c: CompanyProfileData): Form => ({
@@ -39,7 +37,6 @@ const fromCompany = (c: CompanyProfileData): Form => ({
   location: c.location ?? '',
   website_url: c.website_url ?? '',
   description: c.description ?? '',
-  cal_booking_url: c.cal_booking_url ?? '',
 })
 
 const isUrl = (value: string) => !value || /^https?:\/\/\S+\.\S+$/i.test(value)
@@ -53,7 +50,6 @@ function CompanyForm({ company }: { company: CompanyProfileData }) {
 
   const initial = fromCompany(company)
   // Cal.com link: only while native scheduling is off and the backend still has the field.
-  const usesBookingLink = !FLAGS.nativeScheduling && 'cal_booking_url' in company
   const changed = (Object.keys(form) as (keyof Form)[]).some((k) => form[k].trim() !== initial[k])
   const set = (key: keyof Form) => (event: { target: { value: string } }) =>
     setForm((prev) => ({ ...prev, [key]: event.target.value }))
@@ -64,8 +60,6 @@ function CompanyForm({ company }: { company: CompanyProfileData }) {
     if (!form.name.trim()) next.name = 'Enter the company name.'
     if (!isUrl(form.website_url.trim()))
       next.website_url = 'Use a full link, like https://example.com'
-    if (!isUrl(form.cal_booking_url.trim()))
-      next.cal_booking_url = 'Use a full link, like https://cal.com/your-company'
     setErrors(next)
     if (Object.keys(next).length) return
     try {
@@ -75,7 +69,6 @@ function CompanyForm({ company }: { company: CompanyProfileData }) {
         location: form.location.trim() || null,
         website_url: form.website_url.trim() || null,
         description: form.description.trim() || null,
-        ...(usesBookingLink ? { cal_booking_url: form.cal_booking_url.trim() || null } : {}),
       }).unwrap()
       notify.success('Saved')
     } catch (error) {
@@ -165,22 +158,6 @@ function CompanyForm({ company }: { company: CompanyProfileData }) {
             onChange={set('description')}
           />
         </FormField>
-        {!usesBookingLink ? null : (
-          <FormField
-            id="company-booking"
-            label="Interview booking link"
-            error={errors.cal_booking_url}
-          >
-            <Input
-              id="company-booking"
-              type="url"
-              value={form.cal_booking_url}
-              placeholder="https://cal.com/your-company"
-              aria-invalid={!!errors.cal_booking_url}
-              onChange={set('cal_booking_url')}
-            />
-          </FormField>
-        )}
       </SettingsCard>
     </form>
   )

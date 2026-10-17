@@ -9,7 +9,6 @@ import {
   useListInterviewsQuery,
   useRescheduleInterviewMutation,
 } from '@/lib/api/interviews'
-import { FLAGS } from '@/lib/flags'
 import { notify } from '@/lib/notify'
 import { format, isSameWeek, isToday, isTomorrow, startOfToday } from 'date-fns'
 
@@ -66,18 +65,10 @@ function Row({
   const [reschedule, rescheduleState] = useRescheduleInterviewMutation()
 
   async function onReschedule() {
-    // Open the tab now so the browser doesn't block it after the request.
-    const tab = FLAGS.nativeScheduling ? null : window.open('', '_blank')
     try {
-      const result = await reschedule(interview.id).unwrap()
-      if (result.sent) {
-        notify.success(`Sent ${interview.candidate.name} a link to pick a new time`)
-      } else if (tab) {
-        tab.opener = null
-        tab.location.href = result.scheduling_url
-      }
+      await reschedule(interview.application_id).unwrap()
+      notify.success(`Sent ${interview.candidate.name} a link to pick a new time`)
     } catch {
-      tab?.close()
       notify.error("Couldn't reschedule. Try again.")
     }
   }

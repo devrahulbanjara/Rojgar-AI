@@ -57,7 +57,7 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
   const full = template.data?.full ?? false
 
   async function save() {
-    if (full && !recommendation) {
+    if (!recommendation) {
       setTried(true)
       return
     }
@@ -66,16 +66,13 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
         id: interview.id,
         applicationId: interview.application_id,
         jobId: interview.job.id,
-        scorecard:
-          full && recommendation
-            ? {
-                ratings: Object.fromEntries(
-                  Object.entries(ratings).map(([criterion, value]) => [criterion, Number(value)]),
-                ),
-                recommendation,
-                notes,
-              }
-            : null,
+        scorecard: {
+          ratings: Object.fromEntries(
+            Object.entries(ratings).map(([criterion, value]) => [criterion, Number(value)]),
+          ),
+          recommendation,
+          notes,
+        },
       }).unwrap()
       notify.success(`Scorecard saved for ${interview.candidate.name}`)
       onDone()
