@@ -2538,9 +2538,9 @@ async def _handle_classifier_unavailable(
 ) -> RecruiterChatResponse:
     """Ask the recruiter to retry instead of guessing an intent."""
     reply = (
-        "I couldn't work out what you need just now. Could you try again or "
-        "rephrase it, for example \"find candidates with Python experience\" or "
-        "\"show my open jobs\"?"
+        "I couldn't process that just now — the AI service may be busy. Please "
+        'try again in a few seconds, or rephrase it, for example "find '
+        'candidates with Python experience" or "show my open jobs".'
     )
     _append_history(state, "assistant", reply, response_type=ChatResponseType.text)
     await _save_session_state(db, session, state, title_hint=message)
@@ -3577,6 +3577,16 @@ async def _stream_message_inner(
             reply = await _handle_out_of_scope(db, session, state, user_message)
 
         yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+    except HTTPException as exc:
+        # AI-service errors already carry a friendly message (e.g. "busy, try
+        # again in a few seconds" on a Groq 429); never stream raw provider text.
+        logger.warning("Recruiter chat stream failed: HTTP {}", exc.status_code)
+        message = (
+            exc.detail
+            if exc.status_code in (429, 502, 504) and isinstance(exc.detail, str)
+            else PROVIDER_DOWN_MESSAGE
+        )
+        yield _sse("error", {"message": message})
     except Exception:
         logger.exception("Recruiter chat stream failed")
         yield _sse("error", {"message": PROVIDER_DOWN_MESSAGE})

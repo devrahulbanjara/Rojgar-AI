@@ -158,3 +158,53 @@ def test_candidate_embedding_document_has_no_identity():
         application, SimpleNamespace(title="Backend Engineer")
     )
     assert "Nisha" not in doc and "nisha@x.com" not in doc
+
+
+async def test_persistent_rate_limit_is_friendly_and_bounded(monkeypatch):
+    import pytest
+    from fastapi import HTTPException
+    from pydantic import BaseModel
+
+    from app.infrastructures.ai import service as ai_mod
+
+    class Out(BaseModel):
+        ok: bool
+
+    slept: list[float] = []
+
+    async def fake_sleep(seconds):
+        slept.append(seconds)
+
+    async def always_429(**_kwargs):
+        raise _rate_limit_error()
+
+    monkeypatch.setattr(ai_mod.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(
+        ai_mod.ai_service._llm_client.chat.completions, "create", always_429
+    )
+    with pytest.raises(HTTPException) as err:
+        await ai_mod.ai_service.generate_structured("sys", {}, Out)
+    assert err.value.status_code == 429
+    assert err.value.detail == ai_mod.AI_BUSY_MESSAGE  # no raw provider text
+    assert sum(slept) <= ai_mod._RETRY_WAIT_BUDGET_SECONDS
+
+
+async def test_stream_rate_limit_is_friendly(monkeypatch):
+    import pytest
+    from fastapi import HTTPException
+
+    from app.infrastructures.ai import service as ai_mod
+
+    class FakeLLM:
+        async def astream(self, _messages):
+            raise _rate_limit_error()
+            yield  # pragma: no cover
+
+    monkeypatch.setattr(ai_mod.ai_service, "_build_chat_model", lambda **_kw: FakeLLM())
+    with pytest.raises(HTTPException) as err:
+        async for _ in ai_mod.ai_service.stream_text(
+            system_prompt="s", user_payload={}
+        ):
+            pass
+    assert err.value.status_code == 429
+    assert err.value.detail == ai_mod.AI_BUSY_MESSAGE

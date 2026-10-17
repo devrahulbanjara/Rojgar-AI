@@ -213,7 +213,7 @@ class GuardrailsService:
                 # consume the whole token budget before emitting the verdict.
                 reasoning_effort="low",
                 request_timeout=20,
-                max_retries=2,
+                max_retries=1,
             )
         except Exception as exc:
             logger.warning(

@@ -19,6 +19,58 @@ from app.core.config import settings
 
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
 
+# User-facing messages. Raw provider errors (model names, TPM quotas, org ids)
+# are logged, never shown to users.
+AI_BUSY_MESSAGE = (
+    "Our AI assistant is busy right now. Please wait a few seconds and try again."
+)
+AI_UNAVAILABLE_MESSAGE = (
+    "Our AI assistant is temporarily unavailable. Please try again in a moment."
+)
+# Upper bound on time spent waiting between retries for one call, so a user
+# never waits ~80s for an answer that will fail anyway.
+_RETRY_WAIT_BUDGET_SECONDS = 12.0
+_MAX_SINGLE_RETRY_WAIT_SECONDS = 6.0
+
+
+def _retry_after_seconds(exc: Exception) -> float | None:
+    """Read the provider's Retry-After hint (seconds) from an API error."""
+    response = getattr(exc, "response", None)
+    headers = getattr(response, "headers", None)
+    if not headers:
+        return None
+    value = headers.get("retry-after")
+    try:
+        return float(value) if value is not None else None
+    except ValueError:
+        return None
+
+
+def ai_busy_error(retry_after: float | None = None) -> HTTPException:
+    """429 with a friendly message (and Retry-After when known)."""
+    headers = {"Retry-After": str(max(1, round(retry_after)))} if retry_after else None
+    return HTTPException(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        detail=AI_BUSY_MESSAGE,
+        headers=headers,
+    )
+
+
+def map_provider_error(exc: Exception) -> HTTPException:
+    """Translate any Groq/LangChain provider exception into a friendly HTTP error."""
+    if isinstance(exc, HTTPException):
+        return exc
+    if _is_groq_rate_limit(exc):
+        return ai_busy_error(_retry_after_seconds(exc))
+    if isinstance(exc, TimeoutError):
+        return HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=AI_UNAVAILABLE_MESSAGE
+        )
+    return HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY, detail=AI_UNAVAILABLE_MESSAGE
+    )
+
+
 if TYPE_CHECKING:
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
@@ -123,7 +175,11 @@ class AIService:
         self._embeddings: GoogleGenerativeAIEmbeddings | _FakeEmbeddings | None = None
 
         # LLM provider (currently Groq, easily swappable to OpenAI)
-        self._llm_client = AsyncGroq(api_key=settings.groq_api_key)
+        # SDK retries off: `_create_with_retries` owns retry/backoff so waits are
+        # bounded and honour Retry-After (SDK + our retries stacked to ~80s).
+        self._llm_client = AsyncGroq(
+            api_key=settings.groq_api_key, max_retries=0, timeout=60
+        )
         self._llm_model = settings.groq_model_job_drafting
 
     def _get_embeddings_client(self) -> GoogleGenerativeAIEmbeddings | _FakeEmbeddings:
@@ -177,7 +233,9 @@ class AIService:
             temperature=temperature,
             api_key=SecretStr(settings.groq_api_key),
             max_tokens=4096,
-            max_retries=2,
+            # SDK retry honours Retry-After on 429; keep it short for chat.
+            max_retries=1,
+            timeout=60,
         )
 
     async def generate_structured(
@@ -269,52 +327,50 @@ class AIService:
             ) from exc
 
     async def _create_with_retries(self, request_kwargs: dict[str, Any]) -> Any:
-        """Call Groq with bounded retries + exponential backoff on transient errors.
+        """Call Groq with bounded retries on transient errors.
 
-        Retries rate limits, 5xx and timeouts (up to 3 attempts); client errors
-        such as 400 are raised immediately.
+        Rate limits (429/413 token caps), 5xx and timeouts are retried up to 3
+        attempts, waiting the provider's Retry-After (capped) or exponential
+        backoff, within a total wait budget. Final failures surface as friendly
+        HTTP errors; raw provider messages are only logged.
         """
         attempts = 3
+        waited = 0.0
         for attempt in range(1, attempts + 1):
+            retry_after: float | None = None
             try:
-                async with asyncio.timeout(120):
+                async with asyncio.timeout(60):
                     return await self._llm_client.chat.completions.create(
                         **request_kwargs
                     )
-            except TimeoutError:
-                if attempt == attempts:
-                    logger.error("Groq structured generation timed out after retries")
-                    raise HTTPException(
-                        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                        detail="The AI service did not respond in time. Please try again.",
-                    ) from None
+            except TimeoutError as exc:
+                last_exc: Exception = exc
+                logger.warning("Groq call timed out (attempt {})", attempt)
             except (APIStatusError, BadRequestError) as exc:
-                message = _extract_groq_error_message(exc)
+                last_exc = exc
                 status_code = getattr(exc, "status_code", None) or 0
-                transient = _is_groq_rate_limit(exc) or status_code >= 500
-                if transient and attempt < attempts:
-                    pass
-                elif _is_groq_rate_limit(exc):
-                    logger.error("Groq rate limit/token cap hit: {}", message)
-                    raise HTTPException(
-                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail=message,
-                    ) from exc
-                else:
-                    logger.error("Groq structured generation failed: {}", message)
-                    raise HTTPException(
-                        status_code=status.HTTP_502_BAD_GATEWAY,
-                        detail=message,
-                    ) from exc
-            delay = (2 ** (attempt - 1)) + random.uniform(0, 0.5)
-            logger.warning(
-                "Groq call failed (attempt {}/{}); retrying in {:.1f}s",
-                attempt,
-                attempts,
-                delay,
+                rate_limited = _is_groq_rate_limit(exc)
+                logger.warning(
+                    "Groq call failed (attempt {}, status {}): {}",
+                    attempt,
+                    status_code,
+                    _extract_groq_error_message(exc),
+                )
+                if not (rate_limited or status_code >= 500):
+                    raise map_provider_error(exc) from exc
+                retry_after = _retry_after_seconds(exc)
+
+            delay = min(
+                retry_after
+                if retry_after is not None
+                else (2 ** (attempt - 1)) + random.uniform(0, 0.5),
+                _MAX_SINGLE_RETRY_WAIT_SECONDS,
             )
+            if attempt == attempts or waited + delay > _RETRY_WAIT_BUDGET_SECONDS:
+                break
+            waited += delay
             await asyncio.sleep(delay)
-        raise RuntimeError("unreachable")
+        raise map_provider_error(last_exc) from last_exc
 
     async def stream_text(
         self,
@@ -345,6 +401,15 @@ class AIService:
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                 detail="The AI response timed out before it finished. Please try again.",
             ) from None
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logger.warning(
+                "Groq streaming failed: {}: {}",
+                type(exc).__name__,
+                _extract_groq_error_message(exc),
+            )
+            raise map_provider_error(exc) from exc
 
 
 ai_service = AIService()
