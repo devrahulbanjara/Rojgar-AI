@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.core.schemas import BaseSchema
 from app.modules.auth.enums import MembershipStatus
-from app.shared.enums import ApplicationStatus, JobStatus, LocationType
+from app.shared.enums import ApplicationStage, JobStatus, LocationType
 
 
 class ApplicationPipelineItem(BaseSchema):
@@ -14,7 +14,7 @@ class ApplicationPipelineItem(BaseSchema):
     company_logo_url: str | None = None
     location: str | None = None
     location_type: LocationType
-    status: ApplicationStatus
+    status: ApplicationStage
     created_at: datetime
     updated_at: datetime
     pipeline_step: int | None
@@ -31,7 +31,7 @@ class CandidateInterviewItem(BaseSchema):
     end_time: datetime
     location: str | None = None
     title: str | None = None
-    application_status: ApplicationStatus
+    application_status: ApplicationStage
 
 
 class CandidateDashboardResponse(BaseSchema):
@@ -96,16 +96,7 @@ class TodayInterview(BaseSchema):
     candidate_email: str
     job_title: str
     start_time: datetime
-    application_status: ApplicationStatus
-
-
-class PendingDraftItem(BaseSchema):
-    draft_id: UUID
-    application_id: UUID
-    candidate_name: str
-    job_title: str
-    email_type: str
-    subject: str
+    application_status: ApplicationStage
 
 
 class RecruiterStats(BaseSchema):
@@ -113,7 +104,6 @@ class RecruiterStats(BaseSchema):
     total_applications: int
     shortlisted: int
     interviews_today: int
-    pending_drafts: int
 
 
 class RecruiterDashboardResponse(BaseSchema):
@@ -122,7 +112,6 @@ class RecruiterDashboardResponse(BaseSchema):
     stats: RecruiterStats
     active_jobs: list[JobPipelineItem]
     todays_interviews: list[TodayInterview]
-    pending_drafts: list[PendingDraftItem]
 
 
 class JoinRequestItem(BaseSchema):
@@ -151,7 +140,6 @@ class RecruiterAdminDashboardResponse(BaseSchema):
     stats: RecruiterAdminStats
     active_jobs: list[JobPipelineItem]
     todays_interviews: list[TodayInterview]
-    pending_drafts: list[PendingDraftItem]
     join_requests: list[JoinRequestItem]
     team_activity: list[TeamMemberActivity]
 
@@ -163,7 +151,6 @@ class RecruiterAnalyticsStats(BaseSchema):
     interview_booked: int
     interview_completed: int
     offers: int
-    pending_drafts: int
 
 
 class RecruiterAnalyticsTimeseriesPoint(BaseSchema):
@@ -178,25 +165,14 @@ class InterviewLoadPoint(BaseSchema):
     count: int
 
 
-class ScoreDistributionBucket(BaseSchema):
+class FitDistributionBucket(BaseSchema):
+    # strong | possible | weak
     label: str
     count: int
 
 
-class ScoreDistribution(BaseSchema):
-    buckets: list[ScoreDistributionBucket]
-
-
-class OutreachStateBreakdown(BaseSchema):
-    drafted: int
-    approved: int
-    sent: int
-    discarded: int
-
-
-class RecruiterOutreachSummary(BaseSchema):
-    shortlist: OutreachStateBreakdown
-    rejection: OutreachStateBreakdown
+class FitDistribution(BaseSchema):
+    buckets: list[FitDistributionBucket]
 
 
 class RecruiterAnalyticsVelocity(BaseSchema):
@@ -211,8 +187,7 @@ class RecruiterDashboardAnalyticsResponse(BaseSchema):
     funnel: list[StageCountPoint]
     applications_timeseries: list[RecruiterAnalyticsTimeseriesPoint]
     interview_load: list[InterviewLoadPoint]
-    score_distribution: ScoreDistribution
-    outreach: RecruiterOutreachSummary
+    fit_distribution: FitDistribution
     velocity: RecruiterAnalyticsVelocity
 
 
@@ -273,18 +248,20 @@ class RoleCard(BaseSchema):
     location: str | None = None
     location_type: LocationType
     created_at: datetime
+    # The job's closes_at (open) or closed_at (closed).
     expires_at: datetime | None = None
     applicants: int
-    # Applications nobody has decided on yet.
+    # Applications nobody has decided on yet (stage new).
     to_review: int
-    # Of those, how many scored at or above the job's shortlist threshold.
+    # Of those, how many the review rated a strong fit.
     strong: int
-    # Shortlisted candidates who haven't been emailed yet.
+    # Shortlisted candidates with no decision email scheduled or sent.
     to_contact: int
     upcoming_interviews: int
     # Interviewed (completed, or booked with the time already past) and
     # still without an offer / rejection.
     to_decide: int
+    # Closed with closed_reason "hired".
     hiring_completed: bool = False
     share_slug: str
 

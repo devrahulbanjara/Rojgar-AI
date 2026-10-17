@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import and_, case, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.auth.enums import UserRole
 from app.modules.auth.models import User
 from app.modules.dashboards.schemas import (
@@ -25,7 +25,14 @@ from app.modules.dashboards.schemas import (
 from app.modules.dashboards.service import _get_company_context, _get_join_requests
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStatus, JobStatus
+from app.shared.enums import (
+    ApplicationStage,
+    EventType,
+    Fit,
+    JobClosedReason,
+    JobStatus,
+    ReviewState,
+)
 
 DEFAULT_TIMEZONE = "Asia/Kathmandu"
 # Closed roles stay on Today while they still have work, but not forever.
@@ -42,6 +49,13 @@ def _resolve_tz(tz: str | None) -> ZoneInfo:
 def _first_name(full_name: str | None) -> str:
     parts = (full_name or "").split()
     return parts[0] if parts else "there"
+
+
+def _interview_done():
+    return exists().where(
+        ApplicationEvent.application_id == Application.id,
+        ApplicationEvent.type == EventType.interview_done.value,
+    )
 
 
 async def _interviews_between(
@@ -64,7 +78,8 @@ async def _interviews_between(
             Job.company_id == company_id,
             Interview.start_time >= start,
             Interview.start_time < end,
-            Application.status == ApplicationStatus.interview_booked,
+            Application.stage == ApplicationStage.interview,
+            ~_interview_done(),
         )
         .order_by(Interview.start_time.asc())
         .limit(limit)
@@ -83,18 +98,26 @@ async def _role_cards(
     future_interview = exists().where(
         Interview.application_id == Application.id, Interview.start_time >= now
     )
-    booked = Application.status == ApplicationStatus.interview_booked
+    done = _interview_done()
+    booked = and_(Application.stage == ApplicationStage.interview, ~done)
+    emailed = exists().where(
+        ApplicationEvent.application_id == Application.id,
+        ApplicationEvent.type.in_(
+            [EventType.email_scheduled.value, EventType.email_sent.value]
+        ),
+    )
 
     def count_if(condition):
         return func.coalesce(func.sum(case((condition, 1), else_=0)), 0)
 
+    hired = Job.closed_reason == JobClosedReason.hired.value
     today_filter = [
-        Job.hiring_completed.is_(False),
         or_(
-            Job.status == JobStatus.active,
+            Job.status == JobStatus.open,
             and_(
-                Job.status == JobStatus.expired,
-                Job.expires_at >= now - timedelta(days=CLOSED_ROLE_WINDOW_DAYS),
+                Job.status == JobStatus.closed,
+                Job.closed_reason == JobClosedReason.expired.value,
+                Job.closed_at >= now - timedelta(days=CLOSED_ROLE_WINDOW_DAYS),
             ),
         ),
     ]
@@ -106,34 +129,31 @@ async def _role_cards(
             Job.location,
             Job.location_type,
             Job.created_at,
-            Job.expires_at,
-            Job.hiring_completed,
+            func.coalesce(Job.closes_at, Job.closed_at).label("expires_at"),
+            func.coalesce(hired, False).label("hiring_completed"),
             func.count(Application.id).label("applicants"),
-            count_if(Application.status == ApplicationStatus.applied).label(
-                "to_review"
-            ),
+            count_if(Application.stage == ApplicationStage.new).label("to_review"),
             count_if(
                 and_(
-                    Application.status == ApplicationStatus.applied,
-                    Application.score >= Job.shortlist_threshold,
+                    Application.stage == ApplicationStage.new,
+                    Review.state == ReviewState.done.value,
+                    Review.fit == Fit.strong.value,
                 )
             ).label("strong"),
             count_if(
-                and_(
-                    Application.status == ApplicationStatus.shortlisted,
-                    Application.shortlist_notified.is_(False),
-                )
+                and_(Application.stage == ApplicationStage.shortlisted, ~emailed)
             ).label("to_contact"),
             count_if(and_(booked, future_interview)).label("upcoming_interviews"),
             count_if(
-                or_(
-                    Application.status == ApplicationStatus.interview_completed,
-                    and_(booked, past_interview, ~future_interview),
+                and_(
+                    Application.stage == ApplicationStage.interview,
+                    or_(done, and_(past_interview, ~future_interview)),
                 )
             ).label("to_decide"),
         )
         .select_from(Job)
         .outerjoin(Application, Application.job_id == Job.id)
+        .outerjoin(Review, Review.application_id == Application.id)
         .where(Job.company_id == company_id, *([] if everything else today_filter))
         .group_by(Job.id)
     )
@@ -146,7 +166,7 @@ async def _role_cards(
     cards = [
         card
         for card in cards
-        if card.status == JobStatus.active
+        if card.status == JobStatus.open
         or card.to_review + card.to_contact + card.to_decide > 0
     ]
     far_future = datetime.max.replace(tzinfo=UTC)
