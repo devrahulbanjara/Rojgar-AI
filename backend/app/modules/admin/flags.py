@@ -39,20 +39,8 @@ _RULES = [
     ("discriminatory", re.compile("|".join(_DISCRIMINATORY), re.IGNORECASE)),
 ]
 
-# Text fields of a job across model versions (v1 arrays, v2 description + criteria).
-_TEXT_FIELDS = (
-    "title",
-    "description",
-    "overview",
-    "responsibilities",
-    "requirements",
-    "preferred_qualifications",
-    "benefits",
-    "must_haves",
-    "nice_to_haves",
-    "screening_questions",
-    "questions",
-)
+# Every text field of a job an applicant reads.
+_TEXT_FIELDS = ("title", "description", "must_haves", "nice_to_haves", "questions")
 
 
 def _flatten(value) -> list[str]:
@@ -68,7 +56,7 @@ def _flatten(value) -> list[str]:
 
 
 def job_text(job) -> str:
-    return "\n".join(t for f in _TEXT_FIELDS for t in _flatten(getattr(job, f, None)))
+    return "\n".join(t for f in _TEXT_FIELDS for t in _flatten(getattr(job, f)))
 
 
 def scan(text: str) -> list[tuple[str, str]]:

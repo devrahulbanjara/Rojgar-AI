@@ -108,10 +108,11 @@ class TestListApplications:
         await _apply(client, candidate, resume, job)
 
         resp = await client.get(
-            "/applications/company/me", headers=auth_headers(admin.id)
+            "/applications/company/me/candidates", headers=auth_headers(admin.id)
         )
 
         assert resp.status_code == 200
+        assert [row["applicant_email"] for row in resp.json()["data"]] == ["cand_rlist@test.com"]
 
     async def test_business_members_are_people_too(self, client, db):
         admin, _ = await make_recruiter_admin(db, email="admin_block@test.com")

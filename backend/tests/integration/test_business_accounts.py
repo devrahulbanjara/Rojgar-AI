@@ -176,7 +176,7 @@ class TestPublishing:
 
         published = await client.patch(
             f"/jobs/{draft.json()['data']['id']}",
-            json={"status": "active"},
+            json={"status": "open"},
             headers=headers,
         )
         assert published.status_code == 403
@@ -187,7 +187,7 @@ class TestPublishing:
 
         direct = await client.post(
             "/jobs/",
-            json={"title": "Cashier", "status": "active"},
+            json={"title": "Cashier", "status": "open"},
             headers=headers,
         )
         assert direct.status_code == 403

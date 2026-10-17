@@ -163,19 +163,19 @@ async def test_jobs_asking_for_money_or_unfair_must_haves_are_flagged(db):
         db,
         company.id,
         title="Sales staff",
-        overview="Candidates must pay a registration fee of Rs 2000 before joining.",
+        description="Candidates must pay a registration fee of Rs 2000 before joining.",
     )
     unfair = await make_active_job(
-        db, company.id, title="Receptionist", requirements=["Female only, age 20-25"]
+        db, company.id, title="Receptionist", must_haves=["Female only, age 20-25"]
     )
     fine = await make_active_job(
         db,
         company.id,
         title="Driver",
-        overview="We pay NPR 30,000 a month and an attractive bonus.",
+        description="We pay NPR 30,000 a month and an attractive bonus.",
     )
     await make_active_job(
-        db, company.id, title="Draft", status="draft", overview="Pay a deposit"
+        db, company.id, title="Draft", status="draft", description="Pay a deposit"
     )
     reasons = {
         (r.job_id, r.reason)
