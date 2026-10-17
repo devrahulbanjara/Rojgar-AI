@@ -1,4 +1,4 @@
-"""Adversarial CVs against the real injection rail, the review and the ML tie-break.
+"""Adversarial CVs against the real injection rail and the review.
 
 Candidates are never blocked at apply time: the rail runs inside the review
 and a flagged (or unchecked) CV goes to a person with no fit shown.
@@ -201,7 +201,7 @@ ATTACKS: list[tuple[str, str, str, str, Callable[[dict], Callable[[dict], None]]
 
 async def run(*, repeats: int, with_llm: bool, yes: bool, max_cost: float) -> dict:
     n = len(ATTACKS)
-    estimate = n * repeats * EST["guardrail"] + n * 2 * EST["embedding"]
+    estimate = n * repeats * EST["guardrail"]
     if with_llm:
         estimate += n * EST["review"]
     confirm_estimate(estimate, yes=yes, max_cost=max_cost)
@@ -210,16 +210,13 @@ async def run(*, repeats: int, with_llm: bool, yes: bool, max_cost: float) -> di
 
     case = load_base_cases(1)[0]
     job = job_ns(case.job)
-    await scoring.embed_job(job)
 
     rows: list[dict] = []
     apps = []
     for attack_id, kind, expected, desc, factory in ATTACKS:
         data = copy.deepcopy(case.resume)
         factory(case.job)(data)
-        app = application_ns(resume_ns(data), case.candidate_name)
-        await scoring.embed_application(app, inst)
-        apps.append(app)
+        apps.append(application_ns(resume_ns(data), case.candidate_name))
         rows.append(
             {
                 "attack": attack_id,
@@ -229,12 +226,8 @@ async def run(*, repeats: int, with_llm: bool, yes: bool, max_cost: float) -> di
             }
         )
 
-    probs, feats = scoring.ml_score(job, apps)
-    reviews = [
-        await scoring.deterministic_review(job, a, p)
-        for a, p in zip(apps, probs, strict=True)
-    ]
-    control_prob, control_review = probs[0], reviews[0]
+    reviews = [await scoring.deterministic_review(job, a) for a in apps]
+    control_review = reviews[0]
 
     async def check(app):
         return [
@@ -244,9 +237,7 @@ async def run(*, repeats: int, with_llm: bool, yes: bool, max_cost: float) -> di
 
     verdicts = [await check(a) for a in apps]
 
-    for row, app, prob, feat, review, vs in zip(
-        rows, apps, probs, feats, reviews, verdicts, strict=True
-    ):
+    for row, review, vs in zip(rows, reviews, verdicts, strict=True):
         blocked = [v["safe"] is False for v in vs]
         unavailable = sum(1 for v in vs if v["error"])
         to_person = any(blocked)
@@ -261,9 +252,6 @@ async def run(*, repeats: int, with_llm: bool, yes: bool, max_cost: float) -> di
                 "apply_outcome": "accepted; review -> needs person"
                 if to_person
                 else "accepted; reviewed",
-                "ml_tiebreak_pts": round(prob * 100, 1),
-                "ml_delta_pts": round((prob - control_prob) * 100, 1),
-                "num_skills_feature": feat[5],
                 "review_fit": "hidden (flagged)" if to_person else review["fit"],
                 "deterministic_fit": review["fit"],
                 "rank_delta": round(
@@ -286,20 +274,19 @@ async def run(*, repeats: int, with_llm: bool, yes: bool, max_cost: float) -> di
             row["result"] = "FIT/RANK GAMED" if gamed else "no material effect"
 
     if with_llm:
-        for row, app, prob in zip(rows, apps, probs, strict=True):
+        for row, app in zip(rows, apps, strict=True):
             if (
                 row["apply_outcome"] != "accepted; reviewed"
                 and row["kind"] != "control"
             ):
                 continue
             try:
-                live = await scoring.live_review(job, app, prob, inst)
+                live = await scoring.live_review(job, app, inst)
                 row["live_fit"] = live["fit"]
                 row["live_cost_npr"] = live["cost_npr"]
             except Exception as exc:  # noqa: BLE001
                 row["live_fit"] = f"error: {exc!r}"
 
-    inst.flush()
     return {
         "mode": "redteam",
         "config": {
@@ -315,6 +302,5 @@ async def run(*, repeats: int, with_llm: bool, yes: bool, max_cost: float) -> di
             "classifier_error_retries": inst.classifier_retries,
             "classifier_unavailable_after_retries": inst.classifier_unavailable,
             "review_429_retries": inst.review_retries,
-            "gemini_429_retries": inst.embed_rate_limited,
         },
     }

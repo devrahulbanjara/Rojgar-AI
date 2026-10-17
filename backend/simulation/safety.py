@@ -17,13 +17,10 @@ PRICE = {
     # Groq openai/gpt-oss-20b, per token (cheap review pass)
     "groq_small_in": 0.075 / 1_000_000,
     "groq_small_out": 0.30 / 1_000_000,
-    # Gemini embedding, per token
-    "embed_in": 0.15 / 1_000_000,
 }
 
 # Per-call estimates (USD) used before we have real usage numbers.
 EST = {
-    "embedding": 700 * PRICE["embed_in"],
     "guardrail": 1_400 * PRICE["groq_in"] + 600 * PRICE["groq_out"],
     # Cheap pass + full evidence review (upper bound; implausible applicants
     # stop after the cheap pass).

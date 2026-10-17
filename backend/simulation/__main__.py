@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> None:
         help="non-tech base cases (nurse, cashier, driver, teller, Nepali-answers cook)",
     )
     f.add_argument(
-        "--with-llm", action="store_true", help="also run the live Groq review"
+        "--with-llm", action="store_true", help="also run the live LLM review"
     )
     f.add_argument("--llm-bases", type=int, default=1)
     f.add_argument("--repeats", type=int, default=2)

@@ -27,7 +27,7 @@ def _fairness_md(res: dict) -> str:
             "`reviewer input identical` = share of variants whose blind review text was "
             "byte-identical to the reference (the attribute never reached the reviewer). "
             "Fit comes from the production triage + rubric with the deterministic reviewer; "
-            "the ML model is only a tie-break inside a bucket (`ML Δ` in points of 100)."
+            "`rank score` (rubric points, 0-100) orders applicants inside a bucket."
         ),
         "",
         "## Base cases",
@@ -41,16 +41,9 @@ def _fairness_md(res: dict) -> str:
         "",
         "## Reference outcome per case",
         _table(
-            ["case", "job", "fit", "triage", "rank score", "ML tie-break pts"],
+            ["case", "job", "fit", "triage", "rank score"],
             [
-                [
-                    r["case"],
-                    r["job"][:40],
-                    r["fit"],
-                    r["triage"],
-                    r["rank_score"],
-                    r["ml_points"],
-                ]
+                [r["case"], r["job"][:40], r["fit"], r["triage"], r["rank_score"]]
                 for r in res["reference"]
             ],
         ),
@@ -69,9 +62,6 @@ def _fairness_md(res: dict) -> str:
                     "impact ratio",
                     "fit flip vs ref",
                     "mean rank Δ",
-                    "ML input identical",
-                    "mean ML Δ pts",
-                    "max |ML Δ| pts",
                 ],
                 [
                     [
@@ -83,9 +73,6 @@ def _fairness_md(res: dict) -> str:
                         f"{s['impact_ratio']}{' ❌' if s['fails_four_fifths'] else ''}",
                         s["fit_flip_vs_reference"],
                         s["mean_rank_delta"],
-                        s["ml_input_identical"],
-                        s["mean_ml_delta_pts"],
-                        s["max_abs_ml_delta_pts"],
                     ]
                     for g, s in groups.items()
                 ],
@@ -93,11 +80,11 @@ def _fairness_md(res: dict) -> str:
             "",
         ]
     if res.get("yoe_curve"):
-        points = list(res["yoe_curve"][0]["ml_points"].keys())
+        points = list(res["yoe_curve"][0]["fit"].keys())
         lines += [
             "## Self-reported years of experience (content unchanged)",
             "",
-            "ML tie-break points / fit at each reported value:",
+            "Fit / rank score at each reported value:",
             "",
             _table(
                 ["case", "true yoe", *[f"{p}y" for p in points]],
@@ -105,10 +92,7 @@ def _fairness_md(res: dict) -> str:
                     [
                         c["case"],
                         c["true_yoe"],
-                        *[
-                            f"{c['ml_points'][p]} / {c['fit'][p]}"
-                            for p in c["ml_points"]
-                        ],
+                        *[f"{c['fit'][p]} / {c['rank_score'][p]}" for p in points],
                     ]
                     for c in res["yoe_curve"]
                 ],
@@ -118,7 +102,7 @@ def _fairness_md(res: dict) -> str:
     if res.get("llm_rows"):
         s = res["llm_summary"]
         lines += [
-            "## Live review (Groq, temperature 0)",
+            "## Live review (LLM reviewer)",
             "",
             f"Reference fits (noise floor, same input repeated): `{s['reference_fits']}`",
             "",
@@ -186,7 +170,6 @@ def _redteam_md(res: dict) -> str:
                     "fit shown",
                     "det. fit",
                     "rank Δ",
-                    "ML Δ pts",
                     "live fit",
                     "reason",
                 ],
@@ -203,7 +186,6 @@ def _redteam_md(res: dict) -> str:
                         r["review_fit"],
                         r["deterministic_fit"],
                         r["rank_delta"],
-                        r["ml_delta_pts"],
                         r.get("live_fit", ""),
                         (r.get("guardrail_reason") or "")[:100],
                     ]

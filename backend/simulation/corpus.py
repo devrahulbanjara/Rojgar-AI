@@ -1,8 +1,8 @@
 """Base resumes and jobs, built as lightweight stand-ins for the ORM objects.
 
-The code under test (blind review text, ML tie-break, rubric, guardrail text
-flattening) only reads attributes, so plain namespaces let us call the *real*
-functions without writing rows to Postgres.
+The code under test (blind review text, rubric, guardrail text flattening)
+only reads attributes, so plain namespaces let us call the *real* functions
+without writing rows to Postgres.
 
 Cases cover tech roles (seed_data.APPLICATIONS) and non-tech roles from
 seed_data.NONTECH_COMPANIES (bank teller, staff nurse, cashier, driver, cook),
@@ -217,7 +217,6 @@ def job_ns(data: dict) -> SimpleNamespace:
             data.get("nice_to_haves") or data.get("preferred_qualifications") or []
         )[:6],
         questions=seed.job_questions(data),
-        jd_embedding=None,
     )
 
 
@@ -230,7 +229,6 @@ def application_ns(
     return SimpleNamespace(
         id=uuid.uuid4(),
         resume=resume,
-        resume_embedding=None,
         screening_answers=answers,
         shared_full_name=applicant_name,
         user=SimpleNamespace(full_name=applicant_name),

@@ -2,7 +2,8 @@
 
 Each base application is re-reviewed with exactly one identity/proxy attribute
 changed. What a recruiter sees is the fit bucket (strong / possible / weak);
-the order inside a bucket is rank_score (rubric points + ML tie-break).
+the order inside a bucket is rank_score (rubric points, 0-100; ties keep the
+applied order).
 
 Per axis/group we report:
   * reviewer input identical: the blind text the reviewer reads is byte-identical
@@ -10,9 +11,9 @@ Per axis/group we report:
   * deterministic fit (FakeReviewer through the production triage + rubric):
     distribution, flips vs reference, selection rate (fit strong or possible)
     and the four-fifths impact ratio;
-  * rank_score and ML tie-break deltas;
-  * the ML tie-break vs self-reported years curve (should be flat now).
-With --with-llm, the live Groq reviewer runs on the reference (repeated, for
+  * rank_score deltas;
+  * fit and rank_score vs self-reported years, content unchanged (should be flat).
+With --with-llm, the live LLM reviewer runs on the reference (repeated, for
 the noise floor) and on each variant whose reviewer input differs.
 """
 
@@ -37,11 +38,8 @@ YOE_POINTS = [0, 1, 3, 5, 8, 12, 20, 30]
 SELECTED_FITS = {"strong", "possible"}
 
 
-def _estimate(n_cases: int, with_llm: bool, llm_bases: int, repeats: int) -> float:
-    est = n_cases * 12 * EST["embedding"]
-    if with_llm:
-        est += llm_bases * (repeats + 1 + 8) * EST["review"]
-    return est
+def _estimate(with_llm: bool, llm_bases: int, repeats: int) -> float:
+    return llm_bases * (repeats + 1 + 8) * EST["review"] if with_llm else 0.0
 
 
 async def run(
@@ -61,7 +59,7 @@ async def run(
 
     cases = load_base_cases(bases, cross=cross) + load_nontech_cases(nontech)
     confirm_estimate(
-        _estimate(len(cases), with_llm, llm_bases, repeats), yes=yes, max_cost=max_cost
+        _estimate(with_llm, llm_bases, repeats), yes=yes, max_cost=max_cost
     )
     budget = Budget(max_cost=max_cost)
     inst = scoring.Instrumented(budget)
@@ -71,34 +69,31 @@ async def run(
     yoe_curve: list[dict] = []
     for case_index, case in enumerate(cases):
         job = job_ns(case.job)
-        await scoring.embed_job(job)
 
-        # Self-reported years, content unchanged. The tie-break model gets a
-        # fixed neutral value, so this must be flat.
+        # Self-reported years, content unchanged. The review never reads the
+        # field, so fit and rank score must be flat.
         if case_index < curve_cases and case.resume is not None:
-            curve_apps = []
-            for yoe in YOE_POINTS:
-                data = {**case.resume, "years_of_experience": yoe}
-                curve_apps.append(
-                    application_ns(resume_ns(data), case.candidate_name, case.answers)
-                )
-            for a in curve_apps:
-                await scoring.embed_application(a, inst)
-            probs, _ = scoring.ml_score(job, curve_apps)
             reviews = [
-                await scoring.deterministic_review(job, a, p)
-                for a, p in zip(curve_apps, probs, strict=True)
+                await scoring.deterministic_review(
+                    job,
+                    application_ns(
+                        resume_ns({**case.resume, "years_of_experience": yoe}),
+                        case.candidate_name,
+                        case.answers,
+                    ),
+                )
+                for yoe in YOE_POINTS
             ]
             yoe_curve.append(
                 {
                     "case": case.case_id,
                     "true_yoe": case.resume.get("years_of_experience"),
-                    "ml_points": {
-                        y: None if p is None else round(p * 100)
-                        for y, p in zip(YOE_POINTS, probs, strict=True)
-                    },
                     "fit": {
                         y: r["fit"] for y, r in zip(YOE_POINTS, reviews, strict=True)
+                    },
+                    "rank_score": {
+                        y: r["rank_score"]
+                        for y, r in zip(YOE_POINTS, reviews, strict=True)
                     },
                 }
             )
@@ -108,19 +103,10 @@ async def run(
             application_ns(resume_ns(v.resume), v.applicant_name, case.answers)
             for v in variants
         ]
-        embed_hashes = [await scoring.embed_application(a, inst) for a in apps]
-        probs, feats = scoring.ml_score(job, apps)
-        reviews = [
-            await scoring.deterministic_review(job, a, p)
-            for a, p in zip(apps, probs, strict=True)
-        ]
+        reviews = [await scoring.deterministic_review(job, a) for a in apps]
         blind = [scoring.text_hash(scoring.blind_text(job, a)) for a in apps]
-        ml_hashes = [
-            scoring.ml_input_hash(a, h) for a, h in zip(apps, embed_hashes, strict=True)
-        ]
-        ref_prob, ref_review = probs[0], reviews[0]
+        ref_review = reviews[0]
         for i, v in enumerate(variants):
-            prob = probs[i]
             rows.append(
                 {
                     "case": case.case_id,
@@ -139,42 +125,21 @@ async def run(
                         4,
                     ),
                     "selected": reviews[i]["fit"] in SELECTED_FITS,
-                    "ml_points": None if prob is None else round(prob * 100, 1),
-                    "ml_delta_pts": None
-                    if prob is None or ref_prob is None
-                    else round((prob - ref_prob) * 100, 1),
                     "reviewer_input_identical": blind[i] == blind[0],
-                    "ml_input_identical": ml_hashes[i] == ml_hashes[0],
-                    "features": None
-                    if feats[i] is None
-                    else dict(
-                        zip(
-                            [
-                                "tfidf_sim",
-                                "semantic_sim",
-                                "years(neutral)",
-                                "num_companies",
-                                "num_educations",
-                                "num_skills",
-                            ],
-                            [round(x, 4) for x in feats[i]],
-                            strict=True,
-                        )
-                    ),
                 }
             )
 
         if with_llm and case_index < llm_bases:
-            picked = [(variants[0], apps[0], probs[0])] * (repeats + 1)
+            picked = [(variants[0], apps[0])] * (repeats + 1)
             seen = {blind[0]}
-            for v, a, p, h in zip(variants, apps, probs, blind, strict=True):
+            for v, a, h in zip(variants, apps, blind, strict=True):
                 if v.is_reference or h in seen:
                     continue
                 seen.add(h)
-                picked.append((v, a, p))
-            for v, a, p in picked:
+                picked.append((v, a))
+            for v, a in picked:
                 try:
-                    res = await scoring.live_review(job, a, p, inst)
+                    res = await scoring.live_review(job, a, inst)
                     err = None
                 except Exception as exc:  # noqa: BLE001 - audit records failures
                     res, err = {}, repr(exc)
@@ -206,7 +171,6 @@ async def run(
             # Keep under the provider's tokens-per-minute cap between cases.
             await asyncio.sleep(1)
 
-    inst.flush()
     return {
         "mode": "fairness",
         "config": {
@@ -217,8 +181,9 @@ async def run(
             "llm_bases": llm_bases if with_llm else 0,
             "repeats": repeats,
             "seed": seed,
-            "review_model": settings.review_model,
-            "review_cheap_model": settings.review_cheap_model,
+            "review_model": settings.groq_model,
+            "review_cheap_model": settings.groq_small_model,
+            "fallback_model": settings.gemini_model,
         },
         "cases": [
             {
@@ -240,7 +205,6 @@ async def run(
         "spend": budget.summary(),
         "provider_events": {
             "review_429_retries": inst.review_retries,
-            "gemini_429_retries": inst.embed_rate_limited,
         },
     }
 
@@ -268,12 +232,6 @@ def summarize(rows: list[dict]) -> dict:
                     ),
                     3,
                 ),
-                "ml_input_identical": round(
-                    statistics.mean(
-                        1.0 if i["ml_input_identical"] else 0.0 for i in items
-                    ),
-                    3,
-                ),
                 "fit": dict(Counter(i["fit"] or "none" for i in items)),
                 "selection_rate": round(
                     statistics.mean(1.0 if i["selected"] else 0.0 for i in items), 3
@@ -285,15 +243,6 @@ def summarize(rows: list[dict]) -> dict:
                     3,
                 ),
                 "mean_rank_delta": _mean([i["rank_delta"] for i in items]),
-                "mean_ml_delta_pts": _mean([i["ml_delta_pts"] for i in items]),
-                "max_abs_ml_delta_pts": max(
-                    (
-                        abs(i["ml_delta_pts"])
-                        for i in items
-                        if i["ml_delta_pts"] is not None
-                    ),
-                    default=None,
-                ),
             }
         best = max(s["selection_rate"] for s in stats.values())
         for s in stats.values():

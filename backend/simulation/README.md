@@ -7,19 +7,18 @@ will ask:
 | mode | question | how |
 |---|---|---|
 | `fairness` | Does the fit a recruiter sees change when *only* a protected/proxy attribute changes? | Counterfactual variants (tech and non-tech jobs, CVs and Nepali answers) pushed through the **real** blind review, triage and rubric in-process |
-| `redteam` | Can a CV manipulate the review? Does the injection rail flag honest people? | Adversarial CVs through the production rail (normalised, fail-closed), review and ML tie-break |
+| `redteam` | Can a CV manipulate the review? Does the injection rail flag honest people? | Adversarial CVs through the production rail (normalised, fail-closed) and review |
 | `load` | What happens when a real cohort (e.g. a campus drive) shows up at once? | N async persona journeys over HTTP |
 | `limiter-check` | Is the login limiter keyed correctly? | 11 same-IP logins, then 3 with forged `X-Forwarded-For` |
 
 Nothing here re-implements the review. The harness hands production functions
 (`review.blind.build_blind_text`, `review.service._evaluate` — knockouts, cheap
-pass, full evidence review, quote verification, deterministic fit —
-`review.ml_rank.score_applications`, `review.ml_rank.compute_resume_embedding`,
-`review.ml_rank.compute_job_embedding`, `guardrails_service.check_input`)
-attribute-compatible stand-in objects, and hashes every reviewer and ML input so
-"the attribute never reached the model" is provable, not assumed. Without
-`--with-llm` the review uses the deterministic `FakeReviewer` (same triage and
-rubric code, no LLM); with it, the live Groq reviewer at temperature 0.
+pass, full evidence review, quote verification, deterministic fit, rank score —
+and `guardrails_service.check_input`) attribute-compatible stand-in objects, and
+hashes every reviewer input so "the attribute never reached the model" is
+provable, not assumed. Without `--with-llm` the review uses the deterministic
+`FakeReviewer` (same triage and rubric code, no LLM); with it, the live
+`LLMReviewer` (Groq, then Gemini when Groq is busy).
 
 ## Safety rails
 
@@ -29,7 +28,7 @@ rubric code, no LLM); with it, the live Groq reviewer at temperature 0.
 - `limiter-check` refuses `:8000` (the login bucket is shared with whoever else is on that server).
 - Load journeys authenticate with access tokens minted in-process (`app.core.security.create_tokens`), so they do not burn the login limiter; `--login-sample N` adds N real, spaced logins to measure login latency.
 - Every LLM-using mode prints an estimate, needs `--yes` above $0.50, and aborts past `--max-cost` (default $2).
-- Groq calls are serialised with 429 backoff (on-demand tier: 8k tokens/min). The rail is fail-closed: a classifier error is never SAFE; the harness retries it and reports retries and still-unavailable runs. Uncached Gemini embeddings are paced to ≤30/min with 429 backoff. Embeddings are cached on disk under `reports/.cache/`.
+- Groq calls are serialised with 429 backoff (on-demand tier: 8k tokens/min). The rail is fail-closed: a classifier error is never SAFE; the harness retries it and reports retries and still-unavailable runs.
 - LangSmith tracing is off unless `--trace`.
 
 ## Run
@@ -37,7 +36,7 @@ rubric code, no LLM); with it, the live Groq reviewer at temperature 0.
 From `backend/` with the local stack up (Postgres :5433, Qdrant :6335):
 
 ```bash
-# Blind-review audit: 8 tech bases + 8 off-target pairings + 5 non-tech cases, no LLM, ~$0.01
+# Blind-review audit: 8 tech bases + 8 off-target pairings + 5 non-tech cases, no LLM, free
 uv run python -m simulation fairness
 
 # + live Groq review on one base (reference repeated for the noise floor); a few cents
@@ -70,8 +69,8 @@ Reports (`.md` + `.json`) land in `simulation/reports/` (gitignored).
 - **selection rate** = share with fit strong or possible; **impact ratio** = group rate ÷ best group's rate;
   < 0.8 fails the four-fifths rule (NYC LL144-style).
 - **fit flip vs ref** = share of variants whose fit bucket differs from the unchanged application.
-- **ML Δ** = change in the tie-break signal (points of 100). It only orders candidates with equal rubric
-  evidence inside a bucket; the self-reported years feature is a fixed constant, so the years curve is flat.
+- **mean rank Δ** = change in rank score (rubric points, 0-100) that orders applicants inside a bucket;
+  equal scores keep the order people applied in. The self-reported years table should be flat.
 - Live-review sections report the **noise floor** (same input repeated) next to variant flips.
 
 ## Limits
