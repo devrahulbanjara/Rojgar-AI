@@ -33,6 +33,8 @@ export const en = {
     optional: 'optional',
   },
 
+  cookie: { line: 'We only use cookies that keep you signed in.', details: 'Details', ok: 'OK' },
+
   stage: {
     new: 'New',
     shortlisted: 'Shortlisted',

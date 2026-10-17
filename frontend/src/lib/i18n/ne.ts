@@ -35,6 +35,8 @@ export const ne: Dict = {
     optional: 'ऐच्छिक',
   },
 
+  cookie: { line: 'हामी साइन इन राख्ने कुकीज मात्र प्रयोग गर्छौं।', details: 'विवरण', ok: 'ठीक छ' },
+
   stage: {
     new: 'नयाँ',
     shortlisted: 'छानिएको',
