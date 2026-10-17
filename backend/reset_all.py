@@ -31,4 +31,7 @@ async def reset_all() -> None:
 
 
 if __name__ == "__main__":
+    from app.core.destructive_guard import assert_local_target
+
+    assert_local_target("reset_all.py", check_qdrant=True)
     asyncio.run(reset_all())
