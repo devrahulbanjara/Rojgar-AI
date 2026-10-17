@@ -47,7 +47,7 @@ export function ApplicantsPreview({ t }: { t: Dict }) {
                 <IconButton label={p.shortlist} variant="outline" size="sm" tabIndex={-1}>
                   <CheckIcon className="text-success" />
                 </IconButton>
-                <IconButton label={p.notNow} variant="outline" size="sm" tabIndex={-1}>
+                <IconButton label={p.reject} variant="outline" size="sm" tabIndex={-1}>
                   <CloseIcon className="text-danger" />
                 </IconButton>
               </div>

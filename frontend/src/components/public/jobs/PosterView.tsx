@@ -19,7 +19,7 @@ const PRINT_CSS = `@page { size: A4; margin: 0 }
 export async function PosterView({ job, applyUrl }: { job: PublicJob; applyUrl: string }) {
   const t = await getT()
   const salary = job.salary_min || job.salary_max ? salaryLabel(job, t) : null
-  const needs = job.requirements.slice(0, 3)
+  const needs = job.must_haves.slice(0, 3)
   const shortUrl = applyUrl.replace(/^https?:\/\//, '').replace(/\?.*$/, '')
 
   return (

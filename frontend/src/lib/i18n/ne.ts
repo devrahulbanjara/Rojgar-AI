@@ -24,7 +24,7 @@ export const ne: Dict = {
 
   common: {
     example: 'नमूना',
-    verified: 'प्रमाणित',
+    verified: 'प्रमाणित व्यवसाय',
     share: 'सेयर',
     poster: 'पोस्टर',
     print: 'प्रिन्ट',
@@ -72,14 +72,31 @@ export const ne: Dict = {
     closesTomorrow: 'भोलि बन्द हुन्छ',
     closesIn: (days: number) => `${days} दिनमा बन्द हुन्छ`,
     closed: 'बन्द भयो',
+    full_time: 'पूरा समय',
+    part_time: 'आंशिक समय',
+    contract: 'करार',
+    internship: 'इन्टर्नसिप',
+    sharedBy: (name: string) => `${name} ले सेयर गर्नुभएको`,
     about: 'जागिरको बारेमा',
-    whatYouDo: 'तपाईंको काम',
     whatYouNeed: 'चाहिने कुरा',
     niceToHave: 'भए राम्रो',
-    benefits: 'सुविधाहरू',
     knowSomeone: 'यो जागिरको लागि राम्रो मान्छे चिन्नुहुन्छ?',
     suggest: 'चिनेको मान्छे सुझाउनुहोस्',
     moreJobs: (company: string) => `${company} का अरू जागिर`,
+  },
+
+  report: {
+    link: 'यो जागिरबारे उजुरी गर्नुहोस्',
+    reasons: {
+      fee_requested: 'पैसा वा शुल्क माग्छ',
+      fake: 'जागिर नक्कली जस्तो छ',
+      discriminatory: 'कसैप्रति भेदभाव गर्छ',
+      other: 'अरू केही',
+    },
+    details: 'के भयो? (ऐच्छिक)',
+    submit: 'उजुरी पठाउनुहोस्',
+    cancel: 'रद्द गर्नुहोस्',
+    done: 'धन्यवाद। हामी यो जागिर जाँच्नेछौं।',
   },
 
   apply: {
@@ -100,6 +117,8 @@ export const ne: Dict = {
     phoneInvalid: '98XXXXXXXX जस्तो १० अंकको मोबाइल नम्बर लेख्नुहोस्।',
     emailInvalid: 'इमेल जाँच गर्नुहोस्, वा खाली छोड्नुहोस्।',
     answerRequired: 'यो प्रश्नको जवाफ दिनुहोस्।',
+    yes: 'हो',
+    no: 'होइन',
     cvWrongType: 'PDF वा फोटो (JPG वा PNG) अपलोड गर्नुहोस्।',
     cvHeic:
       'iPhone को HEIC फोटो पढ्न सकिँदैन। फोटोको स्क्रिनसट लिएर त्यो अपलोड गर्नुहोस्, वा PDF पठाउनुहोस्।',
@@ -195,7 +214,7 @@ export const ne: Dict = {
       title: 'नयाँ आवेदकहरू',
       facts: '३ जागिर · २६ आवेदक',
       shortlist: 'छान्नुहोस्',
-      notNow: 'अहिले होइन',
+      reject: 'अस्वीकार',
       shortlisted: 'छानिएको',
       suggestedBy: 'राम दाइले सुझाउनुभएको',
       noCv: 'CV छैन',

@@ -22,7 +22,7 @@ export const en = {
 
   common: {
     example: 'Example',
-    verified: 'Verified',
+    verified: 'Verified business',
     share: 'Share',
     poster: 'Poster',
     print: 'Print',
@@ -70,14 +70,31 @@ export const en = {
     closesTomorrow: 'Closes tomorrow',
     closesIn: (days: number) => `Closes in ${days} days`,
     closed: 'Closed',
+    full_time: 'Full time',
+    part_time: 'Part time',
+    contract: 'Contract',
+    internship: 'Internship',
+    sharedBy: (name: string) => `Shared by ${name}`,
     about: 'About the job',
-    whatYouDo: 'What you will do',
     whatYouNeed: 'What you need',
-    niceToHave: 'Nice to have',
-    benefits: 'Benefits',
+    niceToHave: 'Good to have',
     knowSomeone: 'Know someone good for this job?',
     suggest: 'Suggest someone you know',
     moreJobs: (company: string) => `More jobs at ${company}`,
+  },
+
+  report: {
+    link: 'Report this job',
+    reasons: {
+      fee_requested: 'They ask for money or a fee',
+      fake: 'The job looks fake',
+      discriminatory: 'It is unfair to some people',
+      other: 'Something else',
+    },
+    details: 'What happened? (optional)',
+    submit: 'Send report',
+    cancel: 'Cancel',
+    done: "Thanks. We'll look at this job.",
   },
 
   apply: {
@@ -98,6 +115,8 @@ export const en = {
     phoneInvalid: 'Enter a 10-digit mobile number, like 98XXXXXXXX.',
     emailInvalid: 'Check the email, or leave it empty.',
     answerRequired: 'Answer this question.',
+    yes: 'Yes',
+    no: 'No',
     cvWrongType: 'Upload a PDF or a photo (JPG or PNG).',
     cvHeic:
       'iPhone HEIC photos can’t be read. Take a screenshot of the photo and upload that, or send a PDF.',
@@ -193,7 +212,7 @@ export const en = {
       title: 'New applicants',
       facts: '3 jobs · 26 applicants',
       shortlist: 'Shortlist',
-      notNow: 'Not now',
+      reject: 'Reject',
       shortlisted: 'Shortlisted',
       suggestedBy: 'Suggested by Ram dai',
       noCv: 'No CV',

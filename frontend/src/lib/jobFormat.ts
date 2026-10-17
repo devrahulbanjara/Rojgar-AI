@@ -37,9 +37,12 @@ export function closingLabel(iso: string | null | undefined, t: Dict): string | 
   return t.job.closesIn(days)
 }
 
-/** Place · salary · closing, for a job's one-line facts. */
+/** Place · full time · salary · closing, for a job's one-line facts. */
 export function jobFacts(job: PublicJobSummary, t: Dict): string[] {
-  return [placeLabel(job, t), salaryLabel(job, t), closingLabel(job.expires_at, t)].filter(
-    (fact): fact is string => !!fact,
-  )
+  return [
+    placeLabel(job, t),
+    t.job[job.employment_type],
+    salaryLabel(job, t),
+    closingLabel(job.closes_at, t),
+  ].filter((fact): fact is string => !!fact)
 }

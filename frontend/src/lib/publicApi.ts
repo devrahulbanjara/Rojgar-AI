@@ -3,6 +3,22 @@
  * Works in server and client components.
  */
 export type LocationType = 'remote' | 'hybrid' | 'onsite'
+export type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'internship'
+export type JobCategory =
+  | 'banking_finance'
+  | 'healthcare'
+  | 'education'
+  | 'hospitality_tourism'
+  | 'sales_retail'
+  | 'manufacturing'
+  | 'logistics_driving'
+  | 'it_software'
+  | 'ngo_ingo'
+  | 'government_public'
+  | 'office_admin'
+  | 'construction_engineering'
+  | 'other'
+export type QuestionType = 'short_text' | 'yes_no'
 export type ApplySource =
   | 'linkedin'
   | 'facebook'
@@ -33,30 +49,41 @@ export type PublicCompany = {
   description?: string | null
   /** Shown on the job page, careers page and poster. */
   phone?: string | null
+  /** Approved by platform staff: "Verified business". */
   verified: boolean
 }
+
+export type PublicCategory = { value: JobCategory; label: string }
 
 export type PublicJobSummary = {
   slug: string
   title: string
   location?: string | null
   location_type: LocationType
+  category: PublicCategory
+  employment_type: EmploymentType
   salary_min?: number | null
   salary_max?: number | null
   currency: string
   posted_at: string
-  expires_at?: string | null
+  closes_at?: string | null
 }
+
+/** Apply-form question. */
+export type PublicQuestion = { label: string; type: QuestionType; required: boolean }
 
 export type PublicJob = PublicJobSummary & {
   company: PublicCompany
-  overview?: string | null
-  responsibilities: string[]
-  requirements: string[]
-  preferred_qualifications: string[]
-  benefits: string[]
-  screening_questions: string[]
+  /** Markdown. */
+  description: string
+  must_haves: string[]
+  nice_to_haves: string[]
+  questions: PublicQuestion[]
+  /** Name of the person whose share link was opened (?ref=). */
+  shared_by?: string | null
 }
+
+export type ReportReason = 'fee_requested' | 'fake' | 'discriminatory' | 'other'
 
 export type CareersPage = { company: PublicCompany; jobs: PublicJobSummary[] }
 
@@ -100,6 +127,11 @@ export type MyApplication = Omit<ApplicationStatusView, 'can_withdraw'> & {
   /** Opens this application's status page. */
   status_token: string
 }
+
+export type WithdrawResult = { withdrawn: boolean; data_deleted: boolean }
+export type RecommendSent = { sent: boolean }
+export type MagicLinkSent = { sent: boolean }
+export type ScreeningAnswer = { question: string; answer: string }
 
 export type RecommendInput = {
   referrerName: string
@@ -157,7 +189,16 @@ const json = (body: unknown): RequestInit => ({
 })
 
 export const publicApi = {
-  job: (slug: string) => request<PublicJob>(`/public/jobs/${encodeURIComponent(slug)}`),
+  job: (slug: string, ref?: string) =>
+    request<PublicJob>(
+      `/public/jobs/${encodeURIComponent(slug)}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`,
+    ),
+
+  report: (slug: string, input: { reason: ReportReason; details?: string }) =>
+    request<null>(
+      `/public/jobs/${encodeURIComponent(slug)}/report`,
+      json({ reason: input.reason, details: input.details || null }),
+    ),
 
   careers: (companySlug: string) =>
     request<CareersPage>(`/public/companies/${encodeURIComponent(companySlug)}/jobs`),
@@ -175,7 +216,7 @@ export const publicApi = {
       phone: string
       email?: string
       cv?: File | null
-      answers: { question: string; answer: string }[]
+      answers: ScreeningAnswer[]
       src: ApplySource
       ref?: string
       turnstileToken?: string
@@ -198,7 +239,7 @@ export const publicApi = {
   },
 
   recommend: (slug: string, input: RecommendInput) =>
-    request<{ sent: boolean }>(
+    request<RecommendSent>(
       `/public/jobs/${encodeURIComponent(slug)}/recommend`,
       json({
         referrer_name: input.referrerName,
@@ -216,13 +257,13 @@ export const publicApi = {
     ),
 
   withdraw: (token: string) =>
-    request<{ withdrawn: boolean; data_deleted: boolean }>(
+    request<WithdrawResult>(
       '/public/applications/withdraw',
       json({ token }),
     ),
 
   magicLink: (email: string) =>
-    request<{ sent: boolean }>('/public/auth/magic-link', json({ email })),
+    request<MagicLinkSent>('/public/auth/magic-link', json({ email })),
 
   myApplications: (accessToken?: string) =>
     request<MyApplication[]>(
@@ -244,4 +285,10 @@ export const APPLY_SOURCES: ApplySource[] = [
 
 export function toApplySource(value: string | null | undefined): ApplySource {
   return APPLY_SOURCES.includes(value as ApplySource) ? (value as ApplySource) : 'direct'
+}
+
+/** A share-link token from ?ref= (the backend issues 16 URL-safe characters), else undefined. */
+export function toRefToken(value: string | null | undefined): string | undefined {
+  const token = value?.trim()
+  return token && /^[A-Za-z0-9_-]{1,32}$/.test(token) ? token : undefined
 }

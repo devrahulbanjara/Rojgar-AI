@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { useT } from '@/lib/i18n/client'
-import { type ApplySource, PublicApiError, publicApi } from '@/lib/publicApi'
+import { type ApplySource, PublicApiError, type PublicQuestion, publicApi } from '@/lib/publicApi'
 
 import { FileDrop } from '@/components/app/FileDrop'
 import { FormField } from '@/components/app/FormField'
@@ -13,7 +13,8 @@ import { AlertIcon, MailCheckIcon } from '@/components/icons'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 import { PhoneInput, toE164 } from './PhoneInput'
 
@@ -36,7 +37,7 @@ export function ApplyForm({
 }: {
   slug: string
   companyName: string
-  questions: string[]
+  questions: PublicQuestion[]
   source: ApplySource
   refToken?: string
 }) {
@@ -85,8 +86,8 @@ export function ApplyForm({
     if (!phone.trim()) next.phone = t.apply.phoneRequired
     else if (!toE164(phone)) next.phone = t.apply.phoneInvalid
     if (email.trim() && !EMAIL_RE.test(email.trim())) next.email = t.apply.emailInvalid
-    questions.forEach((_, i) => {
-      if (!answers[i]?.trim()) next[`q${i}`] = t.apply.answerRequired
+    questions.forEach((question, i) => {
+      if (question.required && !answers[i]?.trim()) next[`q${i}`] = t.apply.answerRequired
     })
     return next
   }
@@ -109,7 +110,9 @@ export function ApplyForm({
         phone: e164,
         email: email.trim().toLowerCase() || undefined,
         cv,
-        answers: questions.map((question, i) => ({ question, answer: answers[i].trim() })),
+        answers: questions
+          .map((question, i) => ({ question: question.label, answer: answers[i].trim() }))
+          .filter((answer) => answer.answer),
         src: source,
         ref: refToken,
       })
@@ -211,19 +214,17 @@ export function ApplyForm({
       </div>
 
       {questions.map((question, i) => (
-        <FormField key={question} id={`q${i}`} label={question} error={errors[`q${i}`]}>
-          <Textarea
-            id={`q${i}`}
-            rows={2}
-            maxLength={2000}
-            className="text-base"
-            value={answers[i]}
-            aria-invalid={!!errors[`q${i}`]}
-            onChange={(e) =>
-              setAnswers((prev) => prev.map((a, j) => (j === i ? e.target.value : a)))
-            }
-          />
-        </FormField>
+        <QuestionField
+          key={question.label}
+          id={`q${i}`}
+          question={question}
+          value={answers[i]}
+          error={errors[`q${i}`]}
+          onChange={(value) => {
+            setAnswers((prev) => prev.map((a, j) => (j === i ? value : a)))
+            if (errors[`q${i}`]) setErrors((p) => ({ ...p, [`q${i}`]: undefined }))
+          }}
+        />
       ))}
 
       <FormField id="email" label={`${t.apply.email} (${t.common.optional})`} error={errors.email}>
@@ -251,5 +252,59 @@ export function ApplyForm({
         {t.apply.submit}
       </Button>
     </form>
+  )
+}
+
+/** A job's question: a short answer, or Yes / No. */
+function QuestionField({
+  id,
+  question,
+  value,
+  error,
+  onChange,
+}: {
+  id: string
+  question: PublicQuestion
+  value: string
+  error?: string
+  onChange: (value: string) => void
+}) {
+  const t = useT()
+  const label = question.required ? question.label : `${question.label} (${t.common.optional})`
+  if (question.type === 'short_text') {
+    return (
+      <FormField id={id} label={label} error={error}>
+        <Input
+          id={id}
+          className="h-12 text-base"
+          value={value}
+          maxLength={2000}
+          aria-invalid={!!error}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </FormField>
+    )
+  }
+  return (
+    <FormField id={id} label={label} error={error}>
+      <RadioGroup
+        id={id}
+        value={value}
+        onValueChange={onChange}
+        aria-invalid={!!error}
+        className="grid-cols-2 gap-2"
+      >
+        {(['yes', 'no'] as const).map((option) => (
+          <Label
+            key={option}
+            htmlFor={`${id}-${option}`}
+            className="flex h-12 cursor-pointer items-center gap-3 rounded-lg border border-input px-4 text-base font-normal has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+          >
+            <RadioGroupItem id={`${id}-${option}`} value={option} />
+            {t.apply[option]}
+          </Label>
+        ))}
+      </RadioGroup>
+    </FormField>
   )
 }
