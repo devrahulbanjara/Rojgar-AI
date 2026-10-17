@@ -22,8 +22,6 @@ export const LEGACY_RAW_ELEMENTS = [
   'src/app/recruiter/jobs/new/_components/JobDraftForm.tsx',
   'src/app/recruiter/jobs/new/_components/SalaryResearchCard.tsx',
   'src/app/recruiter/jobs/new/page.tsx',
-  'src/app/recruiter/settings/page.tsx',
-  'src/app/recruiter/team/page.tsx',
 ]
 
 /** Files that still import lucide-react directly instead of @/components/icons. */
@@ -48,8 +46,6 @@ export const LEGACY_LUCIDE = [
   'src/app/recruiter/jobs/_components/RecruiterJobEditor.tsx',
   'src/app/recruiter/jobs/new/_components/JobDraftForm.tsx',
   'src/app/recruiter/jobs/new/page.tsx',
-  'src/components/common/AvatarCropModal/AvatarCropModal.tsx',
-  'src/components/common/DashboardErrorState.tsx',
   'src/components/common/Toolbar/index.tsx',
   'src/components/recruiter/CandidateDrawer/CandidateDrawer.tsx',
 ]
@@ -59,5 +55,4 @@ export const LEGACY_SCSS_ROUTES = [
   'src/app/layout.tsx',
   'src/app/recruiter/jobs/\\[id\\]/_components/JobPipelineWorkspace.tsx',
   'src/app/recruiter/jobs/new/page.tsx',
-  'src/app/recruiter/settings/page.tsx',
 ]
