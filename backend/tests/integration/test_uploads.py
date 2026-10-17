@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from app.core.config import settings
 from app.infrastructures.storage.service import storage_service
 from tests.integration.helpers import auth_headers, make_candidate
 
@@ -10,6 +11,7 @@ PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 
 @pytest.fixture
 def fake_s3(monkeypatch):
+    monkeypatch.setattr(settings, "storage_backend", "s3")
     client = MagicMock()
     monkeypatch.setattr(storage_service, "_client", client)
     return client
