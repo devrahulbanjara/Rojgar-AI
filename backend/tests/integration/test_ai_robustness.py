@@ -124,3 +124,37 @@ def test_interview_final_score_requires_a_human_score():
     assert _compute_final_score(None, llm, schema) is None
     humans = HumanAggregate(per_criterion={}, weighted_total=60.0, evaluator_count=1)
     assert _compute_final_score(humans, llm, schema) == 69.0
+
+
+def test_candidate_relevance_uses_similarity_not_rank():
+    from app.infrastructures.qdrant.service import QdrantService
+
+    # All weakly similar: nothing should be "high" just for being ranked first.
+    weak = [{"application_id": i, "score": 0.30 - i / 100} for i in range(3)]
+    tagged = QdrantService._tag_relevance(weak, limit=10)
+    assert tagged and all(h["relevance"] == "low" for h in tagged)
+
+    mixed = [{"application_id": 1, "score": 0.8}, {"application_id": 2, "score": 0.1}]
+    tagged = QdrantService._tag_relevance(mixed, limit=10)
+    assert [h["application_id"] for h in tagged] == [1]
+    assert tagged[0]["relevance"] == "high"
+
+
+def test_candidate_embedding_document_has_no_identity():
+    from types import SimpleNamespace
+
+    from app.infrastructures.qdrant.service import qdrant_service
+    from app.shared.enums import ApplicationStatus
+
+    application = SimpleNamespace(
+        resume=None,
+        user=SimpleNamespace(full_name="Nisha Sharma", email="nisha@x.com"),
+        status=ApplicationStatus.applied,
+        score=None,
+        strengths=None,
+        weaknesses=None,
+    )
+    doc = qdrant_service._build_application_document(
+        application, SimpleNamespace(title="Backend Engineer")
+    )
+    assert "Nisha" not in doc and "nisha@x.com" not in doc
