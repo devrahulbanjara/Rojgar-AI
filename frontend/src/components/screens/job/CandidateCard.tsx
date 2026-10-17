@@ -4,10 +4,9 @@ import Link from 'next/link'
 
 import {
   ACTION_LABEL,
-  type DecisionAction,
+  type DecideAction,
   type PipelineItem,
   SOURCE_LABEL,
-  actionsFor,
   contactLinks,
 } from '@/lib/api/recruiter'
 import { ago } from '@/lib/dates'
@@ -15,14 +14,16 @@ import { cn } from '@/lib/utils'
 
 import { AiText } from '@/components/app/Ai'
 import { EntityAvatar } from '@/components/app/EntityAvatar'
-import { CheckIcon, PhoneIcon } from '@/components/icons'
+import { FitPill } from '@/components/app/StatusPill'
+import { PhoneIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 
-import { FitPill, FlagLine } from './parts'
+import { cardActions } from './DecisionButtons'
+import { FlagLine } from './parts'
 
 function Review({ item }: { item: PipelineItem }) {
-  if (item.flagged && item.flag_reason) return <FlagLine reason={item.flag_reason} />
+  if (item.flagged) return <FlagLine />
   if (item.review_state === 'pending') return <AiText className="text-xs">Reading CV…</AiText>
   if (item.summary)
     return <p className="line-clamp-2 text-sm text-muted-foreground">{item.summary}</p>
@@ -47,11 +48,11 @@ export function CandidateCard({
   active: boolean
   selected: boolean
   onSelectChange: (selected: boolean) => void
-  onDecide: (action: DecisionAction) => void
+  onDecide: (action: DecideAction) => void
   onOpen: () => void
 }) {
-  const { primary } = actionsFor(item.stage)
-  const phone = item.person.phone
+  const primary = cardActions(item.stage)
+  const phone = item.phone
   return (
     <li
       data-app={item.application_id}
@@ -65,14 +66,10 @@ export function CandidateCard({
         <Checkbox
           checked={selected}
           onCheckedChange={(value) => onSelectChange(!!value)}
-          aria-label={`Select ${item.person.name}`}
+          aria-label={`Select ${item.name}`}
           className="relative z-10 mt-1 hidden lg:flex"
         />
-        <EntityAvatar
-          name={item.person.name}
-          src={item.person.avatar_url}
-          className="size-11 lg:hidden"
-        />
+        <EntityAvatar name={item.name} src={item.avatar_url} className="size-11 lg:hidden" />
         <Link
           href={href}
           scroll={false}
@@ -85,22 +82,16 @@ export function CandidateCard({
           className="flex min-w-0 flex-1 flex-col gap-1 outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-2 focus-visible:after:ring-ring lg:after:rounded-xl"
         >
           <span className="flex items-center justify-between gap-2">
-            <span className="truncate font-medium text-foreground">{item.person.name}</span>
+            <span className="truncate font-medium text-foreground">{item.name}</span>
             {item.fit && !item.flagged ? <FitPill fit={item.fit} /> : null}
           </span>
           {item.referred_by ? (
             <span className="text-xs font-medium text-primary">
-              Recommended by {item.referred_by}
+              Recommended by {item.referred_by.name}
             </span>
           ) : null}
           <Review item={item} />
           <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-            {item.checks_total ? (
-              <span className="inline-flex items-center gap-0.5 text-foreground">
-                <CheckIcon weight="bold" className="size-3 text-success" />
-                {item.checks_met} of {item.checks_total} must-haves ·
-              </span>
-            ) : null}
             {SOURCE_LABEL[item.source]} · {ago(item.applied_at)}
           </span>
         </Link>

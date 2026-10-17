@@ -6,27 +6,28 @@ import { useRouter } from 'next/navigation'
 
 import {
   AssistantError,
-  CAPABILITIES,
   type DraftFields,
-  EMPLOYMENT_TYPES,
-  type EmploymentType,
-  JOB_CATEGORIES,
-  type Job,
-  type JobCategory,
-  type JobInput,
-  type JobQuestion,
-  type JobTemplate,
-  WORK_TYPES,
-  type WorkType,
-  getJobTemplates,
   loadDraft,
   protectedGroundWarning,
   streamJobDraft,
-  suggestMustHaves,
-  useGetJobQuery,
-  useSaveJobMutation,
 } from '@/lib/api/recruiter'
+import { EMPLOYMENT_TYPES, JOB_CATEGORIES, LOCATION_TYPES } from '@/lib/jobHelpers'
 import { notify } from '@/lib/notify'
+import {
+  type EmploymentType,
+  type JobCategory,
+  type JobDetail,
+  type JobFields,
+  type JobQuestion,
+  type JobStatus,
+  type JobUpdate,
+  type LocationType,
+  useCreateJobMutation,
+  useGetJobQuery,
+  useGetJobTemplatesQuery,
+  useSuggestMustHavesMutation,
+  useUpdateJobMutation,
+} from '@/store/services/jobsApi'
 import { addDays, format } from 'date-fns'
 
 import { AiGlow, AiSpark, AiText } from '@/components/app/Ai'
@@ -51,12 +52,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { GetApplicantsSheet } from '../job/GetApplicantsSheet'
 import { MustHaveChips, SuggestButton } from './MustHaveChips'
 
-type Form = Omit<JobInput, 'id' | 'status'>
+/** The builder fields; category stays empty until someone picks one. */
+type Form = Omit<JobFields, 'category' | 'location'> & {
+  category: JobCategory | null
+  location: string
+}
 
 const EMPTY: Form = {
   title: '',
   location: '',
-  work_type: 'onsite',
+  location_type: 'onsite',
   employment_type: 'full_time',
   category: null,
   salary_min: null,
@@ -84,12 +89,12 @@ const SECTIONS = [
 
 const DESCRIPTION_MAX = 5000
 
-function fromJob(job: Job): Form {
+function fromJob(job: JobDetail): Form {
   return {
     title: job.title,
     location: job.location ?? '',
-    work_type: job.work_type,
-    employment_type: job.employment_type ?? 'full_time',
+    location_type: job.location_type,
+    employment_type: job.employment_type,
     category: job.category,
     salary_min: job.salary_min,
     salary_max: job.salary_max,
@@ -99,6 +104,24 @@ function fromJob(job: Job): Form {
     nice_to_haves: job.nice_to_haves,
     questions: job.questions,
     closes_at: job.closes_at,
+  }
+}
+
+/** What goes to POST/PATCH /jobs: blank criteria and questions dropped. */
+function toPayload(form: Form): Partial<JobFields> & { title: string } {
+  const { category, ...rest } = form
+  return {
+    ...rest,
+    ...(category ? { category } : {}),
+    title: form.title.trim() || 'Untitled job',
+    location: form.location.trim() || null,
+    currency: form.currency || 'NPR',
+    must_haves: form.must_haves.map((m) => m.trim()).filter(Boolean),
+    nice_to_haves: form.nice_to_haves.map((m) => m.trim()).filter(Boolean),
+    questions: form.questions
+      .map((q) => ({ ...q, label: q.label.trim() }))
+      .filter((q) => q.label)
+      .map((q) => (q.type === 'yes_no' ? q : { ...q, knockout_answer: null })),
   }
 }
 
@@ -164,10 +187,12 @@ export function JobBuilder({
 }) {
   const router = useRouter()
   const existing = useGetJobQuery(initialJobId ?? '', { skip: !initialJobId })
-  const [saveJob] = useSaveJobMutation()
+  const [createJob] = useCreateJobMutation()
+  const [updateJob] = useUpdateJobMutation()
+  const [suggest, { isLoading: suggesting }] = useSuggestMustHavesMutation()
 
   const [jobId, setJobId] = useState<string | null>(initialJobId ?? null)
-  const [status, setStatus] = useState<Job['status']>('draft')
+  const [status, setStatus] = useState<JobStatus>('draft')
   const [form, setForm] = useState<Form>(EMPTY)
   const [loaded, setLoaded] = useState(!initialJobId)
   const [dirty, setDirty] = useState(false)
@@ -176,12 +201,11 @@ export function JobBuilder({
   const [brief, setBrief] = useState('')
   const [drafting, setDrafting] = useState(false)
   const [draftText, setDraftText] = useState('')
-  const [templates, setTemplates] = useState<JobTemplate[]>([])
   const [errors, setErrors] = useState<Partial<Record<'title' | 'description' | 'salary', string>>>(
     {},
   )
   const [publishing, setPublishing] = useState(false)
-  const [published, setPublished] = useState<Job | null>(null)
+  const [published, setPublished] = useState<JobDetail | null>(null)
   const [current, setCurrent] = useState(0)
   const [closesOn, setClosesOn] = useState(format(addDays(new Date(), 30), 'yyyy-MM-dd'))
   const example = useRotatingExample()
@@ -211,9 +235,7 @@ export function JobBuilder({
     })
   }, [draftId])
 
-  useEffect(() => {
-    void getJobTemplates(form.category).then(setTemplates)
-  }, [form.category])
+  const templates = useGetJobTemplatesQuery(form.category).data ?? []
 
   const update = useCallback(<K extends keyof Form>(key: K, value: Form[K]) => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -221,15 +243,17 @@ export function JobBuilder({
   }, [])
 
   const save = useCallback(
-    async (extra: Partial<JobInput> = {}) => {
+    async (extra: Pick<JobUpdate, 'status' | 'closes_at'> = {}) => {
       const run = async () => {
         setSaving(true)
         try {
-          const saved = await saveJob({
-            ...form,
-            ...extra,
-            ...(jobId ? { id: jobId } : {}),
-          }).unwrap()
+          const body = { ...toPayload(form), ...extra }
+          const saved = jobId
+            ? await updateJob({ id: jobId, ...body }).unwrap()
+            : await createJob({
+                ...body,
+                status: extra.status === 'open' ? 'open' : 'draft',
+              }).unwrap()
           if (!jobId) {
             setJobId(saved.id)
             window.history.replaceState(null, '', `/recruiter/jobs/${saved.id}/edit`)
@@ -245,7 +269,7 @@ export function JobBuilder({
       saveChain.current = next.catch(() => undefined)
       return next
     },
-    [form, jobId, saveJob],
+    [createJob, form, jobId, updateJob],
   )
 
   // Autosave drafts a moment after typing stops.
@@ -286,16 +310,15 @@ export function JobBuilder({
         {
           message: brief,
           draft_id: assistantDraftId,
-          draft: dirty || jobId ? { ...form, location: form.location || null } : undefined,
+          draft:
+            dirty || jobId
+              ? { ...form, location: form.location || null, category: form.category ?? undefined }
+              : undefined,
         },
         { onToken: (text) => setDraftText((t) => t + text) },
       )
       setAssistantDraftId(turn.draft_id)
-      setForm((f) => {
-        const next = applyDraft(f, turn.draft)
-        if (!next.must_haves.length) next.must_haves = suggestMustHaves(next.description)
-        return next
-      })
+      setForm((f) => applyDraft(f, turn.draft))
       setReply(turn.reply ? { text: turn.reply, followUp: turn.follow_up } : null)
       setBrief('')
       setDirty(true)
@@ -310,17 +333,44 @@ export function JobBuilder({
     }
   }
 
-  function pickTemplate(id: string) {
-    const template = templates.find((t) => t.id === id)
+  function pickTemplate(key: string) {
+    const template = templates.find((t) => t.key === key)
     if (!template) return
     setForm((f) => ({
       ...f,
       title: f.title || template.title,
       category: f.category ?? template.category,
+      employment_type: template.employment_type,
+      salary_min: f.salary_min ?? template.salary_min,
+      salary_max: f.salary_max ?? template.salary_max,
+      description: f.description.trim() ? f.description : template.description,
       must_haves: template.must_haves.slice(0, 6),
+      nice_to_haves: template.nice_to_haves.slice(0, 6),
       questions: template.questions.slice(0, 3),
     }))
     setDirty(true)
+  }
+
+  async function suggestCriteria() {
+    try {
+      const result = await suggest({
+        title: form.title.trim() || null,
+        description: form.description,
+      }).unwrap()
+      if (!result.must_haves.length) {
+        notify.info('Nothing to suggest yet. Add them yourself.')
+        return
+      }
+      setForm((f) => ({
+        ...f,
+        must_haves: result.must_haves,
+        nice_to_haves: f.nice_to_haves.length ? f.nice_to_haves : result.nice_to_haves,
+        questions: f.questions.length ? f.questions : result.questions,
+      }))
+      setDirty(true)
+    } catch {
+      notify.error("Couldn't suggest any. Add them yourself.")
+    }
   }
 
   function validate(): boolean {
@@ -499,7 +549,7 @@ export function JobBuilder({
               </FormField>
               <FormField id="employment" label="Employment type">
                 <Select
-                  value={form.employment_type ?? 'full_time'}
+                  value={form.employment_type}
                   onValueChange={(value) => update('employment_type', value as EmploymentType)}
                 >
                   <SelectTrigger id="employment" className="w-full">
@@ -524,14 +574,14 @@ export function JobBuilder({
               </FormField>
               <FormField id="work-type" label="Where they work">
                 <Select
-                  value={form.work_type}
-                  onValueChange={(value) => update('work_type', value as WorkType)}
+                  value={form.location_type}
+                  onValueChange={(value) => update('location_type', value as LocationType)}
                 >
                   <SelectTrigger id="work-type" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {WORK_TYPES.map((c) => (
+                    {LOCATION_TYPES.map((c) => (
                       <SelectItem key={c.value} value={c.value}>
                         {c.label}
                       </SelectItem>
@@ -593,14 +643,8 @@ export function JobBuilder({
             <h2 className="font-heading text-base font-semibold">Must-haves</h2>
             <SuggestButton
               disabled={form.description.trim().length < 20}
-              onClick={() => {
-                const suggestions = suggestMustHaves(form.description)
-                if (!suggestions.length) {
-                  notify.info('Nothing to suggest yet. Add them yourself.')
-                  return
-                }
-                update('must_haves', suggestions)
-              }}
+              busy={suggesting}
+              onClick={() => void suggestCriteria()}
             />
           </div>
           {templates.length ? (
@@ -610,18 +654,20 @@ export function JobBuilder({
               </SelectTrigger>
               <SelectContent>
                 {templates.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
+                  <SelectItem key={t.key} value={t.key}>
                     {t.title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           ) : null}
-          <MustHaveChips
-            label="Must-haves"
-            value={form.must_haves}
-            onChange={(value) => update('must_haves', value)}
-          />
+          <AiGlow active={suggesting} className="-m-2 p-2">
+            <MustHaveChips
+              label="Must-haves"
+              value={form.must_haves}
+              onChange={(value) => update('must_haves', value)}
+            />
+          </AiGlow>
           {protectedCount === 0 && form.must_haves.length > 0 && form.must_haves.length < 3 ? (
             <p className="text-xs text-muted-foreground">Add at least 3.</p>
           ) : null}
@@ -687,26 +733,24 @@ function QuestionsEditor({
             aria-label={`Question ${index + 1}`}
             placeholder="When can you start?"
           />
-          {CAPABILITIES.questionTypes ? (
-            <Select
-              value={question.type}
-              onValueChange={(type) =>
-                onChange(
-                  value.map((q, i) =>
-                    i === index ? { ...q, type: type as JobQuestion['type'] } : q,
-                  ),
-                )
-              }
-            >
-              <SelectTrigger className="w-36 shrink-0" aria-label="Answer type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="short_text">Short answer</SelectItem>
-                <SelectItem value="yes_no">Yes or no</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : null}
+          <Select
+            value={question.type}
+            onValueChange={(type) =>
+              onChange(
+                value.map((q, i) =>
+                  i === index ? { ...q, type: type as JobQuestion['type'] } : q,
+                ),
+              )
+            }
+          >
+            <SelectTrigger className="w-36 shrink-0" aria-label="Answer type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="short_text">Short answer</SelectItem>
+              <SelectItem value="yes_no">Yes or no</SelectItem>
+            </SelectContent>
+          </Select>
           <IconButton
             label={`Remove question ${index + 1}`}
             onClick={() => onChange(value.filter((_, i) => i !== index))}
@@ -720,7 +764,12 @@ function QuestionsEditor({
           variant="outline"
           size="sm"
           className="self-start"
-          onClick={() => onChange([...value, { label: '', type: 'short_text', required: true }])}
+          onClick={() =>
+            onChange([
+              ...value,
+              { label: '', type: 'short_text', required: true, knockout_answer: null },
+            ])
+          }
         >
           <PlusIcon />
           Add a question

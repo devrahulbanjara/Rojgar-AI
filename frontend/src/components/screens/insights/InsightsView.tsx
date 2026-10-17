@@ -50,7 +50,7 @@ function rangeDates(range: Range) {
   return { from: format(from, 'yyyy-MM-dd'), to: format(today, 'yyyy-MM-dd') }
 }
 
-const jobStatus = (status: InsightsJobReply['status']) => (status === 'active' ? 'Open' : 'Closed')
+const JOB_STATUS = { open: 'Open', draft: 'Draft', closed: 'Closed' } as const
 
 const replyColumns: ColumnDef<InsightsJobReply>[] = [
   {
@@ -64,11 +64,13 @@ const replyColumns: ColumnDef<InsightsJobReply>[] = [
   },
   {
     id: 'status',
-    accessorFn: (row) => jobStatus(row.status),
+    accessorFn: (row) => JOB_STATUS[row.status],
     header: 'Status',
     meta: { className: 'hidden md:table-cell' },
     cell: ({ getValue }) => (
-      <StatusPill tone={getValue() === 'Open' ? 'success' : 'neutral'}>
+      <StatusPill
+        tone={getValue() === 'Open' ? 'success' : getValue() === 'Draft' ? 'warning' : 'neutral'}
+      >
         {getValue<string>()}
       </StatusPill>
     ),

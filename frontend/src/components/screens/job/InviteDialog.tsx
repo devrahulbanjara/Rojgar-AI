@@ -1,9 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-
-import { CAPABILITIES } from '@/lib/api/recruiter'
-
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -12,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 
 export type InviteRecipient = { name: string; email: string | null }
 
@@ -20,7 +15,7 @@ function firstName(name: string) {
   return name.trim().split(/\s+/)[0] ?? name
 }
 
-/** Shortlist → the invite the candidate will get. Send is the default (Enter). */
+/** Shortlist → a preview of the email they will get (outline of the backend "shortlist" template). */
 export function InviteDialog({
   open,
   onOpenChange,
@@ -34,27 +29,17 @@ export function InviteDialog({
   recipients: InviteRecipient[]
   jobTitle: string
   companyName: string
-  onSend: (message: string | null) => void
+  onSend: () => void
 }) {
-  const [editing, setEditing] = useState(false)
   const single = recipients.length === 1 ? recipients[0] : null
-  const greeting = single ? `Hi ${firstName(single.name)},` : 'Hi {first name},'
-  const defaultBody = `${greeting}\n\nGood news: ${companyName || 'we'} shortlisted you for ${jobTitle}. Open your application to see the next step.`
-  const [body, setBody] = useState(defaultBody)
   const noEmail = recipients.filter((r) => !r.email)
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) setEditing(false)
-        onOpenChange(next)
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {single ? `Invite ${single.name}` : `Invite ${recipients.length} people`}
+            {single ? `Shortlist ${single.name}` : `Shortlist ${recipients.length} people`}
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3 text-sm">
@@ -66,22 +51,19 @@ export function InviteDialog({
           </p>
           <p className="text-muted-foreground">
             Subject:{' '}
-            <span className="text-foreground">You&apos;ve been shortlisted for {jobTitle}</span>
+            <span className="text-foreground">
+              You&apos;re shortlisted for {jobTitle} at {companyName}
+            </span>
           </p>
-          {editing ? (
-            <Textarea
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              rows={6}
-              aria-label="Invite message"
-              autoFocus
-            />
-          ) : (
-            <div className="rounded-xl border bg-muted/40 p-4 whitespace-pre-line">
-              {defaultBody}
-              <p className="mt-3 font-medium text-primary">View your application</p>
-            </div>
-          )}
+          <div className="flex flex-col gap-3 rounded-xl border bg-muted/40 p-4">
+            <p>Hi {single ? firstName(single.name) : '{first name}'},</p>
+            <p>
+              Thanks for applying to <strong>{jobTitle}</strong> at {companyName}. We&apos;d like to
+              move forward with your application.
+            </p>
+            <p>We will contact you soon about the next step.</p>
+            <p className="font-medium text-primary">See your application</p>
+          </div>
           {noEmail.length ? (
             <p className="text-xs text-warning">
               {noEmail.length === 1 && single
@@ -91,25 +73,8 @@ export function InviteDialog({
           ) : null}
         </div>
         <DialogFooter>
-          {CAPABILITIES.editInviteEmail && !editing ? (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setBody(defaultBody)
-                setEditing(true)
-              }}
-            >
-              Edit
-            </Button>
-          ) : null}
-          <Button
-            autoFocus={!editing}
-            onClick={() => {
-              onSend(editing && body !== defaultBody ? body : null)
-              setEditing(false)
-            }}
-          >
-            {single ? 'Send invite' : `Send ${recipients.length} invites`}
+          <Button autoFocus onClick={onSend}>
+            {single ? 'Shortlist and send' : `Shortlist ${recipients.length} and send`}
           </Button>
         </DialogFooter>
       </DialogContent>

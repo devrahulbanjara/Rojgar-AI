@@ -1,9 +1,15 @@
 'use client'
 
-import { ACTION_LABEL, type DecisionAction, type Stage, actionsFor } from '@/lib/api/recruiter'
+import {
+  ACTION_LABEL,
+  CAN_REJECT,
+  type DecideAction,
+  FORWARD,
+  type Stage,
+} from '@/lib/api/recruiter'
 import { cn } from '@/lib/utils'
 
-import { StatusPill } from '@/components/app/StatusPill'
+import { StagePill } from '@/components/app/StatusPill'
 import { MoreIcon } from '@/components/icons'
 import { Button, IconButton } from '@/components/ui/button'
 import {
@@ -15,36 +21,47 @@ import {
 
 import { Kbd } from './parts'
 
-const KEYS: Partial<Record<DecisionAction, string>> = { shortlist: 'S', reject: 'N' }
+const KEYS: Partial<Record<DecideAction, string>> = { shortlist: 'S', reject: 'R' }
 
-/** The decision buttons for a stage, plus a small "More" menu. */
+/** Actions a list card can offer without loading the panel (mirrors the backend rules). */
+export function cardActions(stage: Stage): DecideAction[] {
+  const forward = FORWARD[stage]
+  return [...(CAN_REJECT(stage) ? (['reject'] as const) : []), ...(forward ? [forward] : [])]
+}
+
+/** Reject + the next step as buttons; everything else (move back, withdraw…) in "More". */
+export function splitActions(stage: Stage, actions: DecideAction[]) {
+  const forward = FORWARD[stage]
+  const primary = (['reject', forward] as const).filter(
+    (a): a is DecideAction => !!a && actions.includes(a),
+  )
+  return { primary, more: actions.filter((a) => !primary.includes(a)) }
+}
+
 export function DecisionButtons({
   stage,
+  actions,
   name,
   onDecide,
-  size = 'md',
   className,
 }: {
   stage: Stage
+  /** From the panel: the actions valid now, in button order. */
+  actions: DecideAction[]
   name: string
-  onDecide: (action: DecisionAction) => void
-  size?: 'sm' | 'md' | 'lg'
+  onDecide: (action: DecideAction) => void
   className?: string
 }) {
-  const { primary, more } = actionsFor(stage)
+  const { primary, more } = splitActions(stage, actions)
   return (
     <div className={cn('flex shrink-0 items-center gap-2', className)}>
-      {stage === 'offer' && !primary.length ? (
-        <span className="text-sm text-muted-foreground">Waiting for their answer</span>
+      {stage === 'hired' || stage === 'rejected' || stage === 'withdrawn' ? (
+        <StagePill stage={stage} />
       ) : null}
-      {stage === 'hired' ? <StatusPill tone="success">Hired</StatusPill> : null}
-      {stage === 'rejected' ? <StatusPill tone="neutral">Not now</StatusPill> : null}
-      {stage === 'withdrawn' ? <StatusPill tone="neutral">Withdrawn</StatusPill> : null}
-      {primary.map((action, index) => (
+      {primary.map((action) => (
         <Button
           key={action}
-          size={size}
-          variant={index === primary.length - 1 ? 'primary' : 'outline'}
+          variant={action === 'reject' ? 'outline' : 'primary'}
           onClick={() => onDecide(action)}
           className="flex-1 sm:flex-none"
         >
@@ -55,11 +72,7 @@ export function DecisionButtons({
       {more.length ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <IconButton
-              label={`More for ${name}`}
-              variant="outline"
-              size={size === 'sm' ? 'sm' : 'md'}
-            >
+            <IconButton label={`More for ${name}`} variant="outline">
               <MoreIcon weight="bold" />
             </IconButton>
           </DropdownMenuTrigger>

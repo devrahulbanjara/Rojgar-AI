@@ -5,12 +5,13 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-import { ago } from '@/lib/dates'
 import {
-  type RecruiterCandidateListItem,
-  useGetMyCompanyCandidatesQuery,
-  useLazySemanticSearchCandidatesQuery,
-} from '@/store/services/applicationsApi'
+  type CompanyPerson,
+  applicantHref,
+  useGetCompanyPeopleQuery,
+  useLazySearchPeopleQuery,
+} from '@/lib/api/recruiter'
+import { ago } from '@/lib/dates'
 import type { ColumnDef } from '@tanstack/react-table'
 
 import { Spinner } from '@/components/app/Ai'
@@ -20,7 +21,7 @@ import { EmptyState } from '@/components/app/EmptyState'
 import { EntityAvatar } from '@/components/app/EntityAvatar'
 import { ErrorState } from '@/components/app/Feedback'
 import { PageHeader } from '@/components/app/PageHeader'
-import { FitText, StagePill, fitFromScore } from '@/components/app/StatusPill'
+import { FitPill, StagePill } from '@/components/app/StatusPill'
 import { SearchIcon } from '@/components/icons'
 import { Input } from '@/components/ui/input'
 import {
@@ -32,27 +33,12 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 
-type Row = RecruiterCandidateListItem & {
-  href: string
-  category: string
-  fit: ReturnType<typeof fitFromScore>
-  reviewing: boolean
-}
+type Row = CompanyPerson & { href: string }
 
-const panelHref = (c: RecruiterCandidateListItem) =>
-  `/recruiter/jobs/${c.primary_job_id}?candidate=${c.latest_application_id}`
-
-function toRow(c: RecruiterCandidateListItem): Row {
-  const latest =
-    c.applications.find((a) => a.application_id === c.latest_application_id) ?? c.applications[0]
-  return {
-    ...c,
-    href: panelHref(c),
-    category: c.primary_job_category || c.primary_job_title,
-    fit: fitFromScore(latest?.score),
-    reviewing: latest?.ai_review_status === 'pending',
-  }
-}
+const toRow = (c: CompanyPerson): Row => ({
+  ...c,
+  href: applicantHref(c.primary_job_id, c.latest_application_id, c.latest_stage),
+})
 
 const columns: ColumnDef<Row>[] = [
   {
@@ -81,7 +67,6 @@ const columns: ColumnDef<Row>[] = [
               ) : c.applicant_email ? (
                 <span className="truncate">{c.applicant_email}</span>
               ) : null}
-              {c.has_cv_file === false ? <span className="shrink-0">· No CV</span> : null}
             </div>
           </div>
         </div>
@@ -105,30 +90,28 @@ const columns: ColumnDef<Row>[] = [
   },
   {
     id: 'stage',
-    accessorFn: (row) => row.latest_status,
+    accessorFn: (row) => row.latest_stage,
     header: () => <span className="text-xs font-medium">Stage</span>,
-    cell: ({ row }) => <StagePill status={row.original.latest_status} />,
+    cell: ({ row }) => <StagePill stage={row.original.latest_stage} />,
   },
   {
     id: 'fit',
     meta: { className: 'hidden sm:table-cell' },
     header: () => <span className="text-xs font-medium">Fit</span>,
     cell: ({ row }) =>
-      row.original.fit ? (
-        <FitText fit={row.original.fit} />
+      row.original.latest_fit ? (
+        <FitPill fit={row.original.latest_fit} />
       ) : (
-        <span className="text-sm text-muted-foreground">
-          {row.original.reviewing ? 'Reviewing' : 'Not reviewed'}
-        </span>
+        <span className="text-sm text-muted-foreground">Not checked</span>
       ),
   },
   {
-    accessorKey: 'latest_updated_at',
+    accessorKey: 'last_activity_at',
     meta: { className: 'hidden lg:table-cell' },
     header: ({ column }) => <SortableHeader column={column} label="Last activity" />,
     cell: ({ row }) => (
       <span className="text-sm whitespace-nowrap text-muted-foreground">
-        {ago(row.original.latest_updated_at)}
+        {ago(row.original.last_activity_at)}
       </span>
     ),
   },
@@ -155,32 +138,28 @@ function CandidatesSkeleton() {
 
 const ALL = '__all'
 
-/** Everyone who applied to any job: one search box (name, skill or experience) and a category filter. */
+/** Everyone who applied to any job: one search box (name, skill or experience) and a job filter. */
 export function CandidatesView() {
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
   const query = params.get('q') ?? ''
-  const category = params.get('category') ?? ALL
+  const jobFilter = params.get('job') ?? ALL
   const [text, setText] = useState(query)
 
-  const { data, isLoading, isError, isFetching, refetch } = useGetMyCompanyCandidatesQuery(
-    { page: 1, size: 200 },
-    { refetchOnMountOrArgChange: true },
-  )
-  const [search, semantic] = useLazySemanticSearchCandidatesQuery()
-  const rows = useMemo(() => (data?.data ?? []).map(toRow), [data])
+  const { data, isLoading, isError, isFetching, refetch } = useGetCompanyPeopleQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  })
+  const [search, semantic] = useLazySearchPeopleQuery()
+  const rows = useMemo(() => (data ?? []).map(toRow), [data])
 
-  // Old links (/recruiter/candidates/{id}, /recruiter/talent?app={id}) open the candidate on the job page.
-  const legacyApp = params.get('app')
+  // Old links (/recruiter/candidates/{id}) open the applicant on their job page.
+  const oldLink = params.get('app')
   useEffect(() => {
-    if (!legacyApp || !rows.length) return
-    const match = rows.find((r) => r.applications.some((a) => a.application_id === legacyApp))
-    if (match) {
-      const app = match.applications.find((a) => a.application_id === legacyApp)!
-      router.replace(`/recruiter/jobs/${app.job_id}?candidate=${legacyApp}`)
-    }
-  }, [legacyApp, rows, router])
+    if (!oldLink || !rows.length) return
+    const app = rows.flatMap((r) => r.applications).find((a) => a.application_id === oldLink)
+    if (app) router.replace(applicantHref(app.job_id, oldLink, app.stage))
+  }, [oldLink, rows, router])
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(params.toString())
@@ -195,21 +174,23 @@ export function CandidatesView() {
     const q = text.trim()
     const timer = window.setTimeout(() => {
       if (q !== query) setParam('q', q || null)
-      if (q.length >= 3) void search({ q, size: 50 }, true)
+      if (q.length >= 3) void search(q, true)
     }, 400)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text])
 
-  const categories = useMemo(
-    () => [...new Set(rows.map((r) => r.category))].sort((a, b) => a.localeCompare(b)),
-    [rows],
-  )
-  const hasCategories = rows.some((r) => r.primary_job_category)
+  const jobs = useMemo(() => {
+    const byId = new Map<string, string>()
+    for (const app of rows.flatMap((r) => r.applications)) byId.set(app.job_id, app.job_title)
+    return [...byId].sort((a, b) => a[1].localeCompare(b[1]))
+  }, [rows])
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const inCategory = rows.filter((r) => category === ALL || r.category === category)
+    const inCategory = rows.filter(
+      (r) => jobFilter === ALL || r.applications.some((a) => a.job_id === jobFilter),
+    )
     if (!q) return inCategory
     const direct = inCategory.filter((r) =>
       [r.applicant_name, r.applicant_email, r.primary_job_title]
@@ -217,9 +198,7 @@ export function CandidatesView() {
         .some((value) => value!.toLowerCase().includes(q)),
     )
     const results =
-      semantic.data && semantic.originalArgs?.q === query.trim()
-        ? semantic.data.data.candidates
-        : []
+      semantic.data && semantic.originalArgs === query.trim() ? semantic.data.candidates : []
     const seen = new Set(direct.map((r) => r.candidate_id))
     const byId = new Map(inCategory.map((r) => [r.candidate_id, r]))
     const fromCvs: Row[] = []
@@ -231,13 +210,13 @@ export function CandidatesView() {
       }
     }
     return [...direct, ...fromCvs]
-  }, [rows, category, query, semantic.data, semantic.originalArgs])
+  }, [rows, jobFilter, query, semantic.data, semantic.originalArgs])
 
   const searching = semantic.isFetching && query.trim().length >= 3
 
   return (
     <PageContainer>
-      <PageHeader title="Candidates" facts={rows.length ? [`${rows.length} people`] : undefined} />
+      <PageHeader title="Applicants" facts={rows.length ? [`${rows.length} people`] : undefined} />
 
       {rows.length || isLoading ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -248,7 +227,7 @@ export function CandidatesView() {
               onChange={(event) => setText(event.target.value)}
               placeholder="Name, skill or experience"
               className="rounded-full bg-card pr-9 pl-9"
-              aria-label="Search candidates"
+              aria-label="Search applicants"
             />
             {searching ? (
               <Spinner
@@ -259,20 +238,17 @@ export function CandidatesView() {
             ) : null}
           </div>
           <Select
-            value={category}
-            onValueChange={(value) => setParam('category', value === ALL ? null : value)}
+            value={jobFilter}
+            onValueChange={(value) => setParam('job', value === ALL ? null : value)}
           >
-            <SelectTrigger
-              className="w-full rounded-full bg-card sm:w-56"
-              aria-label={hasCategories ? 'Category' : 'Job'}
-            >
+            <SelectTrigger className="w-full rounded-full bg-card sm:w-64" aria-label="Job">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>{hasCategories ? 'All categories' : 'All jobs'}</SelectItem>
-              {categories.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {value}
+              <SelectItem value={ALL}>All jobs</SelectItem>
+              {jobs.map(([id, title]) => (
+                <SelectItem key={id} value={id}>
+                  {title}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -284,7 +260,7 @@ export function CandidatesView() {
         <CandidatesSkeleton />
       ) : isError ? (
         <ErrorState onRetry={() => void refetch()} retrying={isFetching}>
-          Couldn&apos;t load candidates.
+          Couldn&apos;t load applicants.
         </ErrorState>
       ) : rows.length === 0 ? (
         <EmptyState>No one has applied yet.</EmptyState>
@@ -293,7 +269,7 @@ export function CandidatesView() {
           columns={columns}
           data={visible}
           getRowId={(row) => row.candidate_id}
-          initialSorting={[{ id: 'latest_updated_at', desc: true }]}
+          initialSorting={[{ id: 'last_activity_at', desc: true }]}
           emptyText={searching ? 'Searching CVs…' : 'No one matches.'}
           pageSizes={[25, 50, 100]}
         />

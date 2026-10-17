@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { ago } from '@/lib/dates'
+import { locationTypeLabel } from '@/lib/jobHelpers'
 import { useGetRecruiterJobsOverviewQuery } from '@/store/services/dashboardApi'
-import type { JobStatus, LocationType } from '@/store/services/jobsApi'
+import type { ClosedReason, JobStatus } from '@/store/services/jobsApi'
 import type { ColumnDef } from '@tanstack/react-table'
 
 import { PageContainer } from '@/components/app/AppShell'
@@ -16,7 +17,7 @@ import { EmptyState } from '@/components/app/EmptyState'
 import { ErrorState } from '@/components/app/Feedback'
 import { FilterChips } from '@/components/app/FilterChips'
 import { PageHeader } from '@/components/app/PageHeader'
-import { StatusPill } from '@/components/app/StatusPill'
+import { JobStatusPill } from '@/components/app/StatusPill'
 import { PlusIcon, SearchIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,18 +25,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { JobRowActions } from './JobRowActions'
 
-const LOCATION_TYPE: Record<LocationType, string> = {
-  remote: 'Remote',
-  onsite: 'On-site',
-  hybrid: 'Hybrid',
-}
-
 export type JobRow = {
   id: string
   title: string
   meta: string
   status: JobStatus
-  hiringCompleted: boolean
+  closed_reason: ClosedReason | null
+  closes_at: string | null
   createdAt: string
   applicants: number
   toReview: number
@@ -51,17 +47,7 @@ const FILTERS: { value: Filter; label: string }[] = [
 ]
 
 function matches(row: JobRow, filter: Filter): boolean {
-  if (filter === 'open') return row.status === 'active'
-  if (filter === 'draft') return row.status === 'draft'
-  if (filter === 'closed') return row.status === 'expired'
-  return true
-}
-
-function statusPill(row: JobRow) {
-  if (row.hiringCompleted) return <StatusPill tone="success">Hired</StatusPill>
-  if (row.status === 'active') return <StatusPill tone="success">Open</StatusPill>
-  if (row.status === 'draft') return <StatusPill tone="warning">Draft</StatusPill>
-  return <StatusPill tone="neutral">Closed</StatusPill>
+  return filter === 'all' || row.status === filter
 }
 
 const columns: ColumnDef<JobRow>[] = [
@@ -111,7 +97,7 @@ const columns: ColumnDef<JobRow>[] = [
     id: 'status',
     meta: { className: 'hidden md:table-cell' },
     header: () => <span className="text-xs font-medium">Status</span>,
-    cell: ({ row }) => statusPill(row.original),
+    cell: ({ row }) => <JobStatusPill job={row.original} />,
   },
   {
     id: 'open',
@@ -138,13 +124,14 @@ export function JobsView() {
     const jobRows: JobRow[] = (jobs.data?.data ?? []).map((job) => ({
       id: job.job_id,
       title: job.title,
-      meta: [job.location, LOCATION_TYPE[job.location_type]].filter(Boolean).join(' · '),
+      meta: [job.location, locationTypeLabel(job.location_type)].filter(Boolean).join(' · '),
       status: job.status,
-      hiringCompleted: job.hiring_completed,
+      closed_reason: job.hiring_completed ? 'hired' : null,
+      closes_at: job.status === 'open' ? job.expires_at : null,
       createdAt: job.created_at,
       applicants: job.applicants,
       toReview: job.to_review,
-      href: `/recruiter/jobs/${job.job_id}${job.to_review > 0 ? '?stage=applied' : ''}`,
+      href: `/recruiter/jobs/${job.job_id}`,
     }))
     return jobRows
   }, [jobs.data])
@@ -181,15 +168,7 @@ export function JobsView() {
 
   return (
     <PageContainer>
-      <PageHeader
-        title="Jobs"
-        primaryAction={postJob}
-        secondaryAction={
-          <Button asChild variant="outline">
-            <Link href="/recruiter/jobs/manual">Write it myself</Link>
-          </Button>
-        }
-      />
+      <PageHeader title="Jobs" primaryAction={postJob} />
 
       <div className="flex flex-wrap items-center gap-3">
         <FilterChips

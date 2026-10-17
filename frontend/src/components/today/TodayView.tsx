@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import Link from 'next/link'
 
+import { applicantHref } from '@/lib/api/recruiter'
 import { formatTime, formatWhen } from '@/lib/dates'
 import {
   type RecruiterHomeInterview,
@@ -38,7 +39,7 @@ function InterviewRow({ interview, now }: { interview: RecruiterHomeInterview; n
         {formatTime(interview.start_time)}
       </span>
       <Link
-        href={`/recruiter/jobs/${interview.job_id}?candidate=${interview.application_id}`}
+        href={applicantHref(interview.job_id, interview.application_id, 'interview')}
         className="flex min-w-0 flex-1 basis-40 items-center gap-3 hover:underline"
       >
         <EntityAvatar name={interview.candidate_name} className="size-8" />

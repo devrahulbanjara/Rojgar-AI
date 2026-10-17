@@ -1,5 +1,7 @@
 import { type ApiResponse, baseApi } from './baseApi'
-import type { JobStatus } from './jobsApi'
+import type { JobStatus, LocationType } from './jobsApi'
+
+/** Types mirror backend/app/modules/dashboards/schemas.py. */
 
 export interface RecruiterHomeInterview {
   interview_id: string
@@ -17,8 +19,9 @@ export interface RecruiterHomeRole {
   title: string
   status: JobStatus
   location: string | null
-  location_type: 'remote' | 'onsite' | 'hybrid'
+  location_type: LocationType
   created_at: string
+  /** The job's closes_at (open) or closed_at (closed). */
   expires_at: string | null
   applicants: number
   to_review: number
@@ -26,6 +29,7 @@ export interface RecruiterHomeRole {
   to_contact: number
   upcoming_interviews: number
   to_decide: number
+  /** Closed with closed_reason "hired". */
   hiring_completed: boolean
   share_slug: string
 }
@@ -38,12 +42,6 @@ export interface RecruiterHomeData {
   next_interview: RecruiterHomeInterview | null
   roles: RecruiterHomeRole[]
   drafts: { job_id: string; title: string; updated_at: string }[]
-  join_requests: {
-    membership_id: string
-    recruiter_name: string
-    recruiter_email: string
-    requested_at: string
-  }[]
 }
 
 export const dashboardApi = baseApi.injectEndpoints({

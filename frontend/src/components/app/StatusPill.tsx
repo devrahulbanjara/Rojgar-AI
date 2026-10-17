@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 
+import { FIT_LABEL, type Fit, STAGE_LABEL, type Stage } from '@/lib/api/recruiter'
+import { jobStatusLabel } from '@/lib/jobHelpers'
 import { cn } from '@/lib/utils'
-import type { ApplicationStatus } from '@/store/services/applicationsApi'
-import type { JobStatus } from '@/store/services/jobsApi'
+import type { JobListItem, JobStatus } from '@/store/services/jobsApi'
 
 /** Semantic tones only: green good/active, amber pending/draft, red overdue/not selected, neutral closed. */
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral'
@@ -38,49 +39,37 @@ export function StatusPill({
   )
 }
 
-/** Candidate-facing wording for an application status. */
-export const APPLICATION_STATUS: Record<ApplicationStatus, { tone: Tone; label: string }> = {
-  applied: { tone: 'neutral', label: 'Applied' },
-  shortlisted: { tone: 'success', label: 'Shortlisted' },
-  interview_booked: { tone: 'success', label: 'Interview' },
-  interview_completed: { tone: 'warning', label: 'Interviewed' },
-  offer: { tone: 'success', label: 'Offer' },
-  offer_accepted: { tone: 'success', label: 'Hired' },
-  offer_declined: { tone: 'neutral', label: 'Declined' },
-  rejected: { tone: 'danger', label: 'Not selected' },
+const STAGE_TONE: Record<Stage, Tone> = {
+  new: 'neutral',
+  shortlisted: 'success',
+  interview: 'success',
+  offer: 'success',
+  hired: 'success',
+  rejected: 'danger',
+  withdrawn: 'neutral',
 }
 
-export function ApplicationStatusPill({ status }: { status: ApplicationStatus }) {
-  const { tone, label } = APPLICATION_STATUS[status]
-  return <StatusPill tone={tone}>{label}</StatusPill>
+/** New · Shortlisted · Interview · Offer · Hired · Not selected · Withdrawn. */
+export function StagePill({ stage }: { stage: Stage }) {
+  return <StatusPill tone={STAGE_TONE[stage]}>{STAGE_LABEL[stage]}</StatusPill>
 }
 
-/** Recruiter-facing stage words (RECRUITER_FLOW.md §5): New · Shortlisted · Interview · Offer · Hired. */
-export const STAGE: Record<ApplicationStatus, { tone: Tone; label: string }> = {
-  applied: { tone: 'neutral', label: 'New' },
-  shortlisted: { tone: 'success', label: 'Shortlisted' },
-  interview_booked: { tone: 'success', label: 'Interview' },
-  interview_completed: { tone: 'warning', label: 'Interview' },
-  offer: { tone: 'success', label: 'Offer' },
-  offer_accepted: { tone: 'success', label: 'Hired' },
-  offer_declined: { tone: 'neutral', label: 'Withdrawn' },
-  rejected: { tone: 'danger', label: 'Rejected' },
+const JOB_TONE: Record<JobStatus, Tone> = { open: 'success', draft: 'warning', closed: 'neutral' }
+
+/** Open · Draft · Closed · Filled. */
+export function JobStatusPill({ job }: { job: Pick<JobListItem, 'status' | 'closed_reason'> }) {
+  return <StatusPill tone={JOB_TONE[job.status]}>{jobStatusLabel(job)}</StatusPill>
 }
 
-export function StagePill({ status }: { status: ApplicationStatus }) {
-  const { tone, label } = STAGE[status]
-  return <StatusPill tone={tone}>{label}</StatusPill>
-}
+const FIT_TONE: Record<Fit, Tone> = { strong: 'success', possible: 'warning', weak: 'neutral' }
 
-export const JOB_STATUS: Record<JobStatus, { tone: Tone; label: string }> = {
-  active: { tone: 'success', label: 'Open' },
-  draft: { tone: 'warning', label: 'Draft' },
-  expired: { tone: 'neutral', label: 'Closed' },
-}
-
-export function JobStatusPill({ status }: { status: JobStatus }) {
-  const { tone, label } = JOB_STATUS[status]
-  return <StatusPill tone={tone}>{label}</StatusPill>
+/** "Fits" · "Might fit" · "Doesn't fit yet": never a bare number. */
+export function FitPill({ fit, className }: { fit: Fit; className?: string }) {
+  return (
+    <StatusPill tone={FIT_TONE[fit]} className={className}>
+      {FIT_LABEL[fit]}
+    </StatusPill>
+  )
 }
 
 /** A neutral tag: "Remote", "Kathmandu", "NPR 120k–180k". */
@@ -90,26 +79,4 @@ export function Tag({ children }: { children: ReactNode }) {
       {children}
     </span>
   )
-}
-
-export type Fit = 'strong' | 'possible' | 'weak'
-
-/** Fit from the old 0–100 score (RECRUITER_FLOW.md: ≥75 strong, 50–74 possible, <50 weak). */
-export function fitFromScore(score: number | null | undefined): Fit | null {
-  if (score === null || score === undefined) return null
-  if (score >= 75) return 'strong'
-  if (score >= 50) return 'possible'
-  return 'weak'
-}
-
-const FIT_TEXT: Record<Fit, { label: string; className: string }> = {
-  strong: { label: 'Fits well', className: 'text-success' },
-  possible: { label: 'Might fit', className: 'text-warning' },
-  weak: { label: 'Weak fit', className: 'text-muted-foreground' },
-}
-
-/** "Fits well" · "Might fit" · "Weak fit" as plain coloured text (no numbers in the UI). */
-export function FitText({ fit }: { fit: Fit }) {
-  const { label, className } = FIT_TEXT[fit]
-  return <span className={cn('text-sm font-medium whitespace-nowrap', className)}>{label}</span>
 }

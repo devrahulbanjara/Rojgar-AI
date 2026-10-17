@@ -3,15 +3,16 @@
 import { type ReactNode, useState } from 'react'
 
 import {
-  type Job,
-  type Referrer,
+  type ReferrerResponse,
   contactLinks,
-  createReferrer,
   phoneDigits,
   posterUrl,
   referralMessage,
+  useCreateReferrerMutation,
+  useListReferrersQuery,
 } from '@/lib/api/recruiter'
 import { notify } from '@/lib/notify'
+import type { JobDetail } from '@/store/services/jobsApi'
 
 import { ShareMenu } from '@/components/app/ShareMenu'
 import {
@@ -82,25 +83,33 @@ async function copy(text: string, what: string) {
   }
 }
 
-function AskPeople({ job }: { job: Job & { slug: string } }) {
+function AskPeople({ job }: { job: JobDetail }) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [current, setCurrent] = useState<Referrer | null>(null)
-  const [asked, setAsked] = useState<Referrer[]>([])
+  const [createReferrer, { isLoading: busy }] = useCreateReferrerMutation()
+  const asked = useListReferrersQuery(job.id).data ?? []
+  const [current, setCurrent] = useState<ReferrerResponse | null>(null)
 
   async function makeLink() {
     if (!name.trim()) return
-    setBusy(true)
-    const referrer = await createReferrer(job, { name: name.trim(), phone: phone.trim() || null })
-    setBusy(false)
-    setCurrent(referrer)
-    setAsked((previous) => [referrer, ...previous])
-    setName('')
-    setPhone('')
+    try {
+      const referrer = await createReferrer({
+        jobId: job.id,
+        name: name.trim(),
+        phone: phone.trim() || null,
+      }).unwrap()
+      setCurrent(referrer)
+      setName('')
+      setPhone('')
+    } catch {
+      notify.error("Couldn't make the link. Try again.")
+    }
   }
 
-  const message = current ? referralMessage(job, current, current.link) : ''
+  const message = current
+    ? referralMessage({ title: job.title, company_name: job.company.name }, current, current.link)
+    : ''
+  const others = asked.filter((r) => r.id !== current?.id)
 
   return (
     <div className="flex flex-col gap-5">
@@ -180,11 +189,14 @@ function AskPeople({ job }: { job: Job & { slug: string } }) {
         </Button>
       </form>
 
-      {asked.length > 1 ? (
+      {others.length ? (
         <ul className="flex flex-col gap-2 text-sm">
-          {asked.slice(1).map((referrer) => (
-            <li key={referrer.token} className="flex items-center justify-between gap-3">
-              <span className="truncate">{referrer.name}</span>
+          {others.map((referrer) => (
+            <li key={referrer.id} className="flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate">
+                {referrer.name}
+                <span className="text-muted-foreground"> · {referrer.applications} applied</span>
+              </span>
               <Button
                 size="sm"
                 variant="ghost"
@@ -207,7 +219,7 @@ export function GetApplicantsSheet({
   open,
   onOpenChange,
 }: {
-  job: Job
+  job: JobDetail
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -243,7 +255,7 @@ export function GetApplicantsSheet({
           {!slug ? (
             <p className="text-sm text-muted-foreground">Publish the job to get its link.</p>
           ) : view === 'ask' ? (
-            <AskPeople job={{ ...job, slug }} />
+            <AskPeople job={job} />
           ) : (
             <>
               <Option
@@ -262,9 +274,9 @@ export function GetApplicantsSheet({
                 job={{
                   slug,
                   title: job.title,
-                  companyName: job.company_name,
+                  companyName: job.company.name,
                   location: job.location,
-                  locationType: job.work_type,
+                  locationType: job.location_type,
                 }}
                 trigger={
                   <Button

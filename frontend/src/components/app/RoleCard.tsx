@@ -13,7 +13,7 @@ import { JobStatusPill } from './StatusPill'
 /** One role and the work waiting on it, Hirely-style. */
 export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; companyName: string }) {
   const jobHref = `/recruiter/jobs/${role.job_id}`
-  const isOpen = role.status === 'active'
+  const isOpen = role.status === 'open'
   const meta = [`Posted ${ago(role.created_at)}`, closingLabel(role.expires_at)]
     .filter(Boolean)
     .join(' · ')
@@ -29,7 +29,9 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
             {role.title}
           </Link>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <JobStatusPill status={role.status} />
+            <JobStatusPill
+              job={{ status: role.status, closed_reason: role.hiring_completed ? 'hired' : null }}
+            />
             <span>
               {meta}
               {role.upcoming_interviews > 0
@@ -60,13 +62,13 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
         <ActionTile
           count={role.to_review}
           label={role.strong > 0 ? `to review · ${role.strong} fit well` : 'to review'}
-          href={`${jobHref}?stage=applied`}
+          href={jobHref}
           tone="primary"
         />
         <ActionTile
           count={role.to_contact}
           label="to call"
-          href={`${jobHref}?stage=shortlist`}
+          href={`${jobHref}?stage=shortlisted`}
           tone="warning"
         />
         <ActionTile

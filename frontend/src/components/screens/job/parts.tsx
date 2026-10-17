@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react'
 
-import { FIT_LABEL, type Fit, contactLinks } from '@/lib/api/recruiter'
+import { contactLinks } from '@/lib/api/recruiter'
 import { cn } from '@/lib/utils'
 
 import { Hint } from '@/components/app/Hint'
-import { StatusPill, type Tone } from '@/components/app/StatusPill'
 import {
   LinkedInIcon,
   MailIcon,
@@ -15,23 +14,15 @@ import {
 } from '@/components/icons'
 import { IconButton } from '@/components/ui/button'
 
-const FIT_TONE: Record<Fit, Tone> = { strong: 'success', possible: 'warning', weak: 'neutral' }
-
-/** "Fits" · "Might fit" · "Doesn't fit yet". */
-export function FitPill({ fit, className }: { fit: Fit; className?: string }) {
-  return (
-    <StatusPill tone={FIT_TONE[fit]} className={className}>
-      {FIT_LABEL[fit]}
-    </StatusPill>
-  )
-}
-
 /** One amber line: the CV needs a person before anyone trusts the review. */
-export function FlagLine({ reason, className }: { reason: string; className?: string }) {
+export function FlagLine({ reason, className }: { reason?: string | null; className?: string }) {
   return (
     <p className={cn('flex items-start gap-1.5 text-xs text-warning', className)}>
       <WarningIcon weight="fill" className="mt-px size-3.5 shrink-0" />
-      <span>Flagged: {reason.replace(/\.$/, '')}. Check the CV before deciding.</span>
+      <span>
+        {reason ? `Flagged: ${reason.replace(/\.$/, '')}.` : 'Flagged.'} Check the CV before
+        deciding.
+      </span>
     </p>
   )
 }
@@ -123,6 +114,3 @@ export function ContactButtons({
     </div>
   )
 }
-
-/** Backwards-compatible alias for ContactButtons. */
-export const CallButtons = ContactButtons

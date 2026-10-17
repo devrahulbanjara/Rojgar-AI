@@ -56,24 +56,22 @@ export interface Scorecard {
   notes: string
 }
 
-/** What the scorecard form asks for this interview. */
-export interface ScorecardTemplate {
-  criteria: string[]
-  full: boolean
-}
-
 // ---------------------------------------------------------------------------
 // API shapes and mapping
 // ---------------------------------------------------------------------------
 
+/** backend/app/modules/interviews/schemas.py AgendaItem */
 interface AgendaItem {
   id: string
   application_id: string
   job_id: string
   job_title: string
   candidate_name: string
+  candidate_email: string | null
+  interviewer_name: string | null
   start: string
   end: string
+  timezone: string
   meeting_link: string
   status: string
   scorecard: 'not_due' | 'needed' | 'done'
@@ -202,17 +200,6 @@ export const interviewsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Availability'],
     }),
 
-    /** Sends the applicant a link to pick a time (email, and SMS where included). */
-    inviteToInterview: builder.mutation<{ scheduling_url: string }, string>({
-      query: (applicationId) => ({
-        url: `${API}/applications/${applicationId}/invite`,
-        method: 'POST',
-        body: { notify: true },
-      }),
-      transformResponse: (res: ApiResponse<{ scheduling_url: string }>) => res.data,
-      invalidatesTags: ['Interviews', 'Applications'],
-    }),
-
     /** Re-sends the same link; the applicant picks a new time from it. */
     rescheduleInterview: builder.mutation<{ scheduling_url: string; sent: boolean }, string>({
       query: (applicationId) => ({
@@ -227,18 +214,15 @@ export const interviewsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Interviews'],
     }),
 
-    getScorecardTemplate: builder.query<ScorecardTemplate, { id: string; jobId: string }>({
-      query: ({ id }) => `${API}/interviews/${id}/scorecard`,
+    /** The job's must-haves to rate, and notes already written. */
+    getScorecardTemplate: builder.query<{ criteria: string[] }, string>({
+      query: (id) => `${API}/interviews/${id}/scorecard`,
       transformResponse: (res: ApiResponse<{ criteria: string[] }>) => ({
         criteria: res.data.criteria,
-        full: true,
       }),
     }),
 
-    submitScorecard: builder.mutation<
-      null,
-      { id: string; applicationId: string; jobId: string; scorecard: Scorecard }
-    >({
+    submitScorecard: builder.mutation<null, { id: string; scorecard: Scorecard }>({
       query: ({ id, scorecard }) => ({
         url: `${API}/interviews/${id}/scorecard`,
         method: 'POST',
@@ -268,7 +252,6 @@ export const {
   useListInterviewsQuery,
   useGetAvailabilityQuery,
   useSaveAvailabilityMutation,
-  useInviteToInterviewMutation,
   useRescheduleInterviewMutation,
   useGetScorecardTemplateQuery,
   useSubmitScorecardMutation,

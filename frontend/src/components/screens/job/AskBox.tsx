@@ -5,9 +5,8 @@ import { useEffect, useId, useRef, useState } from 'react'
 import {
   ACTION_LABEL,
   AssistantError,
-  CAPABILITIES,
   type CandidateAnswer,
-  type DecisionAction,
+  type DecideAction,
   type QuoteSource,
   getCandidateHistory,
   streamCandidateQuestion,
@@ -41,11 +40,14 @@ type Exchange = { question: string; answer: CandidateAnswer }
 export function AskBox({
   applicationId,
   firstName,
+  actions,
   onDecide,
 }: {
   applicationId: string
   firstName: string
-  onDecide: (action: DecisionAction) => void
+  /** Decide actions valid now; a suggestion outside them is not shown. */
+  actions: DecideAction[]
+  onDecide: (action: DecideAction) => void
 }) {
   const [open, setOpen] = useState(false)
   const [askedHere, setAskedHere] = useState(false)
@@ -61,7 +63,6 @@ export function AskBox({
 
   // Show the last answer from earlier visits.
   useEffect(() => {
-    if (!CAPABILITIES.assistant) return
     let live = true
     void getCandidateHistory(applicationId).then((messages) => {
       const answerIndex = messages.findLastIndex((m) => m.role === 'assistant')
@@ -90,8 +91,6 @@ export function AskBox({
   useEffect(() => {
     if (open) inputRef.current?.focus()
   }, [open])
-
-  if (!CAPABILITIES.assistant) return null
 
   async function ask(message: string) {
     const clean = message.trim()
@@ -157,7 +156,8 @@ export function AskBox({
               “{quote.text}” <span className="whitespace-nowrap">· {SOURCE[quote.source]}</span>
             </p>
           ))}
-          {shown.answer.suggested_action ? (
+          {shown.answer.suggested_action &&
+          actions.includes(shown.answer.suggested_action.action) ? (
             <Button
               size="sm"
               variant="outline"

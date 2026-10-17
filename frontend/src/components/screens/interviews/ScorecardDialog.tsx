@@ -36,7 +36,7 @@ const RECOMMENDATIONS = (['strong_no', 'no', 'yes', 'strong_yes'] as Recommendat
 )
 
 function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: () => void }) {
-  const template = useGetScorecardTemplateQuery({ id: interview.id, jobId: interview.job.id })
+  const template = useGetScorecardTemplateQuery(interview.id)
   const [submit, submitState] = useSubmitScorecardMutation()
   const [ratings, setRatings] = useState<Record<string, string>>({})
   const [recommendation, setRecommendation] = useState<Recommendation | ''>('')
@@ -54,7 +54,6 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
   }
 
   const criteria = template.data?.criteria ?? []
-  const full = template.data?.full ?? false
 
   async function save() {
     if (!recommendation) {
@@ -64,8 +63,6 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
     try {
       await submit({
         id: interview.id,
-        applicationId: interview.application_id,
-        jobId: interview.job.id,
         scorecard: {
           ratings: Object.fromEntries(
             Object.entries(ratings).map(([criterion, value]) => [criterion, Number(value)]),
@@ -77,23 +74,8 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
       notify.success(`Notes saved for ${interview.candidate.name}`)
       onDone()
     } catch {
-      notify.error("Couldn't save the scorecard. Try again.")
+      notify.error("Couldn't save the notes. Try again.")
     }
-  }
-
-  if (!full) {
-    return (
-      <>
-        <p className="text-sm text-muted-foreground">
-          This job has no must-haves to rate yet, so only &ldquo;done&rdquo; can be saved.
-        </p>
-        <DialogFooter>
-          <Button loading={submitState.isLoading} onClick={() => void save()}>
-            Mark done
-          </Button>
-        </DialogFooter>
-      </>
-    )
   }
 
   return (
@@ -133,7 +115,7 @@ function ScorecardForm({ interview, onDone }: { interview: Interview; onDone: ()
       </div>
       <DialogFooter>
         <Button loading={submitState.isLoading} onClick={() => void save()}>
-          Save scorecard
+          Save notes
         </Button>
       </DialogFooter>
     </>

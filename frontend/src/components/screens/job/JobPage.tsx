@@ -6,27 +6,28 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 import {
-  type Candidate,
-  type CountedStage,
-  type DecisionAction,
+  type DecideAction,
+  type CandidatePanel as Panel,
   type PipelineItem,
   type PipelineSort,
   STAGE_LABEL,
-  actionsFor,
-  jobFacts,
-  useGetJobQuery,
+  type Stage,
+  recruiterApi,
   useGetPipelineQuery,
 } from '@/lib/api/recruiter'
 import { closingLabel } from '@/lib/dates'
+import { jobFacts } from '@/lib/jobHelpers'
 import { cn } from '@/lib/utils'
+import { useGetJobQuery } from '@/store/services/jobsApi'
 
+import { AiText } from '@/components/app/Ai'
 import { PageContainer } from '@/components/app/AppShell'
 import { BulkBar } from '@/components/app/DataTable'
 import { EmptyState } from '@/components/app/EmptyState'
 import { ErrorState } from '@/components/app/Feedback'
 import { FilterChips } from '@/components/app/FilterChips'
 import { PageHeader } from '@/components/app/PageHeader'
-import { StatusPill } from '@/components/app/StatusPill'
+import { JobStatusPill } from '@/components/app/StatusPill'
 import { EditIcon, PlusIcon, ShareIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,29 +41,31 @@ import {
 import { AddCandidateDialog } from './AddCandidateDialog'
 import { CandidateCard } from './CandidateCard'
 import { CandidatePanel } from './CandidatePanel'
+import { cardActions } from './DecisionButtons'
 import { GetApplicantsSheet } from './GetApplicantsSheet'
 import { InviteDialog, type InviteRecipient } from './InviteDialog'
 import { JobMoreMenu } from './JobMoreMenu'
 import { JobPageSkeleton, PipelineSkeleton } from './skeletons'
 import { useDecisions } from './useDecisions'
 
-const STAGES: CountedStage[] = ['new', 'shortlisted', 'interview', 'offer', 'hired', 'rejected']
-/** Old links (Today, Jobs table) still use the 8-status names. */
-const LEGACY_STAGE: Record<string, CountedStage> = {
-  applied: 'new',
-  shortlist: 'shortlisted',
-  interview_booked: 'interview',
-  interview_completed: 'interview',
-  offer_accepted: 'hired',
-}
+const STAGES: Stage[] = [
+  'new',
+  'shortlisted',
+  'interview',
+  'offer',
+  'hired',
+  'rejected',
+  'withdrawn',
+]
 
-const EMPTY_STAGE: Record<CountedStage, string> = {
+const EMPTY_STAGE: Record<Stage, string> = {
   new: 'No new applicants.',
   shortlisted: 'No one shortlisted yet.',
   interview: 'No one at interview yet.',
   offer: 'No offers yet.',
   hired: 'No one hired yet.',
   rejected: 'No one here.',
+  withdrawn: 'No one here.',
 }
 
 function useIsWide() {
@@ -95,16 +98,21 @@ export function JobPage({ jobId }: { jobId: string }) {
   const wide = useIsWide()
 
   const rawStage = params.get('stage') ?? 'new'
-  const stage: CountedStage =
-    LEGACY_STAGE[rawStage] ??
-    (STAGES.includes(rawStage as CountedStage) ? (rawStage as CountedStage) : 'new')
+  const stage: Stage = STAGES.includes(rawStage as Stage) ? (rawStage as Stage) : 'new'
   const sort: PipelineSort = params.get('sort') === 'newest' ? 'newest' : 'best_fit'
   const activeId = params.get('app')
 
   const job = useGetJobQuery(jobId)
-  const pipeline = useGetPipelineQuery({ jobId, stage, sort }, { refetchOnMountOrArgChange: 30 })
+  const args = { jobId, stage, sort }
+  // While CVs are being read, check back every few seconds.
+  const reviewingBefore = recruiterApi.endpoints.getPipeline.useQueryState(args).data?.reviewing
+  const pipeline = useGetPipelineQuery(args, {
+    refetchOnMountOrArgChange: 30,
+    pollingInterval: reviewingBefore ? 5000 : 0,
+  })
   const items = useMemo(() => pipeline.data?.items ?? [], [pipeline.data])
   const counts = pipeline.data?.counts
+  const reviewing = pipeline.data?.reviewing ?? 0
 
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [invite, setInvite] = useState<Invite | null>(null)
@@ -160,7 +168,7 @@ export function JobPage({ jobId }: { jobId: string }) {
   )
 
   const run = useCallback(
-    (ids: string[], action: DecisionAction, people: InviteRecipient[]) => {
+    (ids: string[], action: DecideAction, people: InviteRecipient[]) => {
       if (activeId && ids.includes(activeId)) setParams({ app: wide ? nextAfter(ids) : null })
       setSelected(new Set())
       void decideNow(ids, action, people.length === 1 ? people[0].name : `${people.length} people`)
@@ -169,7 +177,7 @@ export function JobPage({ jobId }: { jobId: string }) {
   )
 
   const request = useCallback(
-    (ids: string[], action: DecisionAction, people: InviteRecipient[]) => {
+    (ids: string[], action: DecideAction, people: InviteRecipient[]) => {
       if (action === 'shortlist') setInvite({ ids, recipients: people })
       else run(ids, action, people)
     },
@@ -177,15 +185,15 @@ export function JobPage({ jobId }: { jobId: string }) {
   )
 
   const fromItem = (item: PipelineItem): InviteRecipient => ({
-    name: item.person.name,
-    email: item.person.email,
+    name: item.name,
+    email: item.email,
   })
-  const fromCandidate = (c: Candidate): InviteRecipient => ({
+  const fromCandidate = (c: Panel): InviteRecipient => ({
     name: c.person.name,
     email: c.person.email,
   })
 
-  // Keyboard: J/K move, S shortlist, N or R not now, X select.
+  // Keyboard: J/K move, S shortlist, R reject, X select.
   const keyState = useRef({ items, activeId, request, setParams, selected })
   useEffect(() => {
     keyState.current = { items, activeId, request, setParams, selected }
@@ -209,12 +217,11 @@ export function JobPage({ jobId }: { jobId: string }) {
         return
       }
       if (!item) return
-      const { primary, more } = actionsFor(item.stage)
-      const allowed = [...primary, ...more]
+      const allowed = cardActions(item.stage)
       if (key === 's' && allowed.includes('shortlist')) {
         event.preventDefault()
         request([item.application_id], 'shortlist', [fromItem(item)])
-      } else if ((key === 'n' || key === 'r') && allowed.includes('reject')) {
+      } else if (key === 'r' && allowed.includes('reject')) {
         event.preventDefault()
         request([item.application_id], 'reject', [fromItem(item)])
       } else if (key === 'x') {
@@ -246,15 +253,8 @@ export function JobPage({ jobId }: { jobId: string }) {
   const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0
   const waiting = counts ? counts.new + counts.shortlisted + counts.interview : 0
   const selectedItems = items.filter((i) => selected.has(i.application_id))
-  const bulk = actionsFor(stage)
-  const statusPill =
-    data.status === 'open' ? (
-      <StatusPill tone="success">Open</StatusPill>
-    ) : data.status === 'draft' ? (
-      <StatusPill tone="warning">Draft</StatusPill>
-    ) : (
-      <StatusPill tone="neutral">{data.closed_reason === 'hired' ? 'Filled' : 'Closed'}</StatusPill>
-    )
+  const bulk = cardActions(stage)
+  const stages = STAGES.filter((s) => s !== 'withdrawn' || counts?.withdrawn || stage === s)
 
   const getApplicants = (
     <Button variant={total ? 'outline' : 'primary'} onClick={() => setSheetOpen(true)}>
@@ -269,7 +269,7 @@ export function JobPage({ jobId }: { jobId: string }) {
         <PageHeader
           breadcrumb={[{ label: 'Jobs', href: '/recruiter/jobs' }, { label: data.title }]}
           title={data.title}
-          status={statusPill}
+          status={<JobStatusPill job={data} />}
           facts={[...jobFacts(data), data.status === 'open' ? closingLabel(data.closes_at) : null]}
           secondaryAction={
             data.status === 'draft' ? null : (
@@ -296,19 +296,24 @@ export function JobPage({ jobId }: { jobId: string }) {
 
         {pipeline.isLoading || total > 0 ? (
           <div className="flex flex-wrap items-center gap-3">
-            <FilterChips<CountedStage>
+            <FilterChips<Stage>
               label="Stage"
               value={stage}
               onChange={(value) => {
                 setSelected(new Set())
                 setParams({ stage: value, app: null })
               }}
-              options={STAGES.map((value) => ({
+              options={stages.map((value) => ({
                 value,
                 label: STAGE_LABEL[value],
                 count: counts?.[value],
               }))}
             />
+            {reviewing ? (
+              <AiText className="text-sm">
+                Reading {reviewing} CV{reviewing === 1 ? '' : 's'}…
+              </AiText>
+            ) : null}
             <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
               <Select
                 value={sort}
@@ -329,7 +334,7 @@ export function JobPage({ jobId }: { jobId: string }) {
                 onClick={() => setAddOpen(true)}
               >
                 <PlusIcon />
-                Add candidate
+                Add applicant
               </Button>
             </div>
           </div>
@@ -347,7 +352,7 @@ export function JobPage({ jobId }: { jobId: string }) {
           action={
             <Button variant="outline" onClick={() => setAddOpen(true)}>
               <PlusIcon />
-              Add candidate
+              Add applicant
             </Button>
           }
         >
@@ -363,7 +368,7 @@ export function JobPage({ jobId }: { jobId: string }) {
           >
             {selectedItems.length ? (
               <BulkBar count={selectedItems.length}>
-                {bulk.primary.includes('shortlist') ? (
+                {bulk.includes('shortlist') ? (
                   <Button
                     size="sm"
                     onClick={() =>
@@ -377,7 +382,7 @@ export function JobPage({ jobId }: { jobId: string }) {
                     Shortlist {selectedItems.length}
                   </Button>
                 ) : null}
-                {[...bulk.primary, ...bulk.more].includes('reject') ? (
+                {bulk.includes('reject') ? (
                   <Button
                     size="sm"
                     variant="outline"
@@ -389,7 +394,7 @@ export function JobPage({ jobId }: { jobId: string }) {
                       )
                     }
                   >
-                    Not now {selectedItems.length}
+                    Reject {selectedItems.length}
                   </Button>
                 ) : null}
               </BulkBar>
@@ -421,7 +426,7 @@ export function JobPage({ jobId }: { jobId: string }) {
             )}
             {items.length ? (
               <p className="hidden px-3 pt-2 text-xs text-muted-foreground lg:block">
-                J/K move · S shortlist · N not now · X select
+                J/K move · S shortlist · R reject · X select
               </p>
             ) : null}
           </div>
@@ -448,7 +453,7 @@ export function JobPage({ jobId }: { jobId: string }) {
         onOpenChange={(open) => !open && setInvite(null)}
         recipients={invite?.recipients ?? []}
         jobTitle={data.title}
-        companyName={data.company_name}
+        companyName={data.company.name}
         onSend={() => {
           if (invite) run(invite.ids, 'shortlist', invite.recipients)
           setInvite(null)

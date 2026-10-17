@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 
 import { CandidatesView } from '@/components/screens/candidates/CandidatesView'
 
-export const metadata: Metadata = { title: 'Candidates' }
+export const metadata: Metadata = { title: 'Applicants' }
 
 export default function CandidatesPage() {
   return (

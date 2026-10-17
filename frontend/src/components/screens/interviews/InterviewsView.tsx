@@ -9,6 +9,7 @@ import {
   useListInterviewsQuery,
   useRescheduleInterviewMutation,
 } from '@/lib/api/interviews'
+import { applicantHref } from '@/lib/api/recruiter'
 import { notify } from '@/lib/notify'
 import { format, isSameWeek, isToday, isTomorrow, startOfToday } from 'date-fns'
 
@@ -73,7 +74,7 @@ function Row({
     }
   }
 
-  const candidateHref = `/recruiter/jobs/${interview.job.id}?candidate=${interview.application_id}`
+  const candidateHref = applicantHref(interview.job.id, interview.application_id, 'interview')
 
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">

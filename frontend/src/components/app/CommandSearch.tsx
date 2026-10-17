@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { useRouter } from 'next/navigation'
 
-import { useGetMyCompanyCandidatesQuery } from '@/store/services/applicationsApi'
+import { applicantHref, useGetCompanyPeopleQuery } from '@/lib/api/recruiter'
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
 
 import { JobsIcon, SearchIcon, UserIcon } from '@/components/icons'
@@ -20,13 +20,12 @@ import {
 
 import { RECRUITER_NAV } from './navigation'
 
-/** Search icon in the top bar, also ⌘K / Ctrl+K: jump to a job, a candidate or a page. */
+/** Search icon in the top bar, also ⌘K / Ctrl+K: jump to a job, an applicant or a page. */
 export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const jobs = useGetCompanyJobsQuery(undefined, { skip: !open }).data?.data ?? []
-  const people =
-    useGetMyCompanyCandidatesQuery({ page: 1, size: 200 }, { skip: !open }).data?.data ?? []
+  const jobs = useGetCompanyJobsQuery(undefined, { skip: !open }).data ?? []
+  const people = useGetCompanyPeopleQuery(undefined, { skip: !open }).data ?? []
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -53,9 +52,9 @@ export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
         open={open}
         onOpenChange={setOpen}
         title="Search"
-        description="Find a job or a candidate"
+        description="Find a job or an applicant"
       >
-        <CommandInput placeholder="Search jobs and candidates" />
+        <CommandInput placeholder="Search jobs and applicants" />
         <CommandList>
           <CommandEmpty>No matches.</CommandEmpty>
           {jobs.length ? (
@@ -73,14 +72,18 @@ export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
             </CommandGroup>
           ) : null}
           {people.length ? (
-            <CommandGroup heading="Candidates">
+            <CommandGroup heading="Applicants">
               {people.map((person) => (
                 <CommandItem
                   key={person.candidate_id}
                   value={`${person.applicant_name} ${person.primary_job_title} ${person.candidate_id}`}
                   onSelect={() =>
                     go(
-                      `/recruiter/jobs/${person.primary_job_id}?candidate=${person.latest_application_id}`,
+                      applicantHref(
+                        person.primary_job_id,
+                        person.latest_application_id,
+                        person.latest_stage,
+                      ),
                     )
                   }
                 >

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { protectedGroundWarning } from '@/lib/api/recruiter'
 import { cn } from '@/lib/utils'
 
+import { AiSpark } from '@/components/app/Ai'
 import { PlusIcon, WarningIcon, XIcon } from '@/components/icons'
 import { Button, IconButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -99,9 +100,18 @@ export function MustHaveChips({
   )
 }
 
-export function SuggestButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+export function SuggestButton({
+  onClick,
+  disabled,
+  busy = false,
+}: {
+  onClick: () => void
+  disabled?: boolean
+  busy?: boolean
+}) {
   return (
-    <Button size="sm" variant="ghost" onClick={onClick} disabled={disabled}>
+    <Button size="sm" variant="ghost" onClick={onClick} disabled={disabled || busy}>
+      <AiSpark active={busy} />
       Suggest from description
     </Button>
   )
