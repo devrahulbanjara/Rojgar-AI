@@ -246,6 +246,21 @@ class AIService:
         model: str | None = None,
         temperature: float | None = None,
     ) -> SchemaT:
+        """Structured output only; see `generate_structured_with_usage`."""
+        result, _usage = await self.generate_structured_with_usage(
+            system_prompt, user_payload, schema_model, model, temperature
+        )
+        return result
+
+    async def generate_structured_with_usage(
+        self,
+        system_prompt: str,
+        user_payload: dict[str, Any] | str,
+        schema_model: Type[SchemaT],
+        model: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int = 4096,
+    ) -> tuple[SchemaT, dict[str, Any]]:
         """
         Generate structured JSON output conforming to a Pydantic schema.
 
@@ -279,7 +294,9 @@ class AIService:
                 },
                 {
                     "role": "user",
-                    "content": json.dumps(user_payload, ensure_ascii=False),
+                    "content": user_payload
+                    if isinstance(user_payload, str)
+                    else json.dumps(user_payload, ensure_ascii=False),
                 },
             ],
             response_format={
@@ -290,7 +307,7 @@ class AIService:
                     "schema": schema,
                 },
             },
-            max_tokens=4096,
+            max_tokens=max_tokens,
         )
         # Structured calls drive scores and decisions: default to deterministic.
         request_kwargs["temperature"] = 0.0 if temperature is None else temperature
@@ -313,8 +330,16 @@ class AIService:
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="The AI service returned an empty response.",
             )
+        raw_usage = getattr(response, "usage", None)
+        details = getattr(raw_usage, "prompt_tokens_details", None)
+        usage = {
+            "model": request_kwargs["model"],
+            "tokens_in": int(getattr(raw_usage, "prompt_tokens", 0) or 0),
+            "tokens_out": int(getattr(raw_usage, "completion_tokens", 0) or 0),
+            "cached_tokens": int(getattr(details, "cached_tokens", 0) or 0),
+        }
         try:
-            return schema_model.model_validate(json.loads(content))
+            return schema_model.model_validate(json.loads(content)), usage
         except (json.JSONDecodeError, ValueError) as exc:
             logger.error(
                 "Groq structured output for {} failed validation: {}",

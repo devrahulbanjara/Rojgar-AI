@@ -136,6 +136,42 @@ def upgrade() -> None:
     op.add_column(
         "applications", sa.Column("rejected_reason", sa.String(20), nullable=True)
     )
+    op.create_table(
+        "job_referrers",
+        sa.Column("id", sa.Uuid(), primary_key=True),
+        sa.Column(
+            "job_id",
+            sa.Uuid(),
+            sa.ForeignKey("jobs.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column("name", sa.String(255), nullable=False),
+        sa.Column("phone", sa.String(20), nullable=True),
+        sa.Column("token", sa.String(32), nullable=False, unique=True),
+        sa.Column(
+            "created_by",
+            sa.Uuid(),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+    )
+    op.create_index("ix_job_referrers_job_id", "job_referrers", ["job_id"])
+    op.add_column(
+        "applications",
+        sa.Column(
+            "referrer_id",
+            sa.Uuid(),
+            sa.ForeignKey("job_referrers.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+    )
+    op.create_index("ix_applications_referrer_id", "applications", ["referrer_id"])
     op.execute(
         "UPDATE applications SET decided_at = updated_at WHERE status::text <> 'applied'"
     )
@@ -190,6 +226,9 @@ def upgrade() -> None:
         FROM applications
         """
     )
+    # "platform" (signed-in apply) is now "direct"; the applied event keeps it.
+    op.execute("UPDATE applications SET source = 'direct' WHERE source = 'platform'")
+    op.alter_column("applications", "source", server_default="direct")
     op.execute(
         """
         INSERT INTO application_events (id, application_id, type, payload, created_at)
@@ -255,6 +294,10 @@ def upgrade() -> None:
         sa.Column("flag_reason", sa.Text(), nullable=True),
         sa.Column("rank_score", sa.Float(), nullable=True),
         sa.Column("attempts", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("triage", sa.String(20), nullable=True),
+        sa.Column("tokens_in", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("tokens_out", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("cost_npr", sa.Float(), nullable=False, server_default="0"),
         sa.Column("model", sa.String(120), nullable=True),
         sa.Column("prompt_version", sa.String(40), nullable=True),
         sa.Column(
@@ -840,11 +883,25 @@ def downgrade() -> None:
     )
     op.create_index("ix_applications_score", "applications", ["score"])
     op.drop_index("ix_applications_stage", table_name="applications")
-    for column in ("stage", "decided_by", "decided_at", "rejected_reason"):
+    op.execute(
+        """
+        UPDATE applications a SET source = 'platform' FROM application_events e
+        WHERE e.application_id = a.id AND e.type = 'applied'
+          AND e.payload ->> 'source' = 'platform'
+        """
+    )
+    op.execute(
+        "UPDATE applications SET source = 'other' WHERE source NOT IN "
+        "('linkedin', 'facebook', 'merojob', 'direct', 'other', 'platform')"
+    )
+    op.alter_column("applications", "source", server_default="platform")
+    op.drop_index("ix_applications_referrer_id", table_name="applications")
+    for column in ("stage", "decided_by", "decided_at", "rejected_reason", "referrer_id"):
         op.drop_column("applications", column)
     op.execute("DROP TYPE applicationstage")
     op.drop_table("application_reviews")
     op.drop_table("application_events")
+    op.drop_table("job_referrers")
     # Answers-only applications have no resume and cannot exist in v1.
     op.execute("DELETE FROM applications WHERE resume_id IS NULL")
     op.alter_column(

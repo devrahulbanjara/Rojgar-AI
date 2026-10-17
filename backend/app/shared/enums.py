@@ -80,6 +80,33 @@ ACTIVE_STAGES = frozenset(
 )
 
 
+class ApplicationSource(str, Enum):
+    linkedin = "linkedin"
+    facebook = "facebook"
+    merojob = "merojob"
+    viber = "viber"
+    qr = "qr"
+    walk_in = "walk_in"
+    phone = "phone"
+    referral = "referral"
+    direct = "direct"
+    other = "other"
+
+
+# Sources a recruiter records when adding someone by hand.
+QUICK_ADD_SOURCES = frozenset(
+    {ApplicationSource.walk_in, ApplicationSource.phone, ApplicationSource.referral}
+)
+
+
+class ReviewTriage(str, Enum):
+    """How far the cost-controlled review went for one application."""
+
+    knockout = "knockout"  # a knockout answer decided it; no LLM call
+    extract = "extract"  # cheap pass only (clearly not plausible)
+    full = "full"  # cheap pass + full evidence review
+
+
 class RejectedReason(str, Enum):
     not_a_fit = "not_a_fit"
     position_filled = "position_filled"
@@ -115,6 +142,7 @@ class EventType(str, Enum):
     interview_done = "interview_done"
     note = "note"
     review_done = "review_done"
+    flag_cleared = "flag_cleared"
 
 
 class QuestionType(str, Enum):

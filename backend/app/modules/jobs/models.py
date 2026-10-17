@@ -106,6 +106,28 @@ class Job(Base):
     company: Mapped[Company] = relationship("Company", lazy="raise")
 
 
+class JobReferrer(Base):
+    """A person a recruiter asked to pass the job on; owns one share link."""
+
+    __tablename__ = "job_referrers"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    job_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Share link: /jobs/{slug}?ref={token}
+    token: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
+    # NULL when someone recommended a candidate from the public page.
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 class JobSyncEvent(Base):
     __tablename__ = "job_sync_events"
 

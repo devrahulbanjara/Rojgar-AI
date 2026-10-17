@@ -25,7 +25,7 @@ from app.shared.enums import ApplicationStage, SyncAction, SyncStatus
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
-    from app.modules.jobs.models import Job
+    from app.modules.jobs.models import Job, JobReferrer
     from app.modules.resumes.models import Resume
 
 
@@ -78,10 +78,14 @@ class Application(Base):
     shared_linkedin_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     shared_github_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     shared_portfolio_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    # Where the candidate came from: linkedin | facebook | merojob | direct |
-    # other | platform (applied while signed in).
+    # linkedin | facebook | merojob | viber | qr | walk_in | phone | referral |
+    # direct | other (see ApplicationSource).
     source: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="platform", server_default="platform"
+        String(20), nullable=False, default="direct", server_default="direct"
+    )
+    # The person who referred them (source = referral).
+    referrer_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("job_referrers.id", ondelete="SET NULL"), nullable=True, index=True
     )
     consented_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
@@ -118,6 +122,7 @@ class Application(Base):
     user: Mapped[User] = relationship(lazy="joined", foreign_keys=[user_id])
     resume: Mapped[Resume | None] = relationship(lazy="joined")
     job: Mapped[Job] = relationship(lazy="raise")
+    referrer: Mapped[JobReferrer | None] = relationship(lazy="raise")
     review: Mapped[Review | None] = relationship(
         lazy="raise", uselist=False, back_populates="application"
     )
@@ -151,6 +156,17 @@ class Review(Base):
     rank_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     attempts: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
+    )
+    # knockout | extract | full: how far the cost-controlled triage went.
+    triage: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    tokens_in: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    tokens_out: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    cost_npr: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0, server_default="0"
     )
     model: Mapped[str | None] = mapped_column(String(120), nullable=True)
     prompt_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
