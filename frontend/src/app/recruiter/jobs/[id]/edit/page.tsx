@@ -32,7 +32,7 @@ export default function RecruiterEditJobPage() {
     try {
       await updateJob({ id: jobId, ...payload }).unwrap()
       notify.success('Job updated successfully.')
-      router.push('/recruiter/jobs')
+      router.push(`/recruiter/jobs/${jobId}`)
     } catch (error) {
       const parsed = parseApiError(error, {}, 'Failed to update job. Please try again.')
       notify.error(parsed.message)
@@ -123,7 +123,7 @@ export default function RecruiterEditJobPage() {
               key={`edit:${jobId}:${detail.updated_at}`}
               initial={formFromDetail(detail)}
               onSubmit={handleUpdate}
-              onCancel={() => router.push('/recruiter/jobs')}
+              onCancel={() => router.push(`/recruiter/jobs/${jobId}`)}
               isLoading={isUpdating}
               submitLabel="Update Job"
             />
