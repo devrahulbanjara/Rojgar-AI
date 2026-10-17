@@ -180,3 +180,17 @@ def score_applications(job: Job, applications: list[Application]) -> list[float 
             float(prob),
         )
     return results
+
+
+def assert_model_available() -> None:
+    """Fail fast if the ML pre-filter model file is missing.
+
+    Called at startup in production: a missing file previously made every
+    applicant score 100 and be shortlisted. Outside production, missing-model
+    scoring returns None so applications route to human review instead.
+    """
+    if _load_model() is None:
+        raise RuntimeError(
+            f"ML pre-filter model not found at {_MODEL_PATH}. Ship "
+            "ml_bouncer_model.pkl with the image (see Dockerfile)."
+        )

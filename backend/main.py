@@ -42,6 +42,7 @@ from app.modules.recruiter_preferences.router import (
 )
 from app.modules.resume_gap.router import router as resume_gap_router
 from app.modules.resumes.router import router as resumes_router
+from app.modules.shortlisting.ml_bouncer import assert_model_available
 from app.modules.shortlisting.router import router as shortlisting_router
 from app.modules.shortlisting.service import recover_unfinished_shortlisting
 
@@ -62,6 +63,10 @@ async def _run_startup_backlog() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Run startup and shutdown tasks for the FastAPI application lifecycle."""
+    if settings.environment == "prod":
+        # Refuse to serve with a missing ML pre-filter model rather than
+        # silently mis-scoring every application.
+        assert_model_available()
     # vector store — job/candidate search and recruiter chat
     await qdrant_service.initialize()
     # LangGraph runner — job drafting AI

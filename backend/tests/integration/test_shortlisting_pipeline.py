@@ -388,3 +388,16 @@ class TestApplyGuardrailQuarantine:
         row = await db.scalar(select(Application).where(Application.job_id == job.id))
         assert row.ai_review_status == "needs_human_review"
         assert "ai_flag_reason" not in resp.json()["data"]  # candidate never sees it
+
+
+class TestMissingModel:
+    def test_missing_model_never_scores_100(self, monkeypatch):
+        import pytest
+
+        from app.modules.jobs.models import Job
+
+        monkeypatch.setattr(ml_bouncer, "_load_model", lambda: None)
+        apps = [Application(), Application()]
+        assert ml_bouncer.score_applications(Job(), apps) == [None, None]
+        with pytest.raises(RuntimeError):
+            ml_bouncer.assert_model_available()
