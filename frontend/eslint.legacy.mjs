@@ -11,10 +11,8 @@ export const LEGACY_RAW_ELEMENTS = [
   'src/app/\\(auth\\)/signup/page.tsx',
   'src/app/jobs/page.tsx',
   'src/app/page.tsx',
-  'src/app/recruiter/applications/_components/ApplicationsSkeletons.tsx',
   'src/app/recruiter/candidates/\\[application_id\\]/resume/page.tsx',
   'src/app/recruiter/candidates/_components/CandidatesSkeletons.tsx',
-  'src/app/recruiter/candidates/loading.tsx',
   'src/app/recruiter/company/settings/page.tsx',
   'src/app/recruiter/jobs/\\[id\\]/_components/JobPipelineWorkspace.tsx',
   'src/app/recruiter/jobs/\\[id\\]/page.tsx',
@@ -32,9 +30,6 @@ export const LEGACY_RAW_ELEMENTS = [
   'src/app/recruiter/settings/_components/SettingsDangerZone.tsx',
   'src/app/recruiter/settings/_components/WorkspaceCard.tsx',
   'src/app/recruiter/settings/page.tsx',
-  'src/app/recruiter/talent/page.tsx',
-  'src/app/recruiter/team/_components/AuditPanel.tsx',
-  'src/app/recruiter/team/_components/RecruitersPanel.tsx',
   'src/app/recruiter/team/page.tsx',
 ]
 
@@ -65,8 +60,6 @@ export const LEGACY_LUCIDE = [
   'src/app/recruiter/profile/_components/RecruiterIdentityCard.tsx',
   'src/app/recruiter/settings/_components/CommunicationCard.tsx',
   'src/app/recruiter/settings/_components/SettingsDangerZone.tsx',
-  'src/app/recruiter/talent/page.tsx',
-  'src/app/recruiter/team/_components/RecruitersPanel.tsx',
   'src/components/common/AvatarCropModal/AvatarCropModal.tsx',
   'src/components/common/DashboardErrorState.tsx',
   'src/components/common/Toolbar/index.tsx',
@@ -88,6 +81,4 @@ export const LEGACY_SCSS_ROUTES = [
   'src/app/recruiter/settings/_components/SettingsDangerZone.tsx',
   'src/app/recruiter/settings/_components/WorkspaceCard.tsx',
   'src/app/recruiter/settings/page.tsx',
-  'src/app/recruiter/talent/page.tsx',
-  'src/app/recruiter/team/_components/RecruitersPanel.tsx',
 ]
