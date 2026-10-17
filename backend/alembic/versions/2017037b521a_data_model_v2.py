@@ -665,13 +665,14 @@ def downgrade() -> None:
                 WHEN 'draft' THEN 'draft'
                 WHEN 'open' THEN 'active'
                 ELSE 'expired' END)::jobstatus,
-            hiring_completed = (closed_reason = 'hired'),
+            hiring_completed = coalesce(closed_reason = 'hired', false),
             hired_at = CASE WHEN closed_reason = 'hired' THEN closed_at END,
             final_shortlist_completed = (status::text = 'closed'),
             shortlist_status = (CASE WHEN status::text = 'closed'
                 THEN 'completed' ELSE 'not_started' END)::shortliststatus,
             expires_at = CASE
-                WHEN status::text = 'closed' AND closed_reason <> 'hired' THEN closed_at
+                WHEN status::text = 'closed'
+                     AND closed_reason IS DISTINCT FROM 'hired' THEN closed_at
                 ELSE closes_at END
         """
     )
