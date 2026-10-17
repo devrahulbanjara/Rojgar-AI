@@ -27,19 +27,19 @@ export const CAPABILITIES = {
   /** Assistant SSE endpoints (job draft + "Ask about this candidate"). */
   assistant: true,
   /** POST notes on an application. */
-  notes: false,
+  notes: true,
   /** Recruiter can mark an offer as hired (today only the candidate accepts). */
-  markHired: false,
+  markHired: true,
   /** Move a candidate back one stage / mark withdrawn. */
-  withdraw: false,
+  withdraw: true,
   /** Recruiter can edit the invite email before it goes out. */
   editInviteEmail: false,
   /** Question type + required flag stored on the job. */
-  questionTypes: false,
+  questionTypes: true,
   /** job.category / job.employment_type stored by the backend (kept in this browser until then). */
-  jobCategory: false,
+  jobCategory: true,
   /** Recruiter adds a walk-in / phone / referral candidate. */
-  addCandidate: false,
+  addCandidate: true,
 } as const
 
 /** How long a decision's email waits so Undo can cancel it. */
@@ -1570,7 +1570,7 @@ export async function addCandidate(input: QuickAddInput): Promise<{ application_
   form.set('source', input.source)
   if (input.referred_by) form.set('referred_by', input.referred_by)
   if (input.cv) form.set('cv', input.cv)
-  const response = await authedFetch(`${API}/jobs/${input.jobId}/candidates`, {
+  const response = await authedFetch(`${API}/recruiter/v2/jobs/${input.jobId}/candidates`, {
     method: 'POST',
     body: form,
   })
@@ -1601,7 +1601,7 @@ export async function createReferrer(
     link: `${origin()}/jobs/${encodeURIComponent(job.slug)}?src=referral&ref=${encodeURIComponent(token)}`,
   })
   try {
-    const response = await authedFetch(`${API}/jobs/${job.id}/referrers`, {
+    const response = await authedFetch(`${API}/recruiter/v2/jobs/${job.id}/referrers`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(contact),

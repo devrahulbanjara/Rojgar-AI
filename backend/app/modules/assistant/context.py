@@ -1,27 +1,12 @@
 """Everything "Ask about this candidate" is allowed to know, loaded in one place.
 
-This is the only file that reads the hiring data model. When B1's model lands
-(Application.stage + Review + Event), only `load_candidate_context` changes.
-
-What it reads today (all scoped by Job.company_id == the caller's company):
-- applications: id, job_id, status, score, strengths, weaknesses,
-  screening_answers, ai_flag_reason, share_headline_summary
-- jobs: company_id (tenant check), title, requirements[:6] (must-haves),
-  preferred_qualifications[:6] (nice-to-haves)
-- resumes (+ experiences, educations, skills): headline, summary (raw CV text for
-  guest applicants), years_of_experience, experience title/company/dates/bullets,
-  education institution/degree/field, skill names.
-  Contact details (email, phone, links, name) are NOT read; emails/phones that
-  appear inside CV text are redacted before the text leaves this module.
-- candidate_evaluation_scores (scorecards): evaluator_type, evaluator_label,
-  criteria_snapshot labels, scores, notes
-- interviews: start_time, title
-- activity_events (audience="recruiter"): created_at, title, description
-
-B1 mapping: status -> Application.stage; score/strengths/weaknesses ->
-Review.fit/summary/checks (criterion, result, evidence); activity_events ->
-Event (type, payload); scorecards -> Scorecard (ratings per must-have,
-recommendation, notes).
+Scoped by Job.company_id == the caller's company:
+- applications: id, job_id, stage, screening_answers, share_headline_summary
+- jobs: company_id, title, must_haves, nice_to_haves
+- resumes: headline, summary, experiences, educations, skills (PII redacted)
+- reviews: fit, summary, checks (criterion, result, evidence)
+- scorecards: ratings per must-have, recommendation, notes
+- events/activity: timeline of application actions
 """
 
 import uuid
@@ -32,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.modules.activity.models import ActivityEvent
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, Review
 from app.modules.interviews.models import Interview, Scorecard
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
@@ -41,16 +26,14 @@ from app.shared.text_safety import redact_pii
 _MAX_CV_CHARS = 9000
 _MAX_SECTION_CHARS = 3000
 
-# Plain words for the current statuses (RECRUITER_FLOW.md section 5).
 _STAGE_WORDS = {
-    "applied": "New",
+    "new": "New",
     "shortlisted": "Shortlisted",
-    "interview_booked": "Interview (booked)",
-    "interview_completed": "Interview (done)",
+    "interview": "Interview",
     "offer": "Offer",
-    "offer_accepted": "Hired",
-    "offer_declined": "Withdrawn (declined offer)",
+    "hired": "Hired",
     "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
 }
 
 
@@ -68,15 +51,6 @@ class CandidateContext:
     @property
     def cv_available(self) -> bool:
         return bool(self.sections.get("cv", "").strip())
-
-
-def _fit_words(score: int | None) -> str | None:
-    """Score bands from RECRUITER_FLOW.md: >=75 strong, 50-74 possible, <50 weak."""
-    if score is None:
-        return None
-    if score >= 75:
-        return "Strong fit"
-    return "Possible fit" if score >= 50 else "Weak fit"
 
 
 def _cv_text(resume: Resume | None, include_summary: bool) -> str:
@@ -138,12 +112,25 @@ async def load_candidate_context(
         )
     )
 
+    review = await db.scalar(
+        select(Review).where(Review.application_id == application.id)
+    )
+
     review_lines: list[str] = []
-    fit = _fit_words(application.score)
-    if fit:
-        review_lines.append(fit)
-    review_lines += [f"Strength: {s}" for s in application.strengths or []]
-    review_lines += [f"Gap: {w}" for w in application.weaknesses or []]
+    if review:
+        if review.fit:
+            fit_val = review.fit.value if hasattr(review.fit, "value") else str(review.fit)
+            review_lines.append(f"{fit_val.capitalize()} fit")
+        if review.summary:
+            review_lines.append(f"Summary: {review.summary}")
+        for c in review.checks or []:
+            crit = c.get("criterion", "")
+            res = c.get("result", "")
+            quote = c.get("evidence", "")
+            line = f"Check: {crit} → {res}"
+            if quote:
+                line += f" (Quote: \"{quote}\")"
+            review_lines.append(line)
 
     scorecards = (
         await db.scalars(
@@ -194,13 +181,14 @@ async def load_candidate_context(
         for e in reversed(events)
     ]
 
+    stage_key = application.stage.value if hasattr(application.stage, "value") else str(application.stage)
     return CandidateContext(
         application_id=application.id,
         job_title=job.title,
-        stage=_STAGE_WORDS.get(str(application.status.value), "New"),
-        must_haves=list(job.requirements or [])[:6],
-        nice_to_haves=list(job.preferred_qualifications or [])[:6],
-        flag_reason=application.ai_flag_reason,
+        stage=_STAGE_WORDS.get(stage_key, "New"),
+        must_haves=list(job.must_haves or [])[:6],
+        nice_to_haves=list(job.nice_to_haves or [])[:6],
+        flag_reason=review.flag_reason if review else None,
         sections={
             "cv": _cv_text(resume, application.share_headline_summary),
             "answers": _answers_text(application.screening_answers),

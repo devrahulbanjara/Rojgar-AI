@@ -30,7 +30,7 @@ from app.modules.dashboards.home import _resolve_tz
 from app.modules.dashboards.service import _get_company_context
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStatus, JobStatus
+from app.shared.enums import ApplicationStage, JobStatus
 
 Source = Literal[
     "linkedin",
@@ -53,19 +53,18 @@ MIN_WEEKS = 12
 MAX_RANGE_DAYS = 400
 SLOWEST_JOBS = 50
 
-WAITING_STATUSES = (ApplicationStatus.applied,)
+WAITING_STATUSES = (ApplicationStage.new,)
 
 # Furthest stage an application has reached: 0 applied, 1 shortlisted,
 # 2 interviewed, 3 offered, 4 hired. Rejected keeps whatever it reached before.
 STATUS_RANK = {
-    ApplicationStatus.applied: 0,
-    ApplicationStatus.rejected: 0,
-    ApplicationStatus.shortlisted: 1,
-    ApplicationStatus.interview_booked: 1,
-    ApplicationStatus.interview_completed: 2,
-    ApplicationStatus.offer: 3,
-    ApplicationStatus.offer_declined: 3,
-    ApplicationStatus.offer_accepted: 4,
+    ApplicationStage.new: 0,
+    ApplicationStage.rejected: 0,
+    ApplicationStage.withdrawn: 0,
+    ApplicationStage.shortlisted: 1,
+    ApplicationStage.interview: 2,
+    ApplicationStage.offer: 3,
+    ApplicationStage.hired: 4,
 }
 EVENT_RANK = {
     "application_shortlisted": 1,
@@ -131,7 +130,7 @@ class InsightsResponse(BaseModel):
 
 def _status_rank():
     return case(
-        *((Application.status == key, rank) for key, rank in STATUS_RANK.items()),
+        *((Application.stage == key, rank) for key, rank in STATUS_RANK.items()),
         else_=0,
     )
 
@@ -264,7 +263,7 @@ async def _reply_times(
     db: AsyncSession, scope, now: datetime
 ) -> tuple[float | None, list[JobReply]]:
     decisions = _first_decisions()
-    waiting = Application.status.in_(WAITING_STATUSES)
+    waiting = Application.stage.in_(WAITING_STATUSES)
     decided_at = func.coalesce(
         decisions.c.decided_at,
         case((~waiting, Application.updated_at), else_=None),

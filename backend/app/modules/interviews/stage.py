@@ -1,18 +1,16 @@
 """Every application-stage change and timeline write made by interviews.
 
-This is the only file that touches Application.status or the activity feed,
-so B1's change (status -> stage, new Event table) is a one-file merge:
-
-| helper            | today (status / activity)        | after B1 (stage / Event)            |
-|-------------------|----------------------------------|-------------------------------------|
-| can_schedule      | shortlisted/interview_* statuses | stage in {shortlisted, interview}   |
-| on_invited        | activity "interview_invited"     | Event email_sent                    |
-| on_booked         | status interview_booked          | stage interview, Event interview_booked |
-| on_rescheduled    | activity "interview_rescheduled" | Event interview_booked (payload: moved) |
-| on_cancelled      | status back to shortlisted       | stage shortlisted, Event note       |
-| on_done           | status interview_completed       | Event interview_done (stage stays)  |
-| candidate_phone   | application.shared_phone_value   | Person.phone                        |
-| job_must_haves    | job.requirements[:6]             | job.must_haves                      |
+Maps interview scheduling actions to ApplicationStage and Event log:
+| helper            | v2 mapping                          |
+|-------------------|-------------------------------------|
+| can_schedule      | stage in {shortlisted, interview}   |
+| on_invited        | Event email_sent                    |
+| on_booked         | stage interview, Event interview_booked |
+| on_rescheduled    | Event interview_booked (payload: moved) |
+| on_cancelled      | stage shortlisted, Event note       |
+| on_done           | Event interview_done (stage stays)  |
+| candidate_phone   | application.user.phone or shared_phone |
+| job_must_haves    | job.must_haves                      |
 """
 
 from __future__ import annotations
@@ -27,28 +25,47 @@ from app.core.cache import (
     invalidate_company_dashboard_caches,
 )
 from app.modules.activity.service import create_activity_event
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.jobs.models import Job
-from app.shared.enums import ApplicationStatus
-
-_SCHEDULABLE = {
-    ApplicationStatus.shortlisted,
-    ApplicationStatus.interview_booked,
-    ApplicationStatus.interview_completed,
-}
+from app.shared.enums import ApplicationStage, EventType
 
 
 def can_schedule(application: Application) -> bool:
-    return application.status in _SCHEDULABLE
+    return application.stage in {ApplicationStage.shortlisted, ApplicationStage.interview}
 
 
 def candidate_phone(application: Application) -> str | None:
-    return application.shared_phone_value
+    return getattr(getattr(application, "user", None), "phone", None) or application.shared_phone_value
 
 
 def job_must_haves(job: Job) -> list[str]:
-    return [item for item in (job.requirements or []) if item.strip()][:6]
+    return [item for item in (job.must_haves or []) if item.strip()][:6]
+
+
+def _set_stage(
+    db: AsyncSession, application: Application, stage: ApplicationStage
+) -> None:
+    if application.stage != stage:
+        application.stage = stage
+        enqueue_application_sync_event(db, application.id)
+
+
+def _add_event(
+    db: AsyncSession,
+    application_id: uuid.UUID,
+    event_type: EventType,
+    actor_id: uuid.UUID | None = None,
+    payload: dict | None = None,
+) -> None:
+    db.add(
+        ApplicationEvent(
+            application_id=application_id,
+            type=event_type.value if hasattr(event_type, "value") else str(event_type),
+            actor_user_id=actor_id,
+            payload=payload or {},
+        )
+    )
 
 
 async def _event(
@@ -93,15 +110,8 @@ async def _event(
     )
 
 
-def _set_status(
-    db: AsyncSession, application: Application, status: ApplicationStatus
-) -> None:
-    if application.status != status:
-        application.status = status
-        enqueue_application_sync_event(db, application.id)
-
-
 async def on_invited(db, application, job, actor_user_id) -> None:
+    _add_event(db, application.id, EventType.email_sent, actor_user_id, {"subject": f"Interview invite for {job.title}"})
     await _event(
         db,
         application,
@@ -115,7 +125,14 @@ async def on_invited(db, application, job, actor_user_id) -> None:
 
 
 async def on_booked(db, application, job, interview, actor_user_id) -> None:
-    _set_status(db, application, ApplicationStatus.interview_booked)
+    _set_stage(db, application, ApplicationStage.interview)
+    _add_event(
+        db,
+        application.id,
+        EventType.interview_booked,
+        actor_user_id,
+        {"interview_id": str(interview.id), "starts_at": interview.start_time.isoformat()},
+    )
     await _event(
         db,
         application,
@@ -130,7 +147,14 @@ async def on_booked(db, application, job, interview, actor_user_id) -> None:
 
 
 async def on_rescheduled(db, application, job, interview, actor_user_id) -> None:
-    _set_status(db, application, ApplicationStatus.interview_booked)
+    _set_stage(db, application, ApplicationStage.interview)
+    _add_event(
+        db,
+        application.id,
+        EventType.interview_booked,
+        actor_user_id,
+        {"interview_id": str(interview.id), "starts_at": interview.start_time.isoformat(), "moved": True},
+    )
     await _event(
         db,
         application,
@@ -145,7 +169,14 @@ async def on_rescheduled(db, application, job, interview, actor_user_id) -> None
 
 
 async def on_cancelled(db, application, job, interview, actor_user_id) -> None:
-    _set_status(db, application, ApplicationStatus.shortlisted)
+    _set_stage(db, application, ApplicationStage.shortlisted)
+    _add_event(
+        db,
+        application.id,
+        EventType.note,
+        actor_user_id,
+        {"text": f"Interview cancelled by {interview.cancelled_by or 'candidate'}"},
+    )
     await _event(
         db,
         application,
@@ -160,8 +191,13 @@ async def on_cancelled(db, application, job, interview, actor_user_id) -> None:
 
 
 async def on_done(db, application, job, interview, actor_user_id) -> None:
-    if application.status == ApplicationStatus.interview_booked:
-        _set_status(db, application, ApplicationStatus.interview_completed)
+    _add_event(
+        db,
+        application.id,
+        EventType.interview_done,
+        actor_user_id,
+        {"interview_id": str(interview.id)},
+    )
     await _event(
         db,
         application,
