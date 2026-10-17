@@ -14,18 +14,28 @@ export default function CookieBanner() {
 
   // ── On mount: check stored preference ─────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    let stored: string | null = null
+    try {
+      stored = localStorage.getItem(STORAGE_KEY)
+    } catch {
+      stored = null
+    }
     if (!stored) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true)
     }
   }, [])
 
-  const dismiss = (choice: 'accepted' | 'rejected') => {
+  // Only essential cookies exist, so this is a notice, not a consent choice.
+  const dismiss = () => {
     const card = cardRef.current
     if (!card) return
 
-    localStorage.setItem(STORAGE_KEY, choice)
+    try {
+      localStorage.setItem(STORAGE_KEY, 'acknowledged')
+    } catch {
+      // Storage unavailable: the notice simply shows again next visit.
+    }
 
     gsap.to(card, {
       y: 12,
@@ -44,12 +54,12 @@ export default function CookieBanner() {
       className="cookie-banner"
       aria-live="polite"
       role="dialog"
-      aria-label="Cookie preferences"
+      aria-label="Cookie notice"
     >
       {/* Close button */}
       <button
         className="btn btn--icon btn--sm cookie-banner__close"
-        onClick={() => dismiss('rejected')}
+        onClick={dismiss}
         aria-label="Close"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -63,23 +73,20 @@ export default function CookieBanner() {
       </button>
 
       {/* Title */}
-      <h2 className="cookie-banner__title">Cookie preferences</h2>
+      <h2 className="cookie-banner__title">Cookies</h2>
 
       {/* Description */}
       <p className="cookie-banner__desc">
-        We use cookies to improve your experience and analyse site traffic.{' '}
-        <Link href="/privacy" className="cookie-banner__link">
-          Privacy policy
+        We only use essential cookies to keep you signed in.{' '}
+        <Link href="/cookies" className="cookie-banner__link">
+          Cookie policy
         </Link>
       </p>
 
       {/* Actions */}
       <div className="cookie-banner__actions">
-        <button className="btn btn--secondary btn--sm" onClick={() => dismiss('rejected')}>
-          Decline
-        </button>
-        <button className="btn btn--primary btn--sm" onClick={() => dismiss('accepted')}>
-          Accept all
+        <button className="btn btn--primary btn--sm" onClick={dismiss}>
+          OK
         </button>
       </div>
     </div>

@@ -77,10 +77,8 @@ export default function CookiePolicyPage() {
         <main className="legal__content">
           <div className="legal__callout">
             <p>
-              <strong>Summary:</strong> We use essential cookies to make the site work, and optional
-              analytics cookies (only with your consent) to understand how visitors use ConvexHire.
-              You can manage or withdraw cookie consent at any time via the banner or your browser
-              settings.
+              <strong>Summary:</strong> We only use essential cookies that keep you signed in. We do
+              not use analytics, advertising or tracking cookies.
             </p>
           </div>
 
@@ -111,64 +109,29 @@ export default function CookiePolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>ch_session</strong>: Maintains your authenticated session while you are
-                logged in. Expires on browser close.
+                <strong>refresh_token</strong>: Keeps you signed in. HttpOnly (not readable by
+                scripts). Expires after 7 days, or when you log out.
               </li>
               <li>
-                <strong>ch_csrf</strong>: Cross-site request forgery protection token. Expires on
-                browser close.
+                <strong>auth_present</strong>: Tells the site you have a session so it can restore
+                it. Contains no personal data. Cleared on log out.
               </li>
               <li>
-                <strong>cookie-consent</strong>: Stores your cookie consent preference. Persists for
-                12 months.
+                <strong>oauth_state</strong>: Protects Google sign-in against forgery. Set only
+                during Google sign-in and expires within minutes.
+              </li>
+              <li>
+                <strong>cookie-consent</strong> (browser storage, not a cookie): Remembers that you
+                dismissed the cookie notice.
               </li>
             </ul>
 
             <h3 className="legal__section-subtitle">
-              2.2 Analytics Cookies (optional, consent required)
+              2.2 Analytics, Marketing and Tracking Cookies
             </h3>
             <p className="legal__text">
-              These cookies help us understand how visitors interact with the Service so we can
-              improve it. We deploy these{' '}
-              <strong>only after you have given explicit consent</strong> through our cookie banner.
-            </p>
-            <ul className="legal__list">
-              <li>
-                <strong>_ga / _ga_*</strong>: Google Analytics 4. Used to distinguish unique users
-                and sessions. Expires after 2 years.
-              </li>
-              <li>
-                <strong>_gid</strong>: Google Analytics. Distinguishes users. Expires after 24
-                hours.
-              </li>
-              <li>
-                <strong>ch_ab</strong>: Internal A/B testing identifier to measure which UI variant
-                you see. Expires after 30 days.
-              </li>
-            </ul>
-
-            <h3 className="legal__section-subtitle">
-              2.3 Functional Cookies (optional, consent required)
-            </h3>
-            <p className="legal__text">
-              These cookies enable enhanced functionality and personalisation, such as remembering
-              your search filters and preferred language.
-            </p>
-            <ul className="legal__list">
-              <li>
-                <strong>ch_prefs</strong>: Stores your job search preferences (location, salary
-                range). Expires after 90 days.
-              </li>
-              <li>
-                <strong>ch_locale</strong>: Remembers your language preference. Expires after 1
-                year.
-              </li>
-            </ul>
-
-            <h3 className="legal__section-subtitle">2.4 Marketing / Targeting Cookies</h3>
-            <p className="legal__text">
-              We do <strong>not</strong> currently use marketing or advertising cookies. Should this
-              change, we will update this Policy and request fresh consent before deployment.
+              We do <strong>not</strong> use analytics, marketing or advertising cookies. If this
+              changes, we will update this Policy and ask for your consent first.
             </p>
           </section>
 
@@ -179,18 +142,6 @@ export default function CookiePolicyPage() {
               own cookies. These include:
             </p>
             <ul className="legal__list">
-              <li>
-                <strong>Google Analytics</strong>: Analytics (if consent given). Privacy:{' '}
-                <Link
-                  href="https://policies.google.com/privacy"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="legal__link"
-                >
-                  Google Privacy Policy
-                </Link>
-                .
-              </li>
               <li>
                 <strong>LinkedIn / Google OAuth</strong>: Only active if you choose to sign in with
                 those services.
@@ -271,18 +222,6 @@ export default function CookiePolicyPage() {
                 </Link>
                 .
               </li>
-              <li>
-                <strong>Google Analytics opt-out:</strong> Install the{' '}
-                <Link
-                  href="https://tools.google.com/dlpage/gaoptout"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="legal__link"
-                >
-                  Google Analytics Opt-out Browser Add-on
-                </Link>
-                .
-              </li>
             </ul>
           </section>
 
@@ -313,7 +252,7 @@ export default function CookiePolicyPage() {
             <p className="legal__text">For questions about our use of cookies, please contact:</p>
             <ul className="legal__list">
               <li>
-                <strong>Company:</strong> ConvexHire Private Limited (Yet to Register)
+                <strong>Company:</strong> ConvexHire
               </li>
               <li>
                 <strong>Email:</strong> contact@convexhire.rahuldevbanjara.com.np

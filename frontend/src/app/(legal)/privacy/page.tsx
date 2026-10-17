@@ -197,12 +197,11 @@ export default function PrivacyPolicyPage() {
                 research, and candidate search
               </li>
               <li>To transcribe and evaluate interview recordings uploaded by recruiters</li>
-              <li>To process payments for subscriptions</li>
+              <li>To invoice companies on paid plans</li>
               <li>
                 To send you transactional notifications (application updates, password resets)
               </li>
               <li>To send you optional job-alert emails where you have opted in</li>
-              <li>To improve and personalise the Service through analytics</li>
               <li>To prevent fraud, abuse, and security incidents</li>
               <li>To comply with legal obligations under Nepal law</li>
             </ul>
@@ -265,8 +264,10 @@ export default function PrivacyPolicyPage() {
                 recommend reviewing them before applying.
               </li>
               <li>
-                <strong>Service providers:</strong> Trusted sub-processors (hosting, email delivery,
-                payment gateway, analytics) under strict data-processing agreements.
+                <strong>Service providers:</strong> Sub-processors for hosting, storage, email
+                delivery and AI processing (Amazon Web Services, Supabase, Upstash, Qdrant, Groq,
+                Google Gemini, Anthropic via AWS Bedrock, LlamaIndex, Tavily), some of which process
+                data outside Nepal.
               </li>
               <li>
                 <strong>Legal requirements:</strong> When required by a court order, regulatory
@@ -306,8 +307,8 @@ export default function PrivacyPolicyPage() {
                 <strong>Value Added Tax Act 2052 (1995)</strong> of Nepal.
               </li>
               <li>
-                Server logs and analytics data are retained for no more than{' '}
-                <strong>90 days</strong> in anonymised or aggregated form.
+                Server logs are retained for no more than <strong>90 days</strong> in anonymised or
+                aggregated form.
               </li>
             </ul>
           </section>
