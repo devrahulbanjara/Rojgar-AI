@@ -20,7 +20,12 @@ export async function SuggestView({ job, refToken }: { job: PublicJob; refToken?
           {t.suggest.forJob(job.title, job.company.name)}
         </Link>
         <div className="mt-6">
-          <SuggestForm slug={job.slug} companyName={job.company.name} refToken={refToken} />
+          <SuggestForm
+            slug={job.slug}
+            companyName={job.company.name}
+            refToken={refToken}
+            referrer={job.shared_by ?? ''}
+          />
         </div>
       </div>
     </div>

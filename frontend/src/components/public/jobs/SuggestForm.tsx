@@ -23,13 +23,16 @@ export function SuggestForm({
   slug,
   companyName,
   refToken,
+  referrer,
 }: {
   slug: string
   companyName: string
   refToken?: string
+  /** The share link's owner, who is most likely the one suggesting. */
+  referrer: string
 }) {
   const t = useT()
-  const [referrerName, setReferrerName] = useState('')
+  const [referrerName, setReferrerName] = useState(referrer)
   const [referrerPhone, setReferrerPhone] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
