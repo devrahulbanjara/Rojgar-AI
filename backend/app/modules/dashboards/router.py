@@ -16,6 +16,7 @@ from app.modules.dashboards.schemas import (
     RecruiterDashboardAnalyticsResponse,
     RecruiterDashboardResponse,
     RecruiterHomeResponse,
+    RoleCard,
 )
 
 router = APIRouter(prefix="/dashboards", tags=["Dashboards"])
@@ -109,3 +110,13 @@ async def get_recruiter_home(
     """
     data = await home.get_recruiter_home(db, current_user, tz)
     return ResponseBuilder.success(data=data, message="Recruiter home retrieved")
+
+
+@router.get("/recruiter/jobs")
+async def get_recruiter_jobs_overview(
+    current_user: RecruiterPrivileges,
+    db: DbSession,
+) -> UnifiedResponse[list[RoleCard]]:
+    """Every company job with applicant and waiting-work counts (jobs table)."""
+    data = await home.get_recruiter_jobs_overview(db, current_user)
+    return ResponseBuilder.success(data=data, message="Recruiter jobs retrieved")

@@ -47,10 +47,10 @@ export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="w-full max-w-sm justify-start bg-background font-normal text-muted-foreground"
+        className="w-full min-w-0 max-w-sm shrink justify-start bg-background font-normal text-muted-foreground"
       >
         <SearchIcon className="size-4" />
-        <span className="flex-1 text-left">SearchIcon</span>
+        <span className="flex-1 text-left">Search</span>
         <kbd className="hidden rounded border bg-card px-1.5 text-[10px] font-medium sm:inline">
           ⌘K
         </kbd>

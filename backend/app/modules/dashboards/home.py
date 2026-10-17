@@ -73,8 +73,10 @@ async def _interviews_between(
 
 
 async def _role_cards(
-    db: AsyncSession, company_id: uuid.UUID, now: datetime
+    db: AsyncSession, company_id: uuid.UUID, now: datetime, *, everything: bool = False
 ) -> list[RoleCard]:
+    """Per-role counts. Today only wants roles with live work; the jobs list
+    (``everything=True``) wants every role the company has."""
     past_interview = exists().where(
         Interview.application_id == Application.id, Interview.start_time < now
     )
@@ -86,6 +88,16 @@ async def _role_cards(
     def count_if(condition):
         return func.coalesce(func.sum(case((condition, 1), else_=0)), 0)
 
+    today_filter = [
+        Job.hiring_completed.is_(False),
+        or_(
+            Job.status == JobStatus.active,
+            and_(
+                Job.status == JobStatus.expired,
+                Job.expires_at >= now - timedelta(days=CLOSED_ROLE_WINDOW_DAYS),
+            ),
+        ),
+    ]
     rows = await db.execute(
         select(
             Job.id.label("job_id"),
@@ -95,6 +107,7 @@ async def _role_cards(
             Job.location_type,
             Job.created_at,
             Job.expires_at,
+            Job.hiring_completed,
             func.count(Application.id).label("applicants"),
             count_if(Application.status == ApplicationStatus.applied).label(
                 "to_review"
@@ -121,21 +134,14 @@ async def _role_cards(
         )
         .select_from(Job)
         .outerjoin(Application, Application.job_id == Job.id)
-        .where(
-            Job.company_id == company_id,
-            Job.hiring_completed.is_(False),
-            or_(
-                Job.status == JobStatus.active,
-                and_(
-                    Job.status == JobStatus.expired,
-                    Job.expires_at >= now - timedelta(days=CLOSED_ROLE_WINDOW_DAYS),
-                ),
-            ),
-        )
+        .where(Job.company_id == company_id, *([] if everything else today_filter))
         .group_by(Job.id)
     )
 
     cards = [RoleCard(**row._mapping, share_slug=str(row.job_id)) for row in rows.all()]
+    if everything:
+        cards.sort(key=lambda card: card.created_at, reverse=True)
+        return cards
     # Closed roles only matter while something is still waiting on them.
     cards = [
         card
@@ -207,3 +213,13 @@ async def get_recruiter_home(
         drafts=await _draft_roles(db, company_id),
         join_requests=(await _get_join_requests(db, company_id)) if is_admin else [],
     )
+
+
+async def get_recruiter_jobs_overview(
+    db: AsyncSession, current_user: User
+) -> list[RoleCard]:
+    """Every company role with its waiting-work counts, newest first."""
+    company_id, _ = await _get_company_context(db, current_user.id)
+    if company_id is None:
+        return []
+    return await _role_cards(db, company_id, datetime.now(UTC), everything=True)

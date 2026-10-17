@@ -155,3 +155,26 @@ async def test_candidates_cannot_open_recruiter_home(client, db):
     )
 
     assert response.status_code == 403
+
+
+async def test_jobs_overview_lists_every_role_with_counts(client, db):
+    admin, company = await make_recruiter_admin(db)
+    open_job = await make_active_job(db, company.id, title="Open")
+    await _apply(db, open_job, 1)
+    await make_active_job(
+        db,
+        company.id,
+        title="Closed long ago",
+        status=JobStatus.expired,
+        expires_at=NOW - timedelta(days=90),
+    )
+    await make_active_job(db, company.id, title="Draft", status=JobStatus.draft)
+
+    response = await client.get(
+        "/dashboards/recruiter/jobs", headers=auth_headers(admin.id)
+    )
+
+    rows = {row["title"]: row for row in response.json()["data"]}
+    assert set(rows) == {"Open", "Closed long ago", "Draft"}
+    assert rows["Open"]["to_review"] == 1
+    assert rows["Draft"]["applicants"] == 0
