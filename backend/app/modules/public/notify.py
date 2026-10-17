@@ -43,7 +43,7 @@ sender: SmsSender = _log_only
 
 def render(event: NotifyEvent, **ctx: str) -> str:
     """Applicant text; names are cut so it stays one or two SMS."""
-    ctx = {k: v if k == "url" else v[:40] for k, v in ctx.items()}
+    ctx = {k: v if k == "url" else v[:40].rstrip(" .") for k, v in ctx.items()}
     text = _TEXTS[event]["ne"].format(**ctx)
     if len(text) - len(ctx.get("url", "")) <= _MAX_NEPALI_CHARS - 60:
         return text

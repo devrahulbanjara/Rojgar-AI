@@ -51,7 +51,7 @@ export async function PosterView({ job, applyUrl }: { job: PublicJob; applyUrl: 
           {job.location ? <p className="text-lg sm:text-xl">{job.location}</p> : null}
         </header>
 
-        <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start print:grid-cols-[1fr_auto] print:items-start">
+        <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start print:grid-cols-1 print:items-start">
           <div className="flex flex-col gap-5">
             {needs.length ? (
               <section>
@@ -82,18 +82,20 @@ export async function PosterView({ job, applyUrl }: { job: PublicJob; applyUrl: 
             ) : null}
           </div>
 
-          <div className="mx-auto flex w-full max-w-[75mm] flex-col items-center gap-3 text-center sm:w-[75mm] print:w-[75mm]">
-            <div className="w-full rounded-xl border-2 border-black p-2">
+          <div className="mx-auto flex w-full max-w-[75mm] flex-col items-center gap-3 text-center sm:w-[75mm] print:mx-0 print:w-full print:max-w-none print:flex-row print:gap-8 print:text-left">
+            <div className="w-full rounded-xl border-2 border-black p-2 print:w-[85mm] print:shrink-0">
               <PosterQr url={applyUrl} />
             </div>
-            <p className="font-heading text-xl leading-tight font-bold" lang="ne">
+            <div className="flex flex-col gap-3 print:gap-6">
+            <p className="font-heading text-xl leading-tight font-bold print:text-3xl" lang="ne">
               {t.poster.scanNe}
-              <span className="block text-base font-semibold">{t.poster.noAccountNe}</span>
+              <span className="block text-base font-semibold print:text-xl">{t.poster.noAccountNe}</span>
             </p>
-            <p className="font-heading text-xl leading-tight font-bold" lang="en">
+            <p className="font-heading text-xl leading-tight font-bold print:text-3xl" lang="en">
               {t.poster.scanEn}
-              <span className="block text-base font-semibold">{t.poster.noAccountEn}</span>
+              <span className="block text-base font-semibold print:text-xl">{t.poster.noAccountEn}</span>
             </p>
+            </div>
           </div>
         </div>
 

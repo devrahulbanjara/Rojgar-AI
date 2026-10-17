@@ -50,7 +50,7 @@ export function CookieBanner() {
             {t.cookie.details}
           </Link>
         </p>
-        <Button size="sm" onClick={dismiss}>
+        <Button size="sm" className="shrink-0" onClick={dismiss}>
           {t.cookie.ok}
         </Button>
       </div>

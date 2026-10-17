@@ -48,7 +48,7 @@ export const en = {
   nextStep: {
     new: 'The business is looking at applications.',
     shortlisted: 'They will contact you to set an interview.',
-    interview: 'Be on time. Take your citizenship card and CV if you have one.',
+    interview: 'Be on time, with your CV if you have one.',
     interviewDone: 'Interview done. They will get back to you.',
     offer: 'You have an offer. Reply to the business by phone or email.',
     hired: 'Congratulations on the job.',
@@ -101,7 +101,7 @@ export const en = {
       'iPhone HEIC photos can’t be read. Take a screenshot of the photo and upload that, or send a PDF.',
     cvTooBig: (mb: number) => `Use a file under ${mb} MB.`,
     consent: (business: string) =>
-      `We'll share your application with ${business}. AI assists, they decide.`,
+      `We'll share your application with ${business.replace(/\.+$/, '')}. AI assists, they decide.`,
     privacy: 'Privacy',
     submit: 'Send application',
     sentTitle: 'Application sent',

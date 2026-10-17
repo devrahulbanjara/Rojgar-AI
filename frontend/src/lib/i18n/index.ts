@@ -25,24 +25,57 @@ export function pickLocale(saved?: string | null, acceptLanguage?: string | null
   return preferred?.tag.startsWith('ne') ? 'ne' : 'en'
 }
 
-const INTL_LOCALE: Record<Locale, string> = { en: 'en-GB', ne: 'ne-NP' }
+// Browsers often ship without Nepali date data (Intl falls back to US English),
+// so Nepali dates are built here: Devanagari digits, Nepali month names.
+const NE_DIGITS = '०१२३४५६७८९'
+const NE_MONTHS = [
+  'जनवरी',
+  'फेब्रुअरी',
+  'मार्च',
+  'अप्रिल',
+  'मे',
+  'जुन',
+  'जुलाई',
+  'अगस्ट',
+  'सेप्टेम्बर',
+  'अक्टोबर',
+  'नोभेम्बर',
+  'डिसेम्बर',
+]
+const NE_DAYS = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिही', 'शुक्र', 'शनि']
+const neDigits = (n: number | string) => String(n).replace(/\d/g, (d) => NE_DIGITS[Number(d)])
+
+function neTime(date: Date): string {
+  const h = date.getHours()
+  const part = h < 12 ? 'बिहान' : h < 17 ? 'दिउँसो' : 'बेलुका'
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${part} ${neDigits(h % 12 || 12)}:${neDigits(minutes)}`
+}
 
 /** "17 Oct 2026" · "१७ अक्टोबर २०२६" */
 export function formatDate(iso: string, locale: Locale): string {
-  return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+  const date = new Date(iso)
+  if (locale === 'ne') {
+    return `${neDigits(date.getDate())} ${NE_MONTHS[date.getMonth()]} ${neDigits(date.getFullYear())}`
+  }
+  return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(iso))
+  }).format(date)
 }
 
-/** "Tue 21 Oct, 2:00 pm" in the viewer's language. */
+/** "Sun 18 Oct, 11:00" · "आइत १८ अक्टोबर, बिहान ११:००" */
 export function formatDateTime(iso: string, locale: Locale): string {
-  return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+  const date = new Date(iso)
+  if (locale === 'ne') {
+    return `${NE_DAYS[date.getDay()]} ${neDigits(date.getDate())} ${NE_MONTHS[date.getMonth()]}, ${neTime(date)}`
+  }
+  return new Intl.DateTimeFormat('en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
     hour: 'numeric',
     minute: '2-digit',
-  }).format(new Date(iso))
+  }).format(date)
 }
