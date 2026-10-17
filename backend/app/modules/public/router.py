@@ -57,7 +57,7 @@ async def get_public_job(
     "/public/jobs/{slug}/recommend",
     status_code=status.HTTP_201_CREATED,
     summary="Recommend someone for this job (no account needed)",
-    dependencies=[_per_ip(5, 3600)],
+    dependencies=[_per_ip("recommend", 5, 3600)],
 )
 async def recommend(
     slug: str, payload: RecommendRequest, bg_tasks: BackgroundTasks, db: DbSession
