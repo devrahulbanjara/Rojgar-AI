@@ -5,17 +5,12 @@ import re
 import secrets
 from dataclasses import dataclass
 
-from fastapi import HTTPException, status
 from langchain_core.messages import HumanMessage
 from langchain_groq import ChatGroq
 from loguru import logger
 
 from app.core.config import settings
 from app.shared.unicode_text import clean_for_classifier
-
-_DEFAULT_REFUSAL = (
-    "Your input looked unsafe and was blocked by our prompt-injection guardrail."
-)
 
 # Prompt asks Groq to act as a binary classifier for prompt-injection attempts
 # and to emit a JSON object so we can surface the reason to operators and UI.
@@ -113,38 +108,6 @@ class GuardrailResult:
     # True when no trustworthy verdict was produced (classifier unavailable,
     # unparseable reply). `safe` then reflects the caller's fail mode.
     error: bool = False
-
-    @property
-    def refusal_message(self) -> str:
-        """Human-readable message for users when blocked."""
-        if self.reason:
-            return f"{_DEFAULT_REFUSAL} Reason: {self.reason}"
-        return _DEFAULT_REFUSAL
-
-
-class PromptInjectionDetected(HTTPException):
-    """Raised when a user-supplied input is blocked by the input rail."""
-
-    def __init__(
-        self,
-        source: str,
-        reason: str | None = None,
-        score: int = 0,
-    ) -> None:
-        message = f"{_DEFAULT_REFUSAL} Reason: {reason}" if reason else _DEFAULT_REFUSAL
-        super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "prompt_injection_detected",
-                "source": source,
-                "message": message,
-                "reason": reason,
-                "score": score,
-            },
-        )
-        self.source = source
-        self.reason = reason
-        self.score = score
 
 
 def _parse_classifier_output(raw: str) -> tuple[str, int, str]:
@@ -305,16 +268,6 @@ class GuardrailsService:
             score=score,
             reason=reason or None,
         )
-
-    async def assert_input_safe(self, text: str, *, source: str) -> None:
-        """Same as check_input, but raises PromptInjectionDetected on block."""
-        verdict = await self.check_input(text, source=source)
-        if not verdict.safe:
-            raise PromptInjectionDetected(
-                source=verdict.source,
-                reason=verdict.reason,
-                score=verdict.score,
-            )
 
 
 guardrails_service = GuardrailsService()

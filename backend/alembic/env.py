@@ -9,7 +9,6 @@ import app.modules.companies.models
 import app.modules.entitlements.models
 import app.modules.interviews.models
 import app.modules.jobs.models
-import app.modules.profiles.models
 import app.modules.resumes.models  # noqa: F401
 from alembic import context
 from app.core.config import settings

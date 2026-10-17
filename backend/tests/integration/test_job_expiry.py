@@ -10,12 +10,7 @@ from tests.integration.helpers import (
 )
 
 
-async def test_closing_uses_timestamp_and_decides_nothing(db, monkeypatch):
-    async def _noop(*_args, **_kwargs):
-        return None
-
-    monkeypatch.setattr(jobs_service, "process_sync_event", _noop)
-
+async def test_closing_uses_timestamp_and_decides_nothing(db):
     _, company = await make_recruiter_admin(db, email="expiry_admin@example.com")
     now = datetime.now(UTC)
     later_today = await make_active_job(

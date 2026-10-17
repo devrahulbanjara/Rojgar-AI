@@ -51,7 +51,6 @@ from app.modules.interviews.schemas import (
     AgendaItem,
     Availability,
     BookedInterview,
-    CandidateInterviewView,
     InviteResponse,
     PublicSchedule,
     Rating,
@@ -686,49 +685,3 @@ async def submit_scorecard(
 
 
 # --- candidate ---------------------------------------------------------------
-
-
-async def list_candidate_interviews(
-    db: AsyncSession, user_id: uuid.UUID
-) -> list[CandidateInterviewView]:
-    rows = await db.execute(
-        select(Interview, Job, Company, InterviewInvite.id, Application.stage)
-        .join(Application, Application.id == Interview.application_id)
-        .join(Job, Job.id == Application.job_id)
-        .join(Company, Company.id == Job.company_id)
-        .outerjoin(
-            InterviewInvite, InterviewInvite.application_id == Interview.application_id
-        )
-        .where(Application.user_id == user_id)
-        .order_by(Interview.start_time.desc())
-    )
-    return [
-        CandidateInterviewView(
-            id=iv.id,
-            application_id=iv.application_id,
-            start=_local(iv.start_time, iv.timezone),
-            end=_local(iv.end_time, iv.timezone),
-            timezone=iv.timezone,
-            meeting_link=iv.location,
-            status=iv.status,
-            job_id=job.id,
-            job_title=job.title,
-            company_name=company.name,
-            scheduling_url=scheduling_url(make_token(invite_id)) if invite_id else None,
-            stage=stage,
-        )
-        for iv, job, company, invite_id, stage in rows.all()
-    ]
-
-
-def latest_interview_stmt(application_id: uuid.UUID):
-    """The live interview if any, else the most recent one (for candidate panels)."""
-    return (
-        select(Interview)
-        .where(Interview.application_id == application_id)
-        .order_by(
-            (Interview.status == InterviewStatus.booked).desc(),
-            Interview.start_time.desc(),
-        )
-        .limit(1)
-    )

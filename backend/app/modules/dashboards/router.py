@@ -3,69 +3,15 @@ from datetime import date
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import ActiveMember, CurrentUser, DbSession
+from app.core.dependencies import ActiveMember, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.dashboards import home, insights, service
+from app.modules.dashboards import home, insights
 from app.modules.dashboards.schemas import (
-    CandidateDashboardAnalyticsResponse,
-    CandidateDashboardResponse,
-    RecruiterDashboardAnalyticsResponse,
-    RecruiterDashboardResponse,
     RecruiterHomeResponse,
     RoleCard,
 )
 
 router = APIRouter(prefix="/dashboards", tags=["Dashboards"])
-
-
-@router.get("/candidate")
-async def get_candidate_dashboard(
-    current_user: CurrentUser,
-    db: DbSession,
-) -> UnifiedResponse[CandidateDashboardResponse]:
-    """Return the candidate dashboard summary view."""
-    data = await service.get_candidate_dashboard(db, current_user)
-    return ResponseBuilder.success(
-        data=data, message="Candidate dashboard data retrieved"
-    )
-
-
-@router.get("/candidate/analytics")
-async def get_candidate_dashboard_analytics(
-    range_key: str = "30d",
-    current_user: CurrentUser = None,
-    db: DbSession = None,
-) -> UnifiedResponse[CandidateDashboardAnalyticsResponse]:
-    """Return analytics for the candidate dashboard."""
-    data = await service.get_candidate_dashboard_analytics(db, current_user, range_key)
-    return ResponseBuilder.success(
-        data=data, message="Candidate dashboard analytics retrieved"
-    )
-
-
-@router.get("/recruiter")
-async def get_recruiter_dashboard(
-    current_user: ActiveMember,
-    db: DbSession,
-) -> UnifiedResponse[RecruiterDashboardResponse]:
-    """Return the recruiter dashboard summary view."""
-    data = await service.get_recruiter_dashboard(db, current_user)
-    return ResponseBuilder.success(
-        data=data, message="Recruiter dashboard data retrieved"
-    )
-
-
-@router.get("/recruiter/analytics")
-async def get_recruiter_dashboard_analytics(
-    range_key: str = "30d",
-    current_user: ActiveMember = None,
-    db: DbSession = None,
-) -> UnifiedResponse[RecruiterDashboardAnalyticsResponse]:
-    """Return analytics for the recruiter dashboard."""
-    data = await service.get_recruiter_dashboard_analytics(db, current_user, range_key)
-    return ResponseBuilder.success(
-        data=data, message="Recruiter dashboard analytics retrieved"
-    )
 
 
 @router.get("/recruiter/home")

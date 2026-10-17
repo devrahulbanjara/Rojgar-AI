@@ -21,6 +21,7 @@ from app.core.rate_limit import RateLimit, client_ip
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.public import service
 from app.modules.public.schemas import (
+    REF_MAX_LENGTH,
     ApplicationStatusView,
     ApplySource,
     CareersPage,
@@ -48,7 +49,7 @@ def _per_ip(scope: str, times: int, seconds: int, per_email: int | None = None):
 async def get_public_job(
     slug: str,
     db: DbSession,
-    ref: Annotated[str | None, Query(max_length=32)] = None,
+    ref: Annotated[str | None, Query(max_length=REF_MAX_LENGTH)] = None,
 ) -> UnifiedResponse[PublicJob]:
     return ResponseBuilder.success(data=await service.get_public_job(db, slug, ref))
 
@@ -85,7 +86,7 @@ async def apply_as_guest(
     cv: Annotated[UploadFile | None, File()] = None,
     answers: Annotated[str | None, Form(max_length=20000)] = None,
     src: Annotated[ApplySource, Form()] = "direct",
-    ref: Annotated[str | None, Form(max_length=64)] = None,
+    ref: Annotated[str | None, Form(max_length=REF_MAX_LENGTH)] = None,
     turnstile_token: Annotated[str | None, Form(max_length=4096)] = None,
 ) -> UnifiedResponse[GuestApplicationCreated]:
     email = (email or "").strip() or None
@@ -119,14 +120,13 @@ async def apply_as_guest(
 
 @router.post(
     "/public/jobs/{slug}/recommend",
-    summary="Suggest someone you know for a job (texts them the link)",
+    summary="Suggest someone you know: returns their own apply link to forward",
     dependencies=[_per_ip("recommend", 10, 3600)],
 )
 async def recommend(
     slug: str, payload: RecommendRequest, db: DbSession
 ) -> UnifiedResponse[RecommendSent]:
-    await service.recommend(db, slug, payload)
-    return ResponseBuilder.success(data=RecommendSent())
+    return ResponseBuilder.success(data=await service.recommend(db, slug, payload))
 
 
 @router.get(

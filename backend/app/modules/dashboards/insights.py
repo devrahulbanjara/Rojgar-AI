@@ -20,8 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.auth.models import User
-from app.modules.dashboards.home import _resolve_tz
-from app.modules.dashboards.service import _get_company_context
+from app.modules.dashboards.home import _resolve_tz, company_context
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStage, EventType, JobStatus
@@ -362,7 +361,7 @@ async def get_recruiter_insights(
     zone = _resolve_tz(tz)
     start, end = _resolve_range(start, end, zone)
     now = datetime.now(UTC)
-    company_id, _ = await _get_company_context(db, current_user.id)
+    company_id, _ = await company_context(db, current_user.id)
     jobs = await _company_jobs(db, company_id) if company_id else []
 
     if job_id is not None and job_id not in {job.job_id for job in jobs}:

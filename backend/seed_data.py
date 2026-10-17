@@ -3,7 +3,6 @@ import json
 import re
 import secrets
 import uuid
-from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -26,15 +25,8 @@ from app.modules.auth.enums import BusinessStatus, MembershipRole, MembershipSta
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.models import Interview, Scorecard
-from app.modules.jobs.models import Job, JobReferrer, JobSyncEvent
+from app.modules.jobs.models import Job, JobReferrer
 from app.modules.notifications.models import Notification
-from app.modules.profiles.models import (
-    Profile,
-    ProfileEducation,
-    ProfileExperience,
-    ProfileSkill,
-    ResumeImportTask,
-)
 from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.modules.resumes.models import (
     Resume,
@@ -3554,64 +3546,6 @@ LIVE_APPLICATIONS = [
     },
 ]
 
-RESUME_IMPORT_TASK_BLUEPRINTS = [
-    {
-        "candidate_index": 0,
-        "status": "completed",
-        "source_file_name": "aashish-basnet-backend-resume.pdf",
-        "result_data": {
-            "headline": "Senior Backend Engineer | Payments & Platform Reliability",
-            "skills": ["Python", "FastAPI", "PostgreSQL", "Redis", "AWS"],
-            "summary": "Imported successfully with strong alignment to backend platform roles.",
-        },
-    },
-    {
-        "candidate_index": 0,
-        "status": "completed",
-        "source_file_name": "aashish-basnet-merchant-integrations.pdf",
-        "result_data": {
-            "headline": "Senior Backend Engineer | Merchant APIs and Integration Workflows",
-            "skills": [
-                "Python",
-                "FastAPI",
-                "PostgreSQL",
-                "Redis",
-                "API Security",
-                "Webhook Systems",
-            ],
-            "summary": "Imported successfully and used as a targeted resume for merchant integration opportunities.",
-        },
-    },
-    {
-        "candidate_index": 0,
-        "status": "failed",
-        "source_file_name": "aashish-basnet-old-scan.pdf",
-        "error_message": "The uploaded scan was low quality and several sections could not be extracted reliably.",
-    },
-    {
-        "candidate_index": 4,
-        "status": "failed",
-        "source_file_name": "richa-product-designer-resume.pdf",
-        "error_message": "The uploaded file was incomplete and could not be parsed end to end.",
-    },
-    {
-        "candidate_index": 5,
-        "status": "completed",
-        "source_file_name": "nischal-kharel-sre-resume.pdf",
-        "result_data": {
-            "headline": "Staff Platform Engineer | Reliability and Observability",
-            "skills": [
-                "Kubernetes",
-                "Prometheus",
-                "Grafana",
-                "OpenTelemetry",
-                "Python",
-            ],
-            "summary": "Imported successfully with strong alignment to platform reliability openings.",
-        },
-    },
-]
-
 
 def make_user(full_name: str, email: str) -> User:
     return User(
@@ -4238,7 +4172,7 @@ async def seed_company(
 
 
 async def seed_candidate(db, data: dict) -> tuple[User, list[Resume]]:
-    """Seed a single candidate: user + profile + 2 resumes. Returns (user, [resume0, resume1])."""
+    """Seed a single applicant: user + the CVs they applied with. Returns (user, resumes)."""
 
     user = User(
         full_name=data["full_name"],
@@ -4249,49 +4183,6 @@ async def seed_candidate(db, data: dict) -> tuple[User, list[Resume]]:
     )
     db.add(user)
     await db.flush()
-
-    profile = Profile(
-        user_id=user.id,
-        headline=data["headline"],
-        summary=data["summary"],
-        phone=data["phone"],
-        location=data["location"],
-        linkedin_url=data.get("linkedin_url"),
-        github_url=data.get("github_url"),
-        portfolio_url=data.get("portfolio_url"),
-        years_of_experience=data["years_of_experience"],
-        target_roles=data["target_roles"],
-        is_open_to_work=data.get("is_open_to_work", False),
-    )
-    db.add(profile)
-    await db.flush()
-
-    for exp in data["experiences"]:
-        db.add(
-            ProfileExperience(
-                profile_id=profile.id,
-                company_name=exp["company_name"],
-                title=exp["title"],
-                start_date=exp["start_date"],
-                end_date=exp.get("end_date"),
-                description=exp["description"],
-            )
-        )
-
-    for edu in data["educations"]:
-        db.add(
-            ProfileEducation(
-                profile_id=profile.id,
-                institution=edu["institution"],
-                degree=edu.get("degree"),
-                field_of_study=edu.get("field_of_study"),
-                start_date=edu.get("start_date"),
-                end_date=edu.get("end_date"),
-            )
-        )
-
-    for skill_name in data["skills"]:
-        db.add(ProfileSkill(profile_id=profile.id, skill_name=skill_name))
 
     resumes = []
     for variant in data["resume_variants"]:
@@ -4312,7 +4203,7 @@ async def seed_candidate(db, data: dict) -> tuple[User, list[Resume]]:
         resumes.append(resume)
 
     print(
-        f"  ✓ Candidate: {data['full_name']} ({data['email']}) — profile + {len(resumes)} resume(s)"
+        f"  ✓ Candidate: {data['full_name']} ({data['email']}) — {len(resumes)} CV(s)"
     )
     return user, resumes
 
@@ -4944,27 +4835,6 @@ async def seed_preferences_and_activity(
     print(f"  ✓ Activity events: {activity_counter}")
 
 
-async def seed_candidate_import_tasks(
-    db, candidate_users: list[tuple[User, list[Resume]]]
-) -> None:
-    print("\n📄 Seeding resume import task history...")
-
-    for blueprint in RESUME_IMPORT_TASK_BLUEPRINTS:
-        user, _resumes = candidate_users[blueprint["candidate_index"]]
-        db.add(
-            ResumeImportTask(
-                user_id=user.id,
-                status=blueprint["status"],
-                source_file_name=blueprint["source_file_name"],
-                result_data=blueprint.get("result_data"),
-                error_message=blueprint.get("error_message"),
-            )
-        )
-
-    await db.flush()
-    print(f"  ✓ Resume import tasks: {len(RESUME_IMPORT_TASK_BLUEPRINTS)}")
-
-
 async def seed_audit_history(
     db,
     company_contexts: list[dict],
@@ -4976,9 +4846,6 @@ async def seed_audit_history(
     await db.flush()
 
     audit_counter = 0
-    candidate_data_by_email = {
-        candidate["email"]: candidate for candidate in CANDIDATES
-    }
     membership_map: dict[tuple[uuid.UUID, uuid.UUID], CompanyMembership] = {}
     actor_by_user_id: dict[uuid.UUID, User] = {}
 
@@ -4993,112 +4860,6 @@ async def seed_audit_history(
 
     for candidate_user, _resumes in candidate_users:
         actor_by_user_id[candidate_user.id] = candidate_user
-
-    candidate_user_ids = [candidate_user.id for candidate_user, _ in candidate_users]
-    profiles = (
-        (
-            await db.execute(
-                select(Profile).where(Profile.user_id.in_(candidate_user_ids))
-            )
-        )
-        .scalars()
-        .all()
-    )
-    profiles_by_user_id = {profile.user_id: profile for profile in profiles}
-    profile_ids = [profile.id for profile in profiles]
-    profile_experiences_by_profile_id: dict[uuid.UUID, list[ProfileExperience]] = (
-        defaultdict(list)
-    )
-    profile_educations_by_profile_id: dict[uuid.UUID, list[ProfileEducation]] = (
-        defaultdict(list)
-    )
-    profile_skills_by_profile_id: dict[uuid.UUID, list[ProfileSkill]] = defaultdict(
-        list
-    )
-    if profile_ids:
-        for experience in (
-            (
-                await db.execute(
-                    select(ProfileExperience).where(
-                        ProfileExperience.profile_id.in_(profile_ids)
-                    )
-                )
-            )
-            .scalars()
-            .all()
-        ):
-            profile_experiences_by_profile_id[experience.profile_id].append(experience)
-        for education in (
-            (
-                await db.execute(
-                    select(ProfileEducation).where(
-                        ProfileEducation.profile_id.in_(profile_ids)
-                    )
-                )
-            )
-            .scalars()
-            .all()
-        ):
-            profile_educations_by_profile_id[education.profile_id].append(education)
-        for skill in (
-            (
-                await db.execute(
-                    select(ProfileSkill).where(ProfileSkill.profile_id.in_(profile_ids))
-                )
-            )
-            .scalars()
-            .all()
-        ):
-            profile_skills_by_profile_id[skill.profile_id].append(skill)
-
-    resumes = (
-        (await db.execute(select(Resume).where(Resume.user_id.in_(candidate_user_ids))))
-        .scalars()
-        .all()
-    )
-    resume_ids = [resume.id for resume in resumes]
-    resume_experiences_by_resume_id: dict[uuid.UUID, list[ResumeExperience]] = (
-        defaultdict(list)
-    )
-    resume_educations_by_resume_id: dict[uuid.UUID, list[ResumeEducation]] = (
-        defaultdict(list)
-    )
-    resume_skills_by_resume_id: dict[uuid.UUID, list[ResumeSkill]] = defaultdict(list)
-    if resume_ids:
-        for experience in (
-            (
-                await db.execute(
-                    select(ResumeExperience).where(
-                        ResumeExperience.resume_id.in_(resume_ids)
-                    )
-                )
-            )
-            .scalars()
-            .all()
-        ):
-            resume_experiences_by_resume_id[experience.resume_id].append(experience)
-        for education in (
-            (
-                await db.execute(
-                    select(ResumeEducation).where(
-                        ResumeEducation.resume_id.in_(resume_ids)
-                    )
-                )
-            )
-            .scalars()
-            .all()
-        ):
-            resume_educations_by_resume_id[education.resume_id].append(education)
-        for skill in (
-            (
-                await db.execute(
-                    select(ResumeSkill).where(ResumeSkill.resume_id.in_(resume_ids))
-                )
-            )
-            .scalars()
-            .all()
-        ):
-            resume_skills_by_resume_id[skill.resume_id].append(skill)
 
     jobs = (
         (await db.execute(select(Job).order_by(Job.created_at.asc()))).scalars().all()
@@ -5115,15 +4876,6 @@ async def seed_audit_history(
         interview.application_id: interview for interview in interviews
     }
     preferences = (await db.execute(select(RecruiterPreference))).scalars().all()
-    import_tasks = (
-        (
-            await db.execute(
-                select(ResumeImportTask).order_by(ResumeImportTask.created_at.asc())
-            )
-        )
-        .scalars()
-        .all()
-    )
 
     def record(**kwargs) -> None:
         nonlocal audit_counter
@@ -5310,215 +5062,6 @@ async def seed_audit_history(
             request_path=f"/jobs/{deleted_job_id}",
             request_method="DELETE",
         )
-
-    for candidate_index, (candidate_user, resumes) in enumerate(candidate_users):
-        candidate_data = candidate_data_by_email[candidate_user.email]
-        candidate_anchor = NOW - timedelta(days=860 - (candidate_index * 45))
-        queue_user_bootstrap(
-            candidate_user,
-            created_at=candidate_anchor,
-            actor=candidate_user,
-            is_onboarded=False,
-        )
-        record(
-            created_at=candidate_anchor + timedelta(days=1),
-            entity_type="user",
-            entity_id=candidate_user.id,
-            action_type="status_transition",
-            actor=candidate_user,
-            target_user_id=candidate_user.id,
-            before_json={"is_onboarded": False},
-            after_json={"is_onboarded": True},
-            diff_json={"is_onboarded": {"before": False, "after": True}},
-            request_path="/profiles/onboarding",
-            request_method="POST",
-        )
-
-        profile = profiles_by_user_id.get(candidate_user.id)
-        if profile is not None:
-            record(
-                created_at=candidate_anchor + timedelta(days=2),
-                entity_type="profile",
-                entity_id=profile.id,
-                action_type="create",
-                actor=candidate_user,
-                target_user_id=candidate_user.id,
-                after_json=_serialize_audit_entity(profile),
-                request_path="/profiles/me",
-                request_method="POST",
-            )
-            profile_before, profile_after, profile_diff = _build_audit_snapshots(
-                profile,
-                before_overrides={
-                    "headline": None,
-                    "linkedin_url": None,
-                    "github_url": None,
-                    "portfolio_url": None,
-                    "target_roles": [],
-                    "is_open_to_work": False,
-                },
-            )
-            record(
-                created_at=candidate_anchor + timedelta(days=35),
-                entity_type="profile",
-                entity_id=profile.id,
-                action_type="update",
-                actor=candidate_user,
-                target_user_id=candidate_user.id,
-                before_json=profile_before,
-                after_json=profile_after,
-                diff_json=profile_diff,
-                request_path="/profiles/me",
-                request_method="PATCH",
-            )
-
-            profile_experiences = profile_experiences_by_profile_id.get(profile.id, [])
-            for offset, experience in enumerate(profile_experiences):
-                record(
-                    created_at=candidate_anchor + timedelta(days=3, hours=offset),
-                    entity_type="profile_experience",
-                    entity_id=experience.id,
-                    action_type="create",
-                    actor=candidate_user,
-                    target_user_id=candidate_user.id,
-                    parent_entity_type="profile",
-                    parent_entity_id=profile.id,
-                    after_json=_serialize_audit_entity(experience),
-                    request_path="/profiles/me",
-                    request_method="PATCH",
-                )
-
-            profile_educations = profile_educations_by_profile_id.get(profile.id, [])
-            for offset, education in enumerate(profile_educations):
-                record(
-                    created_at=candidate_anchor + timedelta(days=4, hours=offset),
-                    entity_type="profile_education",
-                    entity_id=education.id,
-                    action_type="create",
-                    actor=candidate_user,
-                    target_user_id=candidate_user.id,
-                    parent_entity_type="profile",
-                    parent_entity_id=profile.id,
-                    after_json=_serialize_audit_entity(education),
-                    request_path="/profiles/me",
-                    request_method="PATCH",
-                )
-
-            profile_skills = profile_skills_by_profile_id.get(profile.id, [])
-            for offset, skill in enumerate(profile_skills):
-                record(
-                    created_at=candidate_anchor + timedelta(days=5, hours=offset),
-                    entity_type="profile_skill",
-                    entity_id=skill.id,
-                    action_type="create",
-                    actor=candidate_user,
-                    target_user_id=candidate_user.id,
-                    parent_entity_type="profile",
-                    parent_entity_id=profile.id,
-                    after_json=_serialize_audit_entity(skill),
-                    request_path="/profiles/me",
-                    request_method="PATCH",
-                )
-
-        for resume_index, resume in enumerate(resumes):
-            resume_anchor = candidate_anchor + timedelta(days=6 + (resume_index * 6))
-            record(
-                created_at=resume_anchor,
-                entity_type="resume",
-                entity_id=resume.id,
-                action_type="create",
-                actor=candidate_user,
-                target_user_id=candidate_user.id,
-                after_json=_serialize_audit_entity(resume),
-                request_path="/resumes",
-                request_method="POST",
-            )
-            resume_before, resume_after, resume_diff = _build_audit_snapshots(
-                resume,
-                before_overrides={
-                    "headline": candidate_data["headline"].split("|")[0].strip(),
-                    "summary": "Initial imported resume summary.",
-                },
-            )
-            record(
-                created_at=resume_anchor + timedelta(days=25),
-                entity_type="resume",
-                entity_id=resume.id,
-                action_type="update",
-                actor=candidate_user,
-                target_user_id=candidate_user.id,
-                before_json=resume_before,
-                after_json=resume_after,
-                diff_json=resume_diff,
-                request_path=f"/resumes/{resume.id}",
-                request_method="PATCH",
-            )
-
-            resume_experiences = resume_experiences_by_resume_id.get(resume.id, [])
-            for offset, experience in enumerate(resume_experiences):
-                record(
-                    created_at=resume_anchor + timedelta(hours=offset + 1),
-                    entity_type="resume_experience",
-                    entity_id=experience.id,
-                    action_type="create",
-                    actor=candidate_user,
-                    target_user_id=candidate_user.id,
-                    parent_entity_type="resume",
-                    parent_entity_id=resume.id,
-                    after_json=_serialize_audit_entity(experience),
-                    request_path=f"/resumes/{resume.id}",
-                    request_method="PATCH",
-                )
-
-            resume_educations = resume_educations_by_resume_id.get(resume.id, [])
-            for offset, education in enumerate(resume_educations):
-                record(
-                    created_at=resume_anchor + timedelta(hours=offset + 2),
-                    entity_type="resume_education",
-                    entity_id=education.id,
-                    action_type="create",
-                    actor=candidate_user,
-                    target_user_id=candidate_user.id,
-                    parent_entity_type="resume",
-                    parent_entity_id=resume.id,
-                    after_json=_serialize_audit_entity(education),
-                    request_path=f"/resumes/{resume.id}",
-                    request_method="PATCH",
-                )
-
-            resume_skills = resume_skills_by_resume_id.get(resume.id, [])
-            for offset, skill in enumerate(resume_skills):
-                record(
-                    created_at=resume_anchor + timedelta(hours=offset + 3),
-                    entity_type="resume_skill",
-                    entity_id=skill.id,
-                    action_type="create",
-                    actor=candidate_user,
-                    target_user_id=candidate_user.id,
-                    parent_entity_type="resume",
-                    parent_entity_id=resume.id,
-                    after_json=_serialize_audit_entity(skill),
-                    request_path=f"/resumes/{resume.id}",
-                    request_method="PATCH",
-                )
-
-        if candidate_index == 0 and resumes:
-            deleted_resume_id = uuid.uuid4()
-            deleted_resume_snapshot = _serialize_audit_entity(resumes[0]) | {
-                "id": str(deleted_resume_id),
-                "resume_name": "Legacy Internship Resume",
-            }
-            record(
-                created_at=candidate_anchor + timedelta(days=120),
-                entity_type="resume",
-                entity_id=deleted_resume_id,
-                action_type="delete",
-                actor=candidate_user,
-                target_user_id=candidate_user.id,
-                before_json=deleted_resume_snapshot,
-                request_path=f"/resumes/{deleted_resume_id}",
-                request_method="DELETE",
-            )
 
     for job in jobs:
         actor = actor_by_user_id.get(job.posted_by)
@@ -5758,47 +5301,6 @@ async def seed_audit_history(
             request_path="/recruiter/preferences",
             request_method="PATCH",
         )
-
-    for task_index, task in enumerate(import_tasks):
-        actor = actor_by_user_id.get(task.user_id)
-        task_anchor = NOW - timedelta(days=28 - task_index)
-        create_after = _serialize_audit_entity(task)
-        create_after["status"] = "pending"
-        create_after["error_message"] = None
-        create_after["result_data"] = None
-        record(
-            created_at=task_anchor,
-            entity_type="resume_import_task",
-            entity_id=task.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=task.user_id,
-            after_json=create_after,
-            request_path="/resumes/import",
-            request_method="POST",
-        )
-        if task.status != "pending":
-            task_before, task_after, task_diff = _build_audit_snapshots(
-                task,
-                before_overrides={
-                    "status": "pending",
-                    "error_message": None,
-                    "result_data": None,
-                },
-            )
-            record(
-                created_at=task_anchor + timedelta(minutes=25),
-                entity_type="resume_import_task",
-                entity_id=task.id,
-                action_type="status_transition",
-                actor=actor,
-                target_user_id=task.user_id,
-                before_json=task_before,
-                after_json=task_after,
-                diff_json=task_diff,
-                request_path=f"/resumes/import/{task.id}",
-                request_method="PATCH",
-            )
 
     await db.flush()
     print(f"  Seeded audit logs: {audit_counter}")
@@ -6722,7 +6224,6 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
             job.updated_at = NOW - timedelta(days=12)
             db.add(job)
             await db.flush()
-            db.add(JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT))
             jobs[job_data["key"]] = job
             referrers: dict[str, JobReferrer] = {}
             labels = [q["label"] for q in job.questions]
@@ -7140,16 +6641,8 @@ async def seed() -> None:
                 }
             )
 
-        # Queue all jobs for vector sync
-        for company_context in company_contexts:
-            for job in [
-                *company_context["primary_jobs"],
-                *company_context["extra_jobs"].values(),
-            ]:
-                db.add(JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT))
-
         # --- Candidates ---
-        print("\n👤 Seeding candidates with profiles and resumes...")
+        print("\n👤 Seeding applicants and their CVs...")
         candidate_users: list[tuple[User, list[Resume]]] = []
         for idx, candidate_data in enumerate(CANDIDATES):
             print(
@@ -7165,7 +6658,6 @@ async def seed() -> None:
         await seed_live_pipeline_data(db, candidate_users, company_contexts)
         nontech_contexts, nontech_counts = await seed_nontech_companies(db)
         company_contexts.extend(nontech_contexts)
-        await seed_candidate_import_tasks(db, candidate_users)
         await seed_preferences_and_activity(db, company_contexts)
         await seed_audit_history(db, company_contexts, candidate_users)
         await seed_platform(db, company_contexts)
@@ -7219,9 +6711,6 @@ async def seed() -> None:
         ) or 0
         total_interviews = await db.scalar(select(func.count(Interview.id))) or 0
         total_scorecards = (await db.scalar(select(func.count(Scorecard.id)))) or 0
-        total_import_tasks = (
-            await db.scalar(select(func.count(ResumeImportTask.id)))
-        ) or 0
         total_activity_events = (
             await db.scalar(text("select count(*) from activity_events"))
         ) or 0
@@ -7272,7 +6761,6 @@ async def seed() -> None:
         print(f"  Non-tech            : {nontech_counts}")
         print(f"  Interview bookings  : {total_interviews}")
         print(f"  Interview scorecards: {total_scorecards}")
-        print(f"  Resume import tasks : {total_import_tasks}")
         print(f"  Activity events     : {total_activity_events}")
         print(f"  Notifications       : {total_notifications}")
         print(f"  Audit logs          : {total_audit_logs}")

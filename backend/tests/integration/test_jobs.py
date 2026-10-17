@@ -41,12 +41,6 @@ class TestJobCreate:
 
 
 class TestJobRead:
-    async def test_list_public_jobs_200(self, client):
-        resp = await client.get("/jobs/")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert "items" in body["data"]
-
     async def test_get_job_detail_200(self, client, db):
         admin, company = await make_recruiter_admin(db)
         job = await make_active_job(db, company.id)

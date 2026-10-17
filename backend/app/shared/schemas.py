@@ -8,7 +8,6 @@ from app.core.schemas import BaseSchema
 __all__ = [
     "BaseSchema",
     "DocumentResponseBase",
-    "DocumentUpdateBase",
     "EducationBase",
     "EducationResponse",
     "ExperienceBase",
@@ -66,29 +65,13 @@ class SkillResponse(SkillBase):
 
 
 # ---------------------------------------------------------------------------
-# Shared document base (Profile & Resume share these fields)
+# Resume response fields
 # Defined after the item classes so direct (non-string) references work.
 # ---------------------------------------------------------------------------
 
 
-class DocumentUpdateBase(BaseSchema):
-    """Shared optional fields for updating a Profile or Resume."""
-
-    headline: str | None = Field(default=None, max_length=255)
-    summary: str | None = None
-    phone: str | None = Field(default=None, max_length=30)
-    location: str | None = Field(default=None, max_length=255)
-    linkedin_url: str | None = Field(default=None, max_length=500)
-    github_url: str | None = Field(default=None, max_length=500)
-    portfolio_url: str | None = Field(default=None, max_length=500)
-    years_of_experience: int | None = None
-    experiences: list[ExperienceBase] | None = None
-    educations: list[EducationBase] | None = None
-    skills: list[SkillBase] | None = None
-
-
 class DocumentResponseBase(BaseSchema):
-    """Shared read-only fields for a Profile or Resume response."""
+    """Read-only fields of a parsed CV (resume) response."""
 
     headline: str | None = None
     summary: str | None = None

@@ -8,10 +8,6 @@ from loguru import logger
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.cache import (
-    invalidate_company_dashboard_caches,
-    invalidate_profile_read_caches,
-)
 from app.core.config import settings
 from app.core.database import release_connection
 from app.core.request_context import bind_actor
@@ -50,7 +46,6 @@ from app.shared.normalize import normalize_email
 
 async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
     """Clear profile and company dashboard caches affected by user changes."""
-    await invalidate_profile_read_caches(str(user.id))
 
     company_id = await db.scalar(
         select(CompanyMembership.company_id).where(
@@ -61,7 +56,6 @@ async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
     if company_id is None:
         return
 
-    await invalidate_company_dashboard_caches(db, str(company_id))
     await redis_service.delete(f"company:recruiters:{company_id}")
 
 
@@ -226,7 +220,6 @@ async def set_active_business(
         )
     await activate_membership(db, target)
     await db.commit()
-    await invalidate_profile_read_caches(str(user.id))
     await redis_service.delete(f"company:detail:{user.id}")
     return await build_user_payload(db, user)
 

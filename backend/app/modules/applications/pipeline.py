@@ -20,9 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.cache import (
-    invalidate_candidate_read_caches_for_users,
     invalidate_company_application_caches,
-    invalidate_company_dashboard_caches,
 )
 from app.core.config import settings
 from app.modules.applications import emails
@@ -600,10 +598,6 @@ async def _invalidate(
     db: AsyncSession, company_id, applications: list[Application]
 ) -> None:
     await invalidate_company_application_caches(str(company_id))
-    await invalidate_company_dashboard_caches(db, str(company_id))
-    await invalidate_candidate_read_caches_for_users(
-        {str(a.user_id) for a in applications}
-    )
 
 
 # ---------------------------------------------------------------- notes, flags
@@ -802,7 +796,7 @@ async def quick_add(
             await storage_service.delete_key(cv_key)
         raise
     schedule_review(bg_tasks, application.id, sync_event.id)
-    await invalidate_after_new_application(job, person.id, db)
+    await invalidate_after_new_application(job)
     return QuickAddCreated(application_id=application.id, person_id=person.id)
 
 

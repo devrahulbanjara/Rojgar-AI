@@ -15,6 +15,8 @@ from app.shared.enums import (
 ApplySource = Literal[
     "linkedin", "facebook", "merojob", "viber", "qr", "referral", "direct", "other"
 ]
+# Longest ?ref= token accepted anywhere (share links and suggestion links).
+REF_MAX_LENGTH = 64
 # What an applicant sees; the AI review is never shown.
 Stage = Literal[
     "new", "shortlisted", "interview", "offer", "hired", "not_selected", "withdrawn"
@@ -159,8 +161,11 @@ class RecommendRequest(BaseSchema):
     phone: str = Field(min_length=7, max_length=30)
     note: str | None = Field(default=None, max_length=500)
     # Share-link token from ?ref= on the job page, when there is one.
-    ref: str | None = Field(default=None, max_length=64)
+    ref: str | None = Field(default=None, max_length=REF_MAX_LENGTH)
 
 
 class RecommendSent(BaseSchema):
-    sent: bool = True
+    # True when the suggested person was texted the link (SMS on).
+    sent: bool
+    # The suggested person's own apply link, for the suggester to forward.
+    job_url: str

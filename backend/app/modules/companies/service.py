@@ -4,14 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import (
-    get_company_applicant_user_ids,
-    invalidate_candidate_read_caches_for_users,
-    invalidate_company_dashboard_caches,
     invalidate_company_detail_caches,
     invalidate_job_detail_caches,
 )
 from app.core.swr_cache import swr_get
-from app.infrastructures.redis.service import redis_service
 from app.infrastructures.storage.service import storage_service
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import BusinessStatus, MembershipRole, MembershipStatus
@@ -39,17 +35,12 @@ async def _get_company_job_ids(db: AsyncSession, company_id: str) -> list[str]:
 
 
 async def invalidate_company_content_caches(db: AsyncSession, company_id: str) -> None:
-    """Invalidate company, job, dashboard, and candidate caches for a company."""
+    """Invalidate the company and its job detail caches."""
     await invalidate_company_detail_caches(db, company_id)
-    await invalidate_company_dashboard_caches(db, company_id)
-    await redis_service.delete(f"jobs:company:{company_id}")
 
     job_ids = await _get_company_job_ids(db, company_id)
     for job_id in job_ids:
         await invalidate_job_detail_caches(job_id)
-
-    applicant_user_ids = await get_company_applicant_user_ids(db, company_id)
-    await invalidate_candidate_read_caches_for_users(applicant_user_ids)
 
 
 async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:

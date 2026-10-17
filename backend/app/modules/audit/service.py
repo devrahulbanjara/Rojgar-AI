@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, select
 
 from app.core.request_context import get_request_context
 from app.modules.audit.models import AuditLog
@@ -68,24 +68,6 @@ async def create_custom_audit_log(
     db.add(audit_log)
     await db.flush()
     return audit_log
-
-
-async def list_my_audit_logs(
-    db,
-    user: User,
-    *,
-    limit: int = 50,
-    category: str | None = None,
-) -> list[AuditLogResponse]:
-    """List audit logs where the user is the actor or target."""
-    stmt = select(AuditLog).where(
-        or_(AuditLog.actor_user_id == user.id, AuditLog.target_user_id == user.id)
-    )
-    if category:
-        stmt = stmt.where(AuditLog.category == category)
-    stmt = stmt.order_by(AuditLog.created_at.desc()).limit(limit)
-    result = await db.execute(stmt)
-    return [AuditLogResponse.model_validate(item) for item in result.scalars().all()]
 
 
 async def _get_active_company_membership(db, user_id: uuid.UUID) -> CompanyMembership:

@@ -74,19 +74,3 @@ _BIAS_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         ),
     ),
 )
-
-
-def flag_bias(text: str) -> list[str]:
-    """Return categories of protected-class language detected in `text`.
-
-    Heuristic, not exhaustive. Catches obvious explicit-bias phrasing in
-    recruiter-facing drafts (rejection emails, screening notes). Empty list
-    means no categories matched — not a guarantee that the text is unbiased.
-    """
-    if not text:
-        return []
-    hits: list[str] = []
-    for category, pattern in _BIAS_PATTERNS:
-        if pattern.search(text):
-            hits.append(category)
-    return hits

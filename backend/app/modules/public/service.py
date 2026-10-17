@@ -19,7 +19,6 @@ from sqlalchemy.orm import selectinload
 
 from app.core.cache import (
     invalidate_company_application_caches,
-    invalidate_company_dashboard_caches,
     invalidate_job_detail_caches,
 )
 from app.core.config import settings
@@ -42,7 +41,6 @@ from app.modules.auth.models import OAuthAccount, RefreshToken, User
 from app.modules.companies.models import Company
 from app.modules.interviews.models import Interview, InterviewStatus
 from app.modules.jobs.models import Job, JobReferrer
-from app.modules.profiles.models import Profile
 from app.modules.public import cv_text
 from app.modules.public.models import JobSuggestion, MagicLinkToken
 from app.modules.public.notify import notify_applicant
@@ -59,6 +57,7 @@ from app.modules.public.schemas import (
     PublicJobSummary,
     PublicQuestion,
     RecommendRequest,
+    RecommendSent,
     ScreeningAnswer,
     Stage,
     WithdrawResult,
@@ -455,17 +454,6 @@ async def submit_guest_application(
         )
     contact = cv_text.prefill_from_text(text)
 
-    profile = await db.scalar(select(Profile).where(Profile.user_id == user.id))
-    if profile is None:
-        db.add(
-            Profile(
-                user_id=user.id,
-                phone=phone,
-                linkedin_url=contact["linkedin_url"],
-                github_url=contact["github_url"],
-                portfolio_url=contact["portfolio_url"],
-            )
-        )
     # No CV, no resume row: the application is reviewed on the answers alone.
     resume = None
     if cv_file is not None:
@@ -526,7 +514,7 @@ async def submit_guest_application(
     if parse_first:
         bg_tasks.add_task(enrich_guest_cv, resume.id, application.id, cv_file.data)
     schedule_review(bg_tasks, application.id, sync_event.id, review=not parse_first)
-    await invalidate_after_new_application(job, user.id, db)
+    await invalidate_after_new_application(job)
 
     sent = await _send_status_link(
         phone=phone, email=email, job=job, application_id=application.id, again=False
@@ -577,10 +565,17 @@ async def _referrer_for_suggestion(
 # ---------------------------------------------------------------- suggest someone
 
 
-async def recommend(db: AsyncSession, slug: str, payload: RecommendRequest) -> None:
-    """Store a suggestion and text the suggested person the job link.
+def _suggestion_url(job: Job, token: str) -> str:
+    return f"{settings.frontend_url}/jobs/{job.slug}?src=referral&ref={token}"
 
-    Suggesting the same number twice for a job is accepted but texts once.
+
+async def recommend(
+    db: AsyncSession, slug: str, payload: RecommendRequest
+) -> RecommendSent:
+    """Store a suggestion and return the suggested person's own apply link.
+
+    The person is texted the link when SMS is on. Suggesting the same number
+    twice for a job returns the same link and texts once.
     """
     job = await _load_open_job(db, slug)
     phone = normalize_mobile(payload.phone)
@@ -610,12 +605,12 @@ async def recommend(db: AsyncSession, slug: str, payload: RecommendRequest) -> N
         )
 
     already = await db.scalar(
-        select(JobSuggestion.id).where(
+        select(JobSuggestion.token).where(
             JobSuggestion.job_id == job.id, JobSuggestion.phone == phone
         )
     )
     if already is not None:
-        return
+        return RecommendSent(sent=False, job_url=_suggestion_url(job, already))
     if referrer_phone:
         since = _now() - timedelta(days=1)
         today = await db.scalar(
@@ -647,10 +642,15 @@ async def recommend(db: AsyncSession, slug: str, payload: RecommendRequest) -> N
         await db.commit()
     except IntegrityError:
         await db.rollback()  # the same person was suggested a moment ago
-        return
+        token = await db.scalar(
+            select(JobSuggestion.token).where(
+                JobSuggestion.job_id == job.id, JobSuggestion.phone == phone
+            )
+        )
+        return RecommendSent(sent=False, job_url=_suggestion_url(job, token))
 
-    url = f"{settings.frontend_url}/jobs/{job.slug}?src=referral&ref={token}"
-    await notify_applicant(
+    url = _suggestion_url(job, token)
+    sent = await notify_applicant(
         phone,
         "suggested",
         referrer=referrer_name,
@@ -658,6 +658,7 @@ async def recommend(db: AsyncSession, slug: str, payload: RecommendRequest) -> N
         job=job.title,
         url=url,
     )
+    return RecommendSent(sent=sent, job_url=url)
 
 
 async def enrich_guest_cv(
@@ -672,12 +673,7 @@ async def enrich_guest_cv(
     from app.infrastructures.resume_extraction.service import (
         resume_extraction_service,
     )
-    from app.modules.profiles.ai_import_schemas import ImportedCandidateDocument
-    from app.modules.profiles.ai_import_service import (
-        _build_data_schema,
-        _to_resume_update,
-    )
-    from app.modules.resumes.service import update_resume
+    from app.modules.resumes.parse import ParsedCv, apply_parsed_cv, extraction_schema
     from app.modules.review.service import review_application
 
     upload = UploadFile(
@@ -686,17 +682,14 @@ async def enrich_guest_cv(
         headers=Headers({"content-type": "application/pdf"}),
     )
     try:
-        data = await resume_extraction_service.extract_structured(
+        parsed = await resume_extraction_service.extract_structured(
             file=upload,
-            data_schema=_build_data_schema(),
-            output_model=ImportedCandidateDocument,
+            data_schema=extraction_schema(),
+            output_model=ParsedCv,
         )
         async with AsyncSessionLocal() as db:
-            resume = await db.get(Resume, resume_id)
-            if resume is not None:
-                owner = await db.get(User, resume.user_id)
-                await update_resume(db, owner, str(resume_id), _to_resume_update(data))
-                await db.commit()
+            await apply_parsed_cv(db, resume_id, parsed)
+            await db.commit()
     except Exception as exc:  # noqa: BLE001 - the raw-text CV is reviewed instead
         logger.warning("CV parsing failed for resume {}: {}", resume_id, exc)
     finally:
@@ -817,7 +810,6 @@ async def withdraw_application(db: AsyncSession, token: str) -> WithdrawResult:
     if cv_key:
         await storage_service.delete_key(cv_key)
     await invalidate_company_application_caches(str(job.company_id))
-    await invalidate_company_dashboard_caches(db, str(job.company_id))
     await invalidate_job_detail_caches(str(job.id))
     return WithdrawResult(withdrawn=True, data_deleted=data_deleted)
 

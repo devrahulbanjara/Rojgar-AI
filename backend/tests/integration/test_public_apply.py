@@ -610,6 +610,13 @@ class TestSuggestSomeone:
         assert suggestion.referrer_name == "Ram Shrestha"
         assert suggestion.referrer_phone == "+9779801111111"
         assert f"ref={suggestion.token}" in texts[0]["text"]
+        # The suggester gets the same personal link back to forward it.
+        first, second = resp.json()["data"], again.json()["data"]
+        assert first["sent"] is True and second["sent"] is False
+        assert first["job_url"] == second["job_url"]
+        assert first["job_url"].endswith(
+            f"/jobs/{job.slug}?src=referral&ref={suggestion.token}"
+        )
 
         applied = await _apply(client, job.slug, src="direct", ref=suggestion.token)
         assert applied.status_code == 201, applied.text

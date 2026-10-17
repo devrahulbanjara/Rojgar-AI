@@ -5,7 +5,6 @@ from uuid import UUID
 from pydantic import Field, field_validator, model_validator
 
 from app.core.schemas import BaseSchema
-from app.modules.activity.schemas import ActivityEventResponse
 from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import (
     ApplicationSource,
@@ -18,20 +17,6 @@ from app.shared.enums import (
 )
 
 
-class ApplyRequest(BaseSchema):
-    """Signed-in candidate applies to a job with one of their resumes."""
-
-    job_id: UUID
-    resume_id: UUID
-    share_profile_all: bool = True
-    share_avatar: bool = True
-    share_email: bool = True
-    share_phone: bool = True
-    share_location: bool = True
-    share_links: bool = True
-    share_headline_summary: bool = True
-
-
 class CandidateShareSettings(BaseSchema):
     share_profile_all: bool
     share_avatar: bool
@@ -40,44 +25,6 @@ class CandidateShareSettings(BaseSchema):
     share_location: bool
     share_links: bool
     share_headline_summary: bool
-
-
-class ApplicationResponse(BaseSchema):
-    """One application as its candidate sees it. No AI review fields."""
-
-    id: UUID
-    job_id: UUID
-    user_id: UUID
-    resume_id: UUID | None = None
-    stage: ApplicationStage
-    created_at: datetime
-    updated_at: datetime
-    resume: ResumeResponse | None = None
-    job_title: str | None = None
-    company_name: str | None = None
-    company_logo_url: str | None = None
-    location: str | None = None
-    location_type: LocationType | None = None
-    timeline: list[ActivityEventResponse] = Field(default_factory=list)
-    next_step_hint: str | None = None
-
-
-class CandidateApplicationView(BaseSchema):
-    """Candidate-facing application row."""
-
-    id: UUID
-    stage: ApplicationStage
-    created_at: datetime
-    updated_at: datetime
-    job_id: UUID
-    job_title: str
-    company_name: str
-    company_logo_url: str | None = None
-    location: str | None = None
-    location_type: LocationType
-
-
-# ---------------------------------------------------------------- recruiter
 
 
 class ReferrerRef(BaseSchema):
@@ -137,31 +84,6 @@ class SemanticCandidateSearchResponse(BaseSchema):
     query: str
     total: int
     candidates: list[SemanticCandidateSearchResult] = Field(default_factory=list)
-
-
-class SimilarCandidateResult(BaseSchema):
-    application_id: UUID
-    candidate_id: UUID
-    applicant_name: str
-    applicant_email: str | None = None
-    applicant_avatar_url: str | None = None
-    job_title: str
-    job_id: UUID
-    stage: ApplicationStage
-    fit: str | None = None
-    similarity_score: float
-    applied_at: datetime
-    updated_at: datetime
-
-
-class SimilarCandidatesResponse(BaseSchema):
-    reference_application_id: UUID
-    reference_candidate_name: str
-    total: int
-    candidates: list[SimilarCandidateResult] = Field(default_factory=list)
-
-
-# ---------------------------------------------------------------- /recruiter/v2
 
 
 class StageCounts(BaseSchema):
@@ -385,11 +307,6 @@ class ReferrerResponse(BaseSchema):
     link: str
     applications: int = 0
     created_at: datetime
-
-
-class SourceAnswer(BaseSchema):
-    question: str = Field(max_length=200)
-    answer: str = Field(max_length=2000)
 
 
 class QuickAddForm(BaseSchema):

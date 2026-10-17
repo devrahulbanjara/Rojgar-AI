@@ -134,12 +134,7 @@ class JobListItem(BaseSchema):
     closes_at: datetime | None = None
     closed_at: datetime | None = None
     applications_count: int = 0
-    has_applied: bool = False
     created_at: datetime
-    match_score: float | None = Field(
-        default=None, description="Semantic similarity (0-1)"
-    )
-    is_fallback: bool = False
 
 
 class JobDetailResponse(BaseSchema):
@@ -167,7 +162,6 @@ class JobDetailResponse(BaseSchema):
     applications_count: int = 0
     # Company members only: applications per source.
     source_counts: dict[str, int] | None = None
-    has_applied: bool = False
     created_at: datetime
     updated_at: datetime
     # Criteria that look like protected grounds (Labour Act 2074 s.6). Saving is

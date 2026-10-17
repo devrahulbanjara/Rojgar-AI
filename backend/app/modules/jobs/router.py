@@ -1,6 +1,4 @@
-from typing import Annotated
-
-from fastapi import APIRouter, BackgroundTasks, Query, status
+from fastapi import APIRouter, BackgroundTasks, status
 
 from app.core.dependencies import (
     ActiveMember,
@@ -9,7 +7,7 @@ from app.core.dependencies import (
     OptionalUser,
     UUIDPath,
 )
-from app.core.responses import PaginatedData, ResponseBuilder, UnifiedResponse
+from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.jobs import service
 from app.modules.jobs.schemas import (
     JobCreate,
@@ -19,7 +17,6 @@ from app.modules.jobs.schemas import (
     SuggestMustHavesRequest,
     SuggestMustHavesResponse,
 )
-from app.shared.enums import LocationType
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
@@ -41,39 +38,6 @@ async def create_job(
         data=data,
         message="Job created.",
         status_code=status.HTTP_201_CREATED,
-    )
-
-
-@router.get(
-    "/",
-    summary="Search jobs or get AI-powered recommendations (semantic, highest→lowest score)",
-)
-async def search_jobs(
-    q: Annotated[
-        str | None,
-        Query(description="Free-text search query (embedded and matched semantically)"),
-    ] = None,
-    location: Annotated[
-        str | None, Query(description="Free-text location filter (e.g. 'Kathmandu')")
-    ] = None,
-    location_type: Annotated[LocationType | None, Query()] = None,
-    salary_min: Annotated[int | None, Query(ge=0)] = None,
-    salary_max: Annotated[int | None, Query(ge=0)] = None,
-    page: Annotated[int, Query(ge=1)] = 1,
-    size: Annotated[int, Query(ge=1, le=100)] = 20,
-    user: OptionalUser = None,
-    db: DbSession = None,
-) -> UnifiedResponse[PaginatedData[JobListItem]]:
-    """Search public jobs with optional personalization."""
-    jobs, total = await service.search_jobs(
-        db, user, q, location, location_type, salary_min, salary_max, page, size
-    )
-    return ResponseBuilder.paginated(
-        items=jobs,
-        total=total,
-        page=page,
-        size=size,
-        message="Jobs fetched successfully.",
     )
 
 

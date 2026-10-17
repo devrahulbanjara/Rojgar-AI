@@ -16,14 +16,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.auth.enums import MembershipRole, MembershipStatus
 from app.modules.auth.models import User
-from app.modules.companies.models import CompanyMembership
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.dashboards.schemas import (
     DraftRole,
     HomeInterview,
     RecruiterHomeResponse,
     RoleCard,
 )
-from app.modules.dashboards.service import _get_company_context
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.shared.enums import (
@@ -191,6 +190,25 @@ async def _draft_roles(db: AsyncSession, company_id: uuid.UUID) -> list[DraftRol
     return [DraftRole.model_validate(row._mapping) for row in rows.all()]
 
 
+async def company_context(
+    db: AsyncSession, user_id: uuid.UUID
+) -> tuple[uuid.UUID | None, str]:
+    """The id and name of the business this person is working in now."""
+    row = await db.execute(
+        select(Company.id, Company.name)
+        .join(CompanyMembership, CompanyMembership.company_id == Company.id)
+        .where(
+            CompanyMembership.user_id == user_id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+        .limit(1)
+    )
+    result = row.one_or_none()
+    if result is None:
+        return None, ""
+    return result[0], result[1]
+
+
 async def _is_owner(db: AsyncSession, user_id: uuid.UUID) -> bool:
     role = await db.scalar(
         select(CompanyMembership.role).where(
@@ -205,7 +223,7 @@ async def get_recruiter_home(
     db: AsyncSession, current_user: User, tz: str | None = None
 ) -> RecruiterHomeResponse:
     is_admin = await _is_owner(db, current_user.id)
-    company_id, company_name = await _get_company_context(db, current_user.id)
+    company_id, company_name = await company_context(db, current_user.id)
     first_name = _first_name(current_user.full_name)
 
     if company_id is None:
@@ -249,7 +267,7 @@ async def get_recruiter_jobs_overview(
     db: AsyncSession, current_user: User
 ) -> list[RoleCard]:
     """Every company role with its waiting-work counts, newest first."""
-    company_id, _ = await _get_company_context(db, current_user.id)
+    company_id, _ = await company_context(db, current_user.id)
     if company_id is None:
         return []
     return await _role_cards(db, company_id, datetime.now(UTC), everything=True)

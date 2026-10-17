@@ -22,7 +22,6 @@ from app.core.tasks import sync_daemon_loop
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.infrastructures.storage.router import router as files_router
-from app.modules.activity.router import router as activity_router
 from app.modules.admin.router import router as admin_router
 from app.modules.applications.emails import deliver_overdue
 from app.modules.applications.recruiter_router import router as recruiter_router
@@ -40,12 +39,10 @@ from app.modules.interviews.router import router as interviews_router
 from app.modules.jobs.router import router as jobs_router
 from app.modules.jobs.templates_router import router as job_templates_router
 from app.modules.notifications.router import router as notifications_router
-from app.modules.profiles.router import router as profiles_router
 from app.modules.public.router import router as public_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
-from app.modules.resumes.router import router as resumes_router
 from app.modules.review.ml_rank import assert_model_available
 from app.modules.review.service import recover_pending_reviews
 
@@ -132,17 +129,14 @@ register_exception_handlers(app)  # registers global exception handlers
 # mounts all route modules
 app.include_router(auth_router)
 app.include_router(audit_router)
-app.include_router(activity_router)
 app.include_router(dash_router)
 app.include_router(companies_router)
 app.include_router(businesses_router)
 app.include_router(invites_router)
 app.include_router(admin_router)
 app.include_router(entitlements_router)
-app.include_router(profiles_router)
 app.include_router(public_router)
 app.include_router(files_router)
-app.include_router(resumes_router)
 app.include_router(assistant_router)
 app.include_router(notifications_router)
 app.include_router(recruiter_preferences_router)

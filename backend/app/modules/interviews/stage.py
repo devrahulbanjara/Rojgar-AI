@@ -20,9 +20,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import (
-    invalidate_candidate_read_caches,
     invalidate_company_application_caches,
-    invalidate_company_dashboard_caches,
 )
 from app.modules.activity.service import create_activity_event
 from app.modules.applications.models import Application, ApplicationEvent
@@ -233,6 +231,4 @@ async def refresh_caches(
     db: AsyncSession, application: Application, company_id
 ) -> None:
     """Call after commit."""
-    await invalidate_candidate_read_caches(str(application.user_id))
-    await invalidate_company_dashboard_caches(db, str(company_id))
     await invalidate_company_application_caches(str(company_id), str(application.id))

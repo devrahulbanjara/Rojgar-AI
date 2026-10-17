@@ -2,15 +2,9 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import HTTPException, status
-from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.activity.models import ActivityEvent
-from app.modules.activity.schemas import ActivityEventResponse
-from app.modules.auth.enums import MembershipStatus
-from app.modules.auth.models import User
-from app.modules.companies.models import CompanyMembership
 from app.modules.notifications.service import create_notification
 
 
@@ -62,78 +56,3 @@ async def create_activity_event(
         )
 
     return event
-
-
-async def list_my_activity(
-    db: AsyncSession,
-    user: User,
-    *,
-    limit: int = 25,
-) -> list[ActivityEventResponse]:
-    """Return activity where the user is the subject or the actor."""
-    result = await db.execute(
-        select(ActivityEvent)
-        .where(
-            or_(
-                ActivityEvent.user_id == user.id, ActivityEvent.actor_user_id == user.id
-            )
-        )
-        .order_by(ActivityEvent.created_at.desc())
-        .limit(limit)
-    )
-    return [
-        ActivityEventResponse.model_validate(item) for item in result.scalars().all()
-    ]
-
-
-async def _get_active_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
-    """Return the active company ID for a recruiter, or raise HTTP 403."""
-    result = await db.execute(
-        select(CompanyMembership.company_id).where(
-            CompanyMembership.user_id == user_id,
-            CompanyMembership.status == MembershipStatus.active,
-        )
-    )
-    company_id = result.scalar_one_or_none()
-    if company_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Active company membership required.",
-        )
-    return company_id
-
-
-async def list_company_activity(
-    db: AsyncSession,
-    user: User,
-    *,
-    limit: int = 40,
-) -> list[ActivityEventResponse]:
-    """Return recent activity events scoped to the user's active company."""
-    company_id = await _get_active_company_id(db, user.id)
-    result = await db.execute(
-        select(ActivityEvent)
-        .where(ActivityEvent.company_id == company_id)
-        .order_by(ActivityEvent.created_at.desc())
-        .limit(limit)
-    )
-    return [
-        ActivityEventResponse.model_validate(item) for item in result.scalars().all()
-    ]
-
-
-async def list_application_timeline(
-    db: AsyncSession,
-    *,
-    application_id: str,
-    audience: str | None = None,
-) -> list[ActivityEventResponse]:
-    """Return an application's activity events in chronological order."""
-    stmt = select(ActivityEvent).where(ActivityEvent.application_id == application_id)
-    if audience is not None:
-        stmt = stmt.where(ActivityEvent.audience == audience)
-
-    result = await db.execute(stmt.order_by(ActivityEvent.created_at.asc()))
-    return [
-        ActivityEventResponse.model_validate(item) for item in result.scalars().all()
-    ]

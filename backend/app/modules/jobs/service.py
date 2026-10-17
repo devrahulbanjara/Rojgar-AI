@@ -4,24 +4,18 @@ from datetime import UTC, datetime
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.cache import (
-    get_job_applicant_user_ids,
-    invalidate_candidate_read_caches_for_users,
     invalidate_company_application_caches,
-    invalidate_company_dashboard_caches,
     invalidate_interview_list_caches,
     invalidate_job_detail_caches,
 )
-from app.core.config import settings
-from app.core.database import release_connection
 from app.core.schemas import BaseSchema
 from app.core.swr_cache import swr_get, swr_set
 from app.infrastructures.qdrant.service import qdrant_service
-from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application, ApplicationSyncEvent
 from app.modules.applications.sync import (
     process_sync_event as process_application_sync_event,
@@ -31,7 +25,7 @@ from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 from app.modules.entitlements.service import ensure_can_open_job, on_job_opened
-from app.modules.jobs.models import Job, JobSyncEvent
+from app.modules.jobs.models import Job
 from app.modules.jobs.protected_grounds import CriterionWarning, check_protected_grounds
 from app.modules.jobs.schemas import (
     CompanySnippet,
@@ -43,13 +37,10 @@ from app.modules.jobs.schemas import (
     SuggestMustHavesRequest,
     SuggestMustHavesResponse,
 )
-from app.modules.jobs.sync import process_sync_event
-from app.modules.profiles.models import Profile
 from app.shared.enums import (
     ApplicationStage,
     JobClosedReason,
     JobStatus,
-    LocationType,
     RejectedReason,
     SyncAction,
 )
@@ -71,23 +62,13 @@ def _effective_job_status(job: Job) -> JobStatus:
     return job.status
 
 
-def _should_be_searchable(job: Job) -> bool:
-    return _effective_job_status(job) == JobStatus.open
-
-
 def _warnings_for(job: Job) -> list[CriterionWarning]:
     return check_protected_grounds(job.must_haves, job.nice_to_haves, job.questions)
-
-
-def _background_database_url(db: AsyncSession) -> str:
-    """Return the configured async DB URL for background worker tasks."""
-    return settings.database_url
 
 
 async def _compute_and_store_jd_embedding(job: Job) -> None:
     """Compute Gemini embedding for job description text and store on the row."""
     from app.infrastructures.ai.service import ai_service
-    from app.infrastructures.qdrant.service import qdrant_service
 
     text = qdrant_service._build_job_document(job)
     job.jd_embedding = await ai_service.get_embeddings(text)
@@ -114,22 +95,13 @@ async def close_due_jobs(db: AsyncSession) -> int:
     )
     if not jobs:
         return 0
-    event_ids: list[uuid.UUID] = []
     for job in jobs:
         job.status = JobStatus.closed
         job.closed_reason = JobClosedReason.expired.value
         job.closed_at = job.closes_at
-        event = JobSyncEvent(id=uuid.uuid4(), job_id=job.id, action=SyncAction.UPSERT)
-        db.add(event)
-        event_ids.append(event.id)
     await db.commit()
-    for company_id in {job.company_id for job in jobs}:
-        await redis_service.delete(f"jobs:company:{company_id}")
-        await invalidate_company_dashboard_caches(db, str(company_id))
     for job in jobs:
         await invalidate_job_detail_caches(str(job.id))
-    for event_id in event_ids:
-        await process_sync_event(event_id)
     logger.info("Closed {} job(s) past their closing time.", len(jobs))
     return len(jobs)
 
@@ -137,10 +109,6 @@ async def close_due_jobs(db: AsyncSession) -> int:
 def _job_list_item_from_row(
     job: Job,
     applications_count: int | None = None,
-    *,
-    match_score: float | None = None,
-    is_fallback: bool = False,
-    has_applied: bool = False,
 ) -> JobListItem:
     return JobListItem.model_validate(
         {
@@ -161,16 +129,13 @@ def _job_list_item_from_row(
             "closes_at": job.closes_at,
             "closed_at": job.closed_at,
             "applications_count": int(applications_count or 0),
-            "has_applied": has_applied,
             "created_at": job.created_at,
-            "match_score": match_score,
-            "is_fallback": is_fallback,
         }
     )
 
 
 def _job_detail_response_from_row(
-    job: Job, applications_count: int | None = None, *, has_applied: bool = False
+    job: Job, applications_count: int | None = None
 ) -> JobDetailResponse:
     return JobDetailResponse.model_validate(
         {
@@ -196,29 +161,10 @@ def _job_detail_response_from_row(
             "nice_to_haves": job.nice_to_haves or [],
             "questions": job.questions or [],
             "applications_count": int(applications_count or 0),
-            "has_applied": has_applied,
             "created_at": job.created_at,
             "updated_at": job.updated_at,
         }
     )
-
-
-async def _get_applied_job_ids(
-    db: AsyncSession,
-    user: User | None,
-    job_ids: list[uuid.UUID],
-) -> set[uuid.UUID]:
-    """Return the set of job IDs already applied to by the user."""
-    if not user or not job_ids:
-        return set()
-
-    result = await db.execute(
-        select(Application.job_id).where(
-            Application.user_id == user.id,
-            Application.job_id.in_(job_ids),
-        )
-    )
-    return set(result.scalars().all())
 
 
 async def _get_user_company_id(db: AsyncSession, user: User):
@@ -278,9 +224,6 @@ async def create_job(
     if job.status == JobStatus.open:
         await on_job_opened(db, company_id, job.id)
 
-    # 1. Transactionally write the outbox event alongside the job
-    event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
-    db.add(event)
     await create_custom_audit_log(
         db,
         entity_type="job",
@@ -293,9 +236,6 @@ async def create_job(
     )
     await db.commit()
 
-    # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
-    bg_tasks.add_task(process_sync_event, event.id)
-
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -306,240 +246,10 @@ async def create_job(
     job, applications_count = result.one()
     logger.info(f"Job '{job.title}' created by user {user.id}")
 
-    await redis_service.delete(f"jobs:company:{company_id}")
-    await invalidate_company_dashboard_caches(db, str(company_id))
 
     response = _job_detail_response_from_row(job, applications_count)
     response.warnings = _warnings_for(job)
     return response
-
-
-async def _build_recommendation_query(db: AsyncSession, user: User) -> str | None:
-    """
-    Build a semantically rich query string from the candidate's profile.
-    Target role is repeated at the top for highest embedding weight.
-    """
-    result = await db.execute(
-        select(Profile)
-        .where(Profile.user_id == user.id)
-        .options(
-            selectinload(Profile.experiences),
-            selectinload(Profile.educations),
-            selectinload(Profile.skills),
-        )
-    )
-    profile = result.scalar_one_or_none()
-
-    if not profile:
-        return None
-
-    target_roles: list[str] = profile.target_roles or []
-    top_target = target_roles[0] if target_roles else "Technology Professional"
-    experience_titles = (
-        ", ".join(exp.title for exp in profile.experiences)
-        if profile.experiences
-        else ""
-    )
-    skill_names = (
-        ", ".join(s.skill_name for s in profile.skills) if profile.skills else ""
-    )
-    education_entries = (
-        ", ".join(
-            " ".join(
-                part
-                for part in [edu.degree, edu.field_of_study, edu.institution]
-                if part
-            )
-            for edu in profile.educations
-        )
-        if profile.educations
-        else ""
-    )
-
-    parts = [
-        f"TARGET ROLE (highest priority):\n{top_target}",
-        f"PREFERRED ROLE KEYWORDS:\n{', '.join(target_roles)}",
-    ]
-    if profile.headline:
-        parts.append(f"PROFESSIONAL HEADLINE:\n{profile.headline}")
-    if profile.summary:
-        parts.append(f"PROFESSIONAL SUMMARY:\n{profile.summary}")
-    if experience_titles:
-        parts.append(f"WORK EXPERIENCE:\n{experience_titles}")
-    if education_entries:
-        parts.append(f"EDUCATION:\n{education_entries}")
-    if skill_names:
-        parts.append(f"SKILLS:\n{skill_names}")
-
-    return "\n\n".join(parts)
-
-
-def normalize_search_query(q: str | None) -> str | None:
-    """Lowercase and collapse whitespace so equal searches share one embedding."""
-    if not q:
-        return None
-    normalized = " ".join(q.lower().split())[:300]
-    return normalized or None
-
-
-def _open_job_conditions(
-    location: str | None,
-    location_type: LocationType | None,
-    salary_min: int | None,
-    salary_max: int | None,
-) -> list:
-    """SQL filters for jobs a candidate can see, mirroring the Qdrant filters."""
-    conditions = [
-        Job.status == JobStatus.open,
-        or_(Job.closes_at.is_(None), Job.closes_at > _utcnow()),
-    ]
-    if location:
-        conditions.append(Job.location.icontains(location.strip(), autoescape=True))
-    if location_type:
-        conditions.append(Job.location_type == location_type)
-    if salary_min is not None:
-        conditions.append(Job.salary_max >= salary_min)
-    if salary_max is not None:
-        conditions.append(Job.salary_min <= salary_max)
-    return conditions
-
-
-async def _search_jobs_in_db(
-    db: AsyncSession,
-    user: "User | None",
-    terms: str | None,
-    conditions: list,
-    page: int,
-    size: int,
-) -> tuple[list[JobListItem], int]:
-    """Newest open jobs, optionally matching every word of ``terms``.
-
-    Used for browsing (no query: no embedding needed) and as the fallback
-    when the embedding provider or vector store is unavailable.
-    """
-    where = list(conditions)
-    for word in (terms or "").split()[:6]:
-        where.append(
-            or_(
-                Job.title.icontains(word, autoescape=True),
-                Job.description.icontains(word, autoescape=True),
-                func.array_to_string(Job.must_haves, " ").icontains(
-                    word, autoescape=True
-                ),
-            )
-        )
-    total = await db.scalar(select(func.count(Job.id)).where(*where)) or 0
-    if total == 0:
-        return [], 0
-    rows = await db.execute(
-        select(Job, func.count(Application.id).label("applications_count"))
-        .options(selectinload(Job.company))
-        .outerjoin(Application, Application.job_id == Job.id)
-        .where(*where)
-        .group_by(Job.id)
-        .order_by(Job.created_at.desc(), Job.id)
-        .offset((page - 1) * size)
-        .limit(size)
-    )
-    rows = rows.all()
-    applied_job_ids = await _get_applied_job_ids(db, user, [job.id for job, _ in rows])
-    items = [
-        _job_list_item_from_row(job, count, has_applied=job.id in applied_job_ids)
-        for job, count in rows
-    ]
-    return items, total
-
-
-async def search_jobs(
-    db: AsyncSession,
-    user: "User | None",
-    q: str | None,
-    location: str | None,
-    location_type: LocationType | None,
-    salary_min: int | None,
-    salary_max: int | None,
-    page: int,
-    size: int,
-) -> tuple[list[JobListItem], int]:
-    """
-    Public job search.
-
-    - ``q`` given: semantic search (embedding cached per normalized query).
-    - No ``q``, signed-in candidate with a profile: profile-based recommendations.
-    - Otherwise (browse): newest open jobs straight from Postgres; no embedding.
-    - If the embedding provider or Qdrant fails (quota, outage), the search
-      degrades to keyword matching instead of returning a 500.
-    """
-    conditions = _open_job_conditions(location, location_type, salary_min, salary_max)
-    query = normalize_search_query(q)
-    search_query = query
-    if search_query is None and user:
-        search_query = await _build_recommendation_query(db, user)
-    if search_query is None:
-        return await _search_jobs_in_db(db, user, None, conditions, page, size)
-
-    # Return the pooled connection before the embedding + vector calls; loaded
-    # objects stay usable (expire_on_commit=False).
-    await release_connection(db)
-    try:
-        qdrant_results, total_count = await qdrant_service.search_jobs(
-            query=search_query,
-            location=location.strip() if location else None,
-            location_type=location_type.value if location_type else None,
-            salary_min=salary_min,
-            salary_max=salary_max,
-            page=page,
-            size=size,
-        )
-    except Exception as exc:
-        logger.warning(
-            "Semantic job search unavailable ({}); using keyword search.",
-            type(exc).__name__,
-        )
-        return await _search_jobs_in_db(db, user, query, conditions, page, size)
-
-    if not qdrant_results:
-        return [], 0
-
-    # Batch-fetch the real job rows from Postgres (preserves no ordering)
-    job_ids = [res["job_id"] for res in qdrant_results]
-    applied_job_ids = await _get_applied_job_ids(db, user, job_ids)
-    stmt = (
-        select(Job, func.count(Application.id).label("applications_count"))
-        .options(selectinload(Job.company))
-        .outerjoin(Application, Application.job_id == Job.id)
-        .where(Job.id.in_(job_ids))
-        .group_by(Job.id)
-    )
-    db_result = await db.execute(stmt)
-    job_map = {job.id: (job, app_count) for job, app_count in db_result.all()}
-
-    # Reconstruct the list in Qdrant's exact semantic score order
-    final_jobs: list[JobListItem] = []
-    for res in qdrant_results:
-        row = job_map.get(res["job_id"])
-        if row is None:
-            continue  # ghost vector (job deleted from Postgres but not yet from Qdrant)
-        job, app_count = row
-
-        if not _should_be_searchable(job):
-            continue
-
-        final_jobs.append(
-            _job_list_item_from_row(
-                job,
-                app_count,
-                match_score=round(res["score"], 4),
-                is_fallback=res["is_fallback"],
-                has_applied=job.id in applied_job_ids,
-            )
-        )
-
-    # total_count is Qdrant's match count. Only fall back to counting rows
-    # when this page came back short (i.e. there is no further page).
-    if len(final_jobs) < size:
-        return final_jobs, (page - 1) * size + len(final_jobs)
-    return final_jobs, max(total_count, page * size)
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
@@ -563,9 +273,7 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     return response
 
 
-async def _load_job_detail_response(
-    db: AsyncSession, job_id: str, user: User | None
-) -> JobDetailResponse:
+async def _load_job_detail_response(db: AsyncSession, job_id: str) -> JobDetailResponse:
     """Load a job detail response from the database for cache population."""
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
@@ -581,24 +289,17 @@ async def _load_job_detail_response(
             detail="Job not found.",
         )
     job, applications_count = row
-    applied_job_ids = await _get_applied_job_ids(db, user, [job.id])
-    return _job_detail_response_from_row(
-        job,
-        applications_count,
-        has_applied=job.id in applied_job_ids,
-    )
+    return _job_detail_response_from_row(job, applications_count)
 
 
 async def get_job_detail(
     db: AsyncSession, job_id: str, user: User | None = None
 ) -> JobDetailResponse:
     """Get full job details including description (SWR-cached)."""
-    cache_key = (
-        f"job:detail:{job_id}:candidate:{user.id}" if user else f"job:detail:{job_id}"
-    )
+    cache_key = f"job:detail:{job_id}"
 
     async def _load() -> dict:
-        response = await _load_job_detail_response(db, job_id, user)
+        response = await _load_job_detail_response(db, job_id)
         return response.model_dump(mode="json")
 
     payload = await swr_get(
@@ -662,7 +363,6 @@ async def update_job(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found or you do not have permission.",
         )
-    applicant_user_ids = await get_job_applicant_user_ids(db, job_id)
     old_status = job.status
     update_data = payload.model_dump(exclude_unset=True)
     if update_data.get("status") == JobStatus.open and old_status != JobStatus.open:
@@ -702,8 +402,6 @@ async def update_job(
     if job.status == JobStatus.open and _JD_FIELDS & set(update_data):
         await _compute_and_store_jd_embedding(job)
 
-    event = JobSyncEvent(id=uuid.uuid4(), job_id=job.id, action=SyncAction.UPSERT)
-    db.add(event)
     email_ids: list[uuid.UUID] = []
     closed_out = 0
     if closing:
@@ -743,7 +441,6 @@ async def update_job(
         rereview_ids = await _rereview_new_applications(db, job.id)
     await db.commit()
 
-    bg_tasks.add_task(process_sync_event, event.id)
     if email_ids and "PYTEST_CURRENT_TEST" not in os.environ:
         from app.modules.applications.emails import send_after_undo_window
 
@@ -767,11 +464,8 @@ async def update_job(
     response.warnings = _warnings_for(job)
 
     await invalidate_job_detail_caches(job_id)
-    await redis_service.delete(f"jobs:company:{company_id}")
-    await invalidate_company_dashboard_caches(db, str(company_id))
     await invalidate_company_application_caches(str(company_id))
     await invalidate_interview_list_caches(str(company_id))
-    await invalidate_candidate_read_caches_for_users(applicant_user_ids)
     if published:
         await swr_set(
             f"job:detail:{job_id}", response.model_dump(mode="json"), hard_ttl=3600
@@ -888,7 +582,6 @@ async def delete_job(
     application_ids = list(
         await db.scalars(select(Application.id).where(Application.job_id == job.id))
     )
-    applicant_user_ids = await get_job_applicant_user_ids(db, job_id)
     job_title = job.title  # capture before deletion
     job_company_id = job.company_id
     await create_custom_audit_log(
@@ -910,22 +603,14 @@ async def delete_job(
     for application_sync_event in application_sync_events:
         db.add(application_sync_event)
 
-    # 1. Transactionally write the hard-delete outbox event
-    event = JobSyncEvent(job_id=uuid.UUID(str(job_id)), action=SyncAction.DELETE)
-    db.add(event)
     await db.commit()
 
-    # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
-    bg_tasks.add_task(process_sync_event, event.id)
     for application_sync_event in application_sync_events:
         bg_tasks.add_task(process_application_sync_event, application_sync_event.id)
 
     await invalidate_job_detail_caches(job_id)
-    await redis_service.delete(f"jobs:company:{company_id}")
-    await invalidate_company_dashboard_caches(db, str(company_id))
     await invalidate_company_application_caches(str(company_id))
     await invalidate_interview_list_caches(str(company_id))
-    await invalidate_candidate_read_caches_for_users(applicant_user_ids)
 
     logger.info(f"Job '{job_title}' deleted by user {user.id}")
 

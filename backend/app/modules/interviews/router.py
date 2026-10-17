@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query
 
-from app.core.dependencies import ActiveMember, CurrentUser, DbSession, OptionalUser
+from app.core.dependencies import ActiveMember, DbSession, OptionalUser
 from app.core.rate_limit import RateLimit
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.interviews import service
@@ -13,7 +13,6 @@ from app.modules.interviews.schemas import (
     Availability,
     BookedInterview,
     BookRequest,
-    CandidateInterviewView,
     InviteRequest,
     InviteResponse,
     PublicSchedule,
@@ -99,20 +98,6 @@ async def submit_scorecard(
 ) -> UnifiedResponse[ScorecardView]:
     data = await service.submit_scorecard(db, user, interview_id, payload)
     return ResponseBuilder.success(data=data, message="Scorecard saved.")
-
-
-# --- candidate ---------------------------------------------------------------
-
-
-@router.get("/interviews/my", summary="Signed-in candidate: my interviews")
-async def my_interviews(
-    user: CurrentUser, db: DbSession
-) -> UnifiedResponse[list[CandidateInterviewView]]:
-    data = await service.list_candidate_interviews(db, user.id)
-    return ResponseBuilder.success(data=data)
-
-
-# --- public scheduling link (candidate or recruiter) -------------------------
 
 
 @router.get(

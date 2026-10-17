@@ -13,7 +13,6 @@ import app.modules.entitlements.models
 import app.modules.interviews.models
 import app.modules.jobs.models
 import app.modules.notifications.models
-import app.modules.profiles.models
 import app.modules.public.models
 import app.modules.recruiter_preferences.models
 import app.modules.resumes.models  # noqa: F401

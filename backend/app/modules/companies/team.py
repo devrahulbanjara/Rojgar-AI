@@ -9,7 +9,6 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.cache import invalidate_company_dashboard_caches
 from app.core.config import settings
 from app.infrastructures.redis.service import redis_service
 from app.modules.audit.service import create_custom_audit_log
@@ -199,7 +198,6 @@ async def remove_member(
             await activate_membership(db, other)
     await db.commit()
     await forget_business_caches(person.id)
-    await invalidate_company_dashboard_caches(db, str(business.id))
 
 
 # ---------------------------------------------------------------- invites
@@ -360,5 +358,4 @@ async def accept_invite(db: AsyncSession, token: str, user: User) -> uuid.UUID:
         metadata={"invite_id": str(invite.id), "role": membership.role.value},
     )
     await db.commit()
-    await invalidate_company_dashboard_caches(db, str(invite.company_id))
     return invite.company_id
