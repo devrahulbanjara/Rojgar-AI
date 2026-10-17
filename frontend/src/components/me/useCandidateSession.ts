@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery } from '@/store/services/authApi'
-import { setCredentials, updateAccessToken } from '@/store/slices/authSlice'
+import { clearCredentials, setCredentials, updateAccessToken } from '@/store/slices/authSlice'
 
 export type CandidateSession =
   | { status: 'checking' }
@@ -51,7 +51,9 @@ export function useCandidateSession(): CandidateSession {
     let cancelled = false
     refreshFromCookie()
       .then(async (fresh) => {
-        if (!fresh || cancelled) return
+        if (cancelled) return
+        // No live session: forget the remembered user so nothing acts on it.
+        if (!fresh) return void dispatch(clearCredentials())
         dispatch(updateAccessToken(fresh))
         const me = await getMe()
           .unwrap()

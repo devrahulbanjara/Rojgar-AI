@@ -33,7 +33,7 @@ export function MyApplications() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (session.status === 'signed-out') router.replace('/signin')
+    if (session.status === 'signed-out') router.replace('/login')
     if (session.status !== 'signed-in') return
     let cancelled = false
     publicApi
