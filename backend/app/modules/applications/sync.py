@@ -6,7 +6,11 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
 from app.infrastructures.qdrant.service import qdrant_service
-from app.modules.applications.models import Application, ApplicationSyncEvent
+from app.modules.applications.models import (
+    Application,
+    ApplicationSyncEvent,
+    Review,
+)
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
 from app.shared.enums import SyncAction, SyncStatus
@@ -65,7 +69,10 @@ async def process_sync_event(event_id: uuid.UUID) -> None:
                     await qdrant_service.delete_application(event.application_id)
                 else:
                     application, job = row
-                    await qdrant_service.upsert_application(application, job)
+                    review = await db.scalar(
+                        select(Review).where(Review.application_id == application.id)
+                    )
+                    await qdrant_service.upsert_application(application, job, review)
             elif event.action == SyncAction.DELETE:
                 await qdrant_service.delete_application(event.application_id)
 

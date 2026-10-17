@@ -30,9 +30,12 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    email: Mapped[str] = mapped_column(
-        String(255), nullable=False, unique=True, index=True
+    # NULL for candidates who applied with a phone number only.
+    email: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, unique=True, index=True
     )
+    # E.164 (Nepal default); identifies phone-only candidates.
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True, unique=True)
     password_hash: Mapped[str | None] = mapped_column(String(255))
     avatar_url: Mapped[str | None] = mapped_column(String(255))
     is_email_verified: Mapped[bool] = mapped_column(

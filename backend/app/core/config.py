@@ -129,27 +129,23 @@ class Settings(BaseSettings):
         "gif",
     )
 
-    # AWS Bedrock (shortlisting)
+    # AI review (one per application, rolling). Provider: groq | bedrock | fake.
+    review_provider: str = "groq"
+    # Full evidence review and the cheap first pass (Groq model ids).
+    review_model: str = "openai/gpt-oss-120b"
+    review_cheap_model: str = "openai/gpt-oss-20b"
+    # Bedrock alternative (credentials below).
     aws_access_key_id_shortlisting: str | None = None
     aws_secret_access_key_shortlisting: str | None = None
-    aws_bedrock_shortlisting_model_id: str = "us.anthropic.claude-sonnet-4-6"
-    aws_bedrock_shortlisting_merge_model_id: str = (
-        "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    )
-    aws_bedrock_shortlisting_temperature: float = 0.0
-    aws_bedrock_shortlisting_max_tokens: int = 1200
-    aws_bedrock_shortlisting_merge_max_tokens: int = 600
-    shortlisting_prompt_cache_ttl: str = "5m"
-    shortlisting_web_search_budget_per_persona: int = 1
-    # Number of persona review rounds. 1 = single pass (no critique call);
-    # 2 = one critique-driven reflection round when the critique is not satisfied.
-    shortlisting_reflection_max_iterations: int = 1
-    shortlisting_web_search_max_results: int = 3
-    # Jobs with at most this many applications get an LLM review for everyone;
-    # the ML pre-filter only ranks, it never decides who is seen.
-    shortlisting_full_review_max_applicants: int = 30
-    # Per-application LLM review attempts before routing to a human.
-    shortlisting_max_review_attempts: int = 3
+    review_bedrock_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    # Attempts per review; waits 5, 10, 20 s between them (rate limits).
+    review_max_attempts: int = 4
+    review_retry_delay_seconds: float = 5.0
+    # Cheap pass must-have coverage (0-1) at or above which the full review runs.
+    review_full_review_min_coverage: float = 0.25
+    # Concurrent reviews per process (startup backlog, bursts of applications).
+    review_concurrency: int = 4
+    usd_to_npr: float = 137.0
 
     # Resume import
     resume_import_max_upload_bytes: int = 10 * 1024 * 1024
@@ -159,12 +155,9 @@ class Settings(BaseSettings):
     public_status_token_days: int = 180
     magic_link_ttl_minutes: int = 15
     guest_applications_per_email_per_hour: int = 10
+    recommendations_per_job_per_hour: int = 30
     magic_links_per_email_per_15_min: int = 3
     resume_import_allowed_extensions: tuple[str, ...] = ("pdf",)
-
-    # ML bouncer
-    ml_bouncer_top_percent: int = 20
-    ml_bouncer_min_score: float = 0.4
 
     # Guardrails
     guardrails_enabled: bool = True

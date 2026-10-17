@@ -8,6 +8,7 @@ from pydantic import AwareDatetime, Field, field_validator
 
 from app.core.schemas import BaseSchema
 from app.modules.interviews.scheduling import WEEKDAYS
+from app.shared.enums import ApplicationStage
 
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
@@ -162,3 +163,4 @@ class CandidateInterviewView(BaseSchema):
     job_title: str
     company_name: str
     scheduling_url: str | None
+    stage: ApplicationStage

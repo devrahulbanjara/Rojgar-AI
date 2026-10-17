@@ -4,11 +4,11 @@ import uuid
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.swr_cache import swr_get
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
@@ -25,8 +25,8 @@ from app.modules.dashboards.schemas import (
     JoinRequestItem,
     JoinRequestTimeseriesPoint,
     MembershipBreakdownPoint,
-    OutreachStateBreakdown,
-    PendingDraftItem,
+    FitDistribution,
+    FitDistributionBucket,
     RecruiterAdminAnalyticsStats,
     RecruiterAdminDashboardAnalyticsResponse,
     RecruiterAdminDashboardResponse,
@@ -36,53 +36,42 @@ from app.modules.dashboards.schemas import (
     RecruiterAnalyticsVelocity,
     RecruiterDashboardAnalyticsResponse,
     RecruiterDashboardResponse,
-    RecruiterOutreachSummary,
     RecruiterStats,
-    ScoreDistribution,
-    ScoreDistributionBucket,
     StageCountPoint,
     TeamMemberActivity,
     TodayInterview,
 )
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
-from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
-from app.shared.enums import ApplicationStatus, JobStatus
+from app.shared.enums import ApplicationStage, EventType, Fit, JobStatus, ReviewState
 
-PIPELINE_STEPS: dict[ApplicationStatus, int | None] = {
-    ApplicationStatus.applied: 1,
-    ApplicationStatus.shortlisted: 2,
-    ApplicationStatus.interview_booked: 3,
-    ApplicationStatus.interview_completed: 3,
-    ApplicationStatus.offer: 4,
-    ApplicationStatus.rejected: None,
+PIPELINE_STEPS: dict[ApplicationStage, int | None] = {
+    ApplicationStage.new: 1,
+    ApplicationStage.shortlisted: 2,
+    ApplicationStage.interview: 3,
+    ApplicationStage.offer: 4,
+    ApplicationStage.rejected: None,
 }
 
 ANALYTICS_RANGE_DAYS = {"7d": 7, "30d": 30, "90d": 90}
 
-SHORTLIST_RELATED_STATUSES = {
-    ApplicationStatus.shortlisted,
-    ApplicationStatus.interview_booked,
-    ApplicationStatus.interview_completed,
-    ApplicationStatus.offer,
+SHORTLIST_RELATED_STAGES = {
+    ApplicationStage.shortlisted,
+    ApplicationStage.interview,
+    ApplicationStage.offer,
 }
 
-INTERVIEW_RELATED_STATUSES = {
-    ApplicationStatus.interview_booked,
-    ApplicationStatus.interview_completed,
-    ApplicationStatus.offer,
+INTERVIEW_RELATED_STAGES = {
+    ApplicationStage.interview,
+    ApplicationStage.offer,
 }
 
-CANDIDATE_VISIBLE_APPLICATION_STATUSES = {
-    ApplicationStatus.shortlisted,
-    ApplicationStatus.interview_booked,
-    ApplicationStatus.interview_completed,
-    ApplicationStatus.offer,
-    ApplicationStatus.offer_accepted,
-    ApplicationStatus.offer_declined,
-    ApplicationStatus.rejected,
-}
+# An interview counts as done once an `interview_done` event exists.
+_INTERVIEW_DONE = exists().where(
+    ApplicationEvent.application_id == Application.id,
+    ApplicationEvent.type == EventType.interview_done.value,
+)
 
 
 def _utcnow() -> datetime:
@@ -95,9 +84,9 @@ def _today_utc() -> date:
     return _utcnow().date()
 
 
-def _pipeline_step(status: ApplicationStatus) -> int | None:
-    """Map an application status to its dashboard pipeline step."""
-    return PIPELINE_STEPS.get(status)
+def _pipeline_step(stage: ApplicationStage) -> int | None:
+    """Map an application stage to its dashboard pipeline step."""
+    return PIPELINE_STEPS.get(stage)
 
 
 def _job_days_until_expiry(expires_at: datetime | None) -> int | None:
@@ -105,18 +94,6 @@ def _job_days_until_expiry(expires_at: datetime | None) -> int | None:
     if expires_at is None:
         return None
     return (expires_at.date() - _today_utc()).days
-
-
-def _draft_email_type(application_status: ApplicationStatus) -> str:
-    """Classify an outreach draft as shortlist or rejection related."""
-    if application_status in {
-        ApplicationStatus.shortlisted,
-        ApplicationStatus.interview_booked,
-        ApplicationStatus.interview_completed,
-        ApplicationStatus.offer,
-    }:
-        return "shortlist"
-    return "rejection"
 
 
 def _normalize_range_key(range_key: str) -> str:
@@ -195,9 +172,7 @@ async def _build_candidate_dashboard(
             Company.logo_url.label("company_logo_url"),
             Job.location,
             Job.location_type,
-            Job.status.label("job_status"),
-            Job.expires_at.label("job_expires_at"),
-            Application.status,
+            Application.stage,
             Application.created_at,
             Application.updated_at,
         )
@@ -210,11 +185,6 @@ async def _build_candidate_dashboard(
 
     applications = []
     for row in application_rows.all():
-        visible_status = (
-            row.status
-            if row.status in CANDIDATE_VISIBLE_APPLICATION_STATUSES
-            else ApplicationStatus.applied
-        )
         applications.append(
             ApplicationPipelineItem(
                 id=row.id,
@@ -224,10 +194,10 @@ async def _build_candidate_dashboard(
                 company_logo_url=row.company_logo_url,
                 location=row.location,
                 location_type=row.location_type,
-                status=visible_status,
+                status=row.stage,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
-                pipeline_step=_pipeline_step(visible_status),
+                pipeline_step=_pipeline_step(row.stage),
             )
         )
 
@@ -243,14 +213,15 @@ async def _build_candidate_dashboard(
             Interview.end_time,
             Interview.location,
             Interview.title,
-            Application.status.label("application_status"),
+            Application.stage.label("application_status"),
         )
         .join(Application, Application.id == Interview.application_id)
         .join(Job, Job.id == Application.job_id)
         .join(Company, Company.id == Job.company_id)
         .where(
             Application.user_id == current_user.id,
-            Application.status == ApplicationStatus.interview_booked,
+            Application.stage == ApplicationStage.interview,
+            ~_INTERVIEW_DONE,
         )
         .order_by(Interview.start_time.asc())
         .limit(8)
@@ -310,29 +281,18 @@ async def _build_candidate_dashboard_analytics(
                 func.count(Application.id).label("total_applications"),
                 func.sum(
                     case(
-                        (Application.status == ApplicationStatus.shortlisted, 1),
+                        (Application.stage == ApplicationStage.shortlisted, 1),
                         else_=0,
                     )
                 ).label("shortlisted"),
                 func.sum(
-                    case(
-                        (
-                            Application.status.in_(
-                                [
-                                    ApplicationStatus.interview_booked,
-                                    ApplicationStatus.interview_completed,
-                                ]
-                            ),
-                            1,
-                        ),
-                        else_=0,
-                    )
+                    case((Application.stage == ApplicationStage.interview, 1), else_=0)
                 ).label("interviews"),
                 func.sum(
-                    case((Application.status == ApplicationStatus.offer, 1), else_=0)
+                    case((Application.stage == ApplicationStage.offer, 1), else_=0)
                 ).label("offers"),
                 func.sum(
-                    case((Application.status == ApplicationStatus.rejected, 1), else_=0)
+                    case((Application.stage == ApplicationStage.rejected, 1), else_=0)
                 ).label("rejected"),
             ).where(Application.user_id == current_user.id)
         )
@@ -349,7 +309,7 @@ async def _build_candidate_dashboard_analytics(
     activity_rows = (
         await db.execute(
             select(
-                Application.created_at, Application.updated_at, Application.status
+                Application.created_at, Application.updated_at, Application.stage
             ).where(
                 Application.user_id == current_user.id,
                 (Application.created_at >= start_dt)
@@ -378,16 +338,13 @@ async def _build_candidate_dashboard_analytics(
         if updated_day not in timeseries_by_date:
             continue
 
-        if row.status == ApplicationStatus.shortlisted:
+        if row.stage == ApplicationStage.shortlisted:
             timeseries_by_date[updated_day]["shortlisted"] += 1
-        elif row.status in {
-            ApplicationStatus.interview_booked,
-            ApplicationStatus.interview_completed,
-        }:
+        elif row.stage == ApplicationStage.interview:
             timeseries_by_date[updated_day]["interviews"] += 1
-        elif row.status == ApplicationStatus.offer:
+        elif row.stage == ApplicationStage.offer:
             timeseries_by_date[updated_day]["offers"] += 1
-        elif row.status == ApplicationStatus.rejected:
+        elif row.stage == ApplicationStage.rejected:
             timeseries_by_date[updated_day]["rejected"] += 1
 
     timeseries = [
@@ -406,7 +363,7 @@ async def _build_candidate_dashboard_analytics(
         await db.execute(
             select(Application.created_at, Application.updated_at).where(
                 Application.user_id == current_user.id,
-                Application.status.in_(tuple(SHORTLIST_RELATED_STATUSES)),
+                Application.stage.in_(tuple(SHORTLIST_RELATED_STAGES)),
             )
         )
     ).all()
@@ -414,7 +371,7 @@ async def _build_candidate_dashboard_analytics(
         await db.execute(
             select(Application.created_at, Application.updated_at).where(
                 Application.user_id == current_user.id,
-                Application.status.in_(tuple(INTERVIEW_RELATED_STATUSES)),
+                Application.stage.in_(tuple(INTERVIEW_RELATED_STAGES)),
             )
         )
     ).all()
@@ -422,7 +379,7 @@ async def _build_candidate_dashboard_analytics(
         await db.execute(
             select(Application.created_at, Application.updated_at).where(
                 Application.user_id == current_user.id,
-                Application.status == ApplicationStatus.offer,
+                Application.stage == ApplicationStage.offer,
             )
         )
     ).all()
@@ -477,26 +434,19 @@ async def _get_recruiter_stats(
     stats_stmt = (
         select(
             func.count(func.distinct(Job.id))
-            .filter(Job.status == JobStatus.active)
+            .filter(Job.status == JobStatus.open)
             .label("active_jobs"),
             func.count(func.distinct(Application.id)).label("total_applications"),
             func.count(func.distinct(Application.id))
-            .filter(Application.status == ApplicationStatus.shortlisted)
+            .filter(Application.stage == ApplicationStage.shortlisted)
             .label("shortlisted"),
             func.count(func.distinct(Interview.id))
             .filter(func.date(Interview.start_time) == today)
             .label("interviews_today"),
-            func.count(func.distinct(EmailDraft.id))
-            .filter(
-                EmailDraft.is_sent.is_(False),
-                EmailDraft.is_discarded.is_(False),
-            )
-            .label("pending_drafts"),
         )
         .select_from(Job)
         .outerjoin(Application, Application.job_id == Job.id)
         .outerjoin(Interview, Interview.application_id == Application.id)
-        .outerjoin(EmailDraft, EmailDraft.application_id == Application.id)
         .where(Job.company_id == company_id)
     )
     stats_row = (await db.execute(stats_stmt)).one()
@@ -505,7 +455,6 @@ async def _get_recruiter_stats(
         total_applications=stats_row.total_applications or 0,
         shortlisted=stats_row.shortlisted or 0,
         interviews_today=stats_row.interviews_today or 0,
-        pending_drafts=stats_row.pending_drafts or 0,
     )
 
 
@@ -518,23 +467,23 @@ async def _get_active_jobs(
             Job.id,
             Job.title,
             Job.status,
-            Job.expires_at,
+            Job.closes_at,
             func.count(Application.id).label("total_applications"),
             func.sum(
-                case((Application.status == ApplicationStatus.applied, 1), else_=0)
+                case((Application.stage == ApplicationStage.new, 1), else_=0)
             ).label("applied_count"),
             func.sum(
-                case((Application.status == ApplicationStatus.shortlisted, 1), else_=0)
+                case((Application.stage == ApplicationStage.shortlisted, 1), else_=0)
             ).label("shortlisted_count"),
             func.sum(
-                case((Application.status == ApplicationStatus.rejected, 1), else_=0)
+                case((Application.stage == ApplicationStage.rejected, 1), else_=0)
             ).label("rejected_count"),
         )
         .select_from(Job)
         .outerjoin(Application, Application.job_id == Job.id)
-        .where(Job.company_id == company_id, Job.status == JobStatus.active)
+        .where(Job.company_id == company_id, Job.status == JobStatus.open)
         .group_by(Job.id)
-        .order_by(Job.expires_at.asc().nulls_last(), Job.created_at.asc())
+        .order_by(Job.closes_at.asc().nulls_last(), Job.created_at.asc())
         .limit(5)
     )
 
@@ -543,8 +492,8 @@ async def _get_active_jobs(
             id=row.id,
             title=row.title,
             status=row.status,
-            expires_at=row.expires_at,
-            days_until_expiry=_job_days_until_expiry(row.expires_at),
+            expires_at=row.closes_at,
+            days_until_expiry=_job_days_until_expiry(row.closes_at),
             total_applications=row.total_applications or 0,
             applied_count=row.applied_count or 0,
             shortlisted_count=row.shortlisted_count or 0,
@@ -566,7 +515,7 @@ async def _get_todays_interviews(
             Interview.candidate_email,
             Interview.start_time,
             Job.title.label("job_title"),
-            Application.status.label("application_status"),
+            Application.stage.label("application_status"),
         )
         .join(Application, Application.id == Interview.application_id)
         .join(Job, Job.id == Application.job_id)
@@ -578,47 +527,6 @@ async def _get_todays_interviews(
     )
 
     return [TodayInterview.model_validate(row._mapping) for row in result.all()]
-
-
-async def _get_pending_drafts(
-    db: AsyncSession, company_id: uuid.UUID
-) -> list[PendingDraftItem]:
-    """Return pending outreach drafts for a company."""
-    result = await db.execute(
-        select(
-            EmailDraft.id.label("draft_id"),
-            Application.id.label("application_id"),
-            Application.status.label("application_status"),
-            Application.user_id,
-            User.full_name.label("candidate_name"),
-            Job.title.label("job_title"),
-            EmailDraft.subject,
-        )
-        .join(Application, Application.id == EmailDraft.application_id)
-        .join(User, User.id == Application.user_id)
-        .join(Job, Job.id == Application.job_id)
-        .where(
-            Job.company_id == company_id,
-            EmailDraft.is_sent.is_(False),
-            EmailDraft.is_discarded.is_(False),
-        )
-        .order_by(EmailDraft.updated_at.desc(), EmailDraft.created_at.desc())
-        .limit(10)
-    )
-
-    drafts: list[PendingDraftItem] = []
-    for row in result.all():
-        drafts.append(
-            PendingDraftItem(
-                draft_id=row.draft_id,
-                application_id=row.application_id,
-                candidate_name=row.candidate_name,
-                job_title=row.job_title,
-                email_type=_draft_email_type(row.application_status),
-                subject=row.subject or f"Update on your {row.job_title} application",
-            )
-        )
-    return drafts
 
 
 async def _build_recruiter_dashboard(
@@ -635,11 +543,9 @@ async def _build_recruiter_dashboard(
                 total_applications=0,
                 shortlisted=0,
                 interviews_today=0,
-                pending_drafts=0,
             ),
             active_jobs=[],
             todays_interviews=[],
-            pending_drafts=[],
         )
 
     return RecruiterDashboardResponse(
@@ -648,7 +554,6 @@ async def _build_recruiter_dashboard(
         stats=await _get_recruiter_stats(db, company_id),
         active_jobs=await _get_active_jobs(db, company_id),
         todays_interviews=await _get_todays_interviews(db, company_id),
-        pending_drafts=await _get_pending_drafts(db, company_id),
     )
 
 
@@ -674,31 +579,28 @@ async def _get_recruiter_analytics_stats(
         await db.execute(
             select(
                 func.count(func.distinct(Job.id))
-                .filter(Job.status == JobStatus.active)
+                .filter(Job.status == JobStatus.open)
                 .label("active_jobs"),
                 func.count(func.distinct(Application.id)).label("applications"),
                 func.count(func.distinct(Application.id))
-                .filter(Application.status == ApplicationStatus.shortlisted)
+                .filter(Application.stage == ApplicationStage.shortlisted)
                 .label("shortlisted"),
                 func.count(func.distinct(Application.id))
-                .filter(Application.status == ApplicationStatus.interview_booked)
+                .filter(
+                    Application.stage == ApplicationStage.interview, ~_INTERVIEW_DONE
+                )
                 .label("interview_booked"),
                 func.count(func.distinct(Application.id))
-                .filter(Application.status == ApplicationStatus.interview_completed)
+                .filter(
+                    Application.stage == ApplicationStage.interview, _INTERVIEW_DONE
+                )
                 .label("interview_completed"),
                 func.count(func.distinct(Application.id))
-                .filter(Application.status == ApplicationStatus.offer)
+                .filter(Application.stage == ApplicationStage.offer)
                 .label("offers"),
-                func.count(func.distinct(EmailDraft.id))
-                .filter(
-                    EmailDraft.is_sent.is_(False),
-                    EmailDraft.is_discarded.is_(False),
-                )
-                .label("pending_drafts"),
             )
             .select_from(Job)
             .outerjoin(Application, Application.job_id == Job.id)
-            .outerjoin(EmailDraft, EmailDraft.application_id == Application.id)
             .where(Job.company_id == company_id)
         )
     ).one()
@@ -710,7 +612,6 @@ async def _get_recruiter_analytics_stats(
         interview_booked=stats_row.interview_booked or 0,
         interview_completed=stats_row.interview_completed or 0,
         offers=stats_row.offers or 0,
-        pending_drafts=stats_row.pending_drafts or 0,
     )
 
 
@@ -726,16 +627,14 @@ async def _get_recruiter_applications_timeseries(
         await db.execute(
             select(
                 Application.created_at,
-                Application.updated_at,
-                Application.score,
-                Application.strengths,
-                Application.weaknesses,
+                Review.updated_at.label("reviewed_at"),
+                Review.state.label("review_state"),
             )
             .join(Job, Job.id == Application.job_id)
+            .outerjoin(Review, Review.application_id == Application.id)
             .where(
                 Job.company_id == company_id,
-                (Application.created_at >= start_dt)
-                | (Application.updated_at >= start_dt),
+                (Application.created_at >= start_dt) | (Review.updated_at >= start_dt),
             )
         )
     ).all()
@@ -763,13 +662,10 @@ async def _get_recruiter_applications_timeseries(
         if created_day in timeseries_by_date:
             timeseries_by_date[created_day]["new_applicants"] += 1
 
-        updated_day = row.updated_at.date()
-        if (
-            updated_day in timeseries_by_date
-            and row.score is not None
-            and (row.strengths is not None or row.weaknesses is not None)
-        ):
-            timeseries_by_date[updated_day]["completed_reviews"] += 1
+        if row.review_state == ReviewState.done.value and row.reviewed_at:
+            reviewed_day = row.reviewed_at.date()
+            if reviewed_day in timeseries_by_date:
+                timeseries_by_date[reviewed_day]["completed_reviews"] += 1
 
     for row in interview_rows:
         created_day = row.created_at.date()
@@ -824,84 +720,29 @@ async def _get_recruiter_interview_load(
     ]
 
 
-async def _get_score_distribution(
+async def _get_fit_distribution(
     db: AsyncSession, company_id: uuid.UUID
-) -> ScoreDistribution:
-    """Return application score distribution buckets for a company."""
-    score_rows = (
+) -> FitDistribution:
+    """Return how many reviewed applications landed in each fit bucket."""
+    rows = (
         await db.execute(
-            select(Application.score)
+            select(Review.fit, func.count(Review.id))
+            .join(Application, Application.id == Review.application_id)
             .join(Job, Job.id == Application.job_id)
-            .where(Job.company_id == company_id, Application.score.is_not(None))
-        )
-    ).all()
-
-    buckets = {
-        "0-24": 0,
-        "25-49": 0,
-        "50-69": 0,
-        "70-84": 0,
-        "85-100": 0,
-    }
-
-    for row in score_rows:
-        score = row.score or 0
-        if score < 25:
-            buckets["0-24"] += 1
-        elif score < 50:
-            buckets["25-49"] += 1
-        elif score < 70:
-            buckets["50-69"] += 1
-        elif score < 85:
-            buckets["70-84"] += 1
-        else:
-            buckets["85-100"] += 1
-
-    return ScoreDistribution(
-        buckets=[
-            ScoreDistributionBucket(label=label, count=count)
-            for label, count in buckets.items()
-        ]
-    )
-
-
-async def _get_outreach_summary(
-    db: AsyncSession, company_id: uuid.UUID
-) -> RecruiterOutreachSummary:
-    """Summarize outreach draft states for a company."""
-    draft_rows = (
-        await db.execute(
-            select(
-                Application.status,
-                EmailDraft.is_approved,
-                EmailDraft.is_sent,
-                EmailDraft.is_discarded,
+            .where(
+                Job.company_id == company_id,
+                Review.state == ReviewState.done.value,
+                Review.fit.is_not(None),
             )
-            .join(Application, Application.id == EmailDraft.application_id)
-            .join(Job, Job.id == Application.job_id)
-            .where(Job.company_id == company_id)
+            .group_by(Review.fit)
         )
     ).all()
-
-    counts = {
-        "shortlist": {"drafted": 0, "approved": 0, "sent": 0, "discarded": 0},
-        "rejection": {"drafted": 0, "approved": 0, "sent": 0, "discarded": 0},
-    }
-
-    for row in draft_rows:
-        email_type = _draft_email_type(row.status)
-        if row.is_discarded:
-            counts[email_type]["discarded"] += 1
-        elif row.is_sent:
-            counts[email_type]["sent"] += 1
-        elif row.is_approved:
-            counts[email_type]["approved"] += 1
-        else:
-            counts[email_type]["drafted"] += 1
-
-    return RecruiterOutreachSummary(
-        shortlist=OutreachStateBreakdown(**counts["shortlist"]),
-        rejection=OutreachStateBreakdown(**counts["rejection"]),
+    counts = {fit: int(count) for fit, count in rows}
+    return FitDistribution(
+        buckets=[
+            FitDistributionBucket(label=fit.value, count=counts.get(fit.value, 0))
+            for fit in (Fit.strong, Fit.possible, Fit.weak)
+        ]
     )
 
 
@@ -914,12 +755,12 @@ async def _get_recruiter_velocity(
             select(
                 Application.created_at,
                 Application.updated_at,
-                Application.score,
-                Application.strengths,
-                Application.weaknesses,
-                Application.status,
+                Application.stage,
+                Review.state.label("review_state"),
+                Review.updated_at.label("reviewed_at"),
             )
             .join(Job, Job.id == Application.job_id)
+            .outerjoin(Review, Review.application_id == Application.id)
             .where(Job.company_id == company_id)
         )
     ).all()
@@ -929,13 +770,11 @@ async def _get_recruiter_velocity(
     interview_rows: list[tuple[datetime, datetime]] = []
 
     for row in rows:
-        if row.score is not None and (
-            row.strengths is not None or row.weaknesses is not None
-        ):
-            review_rows.append((row.created_at, row.updated_at))
-        if row.status in SHORTLIST_RELATED_STATUSES:
+        if row.review_state == ReviewState.done.value and row.reviewed_at:
+            review_rows.append((row.created_at, row.reviewed_at))
+        if row.stage in SHORTLIST_RELATED_STAGES:
             shortlist_rows.append((row.created_at, row.updated_at))
-        if row.status in INTERVIEW_RELATED_STATUSES:
+        if row.stage in INTERVIEW_RELATED_STAGES:
             interview_rows.append((row.created_at, row.updated_at))
 
     return RecruiterAnalyticsVelocity(
@@ -965,20 +804,11 @@ async def _build_recruiter_dashboard_analytics(
                 interview_booked=0,
                 interview_completed=0,
                 offers=0,
-                pending_drafts=0,
             ),
             funnel=[],
             applications_timeseries=[],
             interview_load=[],
-            score_distribution=ScoreDistribution(buckets=[]),
-            outreach=RecruiterOutreachSummary(
-                shortlist=OutreachStateBreakdown(
-                    drafted=0, approved=0, sent=0, discarded=0
-                ),
-                rejection=OutreachStateBreakdown(
-                    drafted=0, approved=0, sent=0, discarded=0
-                ),
-            ),
+            fit_distribution=FitDistribution(buckets=[]),
             velocity=RecruiterAnalyticsVelocity(),
         )
 
@@ -987,7 +817,7 @@ async def _build_recruiter_dashboard_analytics(
         range_key=normalized_range,
         stats=stats,
         funnel=[
-            StageCountPoint(stage="applied", count=stats.applications),
+            StageCountPoint(stage="new", count=stats.applications),
             StageCountPoint(stage="shortlisted", count=stats.shortlisted),
             StageCountPoint(stage="interview_booked", count=stats.interview_booked),
             StageCountPoint(
@@ -999,8 +829,7 @@ async def _build_recruiter_dashboard_analytics(
             db, company_id, start_dt, start_date, end_date
         ),
         interview_load=await _get_recruiter_interview_load(db, company_id),
-        score_distribution=await _get_score_distribution(db, company_id),
-        outreach=await _get_outreach_summary(db, company_id),
+        fit_distribution=await _get_fit_distribution(db, company_id),
         velocity=await _get_recruiter_velocity(db, company_id),
     )
 
@@ -1082,7 +911,7 @@ async def _get_team_activity(
             .where(
                 Job.company_id == company_id,
                 Job.posted_by.is_not(None),
-                Job.status == JobStatus.active,
+                Job.status == JobStatus.open,
             )
             .group_by(Job.posted_by)
         )
@@ -1097,7 +926,7 @@ async def _get_team_activity(
             .where(
                 Job.company_id == company_id,
                 Job.posted_by.is_not(None),
-                Application.status == ApplicationStatus.shortlisted,
+                Application.stage == ApplicationStage.shortlisted,
                 Application.updated_at >= month_start,
             )
             .group_by(Job.posted_by)
@@ -1170,12 +999,10 @@ async def _build_recruiter_admin_dashboard(
                 total_applications=0,
                 shortlisted=0,
                 interviews_today=0,
-                pending_drafts=0,
                 pending_join_requests=0,
             ),
             active_jobs=[],
             todays_interviews=[],
-            pending_drafts=[],
             join_requests=[],
             team_activity=[],
         )
@@ -1190,12 +1017,10 @@ async def _build_recruiter_admin_dashboard(
             total_applications=base_stats.total_applications,
             shortlisted=base_stats.shortlisted,
             interviews_today=base_stats.interviews_today,
-            pending_drafts=base_stats.pending_drafts,
             pending_join_requests=len(join_requests),
         ),
         active_jobs=await _get_active_jobs(db, company_id),
         todays_interviews=await _get_todays_interviews(db, company_id),
-        pending_drafts=await _get_pending_drafts(db, company_id),
         join_requests=join_requests,
         team_activity=await _get_team_activity(db, company_id),
     )
@@ -1357,7 +1182,7 @@ async def _build_recruiter_admin_dashboard_analytics(
             active_recruiters=active_recruiters,
         ),
         company_funnel=[
-            StageCountPoint(stage="applied", count=recruiter_stats.applications),
+            StageCountPoint(stage="new", count=recruiter_stats.applications),
             StageCountPoint(stage="shortlisted", count=recruiter_stats.shortlisted),
             StageCountPoint(
                 stage="interview_booked", count=recruiter_stats.interview_booked

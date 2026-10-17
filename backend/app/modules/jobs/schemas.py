@@ -1,78 +1,113 @@
 from datetime import datetime, timezone
+from typing import Literal
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from app.core.schemas import BaseSchema
-from app.shared.enums import JobStatus, LocationType
+from app.modules.jobs.protected_grounds import CriterionWarning
+from app.shared.enums import (
+    EmploymentType,
+    JobCategory,
+    JobStatus,
+    LocationType,
+    QuestionType,
+)
+
+MAX_CRITERIA = 6
+MAX_QUESTIONS = 3
+
+
+class JobQuestion(BaseSchema):
+    """A question on the apply form. A yes/no question with `knockout_answer`
+    marks applicants who answer the other way as a weak fit (never rejected)."""
+
+    label: str = Field(min_length=1, max_length=200)
+    type: QuestionType = QuestionType.short_text
+    required: bool = True
+    knockout_answer: Literal["yes", "no"] | None = None
+
+    @model_validator(mode="after")
+    def _knockout_is_yes_no(self) -> "JobQuestion":
+        self.label = " ".join(self.label.split())
+        if self.type != QuestionType.yes_no:
+            self.knockout_answer = None
+        return self
+
+
+def _clean_criteria(values: list[str] | None) -> list[str] | None:
+    if values is None:
+        return None
+    cleaned = [" ".join(v.split()) for v in values if v and v.strip()]
+    if len(cleaned) > MAX_CRITERIA:
+        raise ValueError(f"at most {MAX_CRITERIA} items")
+    if any(len(v) > 200 for v in cleaned):
+        raise ValueError("each item must be 200 characters or less")
+    return list(dict.fromkeys(cleaned))
 
 
 class JobBase(BaseSchema):
     title: str | None = Field(default=None, max_length=255)
     location: str | None = Field(default=None, max_length=255)
     location_type: LocationType | None = None
-    salary_min: int | None = None
-    salary_max: int | None = None
+    category: JobCategory | None = None
+    employment_type: EmploymentType | None = None
+    salary_min: int | None = Field(default=None, ge=0)
+    salary_max: int | None = Field(default=None, ge=0)
     currency: str | None = Field(default=None, max_length=10)
     status: JobStatus | None = None
-    expires_at: datetime | None = None
-    overview: str | None = None
-    responsibilities: list[str] | None = None
-    requirements: list[str] | None = None
-    preferred_qualifications: list[str] | None = None
-    benefits: list[str] | None = None
-    auto_shortlist: bool = False
-    shortlist_threshold: int = Field(default=70, ge=0, le=100)
-    required_years_of_experience: int | None = None
-    # Up to 3 short questions candidates answer on the public apply page.
-    screening_questions: list[str] | None = Field(default=None, max_length=3)
+    closes_at: datetime | None = None
+    # Markdown.
+    description: str | None = Field(default=None, max_length=20000)
+    must_haves: list[str] | None = None
+    nice_to_haves: list[str] | None = None
+    questions: list[JobQuestion] | None = Field(default=None, max_length=MAX_QUESTIONS)
+
+    _criteria = field_validator("must_haves", "nice_to_haves")(
+        lambda cls, v: _clean_criteria(v)
+    )
 
     @model_validator(mode="after")
     def validate_job_fields(self) -> "JobBase":
-        """Validate salary ordering and date constraints for a job payload."""
         if (
             self.salary_min is not None
             and self.salary_max is not None
             and self.salary_min > self.salary_max
         ):
             raise ValueError("salary_min cannot be greater than salary_max")
-
-        if self.screening_questions is not None:
-            cleaned = [q.strip() for q in self.screening_questions if q and q.strip()]
-            if any(len(q) > 200 for q in cleaned):
-                raise ValueError("screening questions must be 200 characters or less")
-            self.screening_questions = cleaned
-
-        if self.expires_at is not None:
-            if self.expires_at.tzinfo is None:
-                raise ValueError("expires_at must be timezone-aware")
-
-            if self.status == JobStatus.active and self.expires_at <= datetime.now(
+        if self.closes_at is not None:
+            if self.closes_at.tzinfo is None:
+                raise ValueError("closes_at must be timezone-aware")
+            if self.status == JobStatus.open and self.closes_at <= datetime.now(
                 timezone.utc
             ):
-                raise ValueError("expires_at must be in the future for active jobs")
-
+                raise ValueError("closes_at must be in the future for open jobs")
         return self
 
 
 class JobCreate(JobBase):
-    """All required fields must be provided on creation."""
-
-    title: str = Field(min_length=1, max_length=255)  # type: ignore[override]
-    location_type: LocationType = LocationType.onsite  # type: ignore[override]
-    currency: str = Field(default="NPR", max_length=10)  # type: ignore[override]
-    status: JobStatus = JobStatus.draft  # type: ignore[override]
+    title: str = Field(min_length=1, max_length=255)  # type: ignore[assignment]
+    location_type: LocationType = LocationType.onsite  # type: ignore[assignment]
+    category: JobCategory = JobCategory.other  # type: ignore[assignment]
+    employment_type: EmploymentType = EmploymentType.full_time  # type: ignore[assignment]
+    currency: str = Field(default="NPR", max_length=10)  # type: ignore[assignment]
+    status: Literal[JobStatus.draft, JobStatus.open] = JobStatus.draft  # type: ignore[assignment]
 
 
 class JobUpdate(JobBase):
-    """All fields are optional — only provided fields are applied."""
+    """Only provided fields change. Closing: status=closed + closed_reason
+    hired (rejects everyone still in progress, kindly) or cancelled."""
 
-    pass
+    closed_reason: Literal["hired", "cancelled"] | None = None
+
+    @model_validator(mode="after")
+    def _closing_needs_reason(self) -> "JobUpdate":
+        if self.status == JobStatus.closed and self.closed_reason is None:
+            raise ValueError("closing a job needs closed_reason: hired or cancelled")
+        return self
 
 
 class CompanySnippet(BaseSchema):
-    """Minimal company info embedded in job responses."""
-
     id: UUID
     name: str
     logo_url: str | None = None
@@ -84,8 +119,6 @@ class CompanySnippet(BaseSchema):
 
 
 class JobListItem(BaseSchema):
-    """Lightweight summary for job listings (no heavy text fields)."""
-
     id: UUID
     company_id: UUID
     company: CompanySnippet
@@ -93,33 +126,25 @@ class JobListItem(BaseSchema):
     title: str
     location: str | None = None
     location_type: LocationType
+    category: JobCategory
+    employment_type: EmploymentType
     salary_min: int | None = None
     salary_max: int | None = None
     currency: str = "NPR"
     status: JobStatus
-    auto_shortlist: bool = False
-    shortlist_threshold: int = 70
-    required_years_of_experience: int | None = None
-    expires_at: datetime | None = None
+    closed_reason: str | None = None
+    closes_at: datetime | None = None
+    closed_at: datetime | None = None
     applications_count: int = 0
-    final_shortlist_completed: bool = False
-    hiring_completed: bool = False
-    hired_at: datetime | None = None
     has_applied: bool = False
     created_at: datetime
-
     match_score: float | None = Field(
-        default=None, description="Semantic similarity score (0–1)"
+        default=None, description="Semantic similarity (0-1)"
     )
-    is_fallback: bool = Field(
-        default=False,
-        description="True when job is shown outside the user's applied filters",
-    )
+    is_fallback: bool = False
 
 
 class JobDetailResponse(BaseSchema):
-    """Full job including all description text fields."""
-
     id: UUID
     company_id: UUID
     company: CompanySnippet
@@ -128,25 +153,37 @@ class JobDetailResponse(BaseSchema):
     title: str
     location: str | None = None
     location_type: LocationType
+    category: JobCategory
+    employment_type: EmploymentType
     salary_min: int | None = None
     salary_max: int | None = None
     currency: str
     status: JobStatus
-    auto_shortlist: bool = False
-    shortlist_threshold: int = 70
-    required_years_of_experience: int | None = None
-    expires_at: datetime | None = None
-    overview: str | None = None
-    responsibilities: list[str] = []
-    requirements: list[str] = []
-    preferred_qualifications: list[str] = []
-    benefits: list[str] = []
-    screening_questions: list[str] = []
+    closed_reason: str | None = None
+    closes_at: datetime | None = None
+    closed_at: datetime | None = None
+    description: str = ""
+    must_haves: list[str] = Field(default_factory=list)
+    nice_to_haves: list[str] = Field(default_factory=list)
+    questions: list[JobQuestion] = Field(default_factory=list)
     applications_count: int = 0
-    # Company members only: applications per source (linkedin, facebook, ...).
+    # Company members only: applications per source.
     source_counts: dict[str, int] | None = None
-    hiring_completed: bool = False
-    hired_at: datetime | None = None
     has_applied: bool = False
     created_at: datetime
     updated_at: datetime
+    # Criteria that look like protected grounds (Labour Act 2074 s.6). Saving is
+    # allowed; the recruiter is asked to reword. Only on create/update replies.
+    warnings: list[CriterionWarning] = Field(default_factory=list)
+
+
+class SuggestMustHavesRequest(BaseSchema):
+    title: str | None = Field(default=None, max_length=255)
+    description: str = Field(min_length=10, max_length=20000)
+
+
+class SuggestMustHavesResponse(BaseSchema):
+    must_haves: list[str] = Field(default_factory=list)
+    nice_to_haves: list[str] = Field(default_factory=list)
+    questions: list[JobQuestion] = Field(default_factory=list)
+    warnings: list[CriterionWarning] = Field(default_factory=list)

@@ -5,9 +5,18 @@ from uuid import UUID
 from pydantic import EmailStr, Field
 
 from app.core.schemas import BaseSchema
-from app.shared.enums import ApplicationStatus, LocationType
+from app.shared.enums import (
+    ApplicationStage,
+    EmploymentType,
+    JobCategory,
+    LocationType,
+    QuestionType,
+)
 
-ApplySource = Literal["linkedin", "facebook", "merojob", "direct", "other"]
+# Where a shared link was opened (UTM-like `src` on the apply link).
+ApplySource = Literal[
+    "linkedin", "facebook", "merojob", "viber", "qr", "direct", "other"
+]
 
 
 class PublicCompany(BaseSchema):
@@ -20,26 +29,42 @@ class PublicCompany(BaseSchema):
     description: str | None = None
 
 
+class PublicCategory(BaseSchema):
+    value: JobCategory
+    label: str
+
+
 class PublicJobSummary(BaseSchema):
     slug: str
     title: str
     location: str | None = None
     location_type: LocationType
+    category: PublicCategory
+    employment_type: EmploymentType
     salary_min: int | None = None
     salary_max: int | None = None
     currency: str
     posted_at: datetime
-    expires_at: datetime | None = None
+    closes_at: datetime | None = None
+
+
+class PublicQuestion(BaseSchema):
+    """Apply-form question. Which answer counts against someone is not shown."""
+
+    label: str
+    type: QuestionType
+    required: bool
 
 
 class PublicJob(PublicJobSummary):
     company: PublicCompany
-    overview: str | None = None
-    responsibilities: list[str] = Field(default_factory=list)
-    requirements: list[str] = Field(default_factory=list)
-    preferred_qualifications: list[str] = Field(default_factory=list)
-    benefits: list[str] = Field(default_factory=list)
-    screening_questions: list[str] = Field(default_factory=list)
+    # Markdown.
+    description: str = ""
+    must_haves: list[str] = Field(default_factory=list)
+    nice_to_haves: list[str] = Field(default_factory=list)
+    questions: list[PublicQuestion] = Field(default_factory=list)
+    # Name of the person whose share link was opened (?ref=), for "Shared by …".
+    shared_by: str | None = None
 
 
 class CareersPage(BaseSchema):
@@ -65,9 +90,26 @@ class GuestApplicationCreated(BaseSchema):
     application_id: UUID
     job_title: str
     company_name: str
-    email: str
+    email: str | None = None
     # The status link is only ever sent by email (proves the address is real).
     status_link_sent: bool
+
+
+class RecommendRequest(BaseSchema):
+    """Someone recommends a person for the job (no account needed)."""
+
+    ref_token: str | None = Field(default=None, max_length=32)
+    referrer_name: str = Field(min_length=1, max_length=255)
+    referrer_phone: str | None = Field(default=None, max_length=30)
+    candidate_name: str = Field(min_length=1, max_length=255)
+    candidate_phone: str = Field(min_length=6, max_length=30)
+    note: str | None = Field(default=None, max_length=1000)
+
+
+class RecommendCreated(BaseSchema):
+    recommended: bool = True
+    # True when the candidate got an SMS with a link to add their details.
+    candidate_notified: bool = False
 
 
 class ApplicationStatusView(BaseSchema):
@@ -76,7 +118,7 @@ class ApplicationStatusView(BaseSchema):
     job_slug: str
     company_name: str
     company_slug: str
-    status: ApplicationStatus
+    stage: ApplicationStage
     status_label: str
     next_step: str | None = None
     applied_at: datetime
@@ -108,7 +150,7 @@ class MyApplication(BaseSchema):
     company_name: str
     company_slug: str
     company_logo_url: str | None = None
-    status: ApplicationStatus
+    stage: ApplicationStage
     status_label: str
     next_step: str | None = None
     applied_at: datetime

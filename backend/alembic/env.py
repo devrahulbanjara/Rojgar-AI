@@ -11,7 +11,6 @@ import app.modules.applications.models  # noqa: F401
 import app.modules.assistant.models  # noqa: F401
 import app.modules.interviews.models  # noqa: F401
 import app.modules.entitlements.models  # noqa: F401
-import app.modules.outreach.models  # noqa: F401
 from alembic import context
 from app.core.config import settings
 from app.core.database import Base

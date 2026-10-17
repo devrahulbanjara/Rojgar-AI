@@ -1,5 +1,7 @@
 import asyncio
 import json
+import re
+import secrets
 import uuid
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
@@ -13,15 +15,19 @@ import app.core.model_registry  # noqa: F401
 from app.core.database import AsyncSessionLocal, Base, engine
 from app.core.security import hash_password
 from app.modules.activity.models import ActivityEvent
-from app.modules.applications.models import Application, ApplicationSyncEvent
+from app.modules.applications.models import (
+    Application,
+    ApplicationEvent,
+    ApplicationSyncEvent,
+    Review,
+)
 from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.models import Interview, Scorecard
-from app.modules.jobs.models import Job, JobSyncEvent
+from app.modules.jobs.models import Job, JobReferrer, JobSyncEvent
 from app.modules.notifications.models import Notification
-from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import (
     Profile,
     ProfileEducation,
@@ -37,12 +43,96 @@ from app.modules.resumes.models import (
     ResumeSkill,
 )
 from app.shared.enums import (
-    ApplicationStatus,
+    ApplicationSource,
+    ApplicationStage,
+    EmploymentType,
+    EventType,
+    JobCategory,
+    JobClosedReason,
     JobStatus,
     LocationType,
-    ShortlistStatus,
+    RejectedReason,
     SyncAction,
 )
+from app.shared.normalize import normalize_phone
+
+
+class ApplicationStatus(str, Enum):
+    """v1 statuses. The application matrices below are written in these and
+    mapped to v2 stages (docs/RECRUITER_FLOW.md, migration 2017037b521a)."""
+
+    applied = "applied"
+    shortlisted = "shortlisted"
+    rejected = "rejected"
+    interview_booked = "interview_booked"
+    interview_completed = "interview_completed"
+    offer = "offer"
+    offer_accepted = "offer_accepted"
+    offer_declined = "offer_declined"
+
+
+class ShortlistStatus(str, Enum):
+    """v1 job knob kept only so the data blocks below read unchanged; ignored."""
+
+    not_started = "not_started"
+    in_progress = "in_progress"
+    completed = "completed"
+    failed = "failed"
+
+
+STAGE_BY_STATUS: dict[ApplicationStatus, ApplicationStage] = {
+    ApplicationStatus.applied: ApplicationStage.new,
+    ApplicationStatus.shortlisted: ApplicationStage.shortlisted,
+    ApplicationStatus.interview_booked: ApplicationStage.interview,
+    ApplicationStatus.interview_completed: ApplicationStage.interview,
+    ApplicationStatus.offer: ApplicationStage.offer,
+    ApplicationStatus.offer_accepted: ApplicationStage.hired,
+    ApplicationStatus.offer_declined: ApplicationStage.withdrawn,
+    ApplicationStatus.rejected: ApplicationStage.rejected,
+}
+# Stages walked through before landing on the target (for stage_changed events).
+STAGE_PATH: dict[ApplicationStatus, list[ApplicationStage]] = {
+    ApplicationStatus.applied: [],
+    ApplicationStatus.shortlisted: [ApplicationStage.shortlisted],
+    ApplicationStatus.interview_booked: [
+        ApplicationStage.shortlisted,
+        ApplicationStage.interview,
+    ],
+    ApplicationStatus.interview_completed: [
+        ApplicationStage.shortlisted,
+        ApplicationStage.interview,
+    ],
+    ApplicationStatus.offer: [
+        ApplicationStage.shortlisted,
+        ApplicationStage.interview,
+        ApplicationStage.offer,
+    ],
+    ApplicationStatus.offer_accepted: [
+        ApplicationStage.shortlisted,
+        ApplicationStage.interview,
+        ApplicationStage.offer,
+        ApplicationStage.hired,
+    ],
+    ApplicationStatus.offer_declined: [
+        ApplicationStage.shortlisted,
+        ApplicationStage.interview,
+        ApplicationStage.offer,
+        ApplicationStage.withdrawn,
+    ],
+    ApplicationStatus.rejected: [ApplicationStage.rejected],
+}
+# Rotated over seeded tech applications so the "source" column has variety.
+TECH_SOURCES = [
+    ApplicationSource.linkedin,
+    ApplicationSource.merojob,
+    ApplicationSource.direct,
+    ApplicationSource.facebook,
+    ApplicationSource.linkedin,
+    ApplicationSource.viber,
+    ApplicationSource.qr,
+]
+# application id -> (v1 status, score) for the activity/audit history passes.
+LEGACY_BY_APP: dict[uuid.UUID, tuple[ApplicationStatus, int | None]] = {}
 
 COMMON_PW = hash_password("Password@123")
 DEFAULT_LOGIN_PASSWORD = "Password@123"
@@ -2564,7 +2654,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 125000,
             "salary_max": 185000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": True,
             "shortlist_threshold": 68,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2602,7 +2692,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 120000,
             "salary_max": 178000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": False,
             "shortlist_threshold": 64,
             "shortlist_status": ShortlistStatus.not_started,
@@ -2670,7 +2760,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 145000,
             "salary_max": 215000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": True,
             "shortlist_threshold": 70,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2708,7 +2798,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 150000,
             "salary_max": 220000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": True,
             "shortlist_threshold": 72,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2746,7 +2836,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 190000,
             "salary_max": 285000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": False,
             "shortlist_threshold": 74,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2786,7 +2876,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 150000,
             "salary_max": 230000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": True,
             "shortlist_threshold": 72,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2822,7 +2912,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 110000,
             "salary_max": 165000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": False,
             "shortlist_threshold": 62,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2890,7 +2980,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 150000,
             "salary_max": 230000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": True,
             "shortlist_threshold": 65,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2928,7 +3018,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 160000,
             "salary_max": 250000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": True,
             "shortlist_threshold": 70,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -2966,7 +3056,7 @@ EXTRA_COMPANY_JOBS = {
             "salary_min": 130000,
             "salary_max": 200000,
             "currency": "NPR",
-            "status": JobStatus.active,
+            "status": JobStatus.open,
             "auto_shortlist": True,
             "shortlist_threshold": 65,
             "shortlist_status": ShortlistStatus.in_progress,
@@ -3640,17 +3730,61 @@ def make_membership(
     )
 
 
+_SECTIONS = (
+    ("responsibilities", "Responsibilities"),
+    ("requirements", "Requirements"),
+    ("preferred_qualifications", "Nice to have"),
+    ("benefits", "Benefits"),
+)
+
+
+def job_description(data: dict) -> str:
+    """Overview + arrays as headed Markdown sections (same as migration 2017037b521a)."""
+    if data.get("description"):
+        return data["description"]
+    parts = [(data.get("overview") or "").strip()]
+    for key, heading in _SECTIONS:
+        items = data.get(key) or []
+        if items:
+            parts.append(f"## {heading}\n- " + "\n- ".join(items))
+    return "\n\n".join(p for p in parts if p)
+
+
+def job_must_haves(data: dict) -> list[str]:
+    if "must_haves" in data:
+        return list(data["must_haves"])
+    years = data.get("required_years_of_experience")
+    prefix = [f"{years}+ years of relevant experience"] if years else []
+    return (prefix + list(data.get("requirements") or []))[:6]
+
+
+def job_questions(data: dict) -> list[dict]:
+    if "questions" in data:
+        return [
+            {
+                "label": q["label"],
+                "type": q.get("type", "short_text"),
+                "required": q.get("required", True),
+                "knockout_answer": q.get("knockout_answer"),
+            }
+            for q in data["questions"]
+        ]
+    return [
+        {"label": q, "type": "short_text", "required": True, "knockout_answer": None}
+        for q in data.get("screening_questions") or []
+    ]
+
+
 def make_job(
     company_id,
     posted_by,
     data: dict,
     *,
-    status: JobStatus = JobStatus.expired,
-    auto_shortlist: bool = False,
-    shortlist_status: ShortlistStatus = ShortlistStatus.completed,
-    final_shortlist_completed: bool = True,
-    hiring_completed: bool = False,
-    expires_at: datetime | None = EXPIRED_DATE,
+    status: JobStatus = JobStatus.closed,
+    closed_reason: str | None = JobClosedReason.expired.value,
+    closed_at: datetime | None = EXPIRED_DATE,
+    closes_at: datetime | None = None,
+    category: JobCategory = JobCategory.it_software,
 ) -> Job:
     return Job(
         company_id=company_id,
@@ -3658,22 +3792,260 @@ def make_job(
         title=data["title"],
         location=data["location"],
         location_type=data["location_type"],
+        category=data.get("category", category),
+        employment_type=data.get("employment_type", EmploymentType.full_time),
         salary_min=data["salary_min"],
         salary_max=data["salary_max"],
         currency=data["currency"],
         status=status,
-        overview=data["overview"],
-        responsibilities=data["responsibilities"],
-        requirements=data["requirements"],
-        preferred_qualifications=data["preferred_qualifications"],
-        benefits=data["benefits"],
-        auto_shortlist=auto_shortlist,
-        shortlist_threshold=data.get("shortlist_threshold", 70),
-        shortlist_status=shortlist_status,
-        final_shortlist_completed=final_shortlist_completed,
-        hiring_completed=hiring_completed,
-        expires_at=expires_at,
+        closed_reason=closed_reason if status == JobStatus.closed else None,
+        closed_at=closed_at if status == JobStatus.closed else None,
+        closes_at=closes_at if status != JobStatus.closed else None,
+        description=job_description(data),
+        must_haves=job_must_haves(data),
+        nice_to_haves=list(
+            data.get("nice_to_haves") or data.get("preferred_qualifications") or []
+        )[:6],
+        questions=job_questions(data),
     )
+
+
+# ---------------------------------------------------------------- reviews
+
+_WORD_RE = re.compile(r"[\w\u0900-\u097F]+")
+_STOP = {
+    "and",
+    "or",
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "on",
+    "for",
+    "with",
+    "to",
+    "at",
+    "years",
+    "year",
+    "yrs",
+    "experience",
+    "least",
+    "good",
+    "strong",
+    "solid",
+    "knowledge",
+    "understanding",
+    "familiarity",
+    "hands",
+    "professional",
+}
+
+
+def _words(text: str) -> set[str]:
+    return {w for w in _WORD_RE.findall(text.lower()) if w not in _STOP and len(w) > 2}
+
+
+def fit_from_score(score: int | None) -> str | None:
+    if score is None:
+        return None
+    return "strong" if score >= 75 else "possible" if score >= 50 else "weak"
+
+
+def cap_summary(text: str | None) -> str | None:
+    if not text:
+        return None
+    line = " ".join(text.split())
+    if len(line) <= 140:
+        return line
+    return line[:139].rsplit(" ", 1)[0].rstrip(",;:-") + "…"
+
+
+def candidate_cv_text(candidate_data: dict, variant: dict | None) -> str:
+    """The text seeded evidence quotes come from (headline, summary, bullets, skills)."""
+    lines = []
+    if variant:
+        lines += [variant.get("headline") or "", variant.get("summary") or ""]
+    lines += [candidate_data.get("headline") or "", candidate_data.get("summary") or ""]
+    for exp in candidate_data.get("experiences") or []:
+        lines.append(f"{exp['title']} at {exp['company_name']}")
+        lines.extend(exp.get("description") or [])
+    lines.append(", ".join(candidate_data.get("skills") or []))
+    return "\n".join(line for line in lines if line)
+
+
+def seeded_checks(must_haves: list[str], cv_text: str, score: int | None) -> list[dict]:
+    """2-4 checks against the job's must-haves, quoting the CV verbatim.
+
+    Deterministic: the CV line sharing most words with a criterion is the
+    evidence; the overlap (nudged by the seeded score) sets met/partly/missing.
+    """
+    lines = [ln.strip() for ln in cv_text.split("\n") if ln.strip()]
+    checks = []
+    bonus = 0.15 if (score or 0) >= 75 else -0.1 if (score or 0) < 50 else 0.0
+    for criterion in must_haves[:4]:
+        words = _words(criterion)
+        best, hits = "", 0
+        for line in lines:
+            n = len(words & _words(line))
+            if n > hits:
+                best, hits = line, n
+        share = (hits / len(words) if words else 0.0) + bonus
+        result = "met" if share >= 0.45 else "partly" if share >= 0.2 else "missing"
+        evidence = None
+        if result != "missing" and best:
+            evidence = best[:200]
+            assert evidence in cv_text
+        else:
+            result = "missing"
+        checks.append(
+            {
+                "criterion": criterion,
+                "kind": "must",
+                "result": result,
+                "evidence": evidence,
+            }
+        )
+    if len(checks) < 2 and lines:
+        checks.append(
+            {
+                "criterion": "Relevant work history",
+                "kind": "must",
+                "result": "met",
+                "evidence": lines[0][:200],
+            }
+        )
+    return checks
+
+
+def add_review(
+    db,
+    application: Application,
+    *,
+    fit: str | None,
+    summary: str | None,
+    checks: list[dict],
+    rank_score: float | None,
+    created_at: datetime,
+    state: str = "done",
+    flag_reason: str | None = None,
+    triage: str = "full",
+) -> Review:
+    review = Review(
+        application_id=application.id,
+        state=state,
+        fit=fit if state == "done" else None,
+        summary=summary,
+        checks=checks,
+        flag_reason=flag_reason,
+        rank_score=rank_score,
+        triage=triage,
+        model="seed",
+        prompt_version="seed-v1",
+    )
+    review.created_at = created_at
+    review.updated_at = created_at
+    db.add(review)
+    return review
+
+
+def add_event(
+    db,
+    application_id: uuid.UUID,
+    type_: EventType,
+    created_at: datetime,
+    *,
+    actor_id: uuid.UUID | None = None,
+    **payload,
+) -> ApplicationEvent:
+    event = ApplicationEvent(
+        id=uuid.uuid4(),
+        application_id=application_id,
+        type=type_.value,
+        actor_user_id=actor_id,
+        payload=jsonable_encoder(payload),
+    )
+    event.created_at = created_at
+    db.add(event)
+    return event
+
+
+def add_history(
+    db,
+    application: Application,
+    legacy: ApplicationStatus,
+    *,
+    created_at: datetime,
+    decided_at: datetime,
+    actor_id: uuid.UUID | None,
+    job_title: str,
+    company_name: str,
+    email_sent: bool,
+    source: str,
+) -> None:
+    """applied -> review_done -> stage_changed... -> emails, as events."""
+    add_event(db, application.id, EventType.applied, created_at, source=source)
+    add_event(
+        db,
+        application.id,
+        EventType.review_done,
+        created_at + timedelta(minutes=1),
+        state="done",
+        triage="full",
+    )
+    path = STAGE_PATH[legacy]
+    previous = ApplicationStage.new
+    step = timedelta(days=1)
+    when = max(created_at + timedelta(hours=6), decided_at - step * len(path))
+    for stage in path:
+        action = {
+            ApplicationStage.shortlisted: "shortlist",
+            ApplicationStage.interview: "invite_to_interview",
+            ApplicationStage.offer: "make_offer",
+            ApplicationStage.hired: "offer_accepted",
+            ApplicationStage.withdrawn: "offer_declined",
+            ApplicationStage.rejected: "reject",
+        }[stage]
+        candidate_acts = stage in {ApplicationStage.hired, ApplicationStage.withdrawn}
+        add_event(
+            db,
+            application.id,
+            EventType.stage_changed,
+            when,
+            actor_id=None if candidate_acts else actor_id,
+            action=action,
+            **{"from": previous.value, "to": stage.value},
+            rejected_reason=application.rejected_reason
+            if stage == ApplicationStage.rejected
+            else None,
+        )
+        template = {
+            ApplicationStage.shortlisted: "shortlist",
+            ApplicationStage.rejected: "rejection",
+            ApplicationStage.offer: "offer",
+        }.get(stage)
+        if template and email_sent and application.shared_email_value:
+            subject = {
+                "shortlist": f"You're shortlisted for {job_title} at {company_name}",
+                "rejection": f"Your application for {job_title} at {company_name}",
+                "offer": f"An offer for {job_title} at {company_name}",
+            }[template]
+            add_event(
+                db,
+                application.id,
+                EventType.email_sent,
+                when + timedelta(seconds=10),
+                actor_id=actor_id,
+                status="sent",
+                template=template,
+                to=application.shared_email_value,
+                subject=subject,
+                sent_at=when + timedelta(seconds=10),
+            )
+        previous = stage
+        when += step
+    if legacy == ApplicationStatus.interview_completed:
+        add_event(db, application.id, EventType.interview_done, decided_at)
 
 
 def build_resume(user, data, variant):
@@ -3716,51 +4088,6 @@ def build_resume(user, data, variant):
     return resume, experiences, educations, skills
 
 
-def generate_shortlist_email(
-    candidate_name: str, job_title: str, company_name: str
-) -> tuple[str, str]:
-    """Generate a shortlist email subject and body."""
-    subject = f"Great news – You've been shortlisted for {job_title} at {company_name}!"
-    body = (
-        f"Dear {candidate_name},\n\n"
-        f"We're pleased to let you know that after reviewing your application for the "
-        f"{job_title} position at {company_name}, our team has shortlisted you for the "
-        f"next stage of our hiring process.\n\n"
-        f"Your profile and experience stood out among the applicants, and we would love to "
-        f"learn more about you in an interview.\n\n"
-        f"Pick an interview time with the scheduling link in this email; the same "
-        f"link lets you reschedule or cancel.\n\n"
-        f"We look forward to speaking with you!\n\n"
-        f"Warm regards,\n"
-        f"The {company_name} Hiring Team"
-    )
-    return subject, body
-
-
-def generate_rejection_email(
-    candidate_name: str, job_title: str, company_name: str, feedback: str
-) -> tuple[str, str]:
-    """Generate a rejection email subject and body."""
-    subject = f"Update on your application for {job_title} at {company_name}"
-    body = (
-        f"Dear {candidate_name},\n\n"
-        f"Thank you for taking the time to apply for the {job_title} position at "
-        f"{company_name}. We genuinely appreciate your interest in our team.\n\n"
-        f"After carefully reviewing all applications, we have decided to move forward "
-        f"with other candidates whose experience more closely aligns with the specific "
-        f"requirements of this role.\n\n"
-        f"Here is some personalised feedback from our review:\n\n"
-        f"{feedback}\n\n"
-        f"We encourage you to apply for future openings that match your skills and "
-        f"experience. This decision does not reflect on your overall abilities — it is "
-        f"simply about the specific fit for this particular role at this time.\n\n"
-        f"We wish you the very best in your career and future applications.\n\n"
-        f"Kind regards,\n"
-        f"The {company_name} Hiring Team"
-    )
-    return subject, body
-
-
 async def ensure_schema() -> None:
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
@@ -3780,7 +4107,7 @@ async def clear_existing_data() -> None:
 def build_credentials_document() -> dict:
     accounts: list[dict] = []
 
-    for company in COMPANIES:
+    for company in COMPANIES + NONTECH_COMPANIES:
         accounts.append(
             {
                 "full_name": company["admin"]["full_name"],
@@ -3866,25 +4193,9 @@ async def create_job_with_schema(
     company_id,
     posted_by,
     data: dict,
-    *,
-    status: JobStatus,
-    auto_shortlist: bool,
-    shortlist_status: ShortlistStatus,
-    final_shortlist_completed: bool,
-    expires_at: datetime | None,
-    hiring_completed: bool = False,
+    **job_kwargs,
 ) -> Job:
-    job = make_job(
-        company_id,
-        posted_by,
-        data,
-        status=status,
-        auto_shortlist=auto_shortlist,
-        shortlist_status=shortlist_status,
-        final_shortlist_completed=final_shortlist_completed,
-        hiring_completed=hiring_completed,
-        expires_at=expires_at,
-    )
+    job = make_job(company_id, posted_by, data, **job_kwargs)
     db.add(job)
     await db.flush()
 
@@ -3981,11 +4292,9 @@ async def seed_company(
             company.id,
             posters[i % len(posters)].id,
             job_data,
-            status=JobStatus.expired,
-            auto_shortlist=False,
-            shortlist_status=ShortlistStatus.completed,
-            final_shortlist_completed=True,
-            expires_at=job_expires_at,
+            status=JobStatus.closed,
+            closed_reason=JobClosedReason.expired.value,
+            closed_at=job_expires_at,
         )
         job.created_at = job_created_at
         job.updated_at = job_expires_at - timedelta(days=1)
@@ -4016,13 +4325,8 @@ async def seed_company(
             poster.id,
             job_data,
             status=job_data["status"],
-            auto_shortlist=job_data.get("auto_shortlist", False),
-            shortlist_status=job_data.get(
-                "shortlist_status", ShortlistStatus.not_started
-            ),
-            final_shortlist_completed=job_data.get("final_shortlist_completed", False),
-            expires_at=job_data.get("expires_at"),
-            hiring_completed=job_data.get("hiring_completed", False),
+            closes_at=job_data.get("expires_at"),
+            category=company_data.get("category", JobCategory.it_software),
         )
         job.created_at = NOW - timedelta(
             days=55 + (company_index * 15) + (job_data["poster_slot"] * 6)
@@ -4123,10 +4427,11 @@ async def seed_applications(
     candidate_users: list[tuple[User, list[Resume]]],
     company_jobs: list[list[Job]],
     company_data_list: list[dict],
+    company_contexts: list[dict],
 ):
-    """Seed applications, shortlisting, outreach emails, and interview bookings."""
+    """Seed historical applications with reviews, timeline events and interviews."""
 
-    print("\n📋 Seeding applications, shortlisting, outreach, and interviews...")
+    print("\n📋 Seeding applications, reviews, timelines and interviews...")
 
     interview_counter = 0
     application_counter = 0
@@ -4149,7 +4454,6 @@ async def seed_applications(
         resume = candidate_resumes[resume_idx]
         company_info = company_data_list[comp_idx]
 
-        # Build share settings
         share = {
             "share_profile_all": True,
             "share_avatar": True,
@@ -4166,21 +4470,27 @@ async def seed_applications(
 
         # Application history follows each completed job's own timeline.
         days_before_expiry = 7 + (application_counter * 3) % 21
-        job_expiry = job.expires_at or EXPIRED_DATE
+        job_expiry = job.closed_at or EXPIRED_DATE
         app_created = job_expiry - timedelta(days=days_before_expiry)
         app_updated = min(NOW - timedelta(days=1), job_expiry - timedelta(days=1))
+        stage = STAGE_BY_STATUS[target_status]
+        source = TECH_SOURCES[application_counter % len(TECH_SOURCES)].value
+        actor_id = job.posted_by
 
         application = Application(
             job_id=job.id,
             user_id=candidate_user.id,
             resume_id=resume.id,
-            score=score,
-            strengths=[feedback] if feedback else None,
-            status=target_status,
-            shortlist_notified=True,
+            stage=stage,
+            source=source,
+            decided_by=actor_id if stage != ApplicationStage.new else None,
+            decided_at=app_updated if stage != ApplicationStage.new else None,
+            rejected_reason=RejectedReason.not_a_fit.value
+            if stage == ApplicationStage.rejected
+            else None,
+            consented_at=app_created,
             created_at=app_created,
             updated_at=app_updated,
-            # Share settings
             share_profile_all=share["share_profile_all"],
             share_avatar=share["share_avatar"],
             share_email=share["share_email"],
@@ -4192,6 +4502,34 @@ async def seed_applications(
         )
         db.add(application)
         await db.flush()
+        LEGACY_BY_APP[application.id] = (target_status, score)
+        variant = cand_data["resume_variants"][resume_idx]
+        checks = seeded_checks(
+            job.must_haves, candidate_cv_text(cand_data, variant), score
+        )
+        add_review(
+            db,
+            application,
+            fit=fit_from_score(score) or _fit_from_checks(checks),
+            summary=cap_summary(feedback),
+            checks=checks,
+            rank_score=float(score) if score is not None else _rank(checks),
+            created_at=app_created + timedelta(minutes=1),
+        )
+        add_history(
+            db,
+            application,
+            target_status,
+            created_at=app_created,
+            decided_at=app_updated,
+            actor_id=actor_id,
+            job_title=job.title,
+            company_name=company_info["name"],
+            email_sent=True,
+            source=source,
+        )
+        if target_status in {ApplicationStatus.rejected, ApplicationStatus.shortlisted}:
+            email_counter += 1
         db.add(
             ApplicationSyncEvent(
                 application_id=application.id, action=SyncAction.UPSERT
@@ -4199,47 +4537,18 @@ async def seed_applications(
         )
         application_counter += 1
 
-        # Log application creation
-        status_emoji = {
-            ApplicationStatus.applied: "📝",
-            ApplicationStatus.shortlisted: "⭐",
-            ApplicationStatus.rejected: "❌",
-            ApplicationStatus.interview_booked: "📅",
-            ApplicationStatus.interview_completed: "✅",
-            ApplicationStatus.offer: "🎁",
-            ApplicationStatus.offer_accepted: "🎉",
-            ApplicationStatus.offer_declined: "🙅",
-        }
-        emoji = status_emoji.get(target_status, "•")
-        print(
-            f"    {emoji} {CANDIDATES[cand_idx]['full_name']} → {job.title[:50]}... "
-            f"[score={score}, status={target_status.value}]"
-        )
 
-        # Create outreach email draft
-        if target_status == ApplicationStatus.interview_booked:
-            subject, body = generate_shortlist_email(
-                candidate_user.full_name,
-                job.title,
-                company_info["name"],
-            )
-            draft = EmailDraft(
-                application_id=application.id,
-                subject=subject,
-                body=body,
-                is_approved=True,
-                is_sent=True,
-            )
-            db.add(draft)
-            email_counter += 1
-
-            # Create interview booking
+        if target_status in {
+            ApplicationStatus.interview_booked,
+            ApplicationStatus.interview_completed,
+        }:
             interview_counter += 1
             interview_base = app_created + timedelta(
                 days=4 + (interview_counter % 4),
                 hours=10 + (interview_counter % 3),
             )
             interview = Interview(
+                id=uuid.uuid4(),
                 application_id=application.id,
                 company_id=job.company_id,
                 ics_uid=f"interview-{uuid.uuid4()}@rojgarai",
@@ -4255,32 +4564,23 @@ async def seed_applications(
                 reminder_1h_sent_at=NOW,
             )
             db.add(interview)
-
-        elif target_status == ApplicationStatus.rejected:
-            subject, body = generate_rejection_email(
-                candidate_user.full_name,
-                job.title,
-                company_info["name"],
-                feedback,
+            add_event(
+                db,
+                application.id,
+                EventType.interview_booked,
+                interview_base - timedelta(days=2),
+                interview_id=str(interview.id),
+                starts_at=interview_base,
             )
-            draft = EmailDraft(
-                application_id=application.id,
-                subject=subject,
-                body=body,
-                is_approved=True,
-                is_sent=True,
-            )
-            db.add(draft)
-            email_counter += 1
 
         print(
             f"    • {CANDIDATES[cand_idx]['full_name']} → {job.title[:50]}... "
-            f"[score={score}, status={target_status.value}]"
+            f"[fit={fit_from_score(score)}, stage={stage.value}]"
         )
 
     await db.flush()
     print(f"\n  ✓ Applications: {application_counter}")
-    print(f"  ✓ Outreach emails: {email_counter}")
+    print(f"  ✓ Decision emails: {email_counter}")
     print(f"  ✓ Interview bookings: {interview_counter}")
 
 
@@ -4290,7 +4590,7 @@ async def seed_live_pipeline_data(
     company_contexts: list[dict],
 ) -> None:
     print(
-        "\n📈 Seeding active pipeline applications, drafts, interviews and scorecards..."
+        "\n📈 Seeding active pipeline applications, drafts, interviews and scorecards..." 
     )
 
     application_counter = 0
@@ -4321,14 +4621,24 @@ async def seed_live_pipeline_data(
         updated_at = NOW - timedelta(days=spec["updated_days_ago"])
         shared_snapshot = build_shared_snapshot(candidate_user, candidate_data, share)
 
+        legacy = spec["status"]
+        stage = STAGE_BY_STATUS[legacy]
+        source = spec.get(
+            "source", TECH_SOURCES[application_counter % len(TECH_SOURCES)].value
+        )
+        actor_id = job.posted_by
         application = Application(
             job_id=job.id,
             user_id=candidate_user.id,
             resume_id=resume.id,
-            score=spec.get("score"),
-            strengths=[spec["feedback"]] if spec.get("feedback") else None,
-            status=spec["status"],
-            shortlist_notified=spec.get("email_state") == "sent",
+            stage=stage,
+            source=source,
+            decided_by=actor_id if stage != ApplicationStage.new else None,
+            decided_at=updated_at if stage != ApplicationStage.new else None,
+            rejected_reason=RejectedReason.not_a_fit.value
+            if stage == ApplicationStage.rejected
+            else None,
+            consented_at=created_at,
             created_at=created_at,
             updated_at=updated_at,
             share_profile_all=share["share_profile_all"],
@@ -4349,33 +4659,49 @@ async def seed_live_pipeline_data(
         )
         application_counter += 1
 
-        email_state = spec.get("email_state")
-        if email_state:
-            if spec["status"] == ApplicationStatus.rejected:
-                subject, body = generate_rejection_email(
-                    candidate_user.full_name,
-                    job.title,
-                    company_data["name"],
-                    spec.get("feedback") or "Thank you for your time and interest.",
-                )
-            else:
-                subject, body = generate_shortlist_email(
-                    candidate_user.full_name,
-                    job.title,
-                    company_data["name"],
-                )
 
-            db.add(
-                EmailDraft(
-                    application_id=application.id,
-                    subject=subject,
-                    body=body,
-                    is_approved=email_state in {"approved", "sent"},
-                    is_sent=email_state == "sent",
-                    is_discarded=email_state == "discarded",
-                )
-            )
+        LEGACY_BY_APP[application.id] = (legacy, spec.get("score"))
+        variant = candidate_data["resume_variants"][spec["resume_index"]]
+        checks = seeded_checks(
+            job.must_haves,
+            candidate_cv_text(candidate_data, variant),
+            spec.get("score"),
+        )
+        add_review(
+            db,
+            application,
+            fit=fit_from_score(spec.get("score")) or _fit_from_checks(checks),
+            summary=cap_summary(spec.get("feedback")),
+            checks=checks,
+            rank_score=float(spec["score"])
+            if spec.get("score") is not None
+            else _rank(checks),
+            created_at=created_at + timedelta(minutes=1),
+        )
+        add_history(
+            db,
+            application,
+            legacy,
+            created_at=created_at,
+            decided_at=updated_at,
+            actor_id=actor_id,
+            job_title=job.title,
+            company_name=company_data["name"],
+            email_sent=spec.get("email_state") == "sent"
+            or legacy == ApplicationStatus.rejected,
+            source=source,
+        )
+        if spec.get("email_state") == "sent":
             draft_counter += 1
+        if spec.get("note"):
+            add_event(
+                db,
+                application.id,
+                EventType.note,
+                updated_at,
+                actor_id=actor_id,
+                text=spec["note"],
+            )
 
         interview_days_offset = spec.get("interview_days_offset")
         if interview_days_offset is not None:
@@ -4383,6 +4709,7 @@ async def seed_live_pipeline_data(
                 hour=spec.get("interview_hour", 11)
             ) + timedelta(days=interview_days_offset)
             interview = Interview(
+                id=uuid.uuid4(),
                 application_id=application.id,
                 company_id=job.company_id,
                 interviewer_user_id=company_context["recruiters"][0].id,
@@ -4395,6 +4722,15 @@ async def seed_live_pipeline_data(
                 location=f"https://meet.jit.si/rojgarai-{uuid.uuid4().hex[:16]}",
                 title=f"Interview: {job.title}",
                 status="booked",
+            )
+            db.add(interview)
+            add_event(
+                db,
+                application.id,
+                EventType.interview_booked,
+                min(interview_start, NOW) - timedelta(days=1),
+                interview_id=str(interview.id),
+                starts_at=interview_start,
             )
             db.add(interview)
             await db.flush()
@@ -4418,7 +4754,7 @@ async def seed_live_pipeline_data(
 
     await db.flush()
     print(f"  ✓ Live applications: {application_counter}")
-    print(f"  ✓ Live email drafts: {draft_counter}")
+    print(f"  ✓ Live decision emails sent: {draft_counter}")
     print(f"  ✓ Live interviews: {interview_counter}")
     print(f"  ✓ Scorecards: {scorecard_counter}")
 
@@ -4490,7 +4826,6 @@ async def seed_preferences_and_activity(
             application_id=kwargs.get("application_id"),
             job_id=kwargs.get("job_id"),
             interview_id=kwargs.get("interview_id"),
-            draft_id=kwargs.get("draft_id"),
             actor_user_id=kwargs.get("actor_user_id"),
             metadata_json=kwargs.get("metadata"),
         )
@@ -4581,7 +4916,7 @@ async def seed_preferences_and_activity(
             application_id=application.id,
             job_id=job.id,
             actor_user_id=actor.id,
-            metadata={"status": ApplicationStatus.applied.value},
+            metadata={"stage": ApplicationStage.new.value},
         )
         activity_counter += 1
 
@@ -4600,55 +4935,18 @@ async def seed_preferences_and_activity(
         )
         activity_counter += 1
 
-        if (
-            application.score is not None
-            or application.strengths
-            or application.weaknesses
-        ):
-            review_at = max(
-                application.created_at + timedelta(hours=18),
-                application.updated_at - timedelta(days=1),
-            )
-            await create_seed_event(
-                created_at=review_at,
-                event_type="application_review_updated",
-                audience="recruiter",
-                title=f"Review captured for {candidate.full_name}",
-                description=f"Score and feedback were saved for {job.title}.",
-                href=f"/recruiter/candidates/{application.id}",
-                company_id=company.id,
-                application_id=application.id,
-                job_id=job.id,
-                actor_user_id=actor.id,
-                metadata={"score": application.score},
-            )
-            activity_counter += 1
-
-            await create_seed_event(
-                created_at=review_at,
-                event_type="application_review_ready",
-                audience="candidate",
-                title=f"Review updated for {job.title}",
-                description=f"{company.name} added review details to your application.",
-                href=f"/candidate/applications/{application.id}",
-                user_id=candidate.id,
-                company_id=company.id,
-                application_id=application.id,
-                job_id=job.id,
-                actor_user_id=actor.id,
-                metadata={"score": application.score},
-            )
-            activity_counter += 1
-
-        if application.status != ApplicationStatus.applied:
+        legacy_status, _legacy_score = LEGACY_BY_APP.get(
+            application.id, (ApplicationStatus.applied, None)
+        )
+        if legacy_status != ApplicationStatus.applied:
             candidate_title, candidate_description = _status_activity_copy(
-                application.status,
+                legacy_status,
                 company.name,
                 job.title,
             )
             await create_seed_event(
                 created_at=application.updated_at,
-                event_type=f"application_{application.status.value}",
+                event_type=f"application_{application.stage.value}",
                 audience="candidate",
                 title=candidate_title,
                 description=candidate_description,
@@ -4658,152 +4956,22 @@ async def seed_preferences_and_activity(
                 application_id=application.id,
                 job_id=job.id,
                 actor_user_id=actor.id,
-                metadata={"status": application.status.value},
+                metadata={"stage": application.stage.value},
             )
             activity_counter += 1
 
             await create_seed_event(
                 created_at=application.updated_at,
-                event_type=f"candidate_{application.status.value}",
+                event_type=f"candidate_{application.stage.value}",
                 audience="recruiter",
-                title=f"{candidate.full_name}: {application.status.value.replace('_', ' ')}",
-                description=f"{candidate.full_name} is now {application.status.value.replace('_', ' ')} for {job.title}.",
+                title=f"{candidate.full_name}: {application.stage.value}",
+                description=f"{candidate.full_name} is now {application.stage.value} for {job.title}.",
                 href=f"/recruiter/candidates/{application.id}",
                 company_id=company.id,
                 application_id=application.id,
                 job_id=job.id,
                 actor_user_id=actor.id,
-                metadata={"status": application.status.value},
-            )
-            activity_counter += 1
-
-        # Commit every 50 events to avoid deadlock
-        if activity_counter % 50 == 0:
-            await db.commit()
-
-    await db.commit()
-
-    with db.no_autoflush:
-        drafts_result = await db.execute(
-            select(EmailDraft, Application, Job, Company, User)
-            .join(Application, Application.id == EmailDraft.application_id)
-            .join(Job, Job.id == Application.job_id)
-            .join(Company, Company.id == Job.company_id)
-            .join(User, User.id == Application.user_id)
-            .order_by(EmailDraft.created_at.asc())
-        )
-    for draft, application, job, company, candidate in drafts_result.all():
-        company_context = company_context_by_id.get(company.id)
-        if company_context is None:
-            continue
-        actors = [company_context["admin"], *company_context["recruiters"]]
-        actor = next(
-            (member for member in actors if member.id == job.posted_by), actors[0]
-        )
-
-        generated_at = max(
-            application.created_at + timedelta(days=1),
-            application.updated_at - timedelta(hours=20),
-        )
-        draft.generated_by_user_id = draft.generated_by_user_id or actor.id
-        draft.approved_by_user_id = draft.approved_by_user_id or (
-            actor.id if draft.is_approved or draft.is_sent else None
-        )
-        draft.sent_by_user_id = draft.sent_by_user_id or (
-            actor.id if draft.is_sent else None
-        )
-        draft.discarded_by_user_id = draft.discarded_by_user_id or (
-            actor.id if draft.is_discarded else None
-        )
-        draft.approved_at = draft.approved_at or (
-            generated_at + timedelta(hours=6)
-            if draft.is_approved or draft.is_sent
-            else None
-        )
-        draft.sent_at = draft.sent_at or (
-            generated_at + timedelta(hours=8) if draft.is_sent else None
-        )
-        draft.discarded_at = draft.discarded_at or (
-            generated_at + timedelta(hours=5) if draft.is_discarded else None
-        )
-
-        await create_seed_event(
-            created_at=generated_at,
-            event_type="outreach_draft_generated",
-            audience="recruiter",
-            title=f"Outreach draft prepared for {candidate.full_name}",
-            description=f"{job.title} draft is ready for review.",
-            href=f"/recruiter/candidates/{application.id}",
-            company_id=company.id,
-            application_id=application.id,
-            job_id=job.id,
-            draft_id=draft.id,
-            actor_user_id=actor.id,
-        )
-        activity_counter += 1
-
-        if draft.is_approved or draft.is_sent:
-            await create_seed_event(
-                created_at=draft.approved_at or generated_at,
-                event_type="outreach_draft_approved",
-                audience="recruiter",
-                title=f"Outreach approved for {candidate.full_name}",
-                description=f"{job.title} outreach has been approved.",
-                href="/recruiter/outreach",
-                company_id=company.id,
-                application_id=application.id,
-                job_id=job.id,
-                draft_id=draft.id,
-                actor_user_id=actor.id,
-            )
-            activity_counter += 1
-
-        if draft.is_sent:
-            sent_time = draft.sent_at or generated_at
-            await create_seed_event(
-                created_at=sent_time,
-                event_type="outreach_email_sent",
-                audience="recruiter",
-                title=f"Outreach sent to {candidate.full_name}",
-                description=f"{job.title} email was delivered to the candidate.",
-                href="/recruiter/outreach",
-                company_id=company.id,
-                application_id=application.id,
-                job_id=job.id,
-                draft_id=draft.id,
-                actor_user_id=actor.id,
-            )
-            activity_counter += 1
-
-            await create_seed_event(
-                created_at=sent_time,
-                event_type="outreach_email_sent",
-                audience="candidate",
-                title=f"Email update for {job.title}",
-                description=f"{company.name} sent you an application update.",
-                href=f"/candidate/applications/{application.id}",
-                user_id=candidate.id,
-                company_id=company.id,
-                application_id=application.id,
-                job_id=job.id,
-                draft_id=draft.id,
-                actor_user_id=actor.id,
-            )
-            activity_counter += 1
-
-        if draft.is_discarded:
-            await create_seed_event(
-                created_at=draft.discarded_at or generated_at,
-                event_type="outreach_draft_discarded",
-                audience="recruiter",
-                title=f"Draft discarded for {candidate.full_name}",
-                description=f"{job.title} outreach was intentionally discarded.",
-                href="/recruiter/outreach",
-                company_id=company.id,
-                application_id=application.id,
-                job_id=job.id,
-                draft_id=draft.id,
-                actor_user_id=actor.id,
+                metadata={"stage": application.stage.value},
             )
             activity_counter += 1
 
@@ -5093,7 +5261,6 @@ async def seed_audit_history(
     interview_by_application_id = {
         interview.application_id: interview for interview in interviews
     }
-    email_drafts = (await db.execute(select(EmailDraft))).scalars().all()
     preferences = (await db.execute(select(RecruiterPreference))).scalars().all()
     import_tasks = (
         (
@@ -5371,7 +5538,7 @@ async def seed_audit_history(
                 "salary_max": 155000,
                 "currency": "NPR",
                 "status": JobStatus.draft.value,
-                "overview": "Legacy role removed before publishing.",
+                "description": "Legacy role removed before publishing.",
             },
             request_path=f"/jobs/{deleted_job_id}",
             request_method="DELETE",
@@ -5605,7 +5772,7 @@ async def seed_audit_history(
             before_overrides={
                 "salary_min": max((job.salary_min or 0) - 15000, 0) or None,
                 "salary_max": max((job.salary_max or 0) - 20000, 0) or None,
-                "overview": "Initial draft of the role description.",
+                "description": "Initial draft of the role description.",
             },
         )
         record(
@@ -5626,7 +5793,7 @@ async def seed_audit_history(
             active_before, active_after, active_diff = _build_audit_snapshots(
                 job,
                 before_overrides={"status": JobStatus.draft},
-                after_overrides={"status": JobStatus.active},
+                after_overrides={"status": JobStatus.open},
             )
             record(
                 created_at=job.created_at + timedelta(hours=1),
@@ -5642,43 +5809,28 @@ async def seed_audit_history(
                 request_path=f"/jobs/{job.id}",
                 request_method="PATCH",
             )
-        if job.status == JobStatus.expired and job.expires_at is not None:
-            expired_before, expired_after, expired_diff = _build_audit_snapshots(
+        if job.status == JobStatus.closed and job.closed_at is not None:
+            closed_before, closed_after, closed_diff = _build_audit_snapshots(
                 job,
-                before_overrides={"status": JobStatus.active},
+                before_overrides={
+                    "status": JobStatus.open,
+                    "closed_reason": None,
+                    "closed_at": None,
+                },
             )
             record(
-                created_at=job.expires_at,
+                created_at=job.closed_at,
                 entity_type="job",
                 entity_id=job.id,
                 action_type="status_transition",
                 actor=actor,
                 target_user_id=job.posted_by,
                 company_id=job.company_id,
-                before_json=expired_before,
-                after_json=expired_after,
-                diff_json=expired_diff,
-                request_path=f"/jobs/{job.id}/expire",
-                request_method="POST",
-            )
-        if job.hiring_completed:
-            hiring_before, hiring_after, hiring_diff = _build_audit_snapshots(
-                job,
-                before_overrides={"hiring_completed": False},
-            )
-            record(
-                created_at=(job.updated_at or job.created_at) + timedelta(hours=2),
-                entity_type="job",
-                entity_id=job.id,
-                action_type="mark_complete",
-                actor=actor,
-                target_user_id=job.posted_by,
-                company_id=job.company_id,
-                before_json=hiring_before,
-                after_json=hiring_after,
-                diff_json=hiring_diff,
-                request_path=f"/jobs/{job.id}/hiring-complete",
-                request_method="POST",
+                before_json=closed_before,
+                after_json=closed_after,
+                diff_json=closed_diff,
+                request_path=f"/jobs/{job.id}",
+                request_method="PATCH",
             )
 
     for application in applications:
@@ -5688,10 +5840,10 @@ async def seed_audit_history(
         interview = interview_by_application_id.get(application.id)
 
         apply_after = _serialize_audit_entity(application)
-        apply_after["status"] = ApplicationStatus.applied.value
-        apply_after["score"] = None
-        apply_after["feedback"] = None
-        apply_after["shortlist_notified"] = False
+        apply_after["stage"] = ApplicationStage.new.value
+        apply_after["decided_by"] = None
+        apply_after["decided_at"] = None
+        apply_after["rejected_reason"] = None
         record(
             created_at=application.created_at,
             entity_type="application",
@@ -5706,81 +5858,17 @@ async def seed_audit_history(
             request_path="/applications",
             request_method="POST",
         )
-        if (
-            application.score is not None
-            or application.strengths
-            or application.weaknesses
-        ):
-            review_before, review_after, review_diff = _build_audit_snapshots(
-                application,
-                before_overrides={"score": None, "strengths": None, "weaknesses": None},
-            )
-            record(
-                created_at=application.created_at + timedelta(hours=18),
-                entity_type="application",
-                entity_id=application.id,
-                action_type="update",
-                actor=actor,
-                target_user_id=application.user_id,
-                company_id=job.company_id if job is not None else None,
-                parent_entity_type="job",
-                parent_entity_id=application.job_id,
-                before_json=review_before,
-                after_json=review_after,
-                diff_json=review_diff,
-                request_path=f"/applications/{application.id}/review",
-                request_method="PATCH",
-            )
 
-        status_path: list[ApplicationStatus] = []
-        if application.status in {
-            ApplicationStatus.applied,
-            ApplicationStatus.shortlisted,
-            ApplicationStatus.rejected,
-            ApplicationStatus.interview_booked,
-            ApplicationStatus.interview_completed,
-            ApplicationStatus.offer,
-        }:
-            status_path.append(ApplicationStatus.applied)
-        if application.status in {
-            ApplicationStatus.shortlisted,
-            ApplicationStatus.rejected,
-            ApplicationStatus.interview_booked,
-            ApplicationStatus.interview_completed,
-            ApplicationStatus.offer,
-        }:
-            status_path.append(ApplicationStatus.shortlisted)
-        if application.status in {
-            ApplicationStatus.interview_booked,
-            ApplicationStatus.interview_completed,
-            ApplicationStatus.offer,
-        }:
-            status_path.append(ApplicationStatus.interview_booked)
-        if application.status in {
-            ApplicationStatus.interview_completed,
-            ApplicationStatus.offer,
-        }:
-            status_path.append(ApplicationStatus.interview_completed)
-        if application.status == ApplicationStatus.rejected:
-            if interview is not None:
-                status_path.extend(
-                    [
-                        ApplicationStatus.interview_booked,
-                        ApplicationStatus.interview_completed,
-                    ]
-                )
-            status_path.append(ApplicationStatus.rejected)
-        if application.status == ApplicationStatus.offer:
-            status_path.append(ApplicationStatus.offer)
-
-        status_path = list(dict.fromkeys(status_path))
+        legacy_status, _score = LEGACY_BY_APP.get(
+            application.id, (ApplicationStatus.applied, None)
+        )
         transition_time = application.created_at + timedelta(days=1)
-        previous_status = ApplicationStatus.applied
-        for next_status in status_path:
+        previous_stage = ApplicationStage.new
+        for next_stage in STAGE_PATH[legacy_status]:
             before_json, after_json, diff_json = _build_audit_snapshots(
                 application,
-                before_overrides={"status": previous_status},
-                after_overrides={"status": next_status},
+                before_overrides={"stage": previous_stage},
+                after_overrides={"stage": next_stage},
             )
             record(
                 created_at=transition_time,
@@ -5795,130 +5883,11 @@ async def seed_audit_history(
                 before_json=before_json,
                 after_json=after_json,
                 diff_json=diff_json,
-                request_path=f"/applications/{application.id}/status",
-                request_method="PATCH",
+                request_path="/recruiter/v2/decide",
+                request_method="POST",
             )
-            previous_status = next_status
+            previous_stage = next_stage
             transition_time += timedelta(days=2)
-
-    for draft in email_drafts:
-        application = applications_by_id.get(draft.application_id)
-        if application is None:
-            continue
-        job = jobs_by_id.get(application.job_id)
-        _actor_key = draft.generated_by_user_id or (
-            job.posted_by if job is not None else None
-        )
-        actor = actor_by_user_id.get(_actor_key) if _actor_key is not None else None
-        company_id = job.company_id if job is not None else None
-        generated_at = (
-            draft.approved_at
-            or draft.sent_at
-            or draft.discarded_at
-            or application.updated_at
-            or application.created_at
-        ) - timedelta(hours=8)
-
-        create_after = _serialize_audit_entity(draft)
-        create_after.update(
-            {
-                "is_approved": False,
-                "is_sent": False,
-                "is_discarded": False,
-                "approved_at": None,
-                "sent_at": None,
-                "discarded_at": None,
-            }
-        )
-        record(
-            created_at=generated_at,
-            entity_type="email_draft",
-            entity_id=draft.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=application.user_id,
-            company_id=company_id,
-            parent_entity_type="application",
-            parent_entity_id=application.id,
-            after_json=create_after,
-            request_path="/outreach/generate",
-            request_method="POST",
-        )
-        if draft.is_approved or draft.is_sent:
-            approve_before, approve_after, approve_diff = _build_audit_snapshots(
-                draft,
-                before_overrides={
-                    "is_approved": False,
-                    "approved_by_user_id": None,
-                    "approved_at": None,
-                },
-            )
-            record(
-                created_at=draft.approved_at or (generated_at + timedelta(hours=3)),
-                entity_type="email_draft",
-                entity_id=draft.id,
-                action_type="approve",
-                actor=actor_by_user_id.get(draft.approved_by_user_id) or actor,
-                target_user_id=application.user_id,
-                company_id=company_id,
-                parent_entity_type="application",
-                parent_entity_id=application.id,
-                before_json=approve_before,
-                after_json=approve_after,
-                diff_json=approve_diff,
-                request_path=f"/outreach/{draft.id}/approve",
-                request_method="POST",
-            )
-        if draft.is_sent:
-            send_before, send_after, send_diff = _build_audit_snapshots(
-                draft,
-                before_overrides={
-                    "is_sent": False,
-                    "sent_by_user_id": None,
-                    "sent_at": None,
-                },
-            )
-            record(
-                created_at=draft.sent_at or (generated_at + timedelta(hours=5)),
-                entity_type="email_draft",
-                entity_id=draft.id,
-                action_type="send",
-                actor=actor_by_user_id.get(draft.sent_by_user_id) or actor,
-                target_user_id=application.user_id,
-                company_id=company_id,
-                parent_entity_type="application",
-                parent_entity_id=application.id,
-                before_json=send_before,
-                after_json=send_after,
-                diff_json=send_diff,
-                request_path=f"/outreach/{draft.id}/send",
-                request_method="POST",
-            )
-        if draft.is_discarded:
-            discard_before, discard_after, discard_diff = _build_audit_snapshots(
-                draft,
-                before_overrides={
-                    "is_discarded": False,
-                    "discarded_by_user_id": None,
-                    "discarded_at": None,
-                },
-            )
-            record(
-                created_at=draft.discarded_at or (generated_at + timedelta(hours=4)),
-                entity_type="email_draft",
-                entity_id=draft.id,
-                action_type="discard",
-                actor=actor_by_user_id.get(draft.discarded_by_user_id) or actor,
-                target_user_id=application.user_id,
-                company_id=company_id,
-                parent_entity_type="application",
-                parent_entity_id=application.id,
-                before_json=discard_before,
-                after_json=discard_after,
-                diff_json=discard_diff,
-                request_path=f"/outreach/{draft.id}/discard",
-                request_method="POST",
-            )
 
     for interview in interview_by_application_id.values():
         application = applications_by_id.get(interview.application_id)
@@ -5942,7 +5911,7 @@ async def seed_audit_history(
             request_method="POST",
         )
         if (
-            application.status
+            LEGACY_BY_APP.get(application.id, (ApplicationStatus.applied, None))[0]
             in {
                 ApplicationStatus.interview_completed,
                 ApplicationStatus.offer,
@@ -6069,6 +6038,1178 @@ async def seed_audit_history(
 
 
 # ============================================================================
+# NON-TECH EMPLOYERS — banks, hospital, school, hotel, retail, logistics.
+# Open jobs with must-haves, knockout questions and a handful of applicants
+# each: English CVs, Nepali answers, phone-only people without a CV, and
+# word-of-mouth referrals. Every evidence quote is a verbatim substring of the
+# applicant's CV text or answers (checked when seeding).
+# ============================================================================
+
+
+def _q(label: str, knockout: str | None = None) -> dict:
+    return {
+        "label": label,
+        "type": "yes_no" if knockout else "short_text",
+        "required": True,
+        "knockout_answer": knockout,
+    }
+
+
+NONTECH_COMPANIES = [
+    {
+        "name": "Himalayan Bank Ltd.",
+        "industry": "Banking",
+        "company_size": "1000+",
+        "location": "Kamaladi, Kathmandu",
+        "website_url": "https://www.himalayanbank.com",
+        "domain": "himalayanbank.com",
+        "cal_booking_url": None,
+        "cal_organizer_email": None,
+        "description": "One of Nepal's leading commercial banks with branches across the country.",
+        "admin": {
+            "full_name": "Sunita Shrestha",
+            "email": "sunita.shrestha@himalayanbank.com",
+            "job_title": "Head of Human Resources",
+        },
+        "recruiters": [
+            {
+                "full_name": "Anil Maharjan",
+                "email": "anil.maharjan@himalayanbank.com",
+                "job_title": "HR Officer",
+            }
+        ],
+        "jobs": [
+            {
+                "key": "hbl_teller",
+                "title": "Bank Teller",
+                "location": "Kamaladi, Kathmandu",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.banking_finance,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 35000,
+                "salary_max": 45000,
+                "currency": "NPR",
+                "closes_in_days": 12,
+                "description": (
+                    "Serve customers at the counter of our Kamaladi branch: deposits, "
+                    "withdrawals, remittance payouts and account queries.\n\n"
+                    "## What you will do\n- Handle cash accurately and balance the till every day\n"
+                    "- Help customers with account and remittance questions\n\n"
+                    "## What we offer\n- Monthly salary NPR 35,000-45,000\n- Festival bonus and provident fund"
+                ),
+                "must_haves": [
+                    "Bachelor's degree in Business, Management or a related field",
+                    "1+ year of cash handling or customer service",
+                    "Comfortable with banking software and MS Excel",
+                    "Fluent in Nepali and English",
+                ],
+                "nice_to_haves": ["Experience at a commercial bank or cooperative"],
+                "questions": [
+                    _q("Have you completed a Bachelor's degree?", "yes"),
+                    _q("How soon can you join?"),
+                ],
+                "applicants": [
+                    {
+                        "full_name": "Prakriti Shrestha",
+                        "email": "prakriti.shrestha@gmail.com",
+                        "phone": "9841001122",
+                        "source": "merojob",
+                        "cv": (
+                            "BBS graduate, 2021.\n"
+                            "Customer service assistant at Nabil Bank, Durbarmarg branch for 18 months: "
+                            "handled cash deposits and withdrawals, balanced the till daily.\n"
+                            "Comfortable with Finacle and MS Excel.\n"
+                            "Languages: Nepali, English, Newari."
+                        ),
+                        "answers": ["Yes", "Within 2 weeks"],
+                        "checks": [
+                            ("met", "BBS graduate"),
+                            ("met", "handled cash deposits and withdrawals"),
+                            ("met", "Comfortable with Finacle and MS Excel"),
+                            ("met", "Languages: Nepali, English"),
+                        ],
+                        "summary": "BBS, 18 months bank customer service, daily cash handling, Finacle and Excel",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 2,
+                    },
+                    {
+                        "full_name": "Bikram Tamang",
+                        "email": None,
+                        "phone": "980-3344556",
+                        "source": "facebook",
+                        "cv": None,
+                        "answers": ["हो, BBS पास गरेको छु", "एक महिनाभित्र"],
+                        "checks": [
+                            ("met", "BBS पास गरेको छु"),
+                            ("missing", None),
+                            ("missing", None),
+                            ("missing", None),
+                        ],
+                        "summary": "Answers only: has a BBS degree; no cash handling or bank work shown",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 1,
+                    },
+                    {
+                        "full_name": "Saroj Adhikari",
+                        "email": "saroj.adhikari@yahoo.com",
+                        "phone": "9851023344",
+                        "source": "linkedin",
+                        "cv": (
+                            "Accountant at Everest Traders for 2 years: daily cash book, bank "
+                            "reconciliation, VAT billing.\n"
+                            "Bachelor in Business Studies (BBS).\n"
+                            "Tally, MS Excel."
+                        ),
+                        "answers": ["Yes", "1 month notice"],
+                        "checks": [
+                            ("met", "Bachelor in Business Studies (BBS)"),
+                            ("partly", "daily cash book, bank reconciliation"),
+                            ("partly", "Tally, MS Excel"),
+                            ("missing", None),
+                        ],
+                        "summary": "BBS, 2 yrs trading-company accountant (cash book, reconciliation); no counter work",
+                        "stage": ApplicationStage.shortlisted,
+                        "days_ago": 6,
+                    },
+                ],
+            },
+            {
+                "key": "hbl_branch_officer",
+                "title": "Branch Officer",
+                "location": "Lakeside, Pokhara",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.banking_finance,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 55000,
+                "salary_max": 75000,
+                "currency": "NPR",
+                "closes_in_days": 20,
+                "description": (
+                    "Run day-to-day operations at our Pokhara branch and lead a small "
+                    "front-office team.\n\n## What we offer\n- Monthly salary NPR 55,000-75,000\n"
+                    "- Relocation support"
+                ),
+                "must_haves": [
+                    "3+ years in a commercial bank branch",
+                    "Experience with loan or credit documentation",
+                    "Knowledge of NRB directives, KYC and AML",
+                    "Has led a small team",
+                ],
+                "nice_to_haves": [],
+                "questions": [
+                    _q("Are you willing to work at the Pokhara branch?", "yes")
+                ],
+                "applicants": [
+                    {
+                        "full_name": "Rabindra Karki",
+                        "email": "rabindra.karki@gmail.com",
+                        "phone": "9856012345",
+                        "source": "linkedin",
+                        "cv": (
+                            "Assistant Branch Manager, Siddhartha Bank, Lakeside Pokhara (4 years).\n"
+                            "Prepared credit files and loan documentation for SME and home loans.\n"
+                            "Responsible for KYC review and AML reporting under NRB directives.\n"
+                            "Supervised a team of 6 front-office staff."
+                        ),
+                        "answers": ["Yes"],
+                        "checks": [
+                            (
+                                "met",
+                                "Assistant Branch Manager, Siddhartha Bank, Lakeside Pokhara (4 years)",
+                            ),
+                            ("met", "Prepared credit files and loan documentation"),
+                            (
+                                "met",
+                                "KYC review and AML reporting under NRB directives",
+                            ),
+                            ("met", "Supervised a team of 6 front-office staff"),
+                        ],
+                        "summary": "4 yrs assistant branch manager in Pokhara; loans, KYC/AML, led 6 staff",
+                        "stage": ApplicationStage.interview,
+                        "interview_in_days": 2,
+                        "days_ago": 9,
+                    },
+                    {
+                        "full_name": "Manisha Poudel",
+                        "email": "manisha.poudel@gmail.com",
+                        "phone": "9841556677",
+                        "source": "merojob",
+                        "cv": (
+                            "Customer Service Officer at Global IME Bank, New Road, 2 years.\n"
+                            "Handled account opening and KYC updates."
+                        ),
+                        "answers": ["No"],
+                        "knockout": True,
+                        "stage": ApplicationStage.new,
+                        "days_ago": 3,
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        "name": "Grande City Hospital",
+        "industry": "Healthcare",
+        "company_size": "501-1000",
+        "location": "Kantipath, Kathmandu",
+        "website_url": "https://www.grandecityhospital.example.np",
+        "domain": "grandecityhospital.example.np",
+        "cal_booking_url": None,
+        "cal_organizer_email": None,
+        "description": "A 200-bed multi-specialty hospital in central Kathmandu.",
+        "admin": {
+            "full_name": "Rekha Gurung",
+            "email": "rekha.gurung@grandecityhospital.example.np",
+            "job_title": "HR Manager",
+        },
+        "recruiters": [],
+        "jobs": [
+            {
+                "key": "gch_staff_nurse",
+                "title": "Staff Nurse",
+                "location": "Kantipath, Kathmandu",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.healthcare,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 35000,
+                "salary_max": 50000,
+                "currency": "NPR",
+                "closes_in_days": 9,
+                "description": (
+                    "Care for patients in our medical and surgical wards on a rotating roster.\n\n"
+                    "## What we offer\n- Monthly salary NPR 35,000-50,000 plus night allowance\n"
+                    "- Free health care for staff"
+                ),
+                "must_haves": [
+                    "Valid Nepal Nursing Council (NNC) licence",
+                    "PCL or B.Sc. in Nursing",
+                    "1+ year of ward or ICU experience",
+                    "Able to work rotating night shifts",
+                ],
+                "nice_to_haves": ["Basic Life Support (BLS) certificate"],
+                "questions": [
+                    _q("Do you hold a valid NNC licence?", "yes"),
+                    _q("Which wards have you worked in?"),
+                ],
+                "applicants": [
+                    {
+                        "full_name": "Sabina Rai",
+                        "email": "sabina.rai@gmail.com",
+                        "phone": "9842233445",
+                        "source": "viber",
+                        "cv": (
+                            "PCL Nursing, Nepal Nursing Council licence no. 12345 (valid till 2027).\n"
+                            "Staff Nurse, Medical ward, Bir Hospital - 3 years, including night duties.\n"
+                            "Basic Life Support (BLS) certified."
+                        ),
+                        "answers": ["Yes", "Medical ward and emergency"],
+                        "checks": [
+                            ("met", "Nepal Nursing Council licence no. 12345"),
+                            ("met", "PCL Nursing"),
+                            (
+                                "met",
+                                "Staff Nurse, Medical ward, Bir Hospital - 3 years",
+                            ),
+                            ("met", "including night duties"),
+                        ],
+                        "summary": "PCL Nursing, NNC licence, 3 yrs medical ward incl. nights, BLS",
+                        "stage": ApplicationStage.shortlisted,
+                        "days_ago": 5,
+                    },
+                    {
+                        "full_name": "Nirmala Thapa",
+                        "email": None,
+                        "phone": "+977 9818765432",
+                        "source": "walk_in",
+                        "cv": None,
+                        "answers": [
+                            "हो, मसँग NNC लाइसेन्स छ",
+                            "दुई वर्ष ICU मा काम गरेको अनुभव छ",
+                        ],
+                        "checks": [
+                            ("met", "मसँग NNC लाइसेन्स छ"),
+                            ("missing", None),
+                            ("met", "दुई वर्ष ICU मा काम गरेको अनुभव छ"),
+                            ("missing", None),
+                        ],
+                        "summary": "Walk-in, answers only: NNC licence, 2 yrs ICU; nursing course and nights not stated",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 1,
+                    },
+                    {
+                        "full_name": "Anjana KC",
+                        "email": "anjana.kc@gmail.com",
+                        "phone": "9860011223",
+                        "source": "facebook",
+                        "cv": (
+                            "B.Sc. Nursing graduate (2024), internship at Kanti Children's Hospital.\n"
+                            "NNC licence exam passed."
+                        ),
+                        "answers": ["Yes", "Paediatric ward (internship)"],
+                        "checks": [
+                            ("partly", "NNC licence exam passed"),
+                            ("met", "B.Sc. Nursing graduate"),
+                            ("partly", "internship at Kanti Children's Hospital"),
+                            ("missing", None),
+                        ],
+                        "summary": "New B.Sc. Nursing graduate, paediatric internship; no paid ward experience yet",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 4,
+                    },
+                ],
+            }
+        ],
+    },
+    {
+        "name": "Little Angels' School",
+        "industry": "Education",
+        "company_size": "201-500",
+        "location": "Hattiban, Lalitpur",
+        "website_url": "https://www.littleangels.example.np",
+        "domain": "littleangels.example.np",
+        "cal_booking_url": None,
+        "cal_organizer_email": None,
+        "description": "A K-12 English-medium school in Lalitpur.",
+        "admin": {
+            "full_name": "Mohan Bhattarai",
+            "email": "mohan.bhattarai@littleangels.example.np",
+            "job_title": "Vice Principal",
+        },
+        "recruiters": [],
+        "jobs": [
+            {
+                "key": "las_science_teacher",
+                "title": "Secondary Science Teacher",
+                "location": "Hattiban, Lalitpur",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.education,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 30000,
+                "salary_max": 45000,
+                "currency": "NPR",
+                "closes_in_days": 15,
+                "description": (
+                    "Teach Science to grades 8-10 and prepare students for SEE.\n\n"
+                    "## What we offer\n- Monthly salary NPR 30,000-45,000\n- School transport"
+                ),
+                "must_haves": [
+                    "Bachelor's degree in Science or Education",
+                    "Valid Teacher Service Commission (TSC) licence",
+                    "2+ years teaching Science at grades 8-10",
+                    "Can teach in English medium",
+                ],
+                "nice_to_haves": ["Lab management experience"],
+                "questions": [_q("Do you have a TSC teaching licence?", "yes")],
+                "applicants": [
+                    {
+                        "full_name": "Dipendra Bhandari",
+                        "email": "dipendra.bhandari@gmail.com",
+                        "phone": "9845566778",
+                        "source": "merojob",
+                        "cv": (
+                            "B.Ed. in Science Education.\n"
+                            "TSC licence holder (secondary level).\n"
+                            "Science teacher for grades 8-10 at Gyanodaya School for 3 years.\n"
+                            "Taught physics and chemistry in English medium."
+                        ),
+                        "answers": ["Yes"],
+                        "checks": [
+                            ("met", "B.Ed. in Science Education"),
+                            ("met", "TSC licence holder (secondary level)"),
+                            (
+                                "met",
+                                "Science teacher for grades 8-10 at Gyanodaya School for 3 years",
+                            ),
+                            ("met", "Taught physics and chemistry in English medium"),
+                        ],
+                        "summary": "B.Ed. Science, TSC licence, 3 yrs teaching grades 8-10 in English medium",
+                        "stage": ApplicationStage.interview,
+                        "interview_in_days": 1,
+                        "days_ago": 8,
+                    },
+                    {
+                        "full_name": "Kamala Joshi",
+                        "email": "kamala.joshi@gmail.com",
+                        "phone": "9849988776",
+                        "source": "viber",
+                        "cv": "M.Sc. Chemistry.\nPart-time tutor for SEE students, 1 year.",
+                        "answers": ["छैन, TSC परीक्षाको तयारी गर्दैछु"],
+                        "checks": [
+                            ("met", "M.Sc. Chemistry"),
+                            ("missing", None),
+                            ("partly", "Part-time tutor for SEE students, 1 year"),
+                            ("missing", None),
+                        ],
+                        "summary": "M.Sc. Chemistry, 1 yr part-time SEE tutor; no TSC licence yet",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 3,
+                    },
+                ],
+            }
+        ],
+    },
+    {
+        "name": "Hotel Thamel Park",
+        "industry": "Hospitality",
+        "company_size": "51-200",
+        "location": "Thamel, Kathmandu",
+        "website_url": "https://www.hotelthamelpark.example.np",
+        "domain": "hotelthamelpark.example.np",
+        "cal_booking_url": None,
+        "cal_organizer_email": None,
+        "description": "A 60-room boutique hotel in the heart of Thamel.",
+        "admin": {
+            "full_name": "Ramesh Shrestha",
+            "email": "ramesh@hotelthamelpark.example.np",
+            "job_title": "General Manager",
+        },
+        "recruiters": [
+            {
+                "full_name": "Ram Thapa",
+                "email": "ram.thapa@hotelthamelpark.example.np",
+                "job_title": "Front Office Manager",
+            }
+        ],
+        "jobs": [
+            {
+                "key": "htp_receptionist",
+                "title": "Front Office Receptionist",
+                "location": "Thamel, Kathmandu",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.hospitality_tourism,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 22000,
+                "salary_max": 30000,
+                "currency": "NPR",
+                "closes_in_days": 7,
+                "description": (
+                    "Welcome guests, handle check-in and check-out, and answer the phone.\n\n"
+                    "## What we offer\n- Monthly salary NPR 22,000-30,000 plus service charge\n"
+                    "- Meals on duty"
+                ),
+                "must_haves": [
+                    "Spoken English for guest check-in",
+                    "1+ year at a hotel front desk",
+                    "Can use a hotel booking system or computer",
+                    "Available for morning and evening shifts",
+                ],
+                "nice_to_haves": ["Speaks a third language (Chinese, Hindi, Japanese)"],
+                "questions": [
+                    _q("Can you work evening shifts?", "yes"),
+                    _q("Which languages can you speak?"),
+                ],
+                "applicants": [
+                    {
+                        "full_name": "Pemba Sherpa",
+                        "email": "pemba.sherpa@gmail.com",
+                        "phone": "9813344221",
+                        "source": "referral",
+                        "referrer": "Ram Thapa (staff)",
+                        "cv": (
+                            "Front desk assistant, Hotel Yak & Yeti, 2 years: guest check-in, "
+                            "reservations in IDS Next.\n"
+                            "Languages: English, Nepali, Sherpa, basic Chinese."
+                        ),
+                        "answers": ["Yes", "English, Nepali, Sherpa, a little Chinese"],
+                        "checks": [
+                            (
+                                "met",
+                                "Languages: English, Nepali, Sherpa, basic Chinese",
+                            ),
+                            ("met", "Front desk assistant, Hotel Yak & Yeti, 2 years"),
+                            ("met", "reservations in IDS Next"),
+                            ("met", "Yes"),
+                        ],
+                        "summary": "2 yrs hotel front desk, IDS Next reservations, English and basic Chinese",
+                        "stage": ApplicationStage.shortlisted,
+                        "days_ago": 4,
+                    },
+                    {
+                        "full_name": "Sushmita Lama",
+                        "email": None,
+                        "phone": "9808877665",
+                        "source": "walk_in",
+                        "cv": None,
+                        "answers": ["हो, सक्छु", "नेपाली, हिन्दी र अलिअलि अंग्रेजी"],
+                        "checks": [
+                            ("partly", "अलिअलि अंग्रेजी"),
+                            ("missing", None),
+                            ("missing", None),
+                            ("met", "हो, सक्छु"),
+                        ],
+                        "summary": "Walk-in, answers only: evening shifts OK, little English; no front-desk work shown",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 0,
+                    },
+                ],
+            },
+            {
+                "key": "htp_cook",
+                "title": "Cook",
+                "location": "Thamel, Kathmandu",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.hospitality_tourism,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 25000,
+                "salary_max": 40000,
+                "currency": "NPR",
+                "closes_in_days": 10,
+                "description": (
+                    "Cook breakfast and à la carte dishes for hotel guests and the rooftop restaurant.\n\n"
+                    "## What we offer\n- Monthly salary NPR 25,000-40,000\n- Meals and service charge"
+                ),
+                "must_haves": [
+                    "2+ years as a cook in a hotel or restaurant",
+                    "Can cook Nepali, Indian and continental dishes",
+                    "Knows kitchen hygiene and food safety",
+                ],
+                "nice_to_haves": ["Bakery or pastry skills"],
+                "questions": [
+                    _q("How many years have you cooked in a restaurant or hotel?")
+                ],
+                "applicants": [
+                    {
+                        "full_name": "Ram Bahadur Magar",
+                        "email": None,
+                        "phone": "9746123456",
+                        "source": "referral",
+                        "referrer": "Ram Thapa (staff)",
+                        "cv": None,
+                        "answers": [
+                            "५ वर्ष थमेलको रेस्टुरेन्टमा कुकको काम गरेँ, नेपाली खाना, दाल भात, मोमो र चाउमिन बनाउँछु"
+                        ],
+                        "checks": [
+                            ("met", "५ वर्ष थमेलको रेस्टुरेन्टमा कुकको काम गरेँ"),
+                            ("partly", "नेपाली खाना, दाल भात, मोमो र चाउमिन बनाउँछु"),
+                            ("missing", None),
+                        ],
+                        "summary": "Referral, answers only: 5 yrs restaurant cook in Thamel, Nepali dishes and momo",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 2,
+                    },
+                    {
+                        "full_name": "Hari Gurung",
+                        "email": "hari.gurung.chef@gmail.com",
+                        "phone": "9817001234",
+                        "source": "merojob",
+                        "cv": (
+                            "Commis chef, Hotel Annapurna, 3 years: Nepali, Indian and continental menu.\n"
+                            "Food safety and kitchen hygiene training (HACCP basics)."
+                        ),
+                        "answers": ["3 years"],
+                        "checks": [
+                            ("met", "Commis chef, Hotel Annapurna, 3 years"),
+                            ("met", "Nepali, Indian and continental menu"),
+                            ("met", "Food safety and kitchen hygiene training"),
+                        ],
+                        "summary": "3 yrs commis chef at a 5-star hotel; Nepali, Indian, continental; HACCP basics",
+                        "stage": ApplicationStage.shortlisted,
+                        "days_ago": 6,
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        "name": "Bhat-Bhateni Supermarket",
+        "industry": "Retail",
+        "company_size": "1000+",
+        "location": "Maharajgunj, Kathmandu",
+        "website_url": "https://www.bhatbhateni.example.np",
+        "domain": "bhatbhateni.example.np",
+        "cal_booking_url": None,
+        "cal_organizer_email": None,
+        "description": "Nepal's largest supermarket chain.",
+        "admin": {
+            "full_name": "Sita Adhikari",
+            "email": "sita.adhikari@bhatbhateni.example.np",
+            "job_title": "HR Manager",
+        },
+        "recruiters": [],
+        "jobs": [
+            {
+                "key": "bbs_store_supervisor",
+                "title": "Store Supervisor",
+                "location": "Maharajgunj, Kathmandu",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.sales_retail,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 35000,
+                "salary_max": 45000,
+                "currency": "NPR",
+                "closes_in_days": 14,
+                "description": (
+                    "Lead a floor team, keep shelves stocked and help customers.\n\n"
+                    "## What we offer\n- Monthly salary NPR 35,000-45,000\n- Staff discount"
+                ),
+                "must_haves": [
+                    "2+ years supervising staff in a shop or supermarket",
+                    "Stock and inventory management",
+                    "Handles customer complaints calmly",
+                    "Basic computer skills",
+                ],
+                "nice_to_haves": [],
+                "questions": [_q("How many people have you supervised?")],
+                "applicants": [
+                    {
+                        "full_name": "Gita Shahi",
+                        "email": "gita.shahi@gmail.com",
+                        "phone": "9841987654",
+                        "source": "referral",
+                        "referrer": "Sita didi",
+                        "cv": (
+                            "Floor supervisor at Big Mart, Baneshwor, 3 years, leading 8 sales staff.\n"
+                            "Responsible for stock counts, re-ordering and inventory reports.\n"
+                            "Resolved customer complaints at the service desk.\n"
+                            "MS Excel and billing software."
+                        ),
+                        "answers": ["8 people"],
+                        "checks": [
+                            (
+                                "met",
+                                "Floor supervisor at Big Mart, Baneshwor, 3 years, leading 8 sales staff",
+                            ),
+                            ("met", "stock counts, re-ordering and inventory reports"),
+                            ("met", "Resolved customer complaints at the service desk"),
+                            ("met", "MS Excel and billing software"),
+                        ],
+                        "summary": "3 yrs supermarket floor supervisor (8 staff), stock and inventory, complaints desk",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 7,
+                    },
+                    {
+                        "full_name": "Bishal Thapa",
+                        "email": "bishal.thapa@gmail.com",
+                        "phone": "9823456789",
+                        "source": "qr",
+                        "cv": "Sales associate at Salesberry, 1 year.\nCustomer service and shelf arrangement.",
+                        "answers": ["None yet"],
+                        "checks": [
+                            ("missing", None),
+                            ("partly", "shelf arrangement"),
+                            ("partly", "Customer service"),
+                            ("missing", None),
+                        ],
+                        "summary": "1 yr sales associate; no supervision or stock control shown",
+                        "stage": ApplicationStage.rejected,
+                        "days_ago": 10,
+                    },
+                ],
+            },
+            {
+                "key": "bbs_cashier",
+                "title": "Cashier",
+                "location": "Koteshwor, Kathmandu",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.sales_retail,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 18000,
+                "salary_max": 25000,
+                "currency": "NPR",
+                "closes_in_days": 5,
+                "description": (
+                    "Run a checkout counter and close the till at the end of each shift.\n\n"
+                    "## What we offer\n- Monthly salary NPR 18,000-25,000\n- Staff discount and lunch"
+                ),
+                "must_haves": [
+                    "Accurate cash handling",
+                    "Can use a POS / billing machine",
+                    "SEE pass or higher",
+                ],
+                "nice_to_haves": [],
+                "questions": [_q("Have you used a billing (POS) machine?")],
+                "applicants": [
+                    {
+                        "full_name": "Laxmi Maharjan",
+                        "email": None,
+                        "phone": "01-5550123",
+                        "source": "walk_in",
+                        "cv": None,
+                        "answers": ["हो, ३ वर्ष किराना पसलमा बिलिङ मेसिन चलाएको छु"],
+                        "checks": [
+                            ("partly", "३ वर्ष किराना पसलमा"),
+                            ("met", "बिलिङ मेसिन चलाएको छु"),
+                            ("missing", None),
+                        ],
+                        "summary": "Walk-in, answers only: 3 yrs billing machine at a grocery shop; SEE not stated",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 1,
+                    },
+                    {
+                        "full_name": "Rojina Shrestha",
+                        "email": "rojina.shrestha@gmail.com",
+                        "phone": "9861234567",
+                        "source": "referral",
+                        "referrer": "Sita didi",
+                        "cv": (
+                            "Cashier at Saleways Supermarket, 1 year: cash counting, POS billing, daily closing.\n"
+                            "SEE passed (GPA 3.2)."
+                        ),
+                        "answers": ["Yes, every day at Saleways"],
+                        "checks": [
+                            ("met", "cash counting, POS billing, daily closing"),
+                            ("met", "POS billing"),
+                            ("met", "SEE passed"),
+                        ],
+                        "summary": "1 yr supermarket cashier: cash counting, POS billing, daily closing; SEE",
+                        "stage": ApplicationStage.shortlisted,
+                        "days_ago": 3,
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        "name": "Upaya City Cargo",
+        "industry": "Logistics",
+        "company_size": "51-200",
+        "location": "Sanepa, Lalitpur",
+        "website_url": "https://www.upaya.example.np",
+        "domain": "upaya.example.np",
+        "cal_booking_url": None,
+        "cal_organizer_email": None,
+        "description": "Same-day cargo and parcel delivery across the Kathmandu valley.",
+        "admin": {
+            "full_name": "Kiran Shakya",
+            "email": "kiran.shakya@upaya.example.np",
+            "job_title": "Operations Lead",
+        },
+        "recruiters": [],
+        "jobs": [
+            {
+                "key": "ucc_driver",
+                "title": "Delivery Driver",
+                "location": "Kathmandu Valley",
+                "location_type": LocationType.onsite,
+                "category": JobCategory.logistics_driving,
+                "employment_type": EmploymentType.full_time,
+                "salary_min": 22000,
+                "salary_max": 30000,
+                "currency": "NPR",
+                "closes_in_days": 11,
+                "description": (
+                    "Drive a delivery van on daily routes in Kathmandu, Lalitpur and Bhaktapur.\n\n"
+                    "## What we offer\n- Monthly salary NPR 22,000-30,000 plus fuel and phone allowance"
+                ),
+                "must_haves": [
+                    "Valid driving licence for light vehicles (category B)",
+                    "2+ years of driving in the Kathmandu valley",
+                    "Knows valley roads and addresses",
+                    "Can use Google Maps on a smartphone",
+                ],
+                "nice_to_haves": [],
+                "questions": [
+                    _q("Do you have a valid category B driving licence?", "yes"),
+                    _q("How many years have you driven in the valley?"),
+                ],
+                "applicants": [
+                    {
+                        "full_name": "Suman Tamang",
+                        "email": None,
+                        "phone": "9849123123",
+                        "source": "phone",
+                        "cv": None,
+                        "answers": ["छैन", "३ वर्ष"],
+                        "knockout": True,
+                        "stage": ApplicationStage.new,
+                        "days_ago": 1,
+                    },
+                    {
+                        "full_name": "Krishna Bhandari",
+                        "email": "krishna.bhandari@gmail.com",
+                        "phone": "9851098765",
+                        "source": "facebook",
+                        "cv": (
+                            "Category B and K driving licence holder.\n"
+                            "Delivery driver for Daraz, Kathmandu valley, 3 years.\n"
+                            "Knows Lalitpur, Bhaktapur and Kathmandu streets well; uses Google Maps daily."
+                        ),
+                        "answers": ["Yes", "3 years"],
+                        "checks": [
+                            ("met", "Category B and K driving licence holder"),
+                            (
+                                "met",
+                                "Delivery driver for Daraz, Kathmandu valley, 3 years",
+                            ),
+                            (
+                                "met",
+                                "Knows Lalitpur, Bhaktapur and Kathmandu streets well",
+                            ),
+                            ("met", "uses Google Maps daily"),
+                        ],
+                        "summary": "Category B licence, 3 yrs valley delivery driver, knows the streets, Google Maps",
+                        "stage": ApplicationStage.interview,
+                        "interview_in_days": 0,
+                        "days_ago": 5,
+                    },
+                    {
+                        "full_name": "Bijay Rai",
+                        "email": "bijay.rai@gmail.com",
+                        "phone": "9807766554",
+                        "source": "viber",
+                        "cv": "Motorbike rider for Pathao, 2 years, Kathmandu.\nLicence category A.",
+                        "answers": ["Yes", "2 years"],
+                        "checks": [
+                            ("partly", "Licence category A"),
+                            ("met", "Motorbike rider for Pathao, 2 years, Kathmandu"),
+                            ("partly", "Kathmandu"),
+                            ("missing", None),
+                        ],
+                        "summary": "2 yrs Pathao rider in Kathmandu; motorbike licence only (category A)",
+                        "stage": ApplicationStage.new,
+                        "days_ago": 2,
+                    },
+                ],
+            }
+        ],
+    },
+]
+
+_LEGACY_FOR_STAGE = {
+    ApplicationStage.new: ApplicationStatus.applied,
+    ApplicationStage.shortlisted: ApplicationStatus.shortlisted,
+    ApplicationStage.interview: ApplicationStatus.interview_booked,
+    ApplicationStage.rejected: ApplicationStatus.rejected,
+}
+
+
+def _fit_from_checks(checks: list[dict]) -> str | None:
+    """Same rule as app.modules.review.rubric.derive_fit."""
+    scoped = [c for c in checks if c["kind"] == "must"]
+    if not scoped:
+        return None
+    if all(c["result"] == "met" for c in scoped):
+        return "strong"
+    points = {"met": 1.0, "partly": 0.5}
+    covered = sum(points.get(c["result"], 0.0) for c in scoped) / len(scoped)
+    return "possible" if covered >= 0.5 else "weak"
+
+
+def _rank(checks: list[dict]) -> float:
+    weights = {"must": 2.0, "nice": 1.0}
+    points = {"met": 1.0, "partly": 0.5}
+    total = sum(weights.get(c["kind"], 0.0) for c in checks)
+    earned = sum(
+        weights.get(c["kind"], 0.0) * points.get(c["result"], 0.0) for c in checks
+    )
+    return round(100.0 * earned / total, 4) + 0.495 if total else 0.0
+
+
+async def _person(db, spec: dict) -> User:
+    """Applicants who never signed up: no password, email optional, E.164 phone."""
+    email = spec["email"].lower() if spec.get("email") else None
+    user = User(
+        full_name=spec["full_name"],
+        email=email,
+        phone=normalize_phone(spec["phone"]),
+        password_hash=None,
+        primary_role=UserRole.candidate,
+        is_email_verified=False,
+        is_onboarded=True,
+    )
+    db.add(user)
+    await db.flush()
+    return user
+
+
+async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
+    """Banks, a hospital, a school, a hotel, a supermarket and a cargo company."""
+    print("\n🏪 Seeding non-tech employers, open jobs and applicants...")
+    contexts: list[dict] = []
+    counts = {"applications": 0, "no_cv": 0, "referrers": 0, "knockouts": 0}
+    for company_data in NONTECH_COMPANIES:
+        admin_info = company_data["admin"]
+        admin = make_user(
+            admin_info["full_name"], admin_info["email"], UserRole.recruiter_admin
+        )
+        db.add(admin)
+        await db.flush()
+        company = Company(
+            name=company_data["name"],
+            industry=company_data["industry"],
+            company_size=company_data["company_size"],
+            location=company_data["location"],
+            website_url=company_data["website_url"],
+            domain=company_data["domain"],
+            cal_booking_url=company_data["cal_booking_url"],
+            cal_organizer_email=company_data["cal_organizer_email"],
+            description=company_data["description"],
+        )
+        db.add(company)
+        await db.flush()
+        db.add(
+            make_membership(
+                admin.id, company.id, MembershipRole.admin, admin_info["job_title"]
+            )
+        )
+        recruiters = []
+        for rec in company_data["recruiters"]:
+            user = make_user(rec["full_name"], rec["email"], UserRole.recruiter)
+            db.add(user)
+            await db.flush()
+            db.add(
+                make_membership(
+                    user.id, company.id, MembershipRole.recruiter, rec["job_title"]
+                )
+            )
+            recruiters.append(user)
+        poster = (recruiters or [admin])[0]
+
+        jobs: dict[str, Job] = {}
+        for job_data in company_data["jobs"]:
+            job = make_job(
+                company.id,
+                poster.id,
+                job_data,
+                status=JobStatus.open,
+                closes_at=NOW + timedelta(days=job_data["closes_in_days"]),
+            )
+            job.created_at = NOW - timedelta(days=12)
+            job.updated_at = NOW - timedelta(days=12)
+            db.add(job)
+            await db.flush()
+            db.add(JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT))
+            jobs[job_data["key"]] = job
+            referrers: dict[str, JobReferrer] = {}
+            labels = [q["label"] for q in job.questions]
+
+            for spec in job_data["applicants"]:
+                person = await _person(db, spec)
+                created = NOW - timedelta(days=spec["days_ago"], hours=3)
+                resume_id = None
+                if spec.get("cv"):
+                    resume = Resume(
+                        user_id=person.id,
+                        resume_name=f"CV for {job.title}",
+                        summary=spec["cv"],
+                        phone=person.phone,
+                    )
+                    db.add(resume)
+                    await db.flush()
+                    resume_id = resume.id
+                else:
+                    counts["no_cv"] += 1
+                referrer = None
+                if spec.get("referrer"):
+                    referrer = referrers.get(spec["referrer"])
+                    if referrer is None:
+                        referrer = JobReferrer(
+                            job_id=job.id,
+                            name=spec["referrer"],
+                            token=secrets.token_urlsafe(12)[:16],
+                            created_by=poster.id,
+                        )
+                        db.add(referrer)
+                        await db.flush()
+                        referrers[spec["referrer"]] = referrer
+                        counts["referrers"] += 1
+                answers = [
+                    {"question": label, "answer": answer}
+                    for label, answer in zip(labels, spec["answers"], strict=False)
+                ]
+                stage = spec["stage"]
+                decided = stage != ApplicationStage.new
+                application = Application(
+                    job_id=job.id,
+                    user_id=person.id,
+                    resume_id=resume_id,
+                    stage=stage,
+                    source=spec["source"],
+                    referrer_id=referrer.id if referrer else None,
+                    decided_by=poster.id if decided else None,
+                    decided_at=created + timedelta(days=1) if decided else None,
+                    rejected_reason=RejectedReason.not_a_fit.value
+                    if stage == ApplicationStage.rejected
+                    else None,
+                    consented_at=created,
+                    screening_answers=answers or None,
+                    shared_full_name=person.full_name,
+                    shared_email_value=person.email,
+                    shared_phone_value=person.phone,
+                    created_at=created,
+                    updated_at=created + timedelta(days=1) if decided else created,
+                )
+                db.add(application)
+                await db.flush()
+                counts["applications"] += 1
+                LEGACY_BY_APP[application.id] = (_LEGACY_FOR_STAGE[stage], None)
+
+                source_text = "\n".join(
+                    [spec.get("cv") or "", *(a["answer"] for a in answers)]
+                )
+                if spec.get("knockout"):
+                    counts["knockouts"] += 1
+                    failed = next(
+                        (q, a)
+                        for q, a in zip(job.questions, spec["answers"], strict=False)
+                        if q.get("knockout_answer")
+                    )
+                    checks = [
+                        {
+                            "criterion": failed[0]["label"],
+                            "kind": "knockout",
+                            "result": "missing",
+                            "evidence": failed[1],
+                        }
+                    ]
+                    fit, rank, triage = "weak", 0.0, "knockout"
+                    summary = cap_summary(
+                        f"Answered “{failed[1]}” to: {failed[0]['label']}"
+                    )
+                else:
+                    checks = []
+                    for criterion, (result, evidence) in zip(
+                        job.must_haves, spec["checks"], strict=True
+                    ):
+                        if evidence is not None and evidence not in source_text:
+                            raise ValueError(
+                                f"Seed evidence not in CV/answers: {evidence!r}"
+                            )
+                        checks.append(
+                            {
+                                "criterion": criterion,
+                                "kind": "must",
+                                "result": result,
+                                "evidence": evidence,
+                            }
+                        )
+                    fit, rank, triage = _fit_from_checks(checks), _rank(checks), "full"
+                    summary = cap_summary(spec["summary"])
+                add_review(
+                    db,
+                    application,
+                    fit=fit,
+                    summary=summary,
+                    checks=checks,
+                    rank_score=rank,
+                    created_at=created + timedelta(minutes=1),
+                    triage=triage,
+                )
+                add_event(
+                    db,
+                    application.id,
+                    EventType.applied,
+                    created,
+                    source=spec["source"],
+                    **(
+                        {"referrer_id": str(referrer.id)}
+                        if referrer is not None
+                        else {}
+                    ),
+                )
+                add_event(
+                    db,
+                    application.id,
+                    EventType.review_done,
+                    created + timedelta(minutes=1),
+                    state="done",
+                    fit=fit,
+                    triage=triage,
+                )
+                legacy = _LEGACY_FOR_STAGE[stage]
+                when = created + timedelta(days=1)
+                previous = ApplicationStage.new
+                for step in STAGE_PATH[legacy]:
+                    add_event(
+                        db,
+                        application.id,
+                        EventType.stage_changed,
+                        when,
+                        actor_id=poster.id,
+                        action={
+                            ApplicationStage.shortlisted: "shortlist",
+                            ApplicationStage.interview: "invite_to_interview",
+                            ApplicationStage.rejected: "reject",
+                        }[step],
+                        **{"from": previous.value, "to": step.value},
+                    )
+                    template = {
+                        ApplicationStage.shortlisted: "shortlist",
+                        ApplicationStage.rejected: "rejection",
+                    }.get(step)
+                    if template and person.email:
+                        add_event(
+                            db,
+                            application.id,
+                            EventType.email_sent,
+                            when + timedelta(seconds=10),
+                            actor_id=poster.id,
+                            status="sent",
+                            template=template,
+                            to=person.email,
+                            subject=(
+                                f"You're shortlisted for {job.title} at {company.name}"
+                                if template == "shortlist"
+                                else f"Your application for {job.title} at {company.name}"
+                            ),
+                        )
+                    previous = step
+                    when += timedelta(hours=20)
+                if spec.get("interview_in_days") is not None and person.email:
+                    start = NOW.replace(hour=5) + timedelta(
+                        days=spec["interview_in_days"]
+                    )
+                    interview = Interview(
+                        id=uuid.uuid4(),
+                        application_id=application.id,
+                        cal_booking_uid=f"seed-nontech-{uuid.uuid4().hex[:12]}",
+                        candidate_name=person.full_name,
+                        candidate_email=person.email,
+                        start_time=start,
+                        end_time=start + timedelta(minutes=30),
+                        timezone="Asia/Kathmandu",
+                        location=company.location,
+                        title=f"Interview: {person.full_name} – {job.title}",
+                    )
+                    db.add(interview)
+                    add_event(
+                        db,
+                        application.id,
+                        EventType.interview_booked,
+                        when,
+                        actor_id=poster.id,
+                        interview_id=str(interview.id),
+                        starts_at=start,
+                    )
+                if spec.get("referrer"):
+                    add_event(
+                        db,
+                        application.id,
+                        EventType.note,
+                        created + timedelta(hours=2),
+                        actor_id=poster.id,
+                        text=f"{spec['referrer']} vouched for {person.full_name.split()[0]}.",
+                    )
+                db.add(
+                    ApplicationSyncEvent(
+                        application_id=application.id, action=SyncAction.UPSERT
+                    )
+                )
+            print(
+                f"    • {company.name}: {job.title} ({job.category.value}, "
+                f"NPR {job.salary_min:,}-{job.salary_max:,}/month, "
+                f"{len(job_data['applicants'])} applicants)"
+            )
+        contexts.append(
+            {
+                "company": company,
+                "company_data": company_data,
+                "primary_jobs": [],
+                "extra_jobs": jobs,
+                "admin": admin,
+                "recruiters": recruiters,
+            }
+        )
+    await db.flush()
+    print(
+        f"  ✓ Non-tech: {len(NONTECH_COMPANIES)} companies, "
+        f"{counts['applications']} applications ({counts['no_cv']} without a CV, "
+        f"{counts['knockouts']} knocked out), {counts['referrers']} referrers"
+    )
+    return contexts, counts
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
@@ -6079,7 +7220,7 @@ async def seed() -> None:
 
     async with AsyncSessionLocal() as db:
         db.sync_session.info["audit_logs_disabled"] = True
-        print("\n🚀 Seeding Rojgar AI – Nepal IT Hiring Platform\n")
+        print("\n🚀 Seeding Rojgar AI – hiring for every kind of job in Nepal\n")
         print("📊 Data Overview:")
         print(f"   • Companies: {len(COMPANIES)}")
         print(f"   • Candidates: {len(CANDIDATES)}")
@@ -6125,8 +7266,12 @@ async def seed() -> None:
             candidate_users.append(user_resume_pair)
 
         # --- Applications, Shortlisting, Outreach, Interviews ---
-        await seed_applications(db, candidate_users, all_jobs, COMPANIES)
+        await seed_applications(
+            db, candidate_users, all_jobs, COMPANIES, company_contexts
+        )
         await seed_live_pipeline_data(db, candidate_users, company_contexts)
+        nontech_contexts, nontech_counts = await seed_nontech_companies(db)
+        company_contexts.extend(nontech_contexts)
         await seed_candidate_import_tasks(db, candidate_users)
         await seed_preferences_and_activity(db, company_contexts)
         await seed_audit_history(db, company_contexts, candidate_users)
@@ -6136,45 +7281,48 @@ async def seed() -> None:
 
         # --- Summary ---
         total_jobs = await db.scalar(select(func.count(Job.id))) or 0
-        active_jobs = (
-            await db.scalar(
-                select(func.count(Job.id)).where(Job.status == JobStatus.active)
-            )
-        ) or 0
-        draft_jobs = (
-            await db.scalar(
-                select(func.count(Job.id)).where(Job.status == JobStatus.draft)
-            )
-        ) or 0
-        expired_jobs = (
-            await db.scalar(
-                select(func.count(Job.id)).where(Job.status == JobStatus.expired)
-            )
-        ) or 0
+        jobs_by_status = dict(
+            (
+                await db.execute(
+                    select(Job.status, func.count(Job.id)).group_by(Job.status)
+                )
+            ).all()
+        )
+        jobs_by_category = dict(
+            (
+                await db.execute(
+                    select(Job.category, func.count(Job.id)).group_by(Job.category)
+                )
+            ).all()
+        )
         total_resumes = await db.scalar(select(func.count(Resume.id))) or 0
         total_applications = await db.scalar(select(func.count(Application.id))) or 0
-        shortlisted = (
-            await db.scalar(
-                select(func.count(Application.id)).where(
-                    Application.status.in_(
-                        [
-                            ApplicationStatus.shortlisted,
-                            ApplicationStatus.interview_booked,
-                            ApplicationStatus.interview_completed,
-                            ApplicationStatus.offer,
-                        ]
+        by_stage = dict(
+            (
+                await db.execute(
+                    select(Application.stage, func.count(Application.id)).group_by(
+                        Application.stage
                     )
                 )
-            )
-        ) or 0
-        rejected = (
+            ).all()
+        )
+        total_reviews = await db.scalar(select(func.count(Review.id))) or 0
+        total_events = await db.scalar(select(func.count(ApplicationEvent.id))) or 0
+        emails_sent = (
             await db.scalar(
-                select(func.count(Application.id)).where(
-                    Application.status == ApplicationStatus.rejected
+                select(func.count(ApplicationEvent.id)).where(
+                    ApplicationEvent.type == EventType.email_sent.value
                 )
             )
         ) or 0
-        total_email_drafts = await db.scalar(select(func.count(EmailDraft.id))) or 0
+        total_referrers = await db.scalar(select(func.count(JobReferrer.id))) or 0
+        no_cv = (
+            await db.scalar(
+                select(func.count(Application.id)).where(
+                    Application.resume_id.is_(None)
+                )
+            )
+        ) or 0
         total_interviews = await db.scalar(select(func.count(Interview.id))) or 0
         total_scorecards = (await db.scalar(select(func.count(Scorecard.id)))) or 0
         total_import_tasks = (
@@ -6197,52 +7345,37 @@ async def seed() -> None:
                 )
             )
         ) or 0
-
         print("\n" + "=" * 70)
         print("✅ SEEDING COMPLETE!")
         print("=" * 70)
-        print(f"  Companies           : {len(COMPANIES)}")
-        print(f"  Admins              : {len(COMPANIES)}")
-        print(f"  Recruiters          : {sum(len(c['recruiters']) for c in COMPANIES)}")
+        print(
+            f"  Companies           : {len(COMPANIES) + len(NONTECH_COMPANIES)} "
+            f"({len(NONTECH_COMPANIES)} non-tech)"
+        )
+        print(
+            f"  Recruiters          : {sum(len(c['recruiters']) for c in COMPANIES + NONTECH_COMPANIES)}"
+        )
         print(f"  Membership requests : {pending_requests} pending")
         print(
             f"  Jobs                : {total_jobs} "
-            f"({active_jobs} active, {draft_jobs} draft, {expired_jobs} expired)"
+            + str({k.value: v for k, v in jobs_by_status.items()})
+        )
+        print(
+            "  Jobs by category    : "
+            + str({k.value: v for k, v in jobs_by_category.items()})
         )
         print(f"  Scorecards          : {total_scorecards}")
         print(f"  Candidates          : {len(CANDIDATES)}")
         print(f"  Resumes             : {total_resumes}")
-        print(f"  Applications        : {total_applications}")
-        print(f"    → Shortlisted     : {shortlisted} (with interview bookings)")
-        print(f"    → Rejected        : {rejected} (with rejection emails)")
-
-        # Count offer states
-        offer_accepted_count = (
-            await db.scalar(
-                select(func.count(Application.id)).where(
-                    Application.status == ApplicationStatus.offer_accepted
-                )
-            )
-        ) or 0
-        offer_declined_count = (
-            await db.scalar(
-                select(func.count(Application.id)).where(
-                    Application.status == ApplicationStatus.offer_declined
-                )
-            )
-        ) or 0
-        offer_pending_count = (
-            await db.scalar(
-                select(func.count(Application.id)).where(
-                    Application.status == ApplicationStatus.offer
-                )
-            )
-        ) or 0
-
         print(
-            f"    → Offers          : {offer_pending_count} pending, {offer_accepted_count} accepted, {offer_declined_count} declined"
+            f"  Applications        : {total_applications} "
+            + str({k.value: v for k, v in by_stage.items()})
         )
-        print(f"  Email drafts        : {total_email_drafts}")
+        print(f"    → Without a CV    : {no_cv}")
+        print(f"  Reviews             : {total_reviews}")
+        print(f"  Timeline events     : {total_events} ({emails_sent} emails sent)")
+        print(f"  Referrers           : {total_referrers}")
+        print(f"  Non-tech            : {nontech_counts}")
         print(f"  Interview bookings  : {total_interviews}")
         print(f"  Interview scorecards: {total_scorecards}")
         print(f"  Resume import tasks : {total_import_tasks}")
@@ -6255,11 +7388,11 @@ async def seed() -> None:
         print(f"  🔑 Login credentials for all accounts: {DEFAULT_LOGIN_PASSWORD}")
         print()
         print("  📧 Recruiter Admin logins:")
-        for c in COMPANIES:
+        for c in COMPANIES + NONTECH_COMPANIES:
             print(f"     • {c['admin']['email']} ({c['name']})")
         print()
         print("  📧 Recruiter logins:")
-        for c in COMPANIES:
+        for c in COMPANIES + NONTECH_COMPANIES:
             for r in c["recruiters"]:
                 print(f"     • {r['email']} ({c['name']})")
         print()

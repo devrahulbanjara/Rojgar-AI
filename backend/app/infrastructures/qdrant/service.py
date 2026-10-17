@@ -308,8 +308,8 @@ class QdrantService:
 
     async def _ensure_candidate_indexes(self) -> None:
         """Ensure payload indexes exist for the candidate-application collection."""
-        keywords = ["company_id", "job_id", "user_id", "application_status"]
-        integers = ["score", "updated_at_ts"]
+        keywords = ["company_id", "job_id", "user_id", "application_status", "fit"]
+        integers = ["updated_at_ts"]
         await self._ensure_payload_indexes(
             self.candidate_collection_name,
             keyword_fields=keywords,
@@ -321,15 +321,13 @@ class QdrantService:
         """Concatenate all relevant job text for optimal semantic matching."""
         parts = [
             f"TITLE: {job.title}",
-            f"OVERVIEW: {job.overview or ''}",
-            f"RESPONSIBILITIES: {', '.join(job.responsibilities or [])}",
-            f"REQUIREMENTS: {', '.join(job.requirements or [])}",
-            f"PREFERRED QUALIFICATIONS: {', '.join(job.preferred_qualifications or [])}",
-            f"BENEFITS: {', '.join(job.benefits or [])}",
+            f"DESCRIPTION: {job.description or ''}",
+            f"MUST HAVE: {', '.join(job.must_haves or [])}",
+            f"NICE TO HAVE: {', '.join(job.nice_to_haves or [])}",
         ]
         return "\n\n".join(parts)
 
-    def _build_application_document(self, application, job) -> str:
+    def _build_application_document(self, application, job, review=None) -> str:
         """Serialise an application and its resume into searchable plain text."""
         resume = application.resume
         resume_experiences = []
@@ -359,13 +357,15 @@ class QdrantService:
         # names) influence semantic similarity. Filter on payload fields instead.
         parts = [
             f"JOB TITLE: {job.title}",
-            f"APPLICATION STATUS: {application.status.value}",
-            f"SCORE: {application.score if application.score is not None else 'unknown'}",
-            f"STRENGTHS: {', '.join(application.strengths) if application.strengths else 'none'}",
-            f"WEAKNESSES: {', '.join(application.weaknesses) if application.weaknesses else 'none'}",
+            f"STAGE: {application.stage.value}",
+            f"FIT: {review.fit if review is not None and review.fit else 'unknown'}",
+            f"REVIEW: {review.summary if review is not None and review.summary else ''}",
             f"RESUME HEADLINE: {resume.headline if resume else ''}",
             f"RESUME SUMMARY: {resume.summary if resume else ''}",
-            f"YEARS OF EXPERIENCE: {resume.years_of_experience if resume and resume.years_of_experience is not None else 'unknown'}",
+            "ANSWERS: "
+            + "; ".join(
+                str(a.get("answer") or "") for a in application.screening_answers or []
+            ),
             f"SKILLS: {', '.join(resume_skills)}",
             f"EXPERIENCE: {', '.join(resume_experiences)}",
             f"EDUCATION: {', '.join(resume_educations)}",
@@ -376,28 +376,16 @@ class QdrantService:
         """
         Embed a job and store it in Qdrant with filterable metadata.
 
-        Only upserts jobs that are:
-        1. Status is 'active' (not expired or draft)
-        2. expires_at is either None or in the future
-
-        This ensures the vector DB only contains truly searchable jobs.
+        Only open jobs whose closing time has not passed are indexed.
         """
         from app.shared.enums import JobStatus
 
         try:
-            # Guard: Only upsert if job is active and not expired
             now = datetime.now(timezone.utc)
-
-            if job.status != JobStatus.active:
-                logger.info(
-                    f"Skipping Qdrant upsert for job {job.id}: status is {job.status.value}, not active"
-                )
-                return
-
-            if job.expires_at is not None and job.expires_at <= now:
-                logger.info(
-                    f"Skipping Qdrant upsert for job {job.id}: expired at {job.expires_at}"
-                )
+            if job.status != JobStatus.open or (
+                job.closes_at is not None and job.closes_at <= now
+            ):
+                logger.info(f"Skipping Qdrant upsert for job {job.id}: not open")
                 return
 
             # Job is valid for search - proceed with upsert
@@ -410,7 +398,7 @@ class QdrantService:
                 "location_type": job.location_type.value if job.location_type else None,
                 "salary_min": job.salary_min,
                 "salary_max": job.salary_max,
-                "expires_at_ts": _expires_at_to_ts(job.expires_at),
+                "expires_at_ts": _expires_at_to_ts(job.closes_at),
             }
 
             if settings.jobs_hybrid_search_enabled:
@@ -449,7 +437,7 @@ class QdrantService:
             logger.error(f"Qdrant delete failed for job {job_id}: {exc}")
             raise  # Re-raise so the outbox processor can mark the event FAILED
 
-    async def upsert_application(self, application, job) -> None:
+    async def upsert_application(self, application, job, review=None) -> None:
         """Embed and upsert one application into the candidate collection.
 
         With hybrid search enabled the point carries a named `dense` vector
@@ -457,7 +445,7 @@ class QdrantService:
         legacy single-vector schema so dev environments without fastembed work.
         """
         try:
-            text_content = self._build_application_document(application, job)
+            text_content = self._build_application_document(application, job, review)
             dense_vector = await ai_service.get_embeddings(text_content)
             updated_at = application.updated_at or application.created_at
             updated_at_ts = int(updated_at.timestamp()) if updated_at else 0
@@ -465,8 +453,9 @@ class QdrantService:
                 "company_id": str(job.company_id),
                 "job_id": str(job.id),
                 "user_id": str(application.user_id),
-                "application_status": application.status.value,
-                "score": application.score,
+                # Key kept for existing filters; the value is the v2 stage.
+                "application_status": application.stage.value,
+                "fit": review.fit if review is not None else None,
                 "updated_at_ts": updated_at_ts,
             }
 

@@ -61,6 +61,7 @@ from app.modules.interviews.schemas import (
     SlotView,
 )
 from app.modules.jobs.models import Job
+from app.shared.enums import ApplicationStage
 
 Actor = Literal["candidate", "recruiter"]
 
@@ -692,7 +693,7 @@ async def list_candidate_interviews(
     db: AsyncSession, user_id: uuid.UUID
 ) -> list[CandidateInterviewView]:
     rows = await db.execute(
-        select(Interview, Job, Company, InterviewInvite.id)
+        select(Interview, Job, Company, InterviewInvite.id, Application.stage)
         .join(Application, Application.id == Interview.application_id)
         .join(Job, Job.id == Application.job_id)
         .join(Company, Company.id == Job.company_id)
@@ -715,8 +716,9 @@ async def list_candidate_interviews(
             job_title=job.title,
             company_name=company.name,
             scheduling_url=scheduling_url(make_token(invite_id)) if invite_id else None,
+            stage=stage,
         )
-        for iv, job, company, invite_id in rows.all()
+        for iv, job, company, invite_id, stage in rows.all()
     ]
 
 

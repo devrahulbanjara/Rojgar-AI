@@ -1,6 +1,6 @@
 # Rojgar AI
 
-AI-assisted recruitment platform running the full hiring funnel end-to-end. Single source of truth for product behaviour, AI internals, security guardrails, and data flow.
+Recruiter-first hiring for every kind of job in Nepal (shop, hotel, clinic, school, bank, factory, transport, office, IT). Single source of truth for product behaviour, AI internals, security guardrails, and data flow.
 
 ---
 
@@ -9,7 +9,7 @@ AI-assisted recruitment platform running the full hiring funnel end-to-end. Sing
 | Role | Description | Approval | Capabilities |
 |------|-------------|----------|--------------|
 | **Candidate** | Job seekers | Instant | Apply from a shared job link (no account needed), track status, optional passwordless account |
-| **Recruiter** | Company hiring team | Admin approval (pending → active) | Jobs, applications, evaluation, shortlisting, outreach, interviews, AI chat |
+| **Recruiter** | Company hiring team | Admin approval (pending → active) | Jobs, candidates, decisions (with automatic emails), interviews, AI chat |
 | **Recruiter Admin** | Founder / lead | Instant | All recruiter capabilities + company registration, team management, settings, logo |
 
 **Auth.** Email + password with 6-digit OTP verification, or Google SSO (instant verified). Forgot-password via one-time reset link emailed to user. Argon2 password hashing. JWT access tokens (15 min) + httpOnly refresh cookies (7 days). `DELETE /auth/me` soft-deletes (`is_deleted`, `deleted_at`) and revokes all refresh tokens; deleted users blocked at login.
@@ -31,38 +31,39 @@ AI-assisted recruitment platform running the full hiring funnel end-to-end. Sing
 **Find Jobs.** `/jobs` lists active jobs. Search by keyword, filter by location type (remote/onsite/hybrid) + salary range. **Hybrid semantic search** combines Qdrant dense vectors (Gemini 3072-d embeddings) with BM25 sparse retrieval — natural-language queries like "Python backend" match by meaning, not keyword. Side-panel preview (full JD, responsibilities, requirements, benefits, salary, expiry) without leaving the list.
 
 **Apply Flow.**
-1. Open the job's public link (shared on LinkedIn, Facebook, Merojob, or the company careers page)
-2. Upload a CV (name, email, phone and links are pre-filled from it)
-3. Answer any job questions, give consent, submit — no account needed
-4. A confirmation email carries a private status link (withdraw + delete data from there)
+1. Open the job's public link (`/jobs/{slug}`, optionally `?ref={token}` from a person's referral link; `src=` marks LinkedIn/Facebook/Merojob/Viber/QR)
+2. Name + phone **or** email (phone stored in E.164, Nepal +977 default, Devanagari digits accepted); CV is optional
+3. Answer the job's questions (short text or yes/no; English or Nepali), give consent, submit — no account needed
+4. With an email: a confirmation carries a private status link (withdraw + delete data from there). Phone-only: SMS is B2's (stub logs for now)
 5. Optional: "Continue with email" magic link to see every application in one list
 
-Constraints: one application per job; cannot apply to draft or expired jobs.
+**Recommend someone.** `POST /public/jobs/{slug}/recommend` — anyone can vouch for a person (name + phone, optional note). Creates an application (stage new, source referral, referrer linked); rate-limited per IP and per job.
 
-**Dashboard.** Totals applied / shortlisted / interview booked / interview completed / offer / rejected.
-**Applications page.** Pipeline progress bar, AI score (visible after evaluation), AI feedback, full timeline (applied → shortlist → interview → offer transitions with timestamps), latest status update message. Updates real-time.
-**Offer respond.** `POST /applications/{id}/offer/respond` lets candidate accept or decline. Terminal states: `offer_accepted`, `offer_declined`.
+Constraints: one application per person per job; draft and closed jobs do not accept applications.
+
+**Dashboard.** Counts per stage.
+**Applications page.** Stage (New, Shortlisted, Interview, Offer, Hired, Not selected, Withdrawn) and timeline. Candidates never see AI review output.
+**Offer respond.** `POST /applications/{id}/offer/respond`: accept → stage hired; decline → withdrawn (event "declined offer").
 
 ---
 
 ## 3. Recruiter Experience
 
-**Dashboard.** Pending applications needing attention, upcoming interviews, draft outreach awaiting approval, pending team join requests (admin only). Single action centre.
+**Dashboard.** Applications to review, flagged CVs, upcoming interviews, jobs closing soon, pending team join requests (admin only).
 
-**Create Jobs (two paths).**
-- **Manual form** — title, overview, responsibilities (list), requirements (list), preferred quals, benefits, location, location type, salary range + currency, expiry date. Save as `draft` (hidden) or publish `active`.
-- **AI Job Assistant** — recruiter types a brief; LangGraph workflow runs `synthesize_salary` (Tavily web research → Groq structured synthesis) → `generate_draft` (full JobDraft schema) → `validate_draft` (server validators: salary range, location type allowlist, required-field coverage) → human `review` (interrupt) → `refine` loop (edit fields, regenerate selected fields, plain-English feedback) → approved → committed. **Lock fields** before generation so AI cannot override (e.g. salary, title). Returns `assumptions`, `warnings`, `missing_fields`, `validation_errors`.
+**Create Jobs.** One page: title, location, work type, category (Banking & Finance, Healthcare, Education, Hospitality & Tourism, Sales & Retail, Manufacturing, Logistics & Driving, IT & Software, NGO/INGO, Government & Public, Office & Admin, Construction & Engineering, Other), employment type, monthly salary (NPR), one Markdown **description**, **must-haves** and **nice-to-haves** (≤ 6 each — they drive the review), up to 3 **questions** (short text or yes/no; a yes/no question may be a *knockout*), status `draft · open · closed`, optional `closes_at`.
+- `GET /job-templates?category=` — ~26 role templates (bank teller, staff nurse, teacher, driver, cook, cashier, …) with must-haves and knockout questions.
+- `POST /jobs/suggest-must-haves` — LLM suggestions from a description; protected-ground items are dropped.
+- **Protected-ground filter** (Labour Act 2074 s.6): saving must-haves/questions returns `warnings` for gender, caste/ethnicity, religion, marital status, age bands, pregnancy, disability, looks, origin (English, romanized Nepali, Devanagari). Genuine requirements (licence, night shift, NNC/TSC registration, "18 or older") pass. Saving is never blocked.
+- The AI Job Assistant (job_ai, B3) drafts the same fields.
 
-States: `draft → active → expired`. Expiry auto-set when expiry date passes; stops accepting applications and unlocks shortlisting.
+Closing: `PATCH /jobs/{id}` `status=closed` with `closed_reason` `hired` or `cancelled` moves everyone still in new/shortlisted/interview to rejected (position_filled / other) and schedules the kind rejection email. Open jobs close themselves at `closes_at` (`closed_reason=expired`), which only stops new applications. Changing must-haves re-reviews undecided applications.
 
-**Applications page.** Cross-job view of every application; filter by job + status.
-**Candidates page.** One row per person; multi-applications nested under candidate; click to see scores, status dropdown (direct update), platform resume link.
+**Job page = pipeline + candidate panel** (`/recruiter/v2`, see §13). Stage counts, list sorted by best fit (strong → possible → weak → reviewing/flagged; `rank_score` inside a bucket), one-line review summary, source and "referred by". The panel: contact (share flags respected), fit + checks with quotes, answers, CV link/structured CV, other applications count, timeline, notes.
 
-**Evaluation.** AI reads candidate resume vs JD; produces 0–100 score + plain-English feedback paragraph. Two modes: per-application **auto-eval** on submit (if job has auto-eval enabled), or **batch** "Run AI evaluation" for unscored applications. Recruiters can manually edit any score / feedback. Filters: above-threshold / 50–69 / below-50, reviewed / pending / missing-review, name + email search. Per-job **shortlist threshold** (0–100). **Available only after job has expired** — guarantees fair window for every applicant.
+**Decisions.** A person makes every decision: shortlist, reject, invite to interview, make offer, mark hired, move back, withdraw — single or bulk. Each writes a `stage_changed` event and schedules the right fixed email (shortlist/interview invite with the company booking link, offer, kind rejection); emails go out after a 10 s window during which `POST /recruiter/v2/undo` reverts the decision. No separate outreach step, no drafts.
 
-**Shortlisting.** Manual one-by-one, or **AI Finalize** — multi-agent LangGraph (see §6) runs across the cohort; ≥ threshold → shortlisted, rest → rejected. Crash-safe per-application idempotent commit with `ShortlistStatus` (`not_started → in_progress → completed | failed`). Shortlist drafts a **warm invite outreach email**; reject drafts a **kind rejection email with embedded AI feedback**. **No email sends without recruiter approval.**
-
-**Outreach.** Pipeline stages: Generate Drafts → Review & Edit → Approve → Send. In-line edit subject + body; discard suppresses send without deleting record; "Send all" dispatches every approved draft via aiosmtplib. Shortlist email contains the candidate's interview scheduling link. Rejection email embeds AI feedback so candidates know why.
+**Word of mouth.** Per-person referral links (`job_referrers`: name, phone, token; link `/jobs/{slug}?ref={token}`), recruiter **quick add** for walk-in / phone / referral candidates (name + phone, optional CV and answers), and CSV export of a job's applications.
 
 **Interviews.** Built-in scheduling, no third-party account. Each recruiter sets weekly hours (default Sun–Fri 10:00–17:00 Asia/Kathmandu), interview length (45 min), buffer and a meeting link (their Meet/Zoom URL, or `auto` for a new Jitsi room). Inviting a shortlisted candidate creates a signed scheduling link showing open times for the next 10 working days. Booking is atomic (row lock per interviewer + partial unique indexes), moves the application to interview, and emails both sides an `.ics` invite (METHOD:REQUEST, TZID Asia/Kathmandu); either side reschedules (SEQUENCE+1) or cancels (METHOD:CANCEL) with the same link. Reminders go out 24 h and 1 h before (one worker sends, Postgres advisory lock + atomic claim). After the interview a person fills a scorecard: each must-have rated 1–4, a recommendation (strong yes · yes · no · strong no) and notes.
 
@@ -82,38 +83,36 @@ Company profile (name, website, industry, location, allowed location types, defa
 
 ---
 
-## 5. Status State Machines
+## 5. Data model and states
 
-**`JobStatus`** — `draft → active → expired` (auto on expiry date).
-**`ApplicationStatus`** — `applied → shortlisted → interview_booked → interview_completed → offer → offer_accepted | offer_declined`. `rejected` reachable from any non-terminal step.
-**`ShortlistStatus`** (per application during AI run) — `not_started → in_progress → completed | failed`.
-**`RecordingStatus`** — `uploaded → transcribing → transcribed → evaluating → evaluated | failed`.
-**`SyncStatus`** (Qdrant outbox) — `PENDING → COMPLETED | FAILED`.
+`Company 1─* Job 1─* Application *─1 Person(User)`; `Application 1─1 Review`, `Application 1─* Event`, `Job 1─* JobReferrer`.
 
-Transitions enforced in service layer. Frontend keeps two parallel type unions (`ApplicationStatus` in `applicationsApi.ts` + `ApplicationLifecycleStatus` in `statusMetadata.ts`); both must update together.
+**`JobStatus`** — `draft → open → closed` (`closed_reason`: hired · cancelled · expired); reopening is allowed.
+**`ApplicationStage`** — `new → shortlisted → interview → offer → hired`; `rejected` and `withdrawn` from any active stage; "move back" returns to the stage it came from.
+**`Review.state`** — `pending → done | needs_person` (flagged CV, unavailable safety check, or repeated failure). `fit` is strong · possible · weak; hidden until done and never shown for a flagged CV.
+**Event types** — applied, stage_changed, email_scheduled → email_sent, interview_booked, interview_done, note, review_done, flag_cleared.
+**Application source** — linkedin, facebook, merojob, viber, qr, walk_in, phone, referral, direct, other.
+**People** — `users.email` is optional; `users.phone` (E.164) identifies phone-only candidates.
+**`RecordingStatus`**, **`SyncStatus`** unchanged.
 
----
-
-## 6. AI Shortlisting Pipeline (multi-agent LangGraph)
-
-Runs when the job expires (or when a recruiter clicks "Run AI screening"). The AI **recommends**; a recruiter **decides**.
-
-**Step 1 — ML ranking (free).** A scikit-learn RandomForest scores each application in milliseconds from six features: TF-IDF and embedding similarity between resume and JD, years of experience, number of roles, degrees, and skills. *Caveat:* the model was trained on 10,000 **synthetic** labelled pairs (`training.py`), not real hiring outcomes, so its output is used only to **rank**, never to reject. Applications it cannot score (missing experience data or embedding, or a missing model file) stay unscored and are flagged for human review — never given a fabricated score.
-
-**Step 2 — AI review (AWS Bedrock Claude).** Jobs with ≤ 30 applications get an LLM review for everyone; larger jobs review the top 20% by ML rank. Per application:
-- **Guardrail** — the resume is screened once by a Groq prompt-injection classifier. A flagged resume is not sent to the reviewers; it is marked *needs human review* with a recruiter-only reason. If the classifier is unavailable, a deterministic marker scan decides instead.
-- **Technical reviewer** — technical depth and delivery evidence against the JD. One Tavily search allowed.
-- **Role-requirements reviewer** — checks the JD's explicit must-haves (experience level, scope, domain, required credentials). It does **not** judge employment gaps, tenure, or writing style.
-- **Critique (optional)** — only when `SHORTLISTING_REFLECTION_MAX_ITERATIONS` ≥ 2; exits when the critique is satisfied *and* confident (≥ 0.7), otherwise one reflection round.
-- **Final merge** — Bedrock Claude Haiku merges both reviews into recruiter-facing `strengths` / `weaknesses`.
-
-Blind review: the text sent to the reviewers omits the candidate's name, email, phone, and links (also inside the summary), gives roles as durations instead of dates, and omits institution names. `PIIMiddleware` redacts email / URL / phone as a second layer. The static rubric + JD sit in the cached system prompt; the resume is sent last.
-
-**Step 3 — Recruiter confirms.** Nothing is shortlisted or rejected automatically. When the run finishes the job shows *AI recommendations ready*; the recruiter reviews and clicks **Approve AI recommendations** (or decides individually). Approval is audit-logged with the approving user. Each application records `ai_review_status` (`completed` / `failed` / `needs_human_review`) and an attempt count; a failing review is retried at most `SHORTLISTING_MAX_REVIEW_ATTEMPTS` times and never blocks the rest of the job. Runs are claimed atomically, so multiple workers never duplicate a job.
-
-**Cost.** ML ranking gates large jobs · cacheable per-job system prompt · structured-output caps · critique skipped unless enabled · Haiku merge · 1-call web-search cap. Cost per reviewed application has not been measured in production; record Bedrock usage before quoting savings.
+Migration `2017037b521a` maps v1 rows exactly (status → stage, score bands → fit, overview + arrays → description, requirements → must-haves, sent outreach drafts → `email_sent` events) and keeps the old AI fields in a `review_done` event so the downgrade restores them.
 
 ---
+
+## 6. Application review (rolling, cost-controlled)
+
+Every application is reviewed shortly after it arrives (background task); nobody waits for a closing date and nothing is auto-decided. Triage (target ≤ NPR 3 per applicant; measured ≈ NPR 0.1 for a full review):
+
+1. **Knockout questions** — deterministic; a wrong answer to a yes/no knockout gives fit weak with the answer as evidence. No LLM.
+2. **Injection rail** on the normalised candidate text (NFKC, zero-width/bidi characters removed, whitespace collapsed). A flag → `needs_person` ("Possible hidden instructions…"); a classifier error or 429 is **never** SAFE — retried, then `needs_person`.
+3. **Cheap pass** (`REVIEW_CHEAP_MODEL`, gpt-oss-20b) — rubric check per must-have / nice-to-have.
+4. **Full evidence review** (`REVIEW_MODEL`, gpt-oss-120b) only when the cheap pass covers ≥ 25 % of must-haves.
+
+The model returns, per criterion, `met / partly / missing` + an exact quote. Each quote must appear in the text (case/whitespace/Unicode-form insensitive, NFC both sides; "…" fragments each checked); a claim without a verified quote becomes `missing` ("no quote, no credit"). **Fit is computed in code**: all must-haves met → strong; ≥ half covered (partly = ½) → possible; else weak. `rank_score` = rubric points (must 2×, nice 1×) + an ML tie-break < 1 point, so the ML signal only orders equal evidence. Temperature 0, strict JSON schema, validation; the job rubric is a fixed prompt prefix (provider prompt caching). Tokens and cost (NPR) are stored on the review. Providers: Groq (default), Bedrock, or a deterministic fake (`REVIEW_PROVIDER`). Retries: 4 attempts, exponential backoff; idempotent (finished reviews are never redone unless criteria change or a person clears a flag); attempts are claimed with compare-and-set so two workers never double-review. Pending reviews resume at startup.
+
+**Blind review.** The reviewer sees no name, contact details, pronouns/honorifics, identity lines (gender, DOB, age, caste, religion, marital status, address — English and Nepali), calendar dates or years, photos, or institution names (kept only when a must-have names a credential). Roles are durations. Works for English, Nepali and mixed text, and for applications with answers only.
+
+**ML tie-break.** The scikit-learn model (synthetic training data) is input to `rank_score` only. Self-reported years never reach it (fixed neutral value) and its text inputs are blind, which removes the audit's blank-years penalty, senior penalty and college-name swings from anything a recruiter sees.
 
 ## 7. Recruiter AI Chat
 
@@ -143,13 +142,13 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 
 ## 8. Guardrails (defense in depth)
 
-**Input rail (Groq prompt-injection classifier).** A direct Groq classifier (`app/infrastructures/guardrails`; the NeMo config in `guardrails_config/` is only used by a test script) inspects user-controlled input for prompt-injection / role-hijack / system-prompt-exfil patterns. Untrusted text is wrapped in random per-call delimiter tags. Wired at: application submit and shortlisting (flag → recruiter review, never a silent rejection), public guest apply, recruiter chat send + stream, job-AI generate + refine. Interactive surfaces fail open on classifier errors; unattended flows fall back to a deterministic marker scan. Toggle: `guardrails_enabled`.
+**Input rail (Groq prompt-injection classifier).** `app/infrastructures/guardrails`. Text is normalised first (NFKC, zero-width and bidi control characters stripped, whitespace collapsed). Untrusted text is wrapped in random per-call delimiter tags. Unattended flows (application review) use `fail_closed=True`: any classifier error or rate limit returns not-safe so the review retries and then goes to a person — never SAFE. Interactive surfaces (recruiter chat, job AI) fail open. Toggle: `guardrails_enabled`.
 
-**PII redaction (LangChain `PIIMiddleware`).** Email, URL, and phone-number patterns redacted before prompts reach the shortlisting LLM. Defense in depth alongside input rail.
+**Evidence over opinion.** Review quotes are verified against the CV; fit is derived in code; candidates never see AI output; decision emails are fixed templates.
 
-**Hallucination prevention.** Job-edit chat tool restricts writes to a **14-field allowlist** with before / after preview + explicit human confirm.
+**Protected grounds.** Job criteria and questions are checked against Labour Act 2074 s.6 grounds on save.
 
-**Other safety layers.** XML tag scrubber + `<user_message>` wrapping in chat. Recruiter DB strings sanitised before LLM. Idempotency keys prevent double LLM calls on retry. Rate limits stop abuse. Row-level locks stop concurrent state corruption.
+**Other safety layers.** Rate limits (public apply, recommend per IP and per job), row-level locks on decisions, compare-and-set review claims, undo window before email.
 
 ---
 
@@ -159,9 +158,9 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 **Redis** — caches (salary research 24 h, idempotency 10 min, recruiter-chat retry cache 10 min); per-client rate limits (auth/public); session locks.
 **Qdrant** — 3072-d Gemini embeddings of jobs (for candidate semantic search) + applications (for recruiter chat candidate search). **Outbox pattern**: every job mutation writes a `JobSyncEvent` row (`PENDING`); a worker reads pending events and upserts / deletes the Qdrant point, then marks `COMPLETED`. Crash-safe — failed events retry.
 **S3** — image storage (avatars, company logos). Old logos cleaned on replace.
-**SMTP (aiosmtplib)** — outbound email via configured provider.
+**SMTP (aiosmtplib)** — decision emails (scheduled as events, sent after the 10 s undo window; overdue ones swept at startup).
 **SMS (Sparrow SMS)** — short Nepali texts to candidates at each step (prod only; logged locally).
-**APScheduler** — cron-style background jobs (job expiry sweep, sync-event retry).
+**APScheduler** — cron-style background jobs (job closing sweep, sync-event retry).
 
 ---
 
@@ -171,14 +170,13 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 **Frontend.** Next.js 16 App Router, React 19, TypeScript, Redux Toolkit + RTK Query, raw fetch + SSE for chat streams, SCSS tokens (`_variables.scss`), single-source button system (`_buttons.scss`), pnpm.
 **AI / ML.**
 - **Groq** — recruiter chat, job drafting, intent classifier, summarization
-- **AWS Bedrock Claude** — shortlisting multi-agent only (heavier reasoning)
+- **Groq gpt-oss-20b / gpt-oss-120b** — application review (cheap pass / full evidence review); Bedrock optional
 - **Gemini** — 3072-d text embeddings
 - **Tavily** — web search (salary research, persona context)
 - **LlamaCloud** — structured resume parsing
-- **scikit-learn RandomForest** — shortlisting ML pre-filter
+- **scikit-learn RandomForest** — rank tie-break only
 - **fastembed** — fast similarity for ML pre-filter features
 - **Prompt-injection rail** — Groq classifier (gpt-oss-120b) + deterministic fallback
-- **LangChain PIIMiddleware** — email / URL / phone redaction in shortlisting
 
 **External services.** SMTP provider, Sparrow SMS, S3-compatible storage, Jitsi (meeting rooms, no account).
 
@@ -187,23 +185,12 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 ## 11. Pipeline at a Glance
 
 ```
-Apply (public job link, no account needed)
-   ↓
-applied  ──[ML pre-filter top 20% ➜ CTO + HR critique loop ➜ Judge ➜ Final merge]──► shortlisted | rejected
-                                                                                          ↓
-                                                                   outreach drafted ➜ recruiter approves ➜ email sent
-                                                                                          ↓
-                                                          candidate picks a time from the scheduling link
-                                                                                          ↓
-                                                              interview_booked ➜ .ics invites ➜ reminders 24 h / 1 h
-                                                                                          ↓
-                                                                          interviewer fills the scorecard
-                                                                                          ↓
-                                                                            interview_completed
-                                                                                          ↓
-                                                                           offer | rejected
-                                                                                          ↓
-                                                                  offer_accepted | offer_declined  (terminal)
+Apply (link / ?ref= / recommend / quick add)  ──► Review (rolling, ≤ 1 min)
+   knockouts ─► injection rail ─► cheap pass ─► full evidence review (if plausible)
+                                             └─► fit + summary + checks with quotes
+Recruiter decides (one key, bulk, undo 10 s) ──► stage_changed + email (after undo window)
+new → shortlisted → interview → offer → hired        rejected / withdrawn
+Close job as hired ──► everyone still waiting gets the kind email
 ```
 
 ---
@@ -211,11 +198,29 @@ applied  ──[ML pre-filter top 20% ➜ CTO + HR critique loop ➜ Judge ➜ F
 ## 12. Product Principles
 
 - **AI assists, humans decide.** Every shortlist call, email send, and job-edit write is human-confirmed.
-- **No silent emails.** Every outreach draft sits in review queue until reviewed + approved.
-- **Pipeline opens only after expiry.** Fair window for every applicant.
+- **Candidates always hear back.** Decisions send fixed, kind emails automatically after a 10 s undo window.
+- **Rolling review.** Every application is reviewed when it arrives; nobody waits for a closing date.
 - **Candidates always know where they stand.** Real-time status. Rejection emails use a fixed, respectful template — internal AI review notes are never sent to candidates.
 - **One application per job. One booking per application.**
 - **Job edits always preview.** Before / after diff with explicit confirm; never silent writes.
 - **Humans decide.** AI ranks and summarises; shortlist/reject decisions are confirmed by a recruiter and audit-logged.
-- **Defense in depth.** Prompt-injection rail + PIIMiddleware + 14-field allowlist + rate limits + idempotency + row-level locks.
-- **Cost-aware AI.** ML ranking for large jobs, prompt caching, schema caps, optional critique, summarization, salary cache, cheap-model final merge.
+- **Defense in depth.** Normalised injection rail (fail-closed for reviews) + verified quotes + blind review + protected-ground warnings + rate limits + idempotency + row-level locks.
+- **Cost-aware AI.** Knockouts before any LLM, cheap pass before the full review, cached rubric prefix, per-review token and NPR cost recorded.
+
+---
+
+## 13. Recruiter API v2 (`/recruiter/v2`, active company members)
+
+| Method + path | Purpose |
+|---|---|
+| `GET /jobs/{job_id}/pipeline?stage=&sort=best_fit\|newest` | Stage counts, reviewing/reviewed counts, applications list |
+| `GET /applications/{id}` | Candidate panel |
+| `POST /decide` `{action, application_ids[], rejected_reason?}` | shortlist · reject · invite_to_interview · make_offer · mark_hired · move_back · withdraw (1–200 ids) |
+| `POST /undo` `{event_ids[]}` | Revert decisions whose email has not gone out |
+| `POST /applications/{id}/notes` `{text}` | Timeline note |
+| `POST /applications/{id}/clear-flag` | Person checked a flagged CV; review runs (rail skipped) |
+| `POST /jobs/{job_id}/candidates` (multipart) | Quick add: full_name, phone, source walk_in·phone·referral, email?, referred_by?, answers (JSON)?, cv? |
+| `POST /jobs/{job_id}/referrers` `{name, phone?}` / `GET` | Personal share links + how many applied |
+| `GET /jobs/{job_id}/export.csv` | CSV (UTF-8 BOM, Nepali-safe) |
+
+Removed (superseded): `PATCH /applications/{id}/status`, `PATCH /applications/{id}/review`, `GET /applications/company/me`, `GET /applications/job/{id}`, `GET /applications/company/me/candidates/{id}` (+ `/timeline`, `/cv`), `/shortlisting/*`, `/outreach/*`, `POST /jobs/{id}/complete-hiring` (use `PATCH /jobs/{id}` with `status=closed, closed_reason=hired`).

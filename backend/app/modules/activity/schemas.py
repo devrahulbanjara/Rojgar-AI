@@ -15,7 +15,6 @@ class ActivityEventResponse(BaseSchema):
     application_id: UUID | None = None
     job_id: UUID | None = None
     interview_id: UUID | None = None
-    draft_id: UUID | None = None
     actor_user_id: UUID | None = None
     event_type: str
     audience: str

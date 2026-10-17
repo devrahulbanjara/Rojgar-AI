@@ -28,12 +28,12 @@ async def process_sync_event(event_id: uuid.UUID) -> None:
 
                 now = datetime.now(timezone.utc)
 
-                # Only active jobs that haven't expired belong in the vector store.
-                # If the job was changed to draft/expired or has expired by date, strip it from Qdrant.
+                # Only open jobs before their closing time belong in the vector
+                # store; drafts and closed jobs are removed from Qdrant.
                 if (
                     job
-                    and job.status == JobStatus.active
-                    and (job.expires_at is None or job.expires_at > now)
+                    and job.status == JobStatus.open
+                    and (job.closes_at is None or job.closes_at > now)
                 ):
                     await qdrant_service.upsert_job(job)
                 else:

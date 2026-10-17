@@ -1,4 +1,7 @@
-from app.shared.enums import ApplicationStatus, JobStatus
+from sqlalchemy import select
+
+from app.modules.applications.models import ApplicationEvent, Review
+from app.shared.enums import ApplicationStage, JobStatus
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
@@ -26,7 +29,22 @@ class TestApply:
         resp = await _apply(client, candidate, resume, job)
 
         assert resp.status_code == 201
-        assert resp.json()["data"]["status"] == "applied"
+        data = resp.json()["data"]
+        assert data["stage"] == "new"
+        # Candidates never see AI review fields.
+        assert "fit" not in data and "score" not in data
+        review = await db.scalar(
+            select(Review).where(Review.application_id == data["id"])
+        )
+        assert review is not None and review.state == "pending"
+        events = list(
+            await db.scalars(
+                select(ApplicationEvent.type).where(
+                    ApplicationEvent.application_id == data["id"]
+                )
+            )
+        )
+        assert events == ["applied"]
 
     async def test_duplicate_application_409(self, client, db):
         candidate, resume = await make_candidate_with_resume(db)
@@ -74,20 +92,6 @@ class TestListApplications:
         apps = resp.json()["data"]
         assert len(apps) == 1
 
-    async def test_recruiter_lists_company_applications(self, client, db):
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_rlist@test.com"
-        )
-        admin, company = await make_recruiter_admin(db, email="admin_rlist@test.com")
-        job = await make_active_job(db, company.id)
-        await _apply(client, candidate, resume, job)
-
-        resp = await client.get(
-            "/applications/company/me", headers=auth_headers(admin.id)
-        )
-
-        assert resp.status_code == 200
-
     async def test_list_my_applications_requires_candidate_role(self, client, db):
         admin, _ = await make_recruiter_admin(db, email="admin_block@test.com")
 
@@ -95,117 +99,15 @@ class TestListApplications:
         assert resp.status_code == 403
 
 
-class TestStatusTransitions:
-    async def test_recruiter_rejects_application(self, client, db):
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_rej@test.com"
-        )
-        admin, company = await make_recruiter_admin(db, email="admin_rej@test.com")
-        # expired job allows shortlist/reject actions from applied state
-        job = await make_active_job(db, company.id, status=JobStatus.expired)
-        application = await make_application(
-            db, candidate.id, job.id, resume.id, ApplicationStatus.applied
-        )
-
-        resp = await client.patch(
-            f"/applications/{application.id}/status",
-            json={"status": "rejected"},
-            headers=auth_headers(admin.id),
-        )
-
-        assert resp.status_code == 200
-        assert resp.json()["data"]["status"] == "rejected"
-
-    async def test_recruiter_shortlists_application(self, client, db):
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_sl@test.com"
-        )
-        admin, company = await make_recruiter_admin(db, email="admin_sl@test.com")
-        job = await make_active_job(db, company.id, status=JobStatus.expired)
-        application = await make_application(
-            db, candidate.id, job.id, resume.id, ApplicationStatus.applied
-        )
-
-        resp = await client.patch(
-            f"/applications/{application.id}/status",
-            json={"status": "shortlisted"},
-            headers=auth_headers(admin.id),
-        )
-
-        assert resp.status_code == 200
-        assert resp.json()["data"]["status"] == "shortlisted"
-
-    async def test_recruiter_records_offer(self, client, db):
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_offer@test.com"
-        )
-        admin, company = await make_recruiter_admin(db, email="admin_offer@test.com")
-        job = await make_active_job(db, company.id)
-        # Skip to interview_completed directly via DB
-        application = await make_application(
-            db,
-            candidate.id,
-            job.id,
-            resume.id,
-            ApplicationStatus.interview_completed,
-        )
-
-        resp = await client.patch(
-            f"/applications/{application.id}/status",
-            json={"status": "offer"},
-            headers=auth_headers(admin.id),
-        )
-
-        assert resp.status_code == 200
-        assert resp.json()["data"]["status"] == "offer"
-
-    async def test_recruiter_cannot_forge_candidate_offer_answer(self, client, db):
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_forge@test.com"
-        )
-        admin, company = await make_recruiter_admin(db, email="admin_forge@test.com")
-        job = await make_active_job(db, company.id)
-        application = await make_application(
-            db, candidate.id, job.id, resume.id, ApplicationStatus.offer
-        )
-
-        for forged in ("offer_accepted", "offer_declined", "applied"):
-            resp = await client.patch(
-                f"/applications/{application.id}/status",
-                json={"status": forged},
-                headers=auth_headers(admin.id),
-            )
-            assert resp.status_code == 400, forged
-
-        await db.refresh(application)
-        assert application.status == ApplicationStatus.offer
-
-    async def test_invalid_transition_conflict(self, client, db):
-        candidate, resume = await make_candidate_with_resume(
-            db, email="cand_skip@test.com"
-        )
-        admin, company = await make_recruiter_admin(db, email="admin_skip@test.com")
-        job = await make_active_job(db, company.id)
-        application = await make_application(
-            db, candidate.id, job.id, resume.id, ApplicationStatus.applied
-        )
-
-        resp = await client.patch(
-            f"/applications/{application.id}/status",
-            json={"status": "offer"},
-            headers=auth_headers(admin.id),
-        )
-
-        assert resp.status_code == 409
-
-    async def test_candidate_accepts_offer(self, client, db):
+class TestOfferResponse:
+    async def test_candidate_accepts_offer_is_hired(self, client, db):
         candidate, resume = await make_candidate_with_resume(
             db, email="cand_accept@test.com"
         )
         admin, company = await make_recruiter_admin(db, email="admin_accept@test.com")
         job = await make_active_job(db, company.id)
         application = await make_application(
-            db, candidate.id, job.id, resume.id, ApplicationStatus.offer
+            db, candidate.id, job.id, resume.id, ApplicationStage.offer
         )
 
         resp = await client.post(
@@ -215,3 +117,32 @@ class TestStatusTransitions:
         )
 
         assert resp.status_code == 200
+        await db.refresh(application)
+        assert application.stage == ApplicationStage.hired
+
+    async def test_candidate_declines_offer_is_withdrawn(self, client, db):
+        candidate, resume = await make_candidate_with_resume(
+            db, email="cand_decline@test.com"
+        )
+        admin, company = await make_recruiter_admin(db, email="admin_decline@test.com")
+        job = await make_active_job(db, company.id)
+        application = await make_application(
+            db, candidate.id, job.id, resume.id, ApplicationStage.offer
+        )
+
+        resp = await client.post(
+            f"/applications/{application.id}/offer/respond",
+            json={"accepted": False},
+            headers=auth_headers(candidate.id),
+        )
+
+        assert resp.status_code == 200
+        await db.refresh(application)
+        assert application.stage == ApplicationStage.withdrawn
+        payload = await db.scalar(
+            select(ApplicationEvent.payload).where(
+                ApplicationEvent.application_id == application.id,
+                ApplicationEvent.type == "stage_changed",
+            )
+        )
+        assert payload["note"] == "declined offer"

@@ -133,9 +133,11 @@ class TestPublicPages:
         expired = await make_active_job(
             db,
             company.id,
-            expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            closes_at=datetime.now(timezone.utc) - timedelta(hours=1),
         )
-        filled = await make_active_job(db, company.id, hiring_completed=True)
+        filled = await make_active_job(
+            db, company.id, status=JobStatus.closed, closed_reason="hired"
+        )
         for job in (draft, expired, filled):
             assert (await client.get(f"/public/jobs/{job.slug}")).status_code == 404
 
@@ -176,7 +178,15 @@ class TestGuestApply:
     async def test_apply_without_account(self, client, db, outbox):
         _, company = await make_recruiter_admin(db, email="a4@test.com")
         job = await make_active_job(
-            db, company.id, screening_questions=["Earliest start date?"]
+            db,
+            company.id,
+            questions=[
+                {
+                    "label": "Earliest start date?",
+                    "type": "short_text",
+                    "required": True,
+                }
+            ],
         )
         resp = await _apply(
             client,
@@ -205,7 +215,7 @@ class TestGuestApply:
         assert application.source == "linkedin"
         assert application.consented_at is not None
         assert application.shared_full_name == "Sita Gurung"
-        assert application.shared_phone_value == "9812345678"
+        assert application.shared_phone_value == "+9779812345678"
         assert application.screening_answers == [
             {"question": "Earliest start date?", "answer": "Next month"}
         ]
@@ -225,7 +235,11 @@ class TestGuestApply:
 
     async def test_screening_questions_must_be_answered(self, client, db, outbox):
         _, company = await make_recruiter_admin(db, email="a6@test.com")
-        job = await make_active_job(db, company.id, screening_questions=["Why us?"])
+        job = await make_active_job(
+            db,
+            company.id,
+            questions=[{"label": "Why us?", "type": "short_text", "required": True}],
+        )
         resp = await _apply(client, job.slug)
         assert resp.status_code == 422
 
@@ -262,25 +276,93 @@ class TestGuestApply:
         assert (await _apply(client, first.slug)).status_code == 201
         assert (await _apply(client, second.slug)).status_code == 429
 
-    async def test_flagged_cv_is_quarantined_not_blocked(
-        self, client, db, outbox, monkeypatch
-    ):
-        from app.infrastructures.guardrails.service import (
-            GuardrailResult,
-            guardrails_service,
-        )
+    async def test_flagged_cv_is_quarantined_not_blocked(self, client, db, outbox):
+        from app.infrastructures.guardrails.service import GuardrailResult
+        from app.modules.applications.models import Review
+        from app.modules.review.reviewer import FakeReviewer
+        from app.modules.review.service import review_application
 
         async def flag(_text, *, source, fail_closed=False):
             return GuardrailResult(safe=False, source=source, score=90, reason="x")
 
-        monkeypatch.setattr(guardrails_service, "check_input", flag)
         _, company = await make_recruiter_admin(db, email="a11@test.com")
-        job = await make_active_job(db, company.id)
+        job = await make_active_job(db, company.id, must_haves=["Python"])
         assert (await _apply(client, job.slug)).status_code == 201
         application = await db.scalar(
             select(Application).where(Application.job_id == job.id)
         )
-        assert application.ai_review_status == "needs_human_review"
+        await review_application(
+            application.id, db=db, reviewer=FakeReviewer(), guardrail=flag
+        )
+        review = await db.scalar(
+            select(Review)
+            .where(Review.application_id == application.id)
+            .execution_options(populate_existing=True)
+        )
+        assert review.state == "needs_person" and review.fit is None
+        await db.refresh(application)
+        assert application.stage.value == "new"
+
+    async def test_apply_with_phone_only_and_no_cv(self, client, db, outbox):
+        _, company = await make_recruiter_admin(db, email="a12@test.com")
+        job = await make_active_job(
+            db,
+            company.id,
+            questions=[
+                {
+                    "label": "Do you have a driving licence?",
+                    "type": "yes_no",
+                    "required": True,
+                    "knockout_answer": "yes",
+                }
+            ],
+        )
+        resp = await client.post(
+            f"/public/jobs/{job.slug}/applications",
+            data={
+                "full_name": "राम बहादुर",
+                "phone": "९८४१२३४५६७",
+                "consent": "true",
+                "answers": json.dumps(
+                    [{"question": "Do you have a driving licence?", "answer": "छ"}]
+                ),
+            },
+        )
+        assert resp.status_code == 201, resp.text
+        assert resp.json()["data"]["status_link_sent"] is False
+        application = await db.scalar(
+            select(Application).where(Application.job_id == job.id)
+        )
+        assert application.resume_id is None
+        assert application.shared_phone_value == "+9779841234567"
+        assert application.screening_answers == [
+            {"question": "Do you have a driving licence?", "answer": "yes"}
+        ]
+        assert outbox == []
+
+    async def test_phone_or_email_is_required(self, client, db, outbox):
+        _, company = await make_recruiter_admin(db, email="a13@test.com")
+        job = await make_active_job(db, company.id)
+        resp = await client.post(
+            f"/public/jobs/{job.slug}/applications",
+            data={"full_name": "No Contact", "consent": "true"},
+        )
+        assert resp.status_code == 422
+
+    async def test_referral_link_marks_the_source(self, client, db, outbox):
+        from app.modules.jobs.models import JobReferrer
+
+        _, company = await make_recruiter_admin(db, email="a14@test.com")
+        job = await make_active_job(db, company.id)
+        referrer = JobReferrer(job_id=job.id, name="Sita didi", token="sitadidi01")
+        db.add(referrer)
+        await db.flush()
+        assert (await _apply(client, job.slug, ref="sitadidi01")).status_code == 201
+        application = await db.scalar(
+            select(Application).where(Application.job_id == job.id)
+        )
+        assert application.source == "referral"
+        assert application.referrer_id == referrer.id
 
 
 class TestStatusAndWithdraw:
@@ -401,9 +483,7 @@ class TestRecruiterSide:
         anonymous = await client.get(f"/jobs/{job.id}")
         assert anonymous.json()["data"]["source_counts"] is None
 
-        listing = await client.get(
-            "/applications/company/me", headers=auth_headers(admin.id)
+        pipeline = await client.get(
+            f"/recruiter/v2/jobs/{job.id}/pipeline", headers=auth_headers(admin.id)
         )
-        rows = listing.json()["data"]
-        rows = rows["items"] if isinstance(rows, dict) else rows
-        assert rows[0]["source"] == "facebook"
+        assert pipeline.json()["data"]["items"][0]["source"] == "facebook"
