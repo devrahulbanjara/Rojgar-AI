@@ -44,17 +44,10 @@ test.describe('Auth validation', () => {
   test('signup blocks weak password', async ({ page }) => {
     await page.goto('/signup')
     await page.getByLabel(/full name/i).fill('Test User')
-    await page.getByLabel(/email/i).fill('test@example.com')
+    await page.getByLabel(/work email/i).fill('test@example.com')
     await page.getByLabel(/^password$/i).fill('weak')
-    await page.getByLabel(/confirm password/i).fill('weak')
-    await page
-      .getByRole('checkbox')
-      .first()
-      .check()
-      .catch(() => {})
-    await page.getByRole('button', { name: /^continue$/i }).click()
-    await expect(
-      page.locator('text=/at least 8|uppercase|lowercase|password.*number/i').first(),
-    ).toBeVisible({ timeout: 3000 })
+    await page.getByLabel(/company name/i).fill('Test Co')
+    await page.getByRole('button', { name: /^create account$/i }).click()
+    await expect(page.getByText('Use a stronger password.')).toBeVisible({ timeout: 3000 })
   })
 })
