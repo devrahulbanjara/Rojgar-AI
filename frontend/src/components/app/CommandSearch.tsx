@@ -8,7 +8,7 @@ import { useGetMyCompanyCandidatesQuery } from '@/store/services/applicationsApi
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
 
 import { JobsIcon, SearchIcon, UserIcon } from '@/components/icons'
-import { Button } from '@/components/ui/button'
+import { IconButton } from '@/components/ui/button'
 import {
   CommandDialog,
   CommandEmpty,
@@ -20,7 +20,7 @@ import {
 
 import { RECRUITER_NAV } from './navigation'
 
-/** Global search (⌘K / Ctrl+K): jump to a job, a candidate or a page. */
+/** Search icon in the top bar, also ⌘K / Ctrl+K: jump to a job, a candidate or a page. */
 export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -46,18 +46,9 @@ export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => setOpen(true)}
-        aria-label="Search jobs and candidates"
-        className="w-full max-w-sm min-w-0 shrink justify-start bg-background font-normal text-muted-foreground"
-      >
-        <SearchIcon className="size-4" />
-        <span className="flex-1 truncate text-left">Search jobs and candidates</span>
-        <kbd className="hidden rounded border bg-card px-1.5 text-[10px] font-medium sm:inline">
-          ⌘K
-        </kbd>
-      </Button>
+      <IconButton label="Search" onClick={() => setOpen(true)}>
+        <SearchIcon className="size-5" />
+      </IconButton>
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
