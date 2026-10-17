@@ -5,7 +5,7 @@ import { Suspense, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { notify } from '@/lib/notify'
-import { consumePostAuthRedirect, getRoleDashboard } from '@/lib/roleRoutes'
+import { consumePostAuthRedirect, homePathFor } from '@/lib/roleRoutes'
 import { useAppDispatch } from '@/store/hooks'
 import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
 import { clearCredentials, setCredentials } from '@/store/slices/authSlice'
@@ -32,20 +32,6 @@ function OAuthCallbackInner() {
 
     async function handleCallback() {
       const errorParam = searchParams.get('error')
-      const actionParam = searchParams.get('action')
-      const setupToken = searchParams.get('setup_token')
-      const userInfoStr = searchParams.get('user_info')
-
-      if (actionParam === 'requires_setup' && setupToken && userInfoStr) {
-        const params = new URLSearchParams({
-          oauth: 'true',
-          setup_token: setupToken,
-          user_info: userInfoStr,
-        })
-        router.replace(`/signup?${params.toString()}`)
-        return
-      }
-
       if (errorParam) {
         router.replace(`/login?error=${encodeURIComponent(errorParam)}`)
         return
@@ -61,8 +47,8 @@ function OAuthCallbackInner() {
         if (!me.success || !user) throw new Error('no user')
 
         dispatch(setCredentials({ accessToken, user }))
-        notify.success(`Welcome, ${user.full_name}!`)
-        router.replace(consumePostAuthRedirect() ?? getRoleDashboard(user.primary_role))
+        notify.success(user.full_name ? `Welcome, ${user.full_name}!` : 'Welcome!')
+        router.replace(consumePostAuthRedirect() ?? homePathFor(user))
       } catch {
         dispatch(clearCredentials())
         router.replace('/login?error=oauth_failed')

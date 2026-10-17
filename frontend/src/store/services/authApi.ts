@@ -9,12 +9,11 @@ export interface SignupRequest {
   full_name: string
   email: string
   password: string
-  primary_role: 'candidate' | 'recruiter_admin' | 'recruiter'
 }
 
-export interface GoogleRegisterRequest {
-  signup_token: string
-  primary_role: 'candidate' | 'recruiter_admin' | 'recruiter'
+export interface OtpVerifyRequest {
+  phone: string
+  code: string
 }
 
 export interface VerifyEmailRequest {
@@ -55,6 +54,8 @@ export interface LoginData {
     token_type: 'bearer'
   }
   user: AuthUser
+  /** True when a phone sign-in just created the account. */
+  is_new?: boolean
 }
 
 export interface RefreshData {
@@ -62,14 +63,8 @@ export interface RefreshData {
   token_type: 'bearer'
 }
 
-/** Returned by POST /auth/signup for company and recruiter roles. */
-export interface SignupData {
-  setup_token: string | null
-}
-
 // Convenience alias for endpoints that return data: null
 type EmptyResponse = ApiResponse<null>
-type SignupResponse = ApiResponse<SignupData | null>
 
 // ---------------------------------------------------------------------------
 // Auth API
@@ -77,8 +72,8 @@ type SignupResponse = ApiResponse<SignupData | null>
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    /** POST /auth/signup — 201, data: SignupData | null */
-    signup: builder.mutation<SignupResponse, SignupRequest>({
+    /** POST /auth/signup — 201; the verification link is emailed. */
+    signup: builder.mutation<EmptyResponse, SignupRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
         method: 'POST',
@@ -118,6 +113,61 @@ export const authApi = baseApi.injectEndpoints({
           }
         } catch {
           // login failure — nothing to store
+        }
+      },
+    }),
+
+    /** POST /auth/otp/request — texts a 6-digit code to a Nepali mobile. */
+    requestPhoneCode: builder.mutation<EmptyResponse, { phone: string }>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/otp/request`,
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    /** POST /auth/otp/verify — signs in (or up); sets the refresh cookie. */
+    verifyPhoneCode: builder.mutation<ApiResponse<LoginData>, OtpVerifyRequest>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/otp/verify`,
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          if (data.success && data.data) {
+            dispatch(
+              setCredentials({
+                accessToken: data.data.tokens.access_token,
+                user: data.data.user,
+                rememberMe: true,
+              }),
+            )
+          }
+        } catch {
+          // wrong or expired code — the form shows the message
+        }
+      },
+    }),
+
+    /** POST /auth/me/active-business — work in another of my businesses. */
+    setActiveBusiness: builder.mutation<ApiResponse<AuthUser>, { business_id: string }>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me/active-business`,
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          if (data.success && data.data) {
+            dispatch(updateUser(data.data))
+            // Every business-scoped list must reload for the new business.
+            dispatch(baseApi.util.resetApiState())
+          }
+        } catch {
+          // handled by caller
         }
       },
     }),
@@ -250,31 +300,6 @@ export const authApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
     }),
-
-    /** POST /auth/google/register — 201, data: LoginData | SignupData */
-    googleRegister: builder.mutation<ApiResponse<LoginData | SignupData>, GoogleRegisterRequest>({
-      query: (body) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google/register`,
-        method: 'POST',
-        body,
-      }),
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled
-          if (data.success && data.data && 'tokens' in data.data) {
-            dispatch(
-              setCredentials({
-                accessToken: data.data.tokens.access_token,
-                user: data.data.user,
-                rememberMe: true, // we assume true for oauth
-              }),
-            )
-          }
-        } catch {
-          // failure
-        }
-      },
-    }),
   }),
   overrideExisting: true,
 })
@@ -294,7 +319,9 @@ export const {
   useRemoveMyAuthAvatarMutation,
   useChangeMyPasswordMutation,
   useDeleteAccountMutation,
-  useGoogleRegisterMutation,
+  useRequestPhoneCodeMutation,
+  useVerifyPhoneCodeMutation,
+  useSetActiveBusinessMutation,
 } = authApi
 
 // ---------------------------------------------------------------------------

@@ -84,6 +84,14 @@ export {
   Buildings as CompanyIcon,
   ClipboardText as AuditIcon,
   House as HomeIcon,
+  // Businesses and platform admin
+  SealCheck as VerifiedIcon,
+  Flag as FlagIcon,
+  Bank as PaymentsIcon,
+  Hourglass as WaitingIcon,
+  Storefront as BusinessIcon,
+  ShieldStar as StaffIcon,
+  ArrowsLeftRight as SwitchIcon,
   // Brands
   LinkedinLogo as LinkedInIcon,
   FacebookLogo as FacebookIcon,

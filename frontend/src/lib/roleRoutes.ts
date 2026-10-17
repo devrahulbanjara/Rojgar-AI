@@ -1,43 +1,29 @@
-import type { PrimaryRole } from './types/user'
+import type { BaseUser } from './types/user'
 
 // ---------------------------------------------------------------------------
-// Role → dashboard path mapping
+// Where each person belongs. There are no global roles: what someone can open
+// follows from their memberships, applications and the platform staff flag.
 // ---------------------------------------------------------------------------
 
-/** The "home" dashboard for each role. */
-export const ROLE_DASHBOARDS: Record<PrimaryRole, string> = {
-  candidate: '/me/applications',
-  recruiter: '/recruiter',
-  recruiter_admin: '/recruiter',
+/** What a protected area needs from the signed-in person. */
+export type Access = 'person' | 'member' | 'platform_admin'
+
+/**
+ * Home for a signed-in person: staff → /admin, business teams → /recruiter,
+ * applicants → /me/applications, anyone else → /start (create a business).
+ */
+export function homePathFor(user: BaseUser | null | undefined): string {
+  if (!user) return '/login'
+  if (user.is_platform_admin) return '/admin'
+  if (user.active_business) return '/recruiter'
+  if (user.has_applications) return '/me/applications'
+  return '/start'
 }
 
-/**
- * Returns the dashboard path for the given role.
- * Falls back to `/` if the role is unknown or not provided.
- */
-export function getRoleDashboard(role: PrimaryRole | undefined | null): string {
-  if (!role) return '/'
-  return ROLE_DASHBOARDS[role] ?? '/'
-}
-
-// ---------------------------------------------------------------------------
-// Route → required role mapping (used by AuthGuard)
-// ---------------------------------------------------------------------------
-
-/**
- * Each protected route prefix and the role(s) that may access it.
- */
-export const PROTECTED_ROUTES: { prefix: string; roles: PrimaryRole[] }[] = [
-  { prefix: '/recruiter', roles: ['recruiter_admin', 'recruiter'] },
-]
-
-/**
- * Given a pathname, returns the roles required to access it,
- * or `null` if the route is not role-restricted.
- */
-export function getRequiredRoles(pathname: string): PrimaryRole[] | null {
-  const match = PROTECTED_ROUTES.find((r) => pathname.startsWith(r.prefix))
-  return match?.roles ?? null
+export function hasAccess(user: BaseUser, access: Access): boolean {
+  if (access === 'platform_admin') return Boolean(user.is_platform_admin)
+  if (access === 'member') return Boolean(user.active_business)
+  return true
 }
 
 // ---------------------------------------------------------------------------

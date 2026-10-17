@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 import { PLANS, useGetCompanyPlanQuery } from '@/lib/api/company'
-import { useAppSelector } from '@/store/hooks'
+import { useIsOwner } from '@/lib/session'
 
 import { Logo } from '@/components/app/Logo'
 import {
@@ -65,7 +65,7 @@ function PlanChip() {
 /** Recruiter/admin sidebar: Today · Jobs · Candidates · Interviews · Team, Settings pinned. */
 export function AppSidebar() {
   const pathname = usePathname()
-  const isAdmin = useAppSelector((s) => s.auth.user?.primary_role === 'recruiter_admin')
+  const isAdmin = useIsOwner()
   const items = RECRUITER_NAV.filter((item) => isAdmin || !item.adminOnly)
 
   return (

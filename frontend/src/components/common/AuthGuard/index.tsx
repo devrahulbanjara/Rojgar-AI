@@ -4,15 +4,15 @@
  * AuthGuard
  *
  * Wraps a protected route segment. Redirects:
- *  - Unauthenticated users  → /login?next=<current-path>
- *  - Wrong-role users       → their own role dashboard
+ *  - Unauthenticated users       → /login?next=<current-path>
+ *  - People without the access   → their own home (homePathFor)
  *
  * Session restore (new tab / sessionStorage):
  *  If there is no access token in Redux (e.g. sessionStorage is per-tab), we POST
  *  /auth/refresh using the HttpOnly refresh cookie before deciding the user is logged out.
  *
  * Usage:
- *   <AuthGuard requiredRole={["recruiter_admin", "recruiter"]}>{children}</AuthGuard>
+ *   <AuthGuard access="member">{children}</AuthGuard>
  */
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useStore } from 'react-redux'
@@ -20,24 +20,19 @@ import { useStore } from 'react-redux'
 import { usePathname, useRouter } from 'next/navigation'
 
 import { notify } from '@/lib/notify'
-import { getRoleDashboard } from '@/lib/roleRoutes'
-import type { PrimaryRole } from '@/lib/types/user'
+import { type Access, hasAccess, homePathFor } from '@/lib/roleRoutes'
 import type { RootState } from '@/store'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice'
 
 interface AuthGuardProps {
-  /** One role or an array of roles allowed to access this section. */
-  requiredRole: PrimaryRole | PrimaryRole[]
+  /** person: anyone signed in · member: on a business team · platform_admin: staff. */
+  access: Access
   children: ReactNode
 }
 
-function hasRequiredRole(role: PrimaryRole, required: PrimaryRole | PrimaryRole[]): boolean {
-  return Array.isArray(required) ? required.includes(role) : role === required
-}
-
-export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
+export default function AuthGuard({ access, children }: AuthGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
   const dispatch = useAppDispatch()
@@ -109,16 +104,15 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
 
     wasAuthenticatedRef.current = true
 
-    if (!hasRequiredRole(user.primary_role, requiredRole)) {
-      notify.error("You don't have permission to access that page.")
-      router.replace(getRoleDashboard(user.primary_role))
+    if (!hasAccess(user, access)) {
+      router.replace(homePathFor(user))
       return
     }
-  }, [mounted, sessionChecked, isAuthenticated, user, requiredRole, pathname, router])
+  }, [mounted, sessionChecked, isAuthenticated, user, access, pathname, router])
 
   if (!mounted || !sessionChecked) return null
 
-  if (!isAuthenticated || !user || !hasRequiredRole(user.primary_role, requiredRole)) {
+  if (!isAuthenticated || !user || !hasAccess(user, access)) {
     return null
   }
 
