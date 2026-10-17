@@ -6,7 +6,7 @@ import type { PrimaryRole } from './types/user'
 
 /** The "home" dashboard for each role. */
 export const ROLE_DASHBOARDS: Record<PrimaryRole, string> = {
-  candidate: '/candidate',
+  candidate: '/me/applications',
   recruiter: '/recruiter',
   recruiter_admin: '/recruiter',
 }
@@ -28,7 +28,6 @@ export function getRoleDashboard(role: PrimaryRole | undefined | null): string {
  * Each protected route prefix and the role(s) that may access it.
  */
 export const PROTECTED_ROUTES: { prefix: string; roles: PrimaryRole[] }[] = [
-  { prefix: '/candidate', roles: ['candidate'] },
   { prefix: '/recruiter', roles: ['recruiter_admin', 'recruiter'] },
 ]
 
@@ -43,7 +42,7 @@ export function getRequiredRoles(pathname: string): PrimaryRole[] | null {
 
 // ---------------------------------------------------------------------------
 // Post-auth redirect ("next") — survives signup, email verification (often in
-// a new tab), onboarding and Google OAuth so the user lands where they started.
+// a new tab) and Google OAuth so the user lands where they started.
 // ---------------------------------------------------------------------------
 
 const POST_AUTH_NEXT_KEY = 'rojgarai:postAuthNext'

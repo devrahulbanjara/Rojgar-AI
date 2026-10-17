@@ -12,7 +12,6 @@
  *  /auth/refresh using the HttpOnly refresh cookie before deciding the user is logged out.
  *
  * Usage:
- *   <AuthGuard requiredRole="candidate">{children}</AuthGuard>
  *   <AuthGuard requiredRole={["recruiter_admin", "recruiter"]}>{children}</AuthGuard>
  */
 import { type ReactNode, useEffect, useRef, useState } from 'react'
@@ -21,7 +20,7 @@ import { useStore } from 'react-redux'
 import { usePathname, useRouter } from 'next/navigation'
 
 import { notify } from '@/lib/notify'
-import { getRoleDashboard, rememberPostAuthRedirect } from '@/lib/roleRoutes'
+import { getRoleDashboard } from '@/lib/roleRoutes'
 import type { PrimaryRole } from '@/lib/types/user'
 import type { RootState } from '@/store'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -114,19 +113,6 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
       notify.error("You don't have permission to access that page.")
       router.replace(getRoleDashboard(user.primary_role))
       return
-    }
-
-    if (user.primary_role === 'candidate') {
-      if (!user.is_onboarded && !pathname.startsWith('/onboarding')) {
-        notify.info('Please complete your onboarding profile first.')
-        rememberPostAuthRedirect(`${pathname}${window.location.search}`)
-        router.replace('/onboarding')
-        return
-      }
-      if (user.is_onboarded && pathname.startsWith('/onboarding')) {
-        router.replace('/candidate')
-        return
-      }
     }
   }, [mounted, sessionChecked, isAuthenticated, user, requiredRole, pathname, router])
 
