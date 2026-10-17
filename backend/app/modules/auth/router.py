@@ -17,6 +17,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import settings
+from app.core.database import release_connection
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.rate_limit import RateLimit
 from app.core.responses import ResponseBuilder, UnifiedResponse
@@ -215,6 +216,7 @@ async def upload_my_avatar(
 ) -> UnifiedResponse[UserResponse]:
     """Upload or replace the authenticated user's avatar image."""
     previous_avatar_url = current_user.avatar_url
+    await release_connection(db)  # no pooled connection during the S3 upload
     new_avatar_url = await storage_service.upload_image(file, folder="avatars")
     current_user.avatar_url = new_avatar_url
     await db.commit()
