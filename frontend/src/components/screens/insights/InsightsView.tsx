@@ -196,7 +196,6 @@ export function InsightsView() {
   return (
     <PageContainer>
       <PageHeader
-        breadcrumb={[{ label: 'Insights' }]}
         title="Insights"
         facts={data?.total ? [`${data.total.toLocaleString()} applications`] : undefined}
       />

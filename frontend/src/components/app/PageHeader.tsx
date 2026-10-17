@@ -37,7 +37,7 @@ export function PageHeader({
   const factLine = (facts ?? []).filter(Boolean).join(' · ')
   return (
     <header className="flex flex-col gap-2">
-      {breadcrumb?.length ? (
+      {breadcrumb && breadcrumb.length > 1 ? (
         <Breadcrumb>
           <BreadcrumbList className="text-xs">
             {breadcrumb.map((crumb, index) => (

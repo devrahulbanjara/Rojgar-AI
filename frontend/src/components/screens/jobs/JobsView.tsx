@@ -182,13 +182,7 @@ export function JobsView() {
   return (
     <PageContainer>
       <PageHeader
-        breadcrumb={[{ label: 'Jobs' }]}
         title="Jobs"
-        facts={
-          rows.length
-            ? [`${counts.open} open`, `${counts.draft} draft`, `${counts.closed} closed`]
-            : undefined
-        }
         primaryAction={postJob}
         secondaryAction={
           <Button asChild variant="outline">
