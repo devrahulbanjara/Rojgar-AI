@@ -19,12 +19,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
+from loguru import logger
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.infrastructures.guardrails import guardrails_service
+from app.infrastructures.guardrails.service import heuristic_injection_signal
 from app.infrastructures.redis.service import redis_service
 from app.infrastructures.search.service import search_service
 from app.modules.assistant import llm
@@ -87,8 +89,18 @@ def _to_messages(raw: list[dict]) -> list[AssistantMessage]:
 
 
 async def _guard(text: str, source: str) -> None:
-    verdict = await guardrails_service.check_input(text, source=source)
-    if not verdict.safe:
+    """Input rail. A slow classifier falls back to the marker scan so it can
+    never stretch a turn past a few seconds."""
+    try:
+        verdict = await asyncio.wait_for(
+            guardrails_service.check_input(text, source=source),
+            settings.assistant_guard_timeout_seconds,
+        )
+        safe = verdict.safe
+    except TimeoutError:
+        logger.warning("Assistant guardrail timed out for {}", source)
+        safe = heuristic_injection_signal(text) is None
+    if not safe:
         raise llm.AssistantError("blocked", BLOCKED_MESSAGE)
 
 
@@ -169,6 +181,14 @@ def numbers_in(text: str) -> set[int]:
         suffix = (match.group(2) or "").rstrip("s")
         multipliers.add(_MULTIPLIERS.get(suffix, 1))
     return {round(v * m) for v in values for m in multipliers}
+
+
+def draft_language(texts: list[str]) -> str:
+    """Nepali when the recruiter mostly writes Devanagari; English for English or
+    Romanized Nepali (Romanized Nepali reads badly in a public job post)."""
+    letters = [c for t in texts for c in t if c.isalpha()]
+    devanagari = sum(1 for c in letters if "\u0900" <= c <= "\u097f")
+    return "Nepali" if letters and devanagari * 2 > len(letters) else "English"
 
 
 def wants_salary_research(message: str) -> bool:
@@ -257,6 +277,9 @@ async def job_draft_turn(
     context: dict[str, Any] = {
         "current_draft": current.model_dump() if current else None,
         "follow_ups_left": max(0, follow_ups_left),
+        "draft_language": draft_language(
+            [m["content"] for m in stored if m["role"] == "user"] + [payload.message]
+        ),
     }
     if results:
         context["search_results"] = results
@@ -421,6 +444,8 @@ async def candidate_turn(
         # Unsupported claims become the fixed "not in data" answer.
         if not action and (not out.found or not answer or (out.quotes and not quotes)):
             answer, quotes = NOT_IN_DATA, []
+        elif not ctx.cv_available and not action and "no cv" not in answer.lower():
+            answer = f"No CV was sent. {answer}"
         quote_dicts = [q.model_dump() for q in quotes]
 
         if thread is None:

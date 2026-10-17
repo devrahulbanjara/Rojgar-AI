@@ -157,6 +157,8 @@ class Settings(BaseSettings):
     assistant_max_tokens: int = 3000
     # Hard deadline for one turn, retries included.
     assistant_turn_timeout_seconds: float = 30.0
+    # Longest wait for the input guardrail before falling back to a marker scan.
+    assistant_guard_timeout_seconds: float = 6.0
     # Turns (question + answer) kept per thread and sent to the model.
     assistant_history_turns: int = 8
 

@@ -31,8 +31,9 @@ Rules:
 - Salary: use only numbers the recruiter wrote, or numbers that appear in
   search_results (then list those urls). Otherwise salary_min, salary_max and
   currency are null. Never estimate. Currency defaults to NPR when a salary is given.
-- category: exactly one of {", ".join(CATEGORIES)}. Hotels, restaurants,
-  travel and trekking are "Hospitality & Tourism"; shops and field sales are
+- category: exactly one of {", ".join(CATEGORIES)}. Any job at a hotel,
+  restaurant, travel or trekking company (receptionist, cook, waiter, guide) is
+  "Hospitality & Tourism"; shops and field sales are
   "Sales & Retail"; drivers and delivery are "Logistics & Driving".
 - must_haves and nice_to_haves: short, checkable facts a CV or form answer can
   show, under 8 words each. Put what the recruiter asked for first; add only
@@ -40,10 +41,9 @@ Rules:
   registration", "Spoken English", "2+ years as receptionist". Never soft
   skills: no "Friendly", "Good communication skills", "Team player", "Passionate".
 - questions: short screening questions for the apply form, only when useful.
-- Language: if the recruiter writes mostly in Devanagari Nepali, write every
-  draft field (title, description, must-haves, questions) in Nepali. If they
-  write in English or Romanized Nepali, write every draft field in English.
-  Never mix languages inside the draft. Write "reply" in the recruiter's own
+  Never ask for name, email, phone or CV; the form already collects them.
+- Write every draft field (title, description, must-haves, questions) in
+  draft_language, never mixing languages. Write "reply" in the recruiter's own
   style. Plain, friendly words.
 - No age, gender, religion, caste, marital status or appearance requirements,
   even if asked; say so briefly in "reply".
