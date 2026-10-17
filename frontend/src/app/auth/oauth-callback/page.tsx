@@ -8,12 +8,12 @@ import { notify } from '@/lib/notify'
 import { consumePostAuthRedirect, homePathFor } from '@/lib/roleRoutes'
 import { useAppDispatch } from '@/store/hooks'
 import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
-import { clearCredentials, setCredentials } from '@/store/slices/authSlice'
+import { clearCredentials, setCredentials, updateAccessToken } from '@/store/slices/authSlice'
 
 import { Spinner } from '@/components/app/Ai'
 
 /**
- * Google OAuth landing page.
+ * Landing page after Google sign-in and after an emailed sign-in link.
  *
  * The backend sets the HttpOnly refresh cookie and redirects here. Tokens or
  * user objects in the URL are deliberately ignored: trusting them allows login
@@ -43,6 +43,8 @@ function OAuthCallbackInner() {
         const refreshed = await refreshToken().unwrap()
         const accessToken = refreshed.data?.access_token
         if (!refreshed.success || !accessToken) throw new Error('no session')
+        // /auth/me needs the new token; without it the call 401s and refreshes again.
+        dispatch(updateAccessToken(accessToken))
 
         const me = await triggerGetMe().unwrap()
         const user = me.data
