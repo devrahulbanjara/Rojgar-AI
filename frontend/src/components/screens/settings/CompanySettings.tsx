@@ -52,6 +52,8 @@ function CompanyForm({ company }: { company: CompanyProfileData }) {
   const [removeLogo, removeState] = useRemoveCompanyLogoMutation()
 
   const initial = fromCompany(company)
+  // Cal.com link: only while native scheduling is off and the backend still has the field.
+  const usesBookingLink = !FLAGS.nativeScheduling && 'cal_booking_url' in company
   const changed = (Object.keys(form) as (keyof Form)[]).some((k) => form[k].trim() !== initial[k])
   const set = (key: keyof Form) => (event: { target: { value: string } }) =>
     setForm((prev) => ({ ...prev, [key]: event.target.value }))
@@ -73,7 +75,7 @@ function CompanyForm({ company }: { company: CompanyProfileData }) {
         location: form.location.trim() || null,
         website_url: form.website_url.trim() || null,
         description: form.description.trim() || null,
-        ...(FLAGS.nativeScheduling ? {} : { cal_booking_url: form.cal_booking_url.trim() || null }),
+        ...(usesBookingLink ? { cal_booking_url: form.cal_booking_url.trim() || null } : {}),
       }).unwrap()
       notify.success('Saved')
     } catch (error) {
@@ -163,7 +165,7 @@ function CompanyForm({ company }: { company: CompanyProfileData }) {
             onChange={set('description')}
           />
         </FormField>
-        {FLAGS.nativeScheduling ? null : (
+        {!usesBookingLink ? null : (
           <FormField
             id="company-booking"
             label="Interview booking link"
