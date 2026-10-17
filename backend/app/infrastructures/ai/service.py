@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import random
 from collections.abc import AsyncIterator
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Type, TypeVar
@@ -176,6 +177,7 @@ class AIService:
             temperature=temperature,
             api_key=SecretStr(settings.groq_api_key),
             max_tokens=4096,
+            max_retries=2,
         )
 
     async def generate_structured(
@@ -232,43 +234,87 @@ class AIService:
             },
             max_tokens=4096,
         )
-        if temperature is not None:
-            request_kwargs["temperature"] = temperature
+        # Structured calls drive scores and decisions: default to deterministic.
+        request_kwargs["temperature"] = 0.0 if temperature is None else temperature
 
-        try:
-            async with asyncio.timeout(120):
-                response = await self._llm_client.chat.completions.create(
-                    **request_kwargs
-                )
-        except TimeoutError:
-            logger.error("Groq structured generation timed out after 120s")
-            raise HTTPException(
-                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail="The AI service did not respond in time. Please try again.",
-            ) from None
-        except (APIStatusError, BadRequestError) as exc:
-            message = _extract_groq_error_message(exc)
-            if _is_groq_rate_limit(exc):
-                logger.error("Groq rate limit/token cap hit: {}", message)
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=message,
-                ) from exc
+        response = await self._create_with_retries(request_kwargs)
 
-            logger.error("Groq structured generation failed: {}", message)
+        choice = response.choices[0]
+        if getattr(choice, "finish_reason", None) == "length":
+            logger.error(
+                "Groq structured output for {} hit the token limit",
+                schema_model.__name__,
+            )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=message,
-            ) from exc
-
-        content = response.choices[0].message.content
+                detail="The AI response was cut off. Please try again.",
+            )
+        content = choice.message.content
         if content is None:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="The AI service returned an empty response.",
             )
-        data = json.loads(content)
-        return schema_model.model_validate(data)
+        try:
+            return schema_model.model_validate(json.loads(content))
+        except (json.JSONDecodeError, ValueError) as exc:
+            logger.error(
+                "Groq structured output for {} failed validation: {}",
+                schema_model.__name__,
+                type(exc).__name__,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="The AI service returned an invalid response. Please try again.",
+            ) from exc
+
+    async def _create_with_retries(self, request_kwargs: dict[str, Any]) -> Any:
+        """Call Groq with bounded retries + exponential backoff on transient errors.
+
+        Retries rate limits, 5xx and timeouts (up to 3 attempts); client errors
+        such as 400 are raised immediately.
+        """
+        attempts = 3
+        for attempt in range(1, attempts + 1):
+            try:
+                async with asyncio.timeout(120):
+                    return await self._llm_client.chat.completions.create(
+                        **request_kwargs
+                    )
+            except TimeoutError:
+                if attempt == attempts:
+                    logger.error("Groq structured generation timed out after retries")
+                    raise HTTPException(
+                        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                        detail="The AI service did not respond in time. Please try again.",
+                    ) from None
+            except (APIStatusError, BadRequestError) as exc:
+                message = _extract_groq_error_message(exc)
+                status_code = getattr(exc, "status_code", None) or 0
+                transient = _is_groq_rate_limit(exc) or status_code >= 500
+                if transient and attempt < attempts:
+                    pass
+                elif _is_groq_rate_limit(exc):
+                    logger.error("Groq rate limit/token cap hit: {}", message)
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail=message,
+                    ) from exc
+                else:
+                    logger.error("Groq structured generation failed: {}", message)
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=message,
+                    ) from exc
+            delay = (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+            logger.warning(
+                "Groq call failed (attempt {}/{}); retrying in {:.1f}s",
+                attempt,
+                attempts,
+                delay,
+            )
+            await asyncio.sleep(delay)
+        raise RuntimeError("unreachable")
 
     async def stream_text(
         self,
@@ -292,8 +338,13 @@ class AIService:
                     if isinstance(content, str) and content:
                         yield content
         except TimeoutError:
+            # Fail loudly: returning here made callers treat a partial answer
+            # (e.g. a half-written interview evaluation) as complete.
             logger.error("Groq streaming timed out after 60s")
-            return
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="The AI response timed out before it finished. Please try again.",
+            ) from None
 
 
 ai_service = AIService()
