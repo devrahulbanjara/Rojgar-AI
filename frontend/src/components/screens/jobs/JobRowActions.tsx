@@ -5,7 +5,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { notify } from '@/lib/notify'
-import { useDeleteJobAIDraftMutation } from '@/store/services/jobAiApi'
 import { useDeleteJobMutation, useUpdateJobMutation } from '@/store/services/jobsApi'
 import { addDays, format } from 'date-fns'
 
@@ -96,7 +95,6 @@ function ReopenDialog({
 export function JobRowActions({ row }: { row: JobRow }) {
   const [updateJob] = useUpdateJobMutation()
   const [deleteJob, { isLoading: deleting }] = useDeleteJobMutation()
-  const [deleteDraft, { isLoading: deletingDraft }] = useDeleteJobAIDraftMutation()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [reopenOpen, setReopenOpen] = useState(false)
 
@@ -116,8 +114,7 @@ export function JobRowActions({ row }: { row: JobRow }) {
 
   async function remove() {
     try {
-      if (row.kind === 'ai_draft') await deleteDraft(row.id).unwrap()
-      else await deleteJob(row.id).unwrap()
+      await deleteJob(row.id).unwrap()
       notify.success(`Deleted ${row.title}`)
       setConfirmOpen(false)
     } catch {
@@ -134,23 +131,19 @@ export function JobRowActions({ row }: { row: JobRow }) {
           </IconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
-          {row.kind === 'job' ? (
-            <>
-              <DropdownMenuItem asChild>
-                <Link href={`/recruiter/jobs/${row.id}/edit`}>
-                  <EditIcon />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              {row.status === 'active' ? (
-                <DropdownMenuItem onSelect={() => void closeJob()}>Close job</DropdownMenuItem>
-              ) : null}
-              {row.status === 'expired' && !row.hiringCompleted ? (
-                <DropdownMenuItem onSelect={() => setReopenOpen(true)}>Reopen</DropdownMenuItem>
-              ) : null}
-              <DropdownMenuSeparator />
-            </>
+          <DropdownMenuItem asChild>
+            <Link href={`/recruiter/jobs/${row.id}/edit`}>
+              <EditIcon />
+              Edit
+            </Link>
+          </DropdownMenuItem>
+          {row.status === 'active' ? (
+            <DropdownMenuItem onSelect={() => void closeJob()}>Close job</DropdownMenuItem>
           ) : null}
+          {row.status === 'expired' && !row.hiringCompleted ? (
+            <DropdownMenuItem onSelect={() => setReopenOpen(true)}>Reopen</DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={() => setConfirmOpen(true)}>
             <TrashIcon />
             Delete
@@ -163,17 +156,15 @@ export function JobRowActions({ row }: { row: JobRow }) {
         onOpenChange={setConfirmOpen}
         title={`Delete ${row.title}?`}
         consequence={
-          row.kind === 'job' && row.applicants > 0
+          row.applicants > 0
             ? `Its ${row.applicants} application${row.applicants === 1 ? '' : 's'} will be deleted too. This can't be undone.`
             : "This can't be undone."
         }
         confirmLabel="Delete"
-        busy={deleting || deletingDraft}
+        busy={deleting}
         onConfirm={remove}
       />
-      {row.kind === 'job' ? (
-        <ReopenDialog row={row} open={reopenOpen} onOpenChange={setReopenOpen} />
-      ) : null}
+      <ReopenDialog row={row} open={reopenOpen} onOpenChange={setReopenOpen} />
     </>
   )
 }
