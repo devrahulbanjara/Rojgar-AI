@@ -87,8 +87,8 @@ export default function TermsPage() {
             <p>
               <strong>Please read carefully.</strong> These Terms constitute a legally binding
               agreement between you and Rojgar AI under the{' '}
-              <strong>Nepal Contract Act 2056 (2000)</strong>. By using Rojgar AI you agree to
-              these Terms. If you do not agree, do not use the Service.
+              <strong>Nepal Contract Act 2056 (2000)</strong>. By using Rojgar AI you agree to these
+              Terms. If you do not agree, do not use the Service.
             </p>
           </div>
 
@@ -96,10 +96,9 @@ export default function TermsPage() {
             <h2 className="legal__section-title">1. Acceptance of Terms</h2>
             <p className="legal__text">
               These Terms and Conditions (&quot;Terms&quot;) govern your access to and use of the
-              Rojgar AI platform and related services operated by{' '}
-              <strong>Rojgar AI</strong> (&quot;Company&quot;, &quot;we&quot;,
-              &quot;us&quot;), a private limited company incorporated under the{' '}
-              <strong>Companies Act 2063 (2006)</strong> of Nepal.
+              Rojgar AI platform and related services operated by <strong>Rojgar AI</strong>{' '}
+              (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;), a private limited company
+              incorporated under the <strong>Companies Act 2063 (2006)</strong> of Nepal.
             </p>
             <p className="legal__text">
               By clicking &quot;Accept&quot;, registering an account, accessing the website at
@@ -162,22 +161,12 @@ export default function TermsPage() {
               with hiring organisations (&quot;Employers&quot;). Our core services include:
             </p>
             <ul className="legal__list">
+              <li>Job pages with a shareable apply link and an apply form that needs no account</li>
+              <li>A status link and email updates for every application</li>
               <li>
-                A searchable job listing database with keyword and semantic search functionality
+                Tools for employers to post jobs, review each application against their criteria,
+                decide with one click, book interviews and record scorecards (paid plans)
               </li>
-              <li>Candidate profile creation, resume building, and PDF export</li>
-              <li>AI-powered resume gap analysis and auto-patching during the application flow</li>
-              <li>Online job application submission and real-time pipeline tracking</li>
-              <li>AI evaluation scoring and written feedback on applications</li>
-              <li>
-                Recruiter dashboard for posting jobs, reviewing applications, AI-assisted
-                shortlisting, outreach email drafting, and interview management (paid subscription)
-              </li>
-              <li>
-                AI chat assistant for recruiters to search candidates, research salaries, and manage
-                jobs
-              </li>
-              <li>Interview recording transcription and AI-powered evaluation</li>
             </ul>
             <p className="legal__text">
               We act as an intermediary platform. We do not guarantee employment, a specific number
@@ -274,9 +263,9 @@ export default function TermsPage() {
             <h2 className="legal__section-title">8. Intellectual Property</h2>
             <p className="legal__text">
               All content on the Service, including but not limited to text, graphics, logos, icons,
-              images, audio, video, data compilations, and software, is the property of Rojgar AI
-              or its licensors and is protected under the{' '}
-              <strong>Copyright Act 2059 (2002)</strong> of Nepal. Refer to our{' '}
+              images, audio, video, data compilations, and software, is the property of Rojgar AI or
+              its licensors and is protected under the <strong>Copyright Act 2059 (2002)</strong> of
+              Nepal. Refer to our{' '}
               <Link href="/copyright" className="legal__link">
                 Copyright Notice
               </Link>{' '}
@@ -292,8 +281,8 @@ export default function TermsPage() {
           <section className="legal__section" id="payments">
             <h2 className="legal__section-title">9. Payments &amp; Refunds</h2>
             <p className="legal__text">
-              Rojgar AI is free for Candidates. Employer subscription plans are offered on a
-              monthly or annual basis. By subscribing, you agree to the following:
+              Rojgar AI is free for Candidates. Employer subscription plans are offered on a monthly
+              or annual basis. By subscribing, you agree to the following:
             </p>
             <ul className="legal__list">
               <li>
@@ -351,9 +340,9 @@ export default function TermsPage() {
             <h2 className="legal__section-title">11. Limitation of Liability</h2>
             <p className="legal__text">
               To the fullest extent permitted by the <strong>Nepal Contract Act 2056</strong> and
-              other applicable law, in no event shall Rojgar AI, its directors,
-              employees, or agents be liable for any indirect, incidental, special, consequential,
-              or punitive damages arising from your use of or inability to use the Service.
+              other applicable law, in no event shall Rojgar AI, its directors, employees, or agents
+              be liable for any indirect, incidental, special, consequential, or punitive damages
+              arising from your use of or inability to use the Service.
             </p>
             <p className="legal__text">
               Our total aggregate liability to you for any claim arising out of or related to these
@@ -371,10 +360,10 @@ export default function TermsPage() {
           <section className="legal__section" id="indemnification">
             <h2 className="legal__section-title">12. Indemnification</h2>
             <p className="legal__text">
-              You agree to defend, indemnify, and hold harmless Rojgar AI and
-              its officers, directors, employees, and agents from and against any claims, damages,
-              obligations, losses, liabilities, costs, or debt, and expenses (including reasonable
-              legal fees) arising from:
+              You agree to defend, indemnify, and hold harmless Rojgar AI and its officers,
+              directors, employees, and agents from and against any claims, damages, obligations,
+              losses, liabilities, costs, or debt, and expenses (including reasonable legal fees)
+              arising from:
             </p>
             <ul className="legal__list">
               <li>Your use of the Service in violation of these Terms</li>
