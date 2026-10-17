@@ -266,7 +266,7 @@ async def invite(
 async def scheduling_url_for(
     db: AsyncSession, application_id: uuid.UUID, interviewer_id: uuid.UUID
 ) -> str:
-    """Link for an outreach email; creates the invite if needed (no commit)."""
+    """Link for an interview-invite email; creates the invite if needed (no commit)."""
     invite_row = await db.scalar(
         select(InterviewInvite).where(InterviewInvite.application_id == application_id)
     )

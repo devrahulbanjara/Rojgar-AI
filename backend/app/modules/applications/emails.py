@@ -22,7 +22,7 @@ from app.core.database import AsyncSessionLocal
 from app.modules.applications.models import Application, ApplicationEvent
 from app.modules.companies.models import Company
 from app.modules.jobs.models import Job
-from app.modules.outreach.templates import render
+from app.modules.applications.email_templates import render
 from app.modules.public.tokens import create_status_token, status_url
 from app.shared.enums import EventType
 

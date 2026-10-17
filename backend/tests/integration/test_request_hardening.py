@@ -1,4 +1,4 @@
-from app.modules.outreach.templates import render
+from app.modules.applications.email_templates import render
 
 
 async def test_oversized_request_id_replaced(client):

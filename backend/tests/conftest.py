@@ -24,8 +24,8 @@ settings.qdrant_api_key = settings.test_qdrant_api_key or ""
 settings.qdrant_collection_name = f"test_{settings.test_db_name}_jobs"
 settings.qdrant_candidate_collection_name = f"test_{settings.test_db_name}_candidates"
 
-from app.core.database import Base, get_db
-from main import app
+from app.core.database import Base, get_db  # noqa: E402 - after the test settings
+from main import app  # noqa: E402
 
 RUN_LIVE_AI = os.getenv("RUN_HYBRID_EVAL") == "1"
 
