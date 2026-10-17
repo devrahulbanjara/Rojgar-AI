@@ -12,6 +12,10 @@ class ShortlistSummaryResponse(BaseSchema):
     shortlist_status: ShortlistStatus
     final_shortlist_completed: bool
     shortlist_threshold: int
+    # AI review finished; decisions await recruiter confirmation (finalize).
+    ai_recommendations_ready: bool = False
+    # Applications the AI could not review (flagged, unscorable, or failed).
+    needs_human_review: int = 0
 
 
 class TriggerShortlistResponse(BaseSchema):
@@ -25,6 +29,8 @@ class EvaluateSingleApplicationResponse(BaseSchema):
     score: int | None
     strengths: list[str] | None
     weaknesses: list[str] | None
+    ai_review_status: str | None = None
+    ai_flag_reason: str | None = None
 
 
 class FinalizeShortlistRequest(BaseSchema):

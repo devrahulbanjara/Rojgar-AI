@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -47,6 +48,17 @@ from app.modules.shortlisting.service import recover_unfinished_shortlisting
 setup_logging()
 
 
+async def _run_startup_backlog() -> None:
+    """Expire overdue jobs, then resume unfinished shortlisting, off the startup path."""
+    # marks any overdue active jobs as expired on boot
+    await run_job_expiry_startup_check()
+    try:
+        # resumes two-stage shortlisting for expired jobs left unfinished by a prior crash
+        await recover_unfinished_shortlisting()
+    except Exception:
+        logger.exception("Startup shortlisting recovery failed.")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Run startup and shutdown tasks for the FastAPI application lifecycle."""
@@ -56,10 +68,10 @@ async def lifespan(app: FastAPI):
     await job_ai_runtime.start()
     # cache layer — jobs, applications, companies
     await redis_service.connect()
-    # marks any overdue active jobs as expired on boot
-    await run_job_expiry_startup_check()
-    # resumes two-stage shortlisting for expired jobs left unfinished by a prior crash
-    await recover_unfinished_shortlisting()
+    # Expiry + shortlisting recovery can run LLM reviews for many applications;
+    # run them in the background so the API starts serving (and passes health
+    # checks) immediately. Jobs are claimed atomically, so replicas don't collide.
+    startup_backlog_task = asyncio.create_task(_run_startup_backlog())
 
     # background loop — retries failed qdrant sync events every 60s
     daemon_task = asyncio.create_task(sync_daemon_loop())
@@ -70,11 +82,12 @@ async def lifespan(app: FastAPI):
     yield
 
     job_expiry_scheduler.shutdown(wait=False)
-    daemon_task.cancel()
-    try:
-        await daemon_task
-    except asyncio.CancelledError:
-        pass
+    for task in (daemon_task, startup_backlog_task):
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
     await redis_service.disconnect()
     await job_ai_runtime.stop()

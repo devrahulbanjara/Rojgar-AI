@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -33,8 +34,9 @@ def _load_model():
         logger.info("ML bouncer model loaded from {}", _MODEL_PATH)
         return model
     except FileNotFoundError:
-        logger.warning(
-            "ML bouncer model not found at {}. All candidates will pass to LLM.",
+        logger.error(
+            "ML bouncer model not found at {}. Applications will not be ML-scored "
+            "and are routed to recruiter review.",
             _MODEL_PATH,
         )
         return None
@@ -99,40 +101,82 @@ def _build_jd_text(job: Job) -> str:
     return " ".join(parts)
 
 
-def extract_features(job: Job, application: Application) -> list[float]:
-    """Build the feature vector in the exact order the model expects."""
-    jd_text = _build_jd_text(job)
-    resume_text = _build_resume_text(application)
-    resume = application.resume
+def _years_of_experience(application: Application) -> float | None:
+    """Self-reported years, else derived from role dates; None when unknown.
 
-    tfidf_sim = _tfidf_similarity(jd_text, resume_text)
+    A missing value must not be read as "0 years": the model treats that as
+    junior and scores it near zero, which silently buries the candidate.
+    """
+    resume = application.resume
+    if resume is None:
+        return None
+    if resume.years_of_experience is not None:
+        return float(resume.years_of_experience)
+    months = 0
+    for exp in resume.experiences or []:
+        if exp.start_date is None:
+            continue
+        end = exp.end_date or date.today()
+        months += max(
+            0, (end.year - exp.start_date.year) * 12 + end.month - exp.start_date.month
+        )
+    return round(months / 12, 1) if months else None
+
+
+def extract_features(job: Job, application: Application) -> list[float] | None:
+    """Build the feature vector in the exact order the model expects.
+
+    Returns None when an input the model depends on is missing (no resume, no
+    embedding, unknown experience). Those applications are routed to a human
+    instead of receiving a fabricated low score.
+    """
+    resume = application.resume
+    if resume is None:
+        return None
+    if not job.jd_embedding or not application.resume_embedding:
+        return None
+    yoe = _years_of_experience(application)
+    if yoe is None:
+        return None
+
+    tfidf_sim = _tfidf_similarity(_build_jd_text(job), _build_resume_text(application))
     semantic_sim = _semantic_similarity(job.jd_embedding, application.resume_embedding)
-    yoe = float(resume.years_of_experience or 0) if resume else 0.0
-    num_companies = float(len(resume.experiences or [])) if resume else 0.0
-    num_educations = float(len(resume.educations or [])) if resume else 0.0
-    num_skills = float(len(resume.skills or [])) if resume else 0.0
+    num_companies = float(len(resume.experiences or []))
+    num_educations = float(len(resume.educations or []))
+    num_skills = float(len(resume.skills or []))
 
     return [tfidf_sim, semantic_sim, yoe, num_companies, num_educations, num_skills]
 
 
-def score_applications(job: Job, applications: list[Application]) -> list[float]:
-    """Run the ML bouncer on a batch of applications. Returns probability [0-1] per application."""
-    model = _load_model()
-    if model is None:
-        return [1.0] * len(applications)
+def score_applications(job: Job, applications: list[Application]) -> list[float | None]:
+    """Run the ML bouncer on a batch of applications.
 
+    Returns a probability [0-1] per application, or None where the model cannot
+    produce a trustworthy score (model file missing, or required inputs missing).
+    The score is used to rank applications; it never rejects anyone on its own.
+    """
     if not applications:
         return []
 
+    model = _load_model()
+    if model is None:
+        return [None] * len(applications)
+
     features = [extract_features(job, app) for app in applications]
-    X = pd.DataFrame(features, columns=_FEATURE_NAMES)
+    scorable = [i for i, row in enumerate(features) if row is not None]
+    results: list[float | None] = [None] * len(applications)
+    if not scorable:
+        return results
+
+    X = pd.DataFrame([features[i] for i in scorable], columns=_FEATURE_NAMES)
     probabilities = model.predict_proba(X)[:, 1]
-    for app, row, prob in zip(applications, features, probabilities, strict=True):
+    for i, prob in zip(scorable, probabilities, strict=True):
+        results[i] = float(prob)
         logger.debug(
             "ML bouncer features app={} job={} {} -> {:.3f}",
-            app.id,
+            applications[i].id,
             job.id,
-            dict(zip(_FEATURE_NAMES, row, strict=True)),
+            dict(zip(_FEATURE_NAMES, features[i] or [], strict=True)),
             float(prob),
         )
-    return [float(p) for p in probabilities]
+    return results

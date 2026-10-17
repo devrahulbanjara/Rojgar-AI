@@ -48,6 +48,13 @@ class Application(Base):
         ARRAY(Float), nullable=True
     )
     ml_bouncer_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # AI review lifecycle: pending | completed | failed | needs_human_review.
+    # Recruiter-facing only; never shown to the candidate.
+    ai_review_status: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_review_attempts: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
+    ai_flag_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     shortlist_notified: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )

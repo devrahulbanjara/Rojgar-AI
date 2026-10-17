@@ -6,12 +6,16 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
-from sqlalchemy import and_, func, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.pool import NullPool
 
-from app.agents.shortlisting import evaluate_application_with_shortlisting_agent
+from app.agents.shortlisting import (
+    evaluate_resume_text,
+    stringify_job,
+    stringify_resume,
+)
 from app.core.cache import (
     invalidate_candidate_read_caches,
     invalidate_candidate_read_caches_for_users,
@@ -37,7 +41,20 @@ from app.modules.shortlisting.schemas import (
 )
 from app.shared.enums import ApplicationStatus, JobStatus, ShortlistStatus, SyncAction
 
-SHORTLISTING_STALE_AFTER = timedelta(minutes=2)
+# A claim older than this is treated as abandoned (crashed worker) and may be
+# re-claimed; LLM review of a large job can legitimately take a while.
+SHORTLISTING_CLAIM_STALE_AFTER = timedelta(minutes=30)
+
+AI_REVIEW_PENDING = "pending"
+AI_REVIEW_COMPLETED = "completed"
+AI_REVIEW_FAILED = "failed"
+AI_REVIEW_NEEDS_HUMAN = "needs_human_review"
+_AI_REVIEW_TERMINAL = {AI_REVIEW_COMPLETED, AI_REVIEW_FAILED, AI_REVIEW_NEEDS_HUMAN}
+
+_UNSCORED_REASON = (
+    "Not scored automatically (missing experience data or resume embedding); "
+    "please review manually."
+)
 
 
 def _job_is_open_for_auto_shortlisting(job: Job) -> bool:
@@ -55,10 +72,76 @@ def _job_has_expired(job: Job) -> bool:
 
 
 def _application_has_complete_review(application: Application) -> bool:
-    """Return True when an application already has score and review."""
+    """Return True when the application needs no further automatic review."""
+    if application.ai_review_status in _AI_REVIEW_TERMINAL:
+        return True
     return application.score is not None and (
         bool(application.strengths) or bool(application.weaknesses)
     )
+
+
+def _apply_ml_score(application: Application, ml_score: float | None) -> None:
+    """Store an ML pre-filter score; unscorable applications are flagged."""
+    application.ml_bouncer_score = ml_score
+    if ml_score is None:
+        application.score = None
+        if application.ai_flag_reason is None:
+            application.ai_flag_reason = _UNSCORED_REASON
+    else:
+        application.score = max(0, min(100, round(ml_score * 100)))
+        if application.ai_flag_reason == _UNSCORED_REASON:
+            application.ai_flag_reason = None
+
+
+def select_llm_cohort(applications: list[Application]) -> list[Application]:
+    """Pick which applications get an LLM review.
+
+    Small jobs: everyone, so the ML pre-filter never decides who gets read.
+    Large jobs: the top N% by ML score among those above the minimum score.
+    Applications the ML model could not score are never silently skipped — they
+    are flagged for human review by the caller.
+    """
+    if len(applications) <= settings.shortlisting_full_review_max_applicants:
+        return list(applications)
+    ranked = sorted(
+        (a for a in applications if a.ml_bouncer_score is not None),
+        key=lambda a: a.ml_bouncer_score or 0.0,
+        reverse=True,
+    )
+    eligible = [
+        a
+        for a in ranked
+        if (a.ml_bouncer_score or 0.0) >= settings.ml_bouncer_min_score
+    ]
+    top_n = max(1, -(-len(applications) * settings.ml_bouncer_top_percent // 100))
+    return eligible[:top_n]
+
+
+async def claim_job_for_shortlisting(db: AsyncSession, job_id: uuid.UUID) -> bool:
+    """Atomically mark a job in_progress. Returns False if another run owns it.
+
+    Prevents duplicate LLM runs across workers/replicas (cron, startup recovery,
+    manual triggers). An in_progress claim older than the stale window is
+    considered abandoned and can be taken over.
+    """
+    stale_before = datetime.now(timezone.utc) - SHORTLISTING_CLAIM_STALE_AFTER
+    result = await db.execute(
+        update(Job)
+        .where(
+            Job.id == job_id,
+            Job.final_shortlist_completed.is_(False),
+            or_(
+                Job.shortlist_status != ShortlistStatus.in_progress,
+                Job.updated_at < stale_before,
+            ),
+        )
+        .values(shortlist_status=ShortlistStatus.in_progress)
+        .returning(Job.id)
+        .execution_options(synchronize_session=False)
+    )
+    claimed = result.scalar_one_or_none() is not None
+    await db.commit()
+    return claimed
 
 
 async def _get_company_id_for_user(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
@@ -92,41 +175,6 @@ async def _get_job_for_company(
             detail="Job not found or does not belong to your company.",
         )
     return job
-
-
-def _score_application(
-    application: Application,
-) -> tuple[int, list[str] | None, list[str] | None]:
-    """Fallback-score an application from resume completeness."""
-    resume = application.resume
-    if resume is None:
-        return 10, None, ["No resume attached"]
-
-    score = 25
-    strengths: list[str] = []
-
-    if resume.headline:
-        score += 10
-        strengths.append("Clear professional headline")
-    if resume.summary:
-        score += 10
-        strengths.append("Written profile summary")
-    if resume.years_of_experience:
-        score += min(resume.years_of_experience * 5, 20)
-        strengths.append(f"{resume.years_of_experience} years of experience")
-    if resume.experiences:
-        score += min(len(resume.experiences) * 8, 24)
-        strengths.append(f"{len(resume.experiences)} experience entries")
-    if resume.educations:
-        score += min(len(resume.educations) * 4, 8)
-        strengths.append("Education history present")
-    if resume.skills:
-        score += min(len(resume.skills) * 3, 18)
-        strengths.append(f"{len(resume.skills)} listed skills")
-
-    score = max(0, min(100, score))
-
-    return score, strengths or None, None
 
 
 async def queue_auto_shortlist_backfill(job_id: uuid.UUID, database_url: str) -> None:
@@ -190,9 +238,8 @@ async def _run_ml_bouncer_backfill_task(job_id: uuid.UUID, database_url: str) ->
                     return
 
                 ml_scores = score_applications(job, applications)
-                for app, ml_score in zip(applications, ml_scores):
-                    app.ml_bouncer_score = ml_score
-                    app.score = max(0, min(100, round(ml_score * 100)))
+                for app, ml_score in zip(applications, ml_scores, strict=True):
+                    _apply_ml_score(app, ml_score)
 
                 enqueue_application_sync_events(
                     db, [a.id for a in applications], SyncAction.UPSERT
@@ -251,8 +298,7 @@ async def score_application_ml_bouncer(
                 return
 
             ml_score = score_applications(job, [application])[0]
-            application.ml_bouncer_score = ml_score
-            application.score = max(0, min(100, round(ml_score * 100)))
+            _apply_ml_score(application, ml_score)
             enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
             await db.commit()
 
@@ -261,10 +307,10 @@ async def score_application_ml_bouncer(
             await invalidate_company_application_caches(str(job.company_id))
             await redis_service.delete(f"shortlist:summary:{job.id}")
             logger.info(
-                "ML bouncer scored application {} for job {} (score={:.3f})",
+                "ML bouncer scored application {} for job {} (score={})",
                 application_id,
                 job.id,
-                ml_score,
+                "unscored" if ml_score is None else f"{ml_score:.3f}",
             )
     except Exception as exc:
         logger.exception(
@@ -274,171 +320,235 @@ async def score_application_ml_bouncer(
         await engine.dispose()
 
 
-async def run_two_stage_for_expired_job(db: AsyncSession, job: Job) -> None:
-    """Run the two-stage pipeline inline for a single expired job, then finalize.
+async def _load_job_applications(db: AsyncSession, job_id: uuid.UUID) -> list:
+    """Load every application of a job with the resume data the pipeline needs."""
+    return list(
+        (
+            await db.execute(
+                select(Application)
+                .where(Application.job_id == job_id)
+                .options(
+                    selectinload(Application.resume).selectinload(Resume.experiences),
+                    selectinload(Application.resume).selectinload(Resume.educations),
+                    selectinload(Application.resume).selectinload(Resume.skills),
+                    joinedload(Application.user),
+                )
+                # Review fields are written with Core UPDATEs; refresh any
+                # identity-mapped instances so retries see current attempts.
+                .execution_options(populate_existing=True)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
-    Crash-safe and idempotent: per-application commits, status tracked on the
-    Job row, work already done is skipped on retry.
+
+async def _set_review_fields(
+    db: AsyncSession, application_id: uuid.UUID, **values
+) -> None:
+    """Write AI review fields for one application in its own short transaction."""
+    await db.execute(
+        update(Application)
+        .where(Application.id == application_id)
+        .values(**values)
+        .execution_options(synchronize_session=False)
+    )
+    enqueue_application_sync_events(db, [application_id], SyncAction.UPSERT)
+    await db.commit()
+
+
+async def _run_llm_reviews(
+    db: AsyncSession, job: Job, cohort: list[Application]
+) -> tuple[int, int, int]:
+    """LLM-review each application in the cohort. Returns (done, flagged, failed).
+
+    Every input the LLM needs is rendered to plain text up front, then each
+    application is processed as: count the attempt (commit) -> LLM call with no
+    open transaction -> write the outcome (commit). A failure affects only its
+    own application and is never retried past the attempt cap, so a single bad
+    resume can neither stall the job nor be retried forever.
+    """
+    jd_text = stringify_job(job)
+    job_title = job.title
+    max_attempts = settings.shortlisting_max_review_attempts
+    work = [
+        (
+            application.id,
+            stringify_resume(
+                application,
+                getattr(application.__dict__.get("user"), "full_name", None),
+            ),
+            application.ai_review_attempts or 0,
+        )
+        for application in cohort
+        if not _application_has_complete_review(application)
+    ]
+
+    done = flagged = failed = 0
+    for application_id, resume_text, attempts in work:
+        if attempts >= max_attempts:
+            await _set_review_fields(
+                db,
+                application_id,
+                ai_review_status=AI_REVIEW_FAILED,
+                ai_flag_reason="Automatic review failed repeatedly; please review manually.",
+            )
+            failed += 1
+            continue
+
+        await _set_review_fields(
+            db,
+            application_id,
+            ai_review_status=AI_REVIEW_PENDING,
+            ai_review_attempts=attempts + 1,
+        )
+        try:
+            result = await evaluate_resume_text(
+                application_ref=str(application_id),
+                job_title=job_title,
+                jd_text=jd_text,
+                resume_text=resume_text,
+            )
+        except Exception as exc:
+            exhausted = attempts + 1 >= max_attempts
+            await _set_review_fields(
+                db,
+                application_id,
+                ai_review_status=AI_REVIEW_FAILED if exhausted else None,
+                ai_flag_reason=(
+                    "Automatic review failed repeatedly; please review manually."
+                    if exhausted
+                    else None
+                ),
+            )
+            failed += 1
+            logger.warning(
+                "Stage2 LLM failed for application {} on job {} (attempt {}/{}): {}",
+                application_id,
+                job.id,
+                attempts + 1,
+                max_attempts,
+                type(exc).__name__,
+            )
+            continue
+
+        if result.needs_human_review:
+            await _set_review_fields(
+                db,
+                application_id,
+                ai_review_status=AI_REVIEW_NEEDS_HUMAN,
+                ai_flag_reason=result.review_note,
+            )
+            flagged += 1
+        else:
+            await _set_review_fields(
+                db,
+                application_id,
+                strengths=result.strengths,
+                weaknesses=result.weaknesses,
+                ai_review_status=AI_REVIEW_COMPLETED,
+            )
+            done += 1
+    return done, flagged, failed
+
+
+async def run_two_stage_for_expired_job(
+    db: AsyncSession, job: Job, *, already_claimed: bool = False
+) -> None:
+    """Run ML ranking + LLM review for a job, then mark recommendations ready.
+
+    Never changes application statuses: the recruiter confirms decisions
+    (`finalize_shortlist`). Idempotent and crash-safe: work already done is
+    skipped, and a run already owned by another worker is not duplicated.
     """
     from app.modules.shortlisting.ml_bouncer import score_applications
 
     if job.final_shortlist_completed:
-        logger.info(
-            "Two-stage skipped for job '{}' ({}): already finalized.",
-            job.title,
-            job.id,
-        )
+        logger.info("Two-stage skipped for job {}: already finalized.", job.id)
         return
 
-    job.shortlist_status = ShortlistStatus.in_progress
-    await db.commit()
-    logger.info(
-        "Two-stage START for expired job '{}' ({}). status=in_progress",
-        job.title,
-        job.id,
-    )
+    job_id = job.id
+    if not already_claimed and not await claim_job_for_shortlisting(db, job_id):
+        logger.info("Two-stage skipped for job {}: another run owns it.", job_id)
+        return
+    logger.info("Two-stage START for job {}. status=in_progress", job_id)
 
     try:
-        applications = list(
-            (
-                await db.execute(
-                    select(Application)
-                    .where(Application.job_id == job.id)
-                    .options(
-                        selectinload(Application.resume).selectinload(
-                            Resume.experiences
-                        ),
-                        selectinload(Application.resume).selectinload(
-                            Resume.educations
-                        ),
-                        selectinload(Application.resume).selectinload(Resume.skills),
-                        joinedload(Application.user),
-                    )
-                )
-            )
-            .scalars()
-            .all()
-        )
+        applications = await _load_job_applications(db, job_id)
 
-        if not applications:
-            job.shortlist_status = ShortlistStatus.completed
-            await db.commit()
-            await auto_finalize_expired_job(db, job)
-            logger.info(
-                "Two-stage DONE (no applications) for job '{}' ({}).",
-                job.title,
-                job.id,
-            )
-            return
-
-        # --- Stage 1: ML Bouncer — score applications missing a bouncer score ---
-        unscored = [a for a in applications if a.ml_bouncer_score is None]
+        # --- Stage 1: ML ranking for applications missing a score ---
+        unscored = [
+            a
+            for a in applications
+            if a.ml_bouncer_score is None and a.ai_flag_reason != _UNSCORED_REASON
+        ]
         if unscored:
-            ml_scores = score_applications(job, unscored)
-            for app, ml_score in zip(unscored, ml_scores, strict=True):
-                app.ml_bouncer_score = ml_score
-                app.score = max(0, min(100, round(ml_score * 100)))
+            for app, ml_score in zip(
+                unscored, score_applications(job, unscored), strict=True
+            ):
+                _apply_ml_score(app, ml_score)
+            enqueue_application_sync_events(
+                db, [a.id for a in unscored], SyncAction.UPSERT
+            )
             await db.commit()
-            logger.info(
-                "Stage1 ML bouncer scored {}/{} application(s) for job '{}' ({})",
-                len(unscored),
-                len(applications),
-                job.title,
-                job.id,
-            )
-        else:
-            logger.info(
-                "Stage1 ML bouncer skipped for job '{}' ({}): all {} app(s) already scored.",
-                job.title,
-                job.id,
-                len(applications),
-            )
 
-        # --- Stage 2: LLM for top candidates (per-app commit so partial work survives crash) ---
-        scored_apps = sorted(
-            applications, key=lambda a: a.ml_bouncer_score or 0, reverse=True
-        )
-        min_score = settings.ml_bouncer_min_score
-        eligible = [a for a in scored_apps if (a.ml_bouncer_score or 0) >= min_score]
-        top_n = max(1, len(applications) * settings.ml_bouncer_top_percent // 100)
-        candidates_for_llm = eligible[:top_n]
+        # --- Stage 2: LLM review ---
+        cohort = select_llm_cohort(applications)
+        done, flagged, failed = await _run_llm_reviews(db, job, cohort)
 
-        already_done = sum(
-            1 for a in candidates_for_llm if _application_has_complete_review(a)
-        )
-        logger.info(
-            "Stage2 LLM cohort {}/{} for job '{}' ({}). already_reviewed={}",
-            len(candidates_for_llm),
-            len(applications),
-            job.title,
-            job.id,
-            already_done,
-        )
-
-        for application in candidates_for_llm:
-            if _application_has_complete_review(application):
-                continue
-            try:
-                agent_result = await evaluate_application_with_shortlisting_agent(
-                    job=job, application=application
-                )
-                application.strengths = agent_result.strengths
-                application.weaknesses = agent_result.weaknesses
-                enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
-                await db.commit()
-                logger.info(
-                    "Stage2 LLM scored app {} for job '{}' ({})",
+        # Unscored applications outside the LLM cohort go to a human, visibly.
+        cohort_ids = {a.id for a in cohort}
+        for application in applications:
+            if (
+                application.id not in cohort_ids
+                and application.score is None
+                and application.ai_review_status not in _AI_REVIEW_TERMINAL
+            ):
+                await _set_review_fields(
+                    db,
                     application.id,
-                    job.title,
-                    job.id,
-                )
-            except Exception as exc:
-                await db.rollback()
-                applicant_name = getattr(
-                    getattr(application, "user", None), "full_name", None
-                ) or str(application.id)
-                logger.warning(
-                    "Stage2 LLM failed for applicant '{}' on job '{}' ({}): {}",
-                    applicant_name,
-                    job.title,
-                    job.id,
-                    exc,
+                    ai_review_status=AI_REVIEW_NEEDS_HUMAN,
+                    ai_flag_reason=_UNSCORED_REASON,
                 )
 
-        # --- Stage 3: Threshold finalization ---
-        job.shortlist_status = ShortlistStatus.completed
+        await db.execute(
+            update(Job)
+            .where(Job.id == job_id)
+            .values(shortlist_status=ShortlistStatus.completed)
+            .execution_options(synchronize_session=False)
+        )
         await db.commit()
+        job.shortlist_status = ShortlistStatus.completed
         await auto_finalize_expired_job(db, job)
         logger.info(
-            "Two-stage DONE + finalized for job '{}' ({}). status=completed",
-            job.title,
-            job.id,
+            "Two-stage DONE for job {}: {} apps, {} reviewed, {} flagged, {} failed.",
+            job_id,
+            len(applications),
+            done,
+            flagged,
+            failed,
         )
     except Exception as exc:
         await db.rollback()
         try:
-            refreshed = await db.scalar(select(Job).where(Job.id == job.id))
-            if refreshed is not None:
-                refreshed.shortlist_status = ShortlistStatus.failed
-                await db.commit()
+            await db.execute(
+                update(Job)
+                .where(Job.id == job_id)
+                .values(shortlist_status=ShortlistStatus.failed)
+                .execution_options(synchronize_session=False)
+            )
+            await db.commit()
         except Exception:
             await db.rollback()
-        logger.exception(
-            "Two-stage FAILED for expired job '{}' ({}). status=failed: {}",
-            job.title,
-            job.id,
-            exc,
-        )
+        logger.exception("Two-stage FAILED for job {}: {}", job_id, exc)
 
 
 async def recover_unfinished_shortlisting() -> None:
-    """Resume any expired auto-shortlist jobs left unfinished from a prior crash.
+    """Resume expired auto-shortlist jobs left unfinished by a prior crash.
 
-    Runs at app startup. Any expired job that has `auto_shortlist=True` and
-    `final_shortlist_completed=False` is re-entered through the two-stage
-    pipeline. The pipeline itself is idempotent: applications already scored
-    by the bouncer are skipped, applications already reviewed by the LLM are
-    skipped, and finalization is a no-op when already done.
+    Called in the background after startup (never blocking it). Each job is
+    claimed atomically, so concurrent replicas do not duplicate work, and the
+    per-application attempt cap bounds how often a failing resume is retried.
     """
     async with AsyncSessionLocal() as db:
         result = await db.execute(
@@ -446,6 +556,7 @@ async def recover_unfinished_shortlisting() -> None:
                 Job.status == JobStatus.expired,
                 Job.auto_shortlist.is_(True),
                 Job.final_shortlist_completed.is_(False),
+                Job.shortlist_status != ShortlistStatus.completed,
             )
         )
         jobs = list(result.scalars().all())
@@ -458,20 +569,11 @@ async def recover_unfinished_shortlisting() -> None:
             len(jobs),
         )
         for job in jobs:
-            logger.info(
-                "Shortlisting recovery: resuming job '{}' ({}). prior_status={}",
-                job.title,
-                job.id,
-                job.shortlist_status,
-            )
             try:
                 await run_two_stage_for_expired_job(db, job)
             except Exception as exc:
                 logger.exception(
-                    "Shortlisting recovery failed for job '{}' ({}): {}",
-                    job.title,
-                    job.id,
-                    exc,
+                    "Shortlisting recovery failed for job {}: {}", job.id, exc
                 )
 
 
@@ -525,7 +627,12 @@ async def evaluate_single_application(
     application_id: uuid.UUID,
     user_id: uuid.UUID,
 ) -> Application:
-    """Run AI evaluation on a single application, overwriting any existing review."""
+    """Run AI evaluation on a single application, overwriting any existing review.
+
+    No silent fallbacks: if the ML model cannot score the application its score
+    stays empty, and if the LLM review fails the request fails (the previous
+    review is kept) instead of storing heuristic text dressed up as AI output.
+    """
     company_id = await _get_company_id_for_user(db, user_id)
 
     application = await db.scalar(
@@ -535,6 +642,7 @@ async def evaluate_single_application(
             selectinload(Application.resume).selectinload(Resume.experiences),
             selectinload(Application.resume).selectinload(Resume.educations),
             selectinload(Application.resume).selectinload(Resume.skills),
+            joinedload(Application.user),
         )
     )
     if application is None:
@@ -548,35 +656,47 @@ async def evaluate_single_application(
     from app.modules.shortlisting.ml_bouncer import score_applications
 
     try:
-        ml_score = score_applications(job, [application])[0]
-        application.ml_bouncer_score = ml_score
-        application.score = max(0, min(100, round(ml_score * 100)))
+        _apply_ml_score(application, score_applications(job, [application])[0])
     except Exception:
-        logger.warning(
-            "ML bouncer scoring failed for application {}, falling back to heuristic",
-            application_id,
-        )
-        score, _, _ = _score_application(application)
-        application.score = score
+        logger.exception("ML bouncer scoring failed for application {}", application_id)
+        _apply_ml_score(application, None)
+
+    jd_text = stringify_job(job)
+    resume_text = stringify_resume(application, application.user.full_name)
+    application.ai_review_attempts = (application.ai_review_attempts or 0) + 1
+    application.ai_review_status = AI_REVIEW_PENDING
+    # Release the connection before the slow LLM call.
+    await db.commit()
 
     try:
-        result = await evaluate_application_with_shortlisting_agent(
-            job=job,
-            application=application,
+        result = await evaluate_resume_text(
+            application_ref=str(application.id),
+            job_title=job.title,
+            jd_text=jd_text,
+            resume_text=resume_text,
         )
-        application.strengths = result.strengths
-        application.weaknesses = result.weaknesses
     except Exception as exc:
-        _, strengths, weaknesses = _score_application(application)
-        application.strengths = strengths
-        application.weaknesses = weaknesses
-        logger.opt(exception=exc).warning(
-            "AI evaluation failed for application {} ({}: {}), used fallback "
-            "strengths/weaknesses",
+        application.ai_review_status = AI_REVIEW_FAILED
+        await db.commit()
+        logger.warning(
+            "AI evaluation failed for application {}: {}",
             application_id,
             type(exc).__name__,
-            exc,
         )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI evaluation failed. The previous review was kept; please retry.",
+        ) from exc
+
+    if result.needs_human_review:
+        application.ai_review_status = AI_REVIEW_NEEDS_HUMAN
+        application.ai_flag_reason = result.review_note
+    else:
+        application.strengths = result.strengths
+        application.weaknesses = result.weaknesses
+        application.ai_review_status = AI_REVIEW_COMPLETED
+        if application.ai_flag_reason != _UNSCORED_REASON:
+            application.ai_flag_reason = None
 
     enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
     await db.commit()
@@ -615,17 +735,30 @@ async def _build_shortlist_summary(
     if (
         job.shortlist_status == ShortlistStatus.in_progress
         and job.updated_at is not None
-        and scored < total
     ):
         updated_at = (
             job.updated_at
             if job.updated_at.tzinfo is not None
             else job.updated_at.replace(tzinfo=timezone.utc)
         )
-        if datetime.now(timezone.utc) - updated_at > SHORTLISTING_STALE_AFTER:
+        # Same window as the claim: a live LLM run must not be reported as failed
+        # (and thereby made re-claimable) while it is still working.
+        if datetime.now(timezone.utc) - updated_at > SHORTLISTING_CLAIM_STALE_AFTER:
             job.shortlist_status = ShortlistStatus.failed
             await db.commit()
             await db.refresh(job)
+
+    needs_human_review = int(
+        await db.scalar(
+            select(func.count(Application.id)).where(
+                Application.job_id == job_id,
+                Application.ai_review_status.in_(
+                    [AI_REVIEW_NEEDS_HUMAN, AI_REVIEW_FAILED]
+                ),
+            )
+        )
+        or 0
+    )
 
     return ShortlistSummaryResponse(
         job_id=job_id,
@@ -635,6 +768,12 @@ async def _build_shortlist_summary(
         shortlist_status=job.shortlist_status,
         final_shortlist_completed=job.final_shortlist_completed,
         shortlist_threshold=job.shortlist_threshold,
+        ai_recommendations_ready=(
+            job.shortlist_status == ShortlistStatus.completed
+            and not job.final_shortlist_completed
+            and scored > 0
+        ),
+        needs_human_review=needs_human_review,
     )
 
 
@@ -709,14 +848,26 @@ async def trigger_shortlisting(
             message="All applications already have score and feedback.",
         )
 
-    job.shortlist_status = ShortlistStatus.in_progress
-    job.final_shortlist_completed = False
+    if job.final_shortlist_completed:
+        return TriggerShortlistResponse(
+            job_id=job_id,
+            shortlist_status=job.shortlist_status,
+            message="Decisions for this job are already finalized.",
+        )
+
+    if not await claim_job_for_shortlisting(db, job_id):
+        return TriggerShortlistResponse(
+            job_id=job_id,
+            shortlist_status=ShortlistStatus.in_progress,
+            message="Shortlisting is already in progress.",
+        )
+
     await create_custom_audit_log(
         db,
         entity_type="job",
         action_type="ai_evaluation_triggered",
         category="pipeline",
-        message=f"AI evaluation triggered for {job.title}",
+        message=f"AI screening (ML ranking + LLM review) started for {job.title}",
         entity_id=job_id,
         company_id=company_id,
         metadata={"job_title": job.title, "total_applications": total_applications},
@@ -733,13 +884,28 @@ async def trigger_shortlisting(
             if bind is not None and hasattr(bind, "engine")
             else AsyncSessionLocal.kw["bind"].url.render_as_string(hide_password=False)
         )
-        background_tasks.add_task(_run_ml_bouncer_backfill_task, job_id, database_url)
+        background_tasks.add_task(_run_claimed_shortlisting_task, job_id, database_url)
 
     return TriggerShortlistResponse(
         job_id=job_id,
         shortlist_status=ShortlistStatus.in_progress,
         message="Shortlisting started. Poll the summary endpoint for progress.",
     )
+
+
+async def _run_claimed_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
+    """Background runner for a recruiter-triggered screening run (already claimed)."""
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as db:
+            job = await db.scalar(select(Job).where(Job.id == job_id))
+            if job is not None:
+                await run_two_stage_for_expired_job(db, job, already_claimed=True)
+    except Exception as exc:
+        logger.exception("Triggered shortlisting failed for job {}: {}", job_id, exc)
+    finally:
+        await engine.dispose()
 
 
 async def _apply_threshold_finalize(
@@ -786,30 +952,35 @@ async def _apply_threshold_finalize(
 
 
 async def auto_finalize_expired_job(db: AsyncSession, job: Job) -> int:
-    """Run threshold finalize for a freshly-expired auto-shortlist job. Returns updated count."""
+    """Mark AI recommendations ready for recruiter review. Changes no statuses.
+
+    Shortlist/reject decisions are consequential, so they are never applied
+    automatically: the recruiter confirms them via `finalize_shortlist`
+    ("Approve AI recommendations"), which records who made the decision.
+    """
     if not job.auto_shortlist or job.final_shortlist_completed:
         return 0
-    updated, shortlisted_rows, rejected_rows = await _apply_threshold_finalize(
-        db, job, job.shortlist_threshold
+
+    await create_custom_audit_log(
+        db,
+        entity_type="job",
+        action_type="ai_recommendations_ready",
+        category="pipeline",
+        message=f"AI recommendations ready for recruiter review on {job.title}",
+        entity_id=job.id,
+        company_id=job.company_id,
+        metadata={"job_title": job.title, "threshold": job.shortlist_threshold},
     )
-    job.final_shortlist_completed = True
     await db.commit()
 
-    changed_user_ids = [
-        str(row[1]) for row in list(shortlisted_rows) + list(rejected_rows)
-    ]
-    if changed_user_ids:
-        await invalidate_candidate_read_caches_for_users(changed_user_ids)
     await invalidate_company_application_caches(str(job.company_id))
     await invalidate_company_dashboard_caches(db, str(job.company_id))
     await redis_service.delete(f"shortlist:summary:{job.id}")
     logger.info(
-        "Auto-finalize on expiry for job '{}' ({}) updated {} application(s).",
-        job.title,
+        "AI recommendations ready for job {}; awaiting recruiter confirmation.",
         job.id,
-        updated,
     )
-    return updated
+    return 0
 
 
 async def finalize_shortlist(
@@ -840,6 +1011,27 @@ async def finalize_shortlist(
 
     if _job_has_expired(job):
         job.final_shortlist_completed = True
+    if payload.use_ai_recommendations:
+        await create_custom_audit_log(
+            db,
+            entity_type="job",
+            action_type="ai_recommendations_approved",
+            category="pipeline",
+            message=(
+                f"Recruiter approved AI recommendations for {job.title}: "
+                f"{len(shortlisted_rows)} shortlisted, {len(rejected_rows)} rejected"
+            ),
+            entity_id=job.id,
+            company_id=company_id,
+            metadata={
+                "threshold": payload.threshold
+                if payload.threshold is not None
+                else job.shortlist_threshold,
+                "shortlisted": len(shortlisted_rows),
+                "rejected": len(rejected_rows),
+                "approved_by_user_id": str(user_id),
+            },
+        )
     await db.commit()
 
     changed_user_ids = [
