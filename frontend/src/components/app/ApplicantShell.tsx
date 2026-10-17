@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 
 import { useT } from '@/lib/i18n/client'
+import { useMounted } from '@/lib/useMounted'
 import { useAppSelector } from '@/store/hooks'
 
 import { useLogout } from '@/components/app/AccountMenu'
@@ -25,7 +26,9 @@ import {
 /** Frame for a signed-in applicant (/me/**): no marketing links, just their applications. */
 export function ApplicantShell({ children }: { children: ReactNode }) {
   const t = useT()
-  const user = useAppSelector((s) => s.auth.user)
+  const stored = useAppSelector((s) => s.auth.user)
+  // The user comes from browser storage, so render it only after hydration.
+  const user = useMounted() ? stored : null
   const signOut = useLogout('/')
   const name = user?.full_name ?? ''
 
