@@ -2,7 +2,6 @@ import type { NextConfig } from 'next'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 
 import { existsSync, readFileSync } from 'node:fs'
-import path from 'node:path'
 
 function readEnvValue(filePath: string, key: string): string | undefined {
   if (!existsSync(filePath)) return undefined
@@ -24,53 +23,6 @@ function readEnvValue(filePath: string, key: string): string | undefined {
   }
 
   return undefined
-}
-
-const backendEnvPath = path.resolve(process.cwd(), '../backend/.env')
-const s3BucketName = process.env.S3_BUCKET_NAME ?? readEnvValue(backendEnvPath, 'S3_BUCKET_NAME')
-const awsRegion =
-  process.env.AWS_REGION ?? readEnvValue(backendEnvPath, 'AWS_REGION') ?? 'us-east-1'
-
-const remotePatterns: NonNullable<NextConfig['images']>['remotePatterns'] = [
-  {
-    protocol: 'https',
-    hostname: 'lh3.googleusercontent.com',
-    port: '',
-    pathname: '/**',
-    search: '',
-  },
-  {
-    protocol: 'https',
-    hostname: 'api.dicebear.com',
-    port: '',
-    pathname: '/9.x/**',
-    search: '',
-  },
-  {
-    protocol: 'https',
-    hostname: 'stories.freepiklabs.com',
-    port: '',
-    pathname: '/storage/**',
-    search: '',
-  },
-]
-
-if (s3BucketName) {
-  remotePatterns.push({
-    protocol: 'https',
-    hostname: `${s3BucketName}.s3.${awsRegion}.amazonaws.com`,
-    port: '',
-    pathname: '/**',
-    search: '',
-  })
-
-  remotePatterns.push({
-    protocol: 'https',
-    hostname: 's3.amazonaws.com',
-    port: '',
-    pathname: `/${s3BucketName}/**`,
-    search: '',
-  })
 }
 
 /**
@@ -127,15 +79,12 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()',
+    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
   },
   { key: 'Content-Security-Policy-Report-Only', value: contentSecurityPolicy },
 ]
 
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns,
-  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
