@@ -59,13 +59,6 @@ export function MyApplications() {
         { title: t.me.closed, rows: items.filter((a) => isClosedStage(a.stage)) },
       ].filter((group) => group.rows.length)
     : []
-  const upcoming =
-    items?.filter((a) => a.stage === 'interview' && isUpcoming(a.interview)).length ?? 0
-  const facts = items?.length
-    ? [t.me.count(items.length), upcoming ? t.me.upcoming(upcoming) : null]
-        .filter(Boolean)
-        .join(' · ')
-    : null
 
   return (
     <div className="min-h-[70dvh] bg-background">
@@ -73,7 +66,6 @@ export function MyApplications() {
         <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {t.me.title}
         </h1>
-        {facts ? <p className="mt-1 text-sm text-muted-foreground">{facts}</p> : null}
 
         <div className="mt-6 flex flex-col gap-8">
           {error ? (

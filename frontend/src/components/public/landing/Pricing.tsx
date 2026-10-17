@@ -3,11 +3,10 @@ import Link from 'next/link'
 import type { Dict } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 const TALK_URL = 'https://wa.me/9779866121812'
-const FEATURED = 'pass'
+const FEATURED = 'first'
 
 export function Pricing({ t }: { t: Dict }) {
   const p = t.landing.pricing
@@ -29,10 +28,7 @@ export function Pricing({ t }: { t: Dict }) {
                   featured && 'border-primary ring-1 ring-primary',
                 )}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-heading text-lg font-semibold text-foreground">{plan.name}</h3>
-                  {featured ? <Badge>{p.popular}</Badge> : null}
-                </div>
+                <h3 className="font-heading text-lg font-semibold text-foreground">{plan.name}</h3>
                 <p className="flex items-baseline gap-1">
                   <span className="font-heading text-3xl font-bold text-foreground">{plan.price}</span>
                   {period ? <span className="text-sm text-muted-foreground">{period}</span> : null}

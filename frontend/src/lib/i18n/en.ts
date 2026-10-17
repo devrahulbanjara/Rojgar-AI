@@ -197,8 +197,6 @@ export const en = {
 
   me: {
     title: 'My applications',
-    count: (n: number) => (n === 1 ? '1 application' : `${n} applications`),
-    upcoming: (n: number) => (n === 1 ? '1 interview coming up' : `${n} interviews coming up`),
     needsYou: 'Needs you',
     inProgress: 'In progress',
     closed: 'Closed',
@@ -275,7 +273,6 @@ export const en = {
       talk: 'Talk to us',
       start: 'Start free',
       choose: 'Choose',
-      popular: 'Most popular',
       payment: 'Pay by bank transfer today — eSewa and Khalti coming soon. VAT bill provided.',
       plans: [
         {
@@ -335,7 +332,7 @@ export const en = {
         },
         {
           q: 'Does the AI reject people?',
-          a: 'No. AI reads every application and shows you who fits and why. A person in your team makes every decision.',
+          a: 'No. AI reads every application and shows you who fits and why. AI assists. You decide.',
         },
         {
           q: 'Can my staff suggest people they know?',
