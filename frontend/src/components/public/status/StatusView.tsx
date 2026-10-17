@@ -6,7 +6,8 @@ import Link from 'next/link'
 
 import { formatDate } from '@/lib/i18n'
 import { useLocale, useT } from '@/lib/i18n/client'
-import { type ApplicationStatusView, publicApi } from '@/lib/publicApi'
+import { notify } from '@/lib/notify'
+import { type ApplicationStatusView, PublicApiError, publicApi } from '@/lib/publicApi'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -47,7 +48,14 @@ export function StatusView({ token }: { token: string | null }) {
       .catch(
         (err) =>
           !cancelled &&
-          setState({ kind: 'error', message: err instanceof Error ? err.message : t.common.error }),
+          setState({
+            kind: 'error',
+            // 404: expired, withdrawn or never valid. The server's words are English-only.
+            message:
+              err instanceof PublicApiError && err.status === 404
+                ? t.status.expired
+                : t.common.error,
+          }),
       )
     return () => {
       cancelled = true
@@ -61,7 +69,7 @@ export function StatusView({ token }: { token: string | null }) {
       await publicApi.withdraw(token)
       setState({ kind: 'withdrawn' })
     } catch (err) {
-      setState({ kind: 'error', message: err instanceof Error ? err.message : t.common.error })
+      notify.error(err instanceof Error ? err.message : t.common.error)
     } finally {
       setWithdrawing(false)
     }

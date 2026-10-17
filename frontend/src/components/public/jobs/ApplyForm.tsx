@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import Link from 'next/link'
 
@@ -52,6 +52,15 @@ export function ApplyForm({
   const [formError, setFormError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState<Sent | null>(null)
+  const doneRef = useRef<HTMLDivElement>(null)
+
+  // On a phone the form is long; bring the confirmation into view.
+  useEffect(() => {
+    if (sent) doneRef.current?.scrollIntoView({ block: 'center' })
+  }, [sent])
+
+  const clear = (field: keyof Errors) =>
+    setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev))
 
   function checkCv(file: File): string | undefined {
     if (/^hei[cf]$/.test(ext(file)) || /hei[cf]/i.test(file.type)) return t.apply.cvHeic
@@ -130,13 +139,13 @@ export function ApplyForm({
 
   if (sent) {
     return (
-      <div className="flex flex-col gap-4" role="status">
+      <div ref={doneRef} className="flex flex-col gap-4" role="status">
         <MailCheckIcon className="size-6 text-success" aria-hidden="true" />
         <h2 className="font-heading text-xl font-bold text-foreground">
           {sent.again ? t.apply.alreadyTitle : t.apply.sentTitle}
         </h2>
         <p className="text-sm text-foreground">
-          {t.apply.sentSms(sent.phone)} {sent.email ? t.apply.sentEmail(sent.email) : null}{' '}
+          {t.apply.sentSms(sent.phone.replace(/^\+977(?=\d)/, '+977 '))} {sent.email ? t.apply.sentEmail(sent.email) : null}{' '}
           {t.apply.replyEither(companyName)}
         </p>
         <div className="flex flex-col gap-2">
@@ -157,10 +166,7 @@ export function ApplyForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-      <div>
-        <h2 className="font-heading text-lg font-semibold text-foreground">{t.apply.title}</h2>
-        <p className="text-xs text-muted-foreground">{t.apply.time}</p>
-      </div>
+      <h2 className="font-heading text-lg font-semibold text-foreground">{t.apply.title}</h2>
       {formError ? (
         <Alert variant="destructive">
           <AlertIcon />
@@ -176,7 +182,10 @@ export function ApplyForm({
           value={fullName}
           maxLength={255}
           aria-invalid={!!errors.fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          onChange={(e) => {
+            setFullName(e.target.value)
+            clear('fullName')
+          }}
         />
       </FormField>
 
@@ -187,7 +196,7 @@ export function ApplyForm({
           invalid={!!errors.phone}
           onChange={(value) => {
             setPhone(value)
-            if (errors.phone) setErrors((p) => ({ ...p, phone: undefined }))
+            clear('phone')
           }}
         />
       </FormField>
@@ -222,7 +231,7 @@ export function ApplyForm({
           error={errors[`q${i}`]}
           onChange={(value) => {
             setAnswers((prev) => prev.map((a, j) => (j === i ? value : a)))
-            if (errors[`q${i}`]) setErrors((p) => ({ ...p, [`q${i}`]: undefined }))
+            clear(`q${i}`)
           }}
         />
       ))}
@@ -237,7 +246,10 @@ export function ApplyForm({
           value={email}
           maxLength={255}
           aria-invalid={!!errors.email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value)
+            clear('email')
+          }}
         />
       </FormField>
 

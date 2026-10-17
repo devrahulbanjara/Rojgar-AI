@@ -1,7 +1,6 @@
 import { BRAND } from '@/lib/brand'
 
 import { authNe } from './auth'
-
 import type { Dict } from './en'
 
 /** नेपाली. Words from docs/AGENT_BRIEF.md: व्यवसाय, टिम, जागिर, आवेदक. Never "सिफारिस". */
@@ -27,11 +26,9 @@ export const ne: Dict = {
     verified: 'प्रमाणित व्यवसाय',
     share: 'सेयर',
     poster: 'पोस्टर',
-    print: 'प्रिन्ट',
     apply: 'आवेदन दिनुहोस्',
     tryAgain: 'फेरि प्रयास गर्नुहोस्',
     error: 'केही मिलेन। फेरि प्रयास गर्नुहोस्।',
-    offline: 'सर्भरसँग जोडिन सकिएन। इन्टरनेट जाँच गर्नुहोस्।',
     linkCopied: 'लिंक कपी भयो',
     copyFailed: 'कपी हुन सकेन। लिंक छानेर कपी गर्नुहोस्।',
     optional: 'ऐच्छिक',
@@ -109,7 +106,6 @@ export const ne: Dict = {
 
   apply: {
     title: 'आवेदन दिनुहोस्',
-    time: 'करिब एक मिनेट लाग्छ',
     name: 'तपाईंको नाम',
     phone: 'मोबाइल नम्बर',
     email: 'इमेल',
@@ -117,7 +113,6 @@ export const ne: Dict = {
     addCv: 'CV वा CV को फोटो थप्नुहोस्',
     cvTypes: (mb: number) => `PDF वा फोटो, ${mb} MB सम्म`,
     reading: 'तपाईंको CV पढ्दै…',
-    photoAdded: 'फोटो थपियो',
     replace: 'बदल्नुहोस्',
     remove: 'हटाउनुहोस्',
     nameRequired: 'आफ्नो नाम लेख्नुहोस्।',
@@ -196,6 +191,7 @@ export const ne: Dict = {
     withdrawnLine: 'यो जागिरको लागि तपाईंको CV र विवरण मेटाइयो।',
     invalidTitle: 'लिंक मिलेन',
     incomplete: 'यो लिंक अधुरो छ।',
+    expired: 'यो लिंकको म्याद सकियो, वा आवेदन फिर्ता लिइयो।',
     getLink: 'साइन इन लिंक पाउनुहोस्',
     seeAll: 'मेरा सबै आवेदन हेर्नुहोस्',
   },
