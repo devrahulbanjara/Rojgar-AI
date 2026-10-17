@@ -69,7 +69,7 @@ A person shortlists, rejects, invites and hires. Each decision waits through a s
 - **AI that reads every application.** A review with quotes as proof, Ask AI about any applicant, a job-writing helper and search by meaning. See [How AI is used](#how-ai-is-used).
 - **Verified businesses.** Sign up as a person, create a business, wait for approval. Only approved businesses' jobs are public.
 - **Teams and roles.** Owner, Manager, Interviewer. Invite-only, with an audit trail.
-- **Interviews.** Applicants pick a time from a signed booking link. Video links use Jitsi Meet (no account needed). `.ics` invites in Nepal time, reschedule and cancel, reminders 24 hours and 1 hour before, and "How did it go?" notes.
+- **Interviews booked inside the app.** Applicants pick a time from a link, with a video room, calendar invites and reminders. See [Booking interviews](#booking-interviews).
 - **Everything in one place.** Today page, a job page with a side panel for each applicant, insights, notifications and an activity feed.
 - **English and नेपाली** across the public pages and the applicant side, with Noto Sans Devanagari for Nepali text.
 
@@ -183,6 +183,24 @@ The job page above is where most of the work happens: applicants best fit first,
   </tr>
 </table>
 
+## Booking interviews
+
+Interviews are booked inside Rojgar AI. There's no back-and-forth over phone calls and no separate calendar tool, and the applicant needs no account.
+
+```text
+Set your hours once ─► Move an applicant to Interview ─► They pick a time from a link
+                                                              │
+        "How did it go?" notes ◄── Reminders 24 h and 1 h before ◄── Both get a calendar invite
+```
+
+1. **Set your hours once.** In *Settings → Availability*, choose your working days and hours (Nepal time), how long an interview lasts (45 minutes by default), the gap between interviews, and the video link: a new Jitsi room for every interview (no account on either side) or your own Meet or Zoom link.
+2. **Invite.** Move an applicant to *Interview*. They get an email with a private booking link (by SMS too, once SMS is switched on).
+3. **They pick a time.** The link shows only times you're free over the next 10 working days, at least 2 hours ahead and never overlapping your other interviews.
+4. **Booked.** Both of you get a calendar invite (`.ics`) with the video link. The interview shows up on *Today* and in *Interviews*, and on the applicant's *My applications* page.
+5. **Change of plans.** The applicant can reschedule or cancel from the same link; you can do it from *Interviews*.
+6. **Reminders.** The applicant and the interviewer get an email 24 hours and 1 hour before.
+7. **How did it go?** After the interview, the interviewer rates each must-have, gives a recommendation and adds notes. The rest of the team sees them in the applicant panel, and Ask AI can quote them.
+
 ## How AI is used
 
 **AI assists. You decide.** AI reads every application, suggests and drafts. It never decides alone and never changes data: every hiring decision is a person's click. Every AI answer comes back in a fixed structure and is checked in code before anyone sees it.
@@ -233,7 +251,6 @@ The job-writing helper is an agent with one tool, a salary search. When you ask 
 | Review, Ask AI, job helper, suggestions, safety check | `gpt-oss-120b`; `gpt-oss-20b` for the quick review | Groq |
 | Fallback when Groq is busy or down | `gemini-2.5-flash` (set `GEMINI_API_KEY`) | Google |
 | Search, CV shortening | `multilingual-e5-small` (English, Nepali, romanized Nepali) and BM25 | Local CPU, free |
-| Ordering applicants with nearly equal reviews | scikit-learn model, never decides fit | Local CPU, free |
 | Salary lookups for the job helper | Tavily web search | Tavily |
 | Reading PDF CVs *(optional)* | LlamaCloud extraction (set `LLAMA_CLOUD_API_KEY`) | LlamaCloud |
 
@@ -276,7 +293,7 @@ A monorepo with a Python API and a Next.js app. The frontend talks to the backen
                          SMTP email · Cloudinary files · Sparrow SMS (off by default)
                                                 │
               Groq · Gemini (fallback) · Tavily · LlamaCloud (optional)
-              local: multilingual-e5-small embeddings (fastembed) · scikit-learn
+              local: multilingual-e5-small embeddings and BM25 (fastembed)
 ```
 
 Backend modules (`backend/app/modules/`): `activity`, `admin`, `applications`, `assistant`, `audit`, `auth`, `companies`, `dashboards`, `entitlements`, `interviews`, `jobs`, `notifications`, `public`, `recruiter_preferences`, `resumes`, `review`.
@@ -294,7 +311,7 @@ Background work runs inside the API process (started in `main.py`):
 
 **Backend:** Python 3.12, FastAPI, SQLAlchemy 2 (async) with asyncpg, Pydantic v2, Alembic, PostgreSQL, Redis, Qdrant, APScheduler, Argon2, PyJWT, aiosmtplib, Cloudinary, pypdf, `uv` for dependencies, `pytest`.
 
-**AI:** LangChain agents on Groq, with Gemini as fallback; local `multilingual-e5-small` and BM25 (fastembed); scikit-learn. See [How AI is used](#how-ai-is-used).
+**AI:** LangChain agents on Groq, with Gemini as fallback; local `multilingual-e5-small` and BM25 (fastembed). See [How AI is used](#how-ai-is-used).
 
 ## Repository layout
 
