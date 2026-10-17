@@ -17,18 +17,20 @@ export function LanguageToggle({ className }: { className?: string }) {
     <ToggleGroup
       type="single"
       size="sm"
-      variant="outline"
       value={locale}
       aria-label={t.nav.language}
       onValueChange={(value) => isLocale(value) && value !== locale && setLocale(value)}
-      className={cn('rounded-full bg-card', className)}
+      className={cn(
+        'overflow-hidden rounded-full border border-border bg-card shadow-xs',
+        className,
+      )}
     >
       {(Object.keys(LABELS) as Locale[]).map((key) => (
         <ToggleGroupItem
           key={key}
           value={key}
           lang={key}
-          className="px-3 text-xs first:rounded-l-full last:rounded-r-full data-[state=on]:bg-foreground data-[state=on]:text-background"
+          className="h-8 rounded-none px-3 text-xs text-muted-foreground hover:bg-muted hover:text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary"
         >
           {LABELS[key]}
         </ToggleGroupItem>
