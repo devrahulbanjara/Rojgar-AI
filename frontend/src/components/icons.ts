@@ -100,6 +100,11 @@ export {
   // Brands
   LinkedinLogo as LinkedInIcon,
   FacebookLogo as FacebookIcon,
+  GithubLogo as GitHubIcon,
+  Globe as WebsiteIcon,
+  ChatCircleText as AskedIcon,
+  PaperPlaneRight as SendIcon,
+  Quotes as QuoteIcon,
 } from '@phosphor-icons/react/ssr'
 
 /**

@@ -1,6 +1,6 @@
 'use client'
 
-import { type ReactNode, useState } from 'react'
+import { useState } from 'react'
 
 import Link from 'next/link'
 
@@ -12,11 +12,13 @@ import {
   type ReviewCheck,
   SOURCE_LABEL,
   STAGE_LABEL,
+  type Source,
   type Stage,
-  contactLinks,
+  applicantHref,
   useAddNoteMutation,
   useClearFlagMutation,
   useGetCandidateQuery,
+  useGetCompanyPeopleQuery,
 } from '@/lib/api/recruiter'
 import { ago, formatWhen, shortDate } from '@/lib/dates'
 import { notify } from '@/lib/notify'
@@ -24,69 +26,159 @@ import { notify } from '@/lib/notify'
 import { AiGlow, AiSpark, AiText } from '@/components/app/Ai'
 import { ErrorState } from '@/components/app/Feedback'
 import { Section } from '@/components/app/Section'
-import { FitPill } from '@/components/app/StatusPill'
-import { ArrowLeftIcon, CheckIcon, DownloadIcon, MinusIcon, XIcon } from '@/components/icons'
+import { FitPill, StagePill } from '@/components/app/StatusPill'
+import {
+  ArrowLeftIcon,
+  BusinessIcon,
+  CheckIcon,
+  ClockIcon,
+  DownloadIcon,
+  FacebookIcon,
+  type IconComponent,
+  LinkIcon,
+  LinkedInIcon,
+  LocationIcon,
+  MinusIcon,
+  PhoneIcon,
+  QrIcon,
+  UserIcon,
+  ViberIcon,
+  XIcon,
+} from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 
 import { AskBox } from './AskBox'
 import { DecisionButtons } from './DecisionButtons'
-import { ContactButtons, FlagLine } from './parts'
+import { ContactButtons, FlagLine, ProfileLinks } from './parts'
 
-function Dot() {
-  return <span aria-hidden="true">·</span>
+const SOURCE_ICON: Record<Source, IconComponent | typeof ViberIcon> = {
+  linkedin: LinkedInIcon,
+  facebook: FacebookIcon,
+  merojob: LinkIcon,
+  viber: ViberIcon,
+  qr: QrIcon,
+  walk_in: BusinessIcon,
+  phone: PhoneIcon,
+  referral: UserIcon,
+  direct: LinkIcon,
+  other: LinkIcon,
 }
 
-function ContactLine({ person }: { person: Panel['person'] }) {
-  const parts: ReactNode[] = []
-  if (person.phone) {
-    parts.push(
-      <a
-        key="tel"
-        href={contactLinks.call(person.phone)}
-        className="text-foreground hover:underline"
-      >
-        {person.phone}
-      </a>,
-      <a key="viber" href={contactLinks.viber(person.phone)} className="hover:underline">
-        Viber
-      </a>,
-      <a
-        key="wa"
-        href={contactLinks.whatsapp(person.phone)}
-        target="_blank"
-        rel="noreferrer"
-        className="hover:underline"
-      >
-        WhatsApp
-      </a>,
-    )
-  }
-  if (person.email)
-    parts.push(
-      <a key="mail" href={`mailto:${person.email}`} className="hover:underline">
-        {person.email}
-      </a>,
-    )
-  if (person.location) parts.push(<span key="loc">{person.location}</span>)
-  for (const [key, label, href] of [
-    ['li', 'LinkedIn', person.linkedin_url],
-    ['gh', 'GitHub', person.github_url],
-    ['web', 'Website', person.portfolio_url],
-  ] as const) {
-    if (href)
-      parts.push(
-        <a key={key} href={href} target="_blank" rel="noreferrer" className="hover:underline">
-          {label}
-        </a>,
-      )
-  }
-  if (!parts.length) return null
+/** "Also applied to 2 other jobs" → a small list of those applications. */
+function OtherJobs({ candidate }: { candidate: Panel }) {
+  const [open, setOpen] = useState(false)
+  const people = useGetCompanyPeopleQuery(undefined, { skip: !open })
+  const others =
+    people.data
+      ?.find((p) => p.candidate_id === candidate.person.id)
+      ?.applications.filter((a) => a.application_id !== candidate.application_id) ?? []
+  const count = candidate.other_applications
   return (
-    <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
-      {parts.flatMap((part, index) => (index ? [<Dot key={`d${index}`} />, part] : [part]))}
-    </p>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-normal">
+          Also applied to {count} other job{count === 1 ? '' : 's'}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80 p-2">
+        {people.isLoading ? (
+          <Skeleton className="h-16 w-full" />
+        ) : (
+          <ul className="flex flex-col">
+            {others.map((other) => (
+              <li key={other.application_id}>
+                <Link
+                  href={applicantHref(other.job_id, other.application_id, other.stage)}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                >
+                  <span className="truncate">{other.job_title}</span>
+                  <StagePill stage={other.stage} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function Header({
+  candidate,
+  onBack,
+  decide,
+}: {
+  candidate: Panel
+  onBack?: () => void
+  decide: (action: DecideAction) => void
+}) {
+  const { person } = candidate
+  const SourceIcon = SOURCE_ICON[candidate.source]
+  const links = person.linkedin_url || person.github_url || person.portfolio_url
+  return (
+    <header className="@container flex flex-col gap-3">
+      {onBack ? (
+        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-3 self-start lg:hidden">
+          <ArrowLeftIcon />
+          All applicants
+        </Button>
+      ) : null}
+      <div className="flex flex-col gap-3 @xl:flex-row @xl:items-start @xl:justify-between @xl:gap-4">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 className="font-heading text-2xl font-normal tracking-tight">{person.name}</h2>
+          {person.headline ? (
+            <p className="truncate text-sm text-muted-foreground" title={person.headline}>
+              {person.headline}
+            </p>
+          ) : null}
+        </div>
+        <DecisionButtons
+          stage={candidate.stage}
+          actions={candidate.actions}
+          name={person.name}
+          onDecide={decide}
+          className="fixed inset-x-0 bottom-0 z-30 border-t bg-card p-3 sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0"
+        />
+      </div>
+      <ContactButtons phone={person.phone} email={person.email} />
+      {person.location || links ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          {person.location ? (
+            <span className="inline-flex items-center gap-1.5">
+              <LocationIcon className="size-4 shrink-0" />
+              {person.location}
+            </span>
+          ) : null}
+          {links ? (
+            <span className="-ml-1 inline-flex items-center">
+              <ProfileLinks
+                linkedin={person.linkedin_url}
+                github={person.github_url}
+                website={person.portfolio_url}
+              />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {candidate.review.flagged ? <FlagLine reason={candidate.review.flag_reason} /> : null}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <ClockIcon className="size-3.5" />
+          Applied {ago(candidate.applied_at)}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <SourceIcon className="size-3.5" />
+          {candidate.referred_by
+            ? `Referred by ${candidate.referred_by.name}`
+            : SOURCE_LABEL[candidate.source]}
+        </span>
+        {candidate.other_applications ? <OtherJobs candidate={candidate} /> : null}
+      </div>
+    </header>
   )
 }
 
@@ -450,65 +542,10 @@ export function CandidatePanel({
 
   const decide = (action: DecideAction) => onDecide(candidate, action)
   const noCv = !candidate.cv_url && !hasOutline(candidate.resume)
-  const phoneFirst = !!candidate.person.phone && (noCv || !!candidate.referred_by)
-  const others = candidate.other_applications
 
   return (
-    <article className="flex flex-col gap-6" aria-label={candidate.person.name}>
-      <header className="flex flex-col gap-3">
-        {onBack ? (
-          <Button variant="ghost" size="sm" onClick={onBack} className="-ml-3 self-start lg:hidden">
-            <ArrowLeftIcon />
-            All applicants
-          </Button>
-        ) : null}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex min-w-0 flex-col gap-1">
-            <h2 className="font-heading text-2xl font-normal tracking-tight">
-              {candidate.person.name}
-            </h2>
-            {candidate.person.headline ? (
-              <p className="text-sm">{candidate.person.headline}</p>
-            ) : null}
-            {candidate.referred_by ? (
-              <p className="text-sm font-medium text-primary">
-                Recommended by {candidate.referred_by.name}
-              </p>
-            ) : null}
-            <ContactLine person={candidate.person} />
-          </div>
-          <DecisionButtons
-            stage={candidate.stage}
-            actions={candidate.actions}
-            name={candidate.person.name}
-            onDecide={decide}
-          />
-        </div>
-        {phoneFirst && candidate.person.phone ? (
-          <ContactButtons
-            phone={candidate.person.phone}
-            email={candidate.person.email}
-            className="sm:hidden"
-          />
-        ) : null}
-        {candidate.review.flagged ? <FlagLine reason={candidate.review.flag_reason} /> : null}
-        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
-          <span>
-            Applied {ago(candidate.applied_at)} · {SOURCE_LABEL[candidate.source]}
-          </span>
-          {others ? (
-            <>
-              <Dot />
-              <Link
-                href={`/recruiter/candidates?q=${encodeURIComponent(candidate.person.name)}`}
-                className="hover:underline"
-              >
-                Also applied to {others} other job{others === 1 ? '' : 's'}
-              </Link>
-            </>
-          ) : null}
-        </p>
-      </header>
+    <article className="flex flex-col gap-6 pb-20 sm:pb-0" aria-label={candidate.person.name}>
+      <Header candidate={candidate} onBack={onBack} decide={decide} />
 
       {noCv && candidate.answers.length ? <Answers answers={candidate.answers} /> : null}
       <Why candidate={candidate} onDecide={decide} />

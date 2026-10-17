@@ -19,10 +19,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-import { Kbd } from './parts'
-
-const KEYS: Partial<Record<DecideAction, string>> = { shortlist: 'S', reject: 'R' }
-
 /** Actions a list card can offer without loading the panel (mirrors the backend rules). */
 export function cardActions(stage: Stage): DecideAction[] {
   const forward = FORWARD[stage]
@@ -66,7 +62,6 @@ export function DecisionButtons({
           className="flex-1 sm:flex-none"
         >
           {ACTION_LABEL[action]}
-          {KEYS[action] ? <Kbd>{KEYS[action]}</Kbd> : null}
         </Button>
       ))}
       {more.length ? (

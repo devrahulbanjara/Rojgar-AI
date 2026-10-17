@@ -5,14 +5,16 @@ import { cn } from '@/lib/utils'
 
 import { Hint } from '@/components/app/Hint'
 import {
+  GitHubIcon,
   LinkedInIcon,
   MailIcon,
   PhoneIcon,
   ViberIcon,
   WarningIcon,
+  WebsiteIcon,
   WhatsAppIcon,
 } from '@/components/icons'
-import { IconButton } from '@/components/ui/button'
+import { Button, IconButton } from '@/components/ui/button'
 
 /** One amber line: the CV needs a person before anyone trusts the review. */
 export function FlagLine({ reason, className }: { reason?: string | null; className?: string }) {
@@ -27,49 +29,52 @@ export function FlagLine({ reason, className }: { reason?: string | null; classN
   )
 }
 
-export function Kbd({ children }: { children: ReactNode }) {
-  return (
-    <kbd className="ml-1 hidden rounded border border-current/25 px-1 font-sans text-[10px] leading-4 opacity-70 lg:inline">
-      {children}
-    </kbd>
-  )
+type Contact = {
+  key: string
+  text: string
+  hint: string
+  href: string
+  icon: ReactNode
+  external?: boolean
+  truncate?: boolean
 }
 
-type Contact = { key: string; label: string; href: string; icon: ReactNode; external?: boolean }
-
 /**
- * Call · Viber · WhatsApp · Email · LinkedIn as round icon buttons. Each has a
- * tooltip and an aria-label; buttons whose data is missing are not shown.
+ * Phone · Viber · WhatsApp · Email as small labelled pills that wrap as whole
+ * items. Only the channels the applicant shared are shown.
  */
 export function ContactButtons({
   phone,
   email,
-  linkedin,
-  only,
   className,
 }: {
   phone?: string | null
   email?: string | null
-  linkedin?: string | null
-  /** Limit to some channels (phone cards show only the phone ones). */
-  only?: string[]
   className?: string
 }) {
   const contacts: Contact[] = []
   if (phone) {
     contacts.push(
-      { key: 'call', label: `Call ${phone}`, href: contactLinks.call(phone), icon: <PhoneIcon /> },
+      {
+        key: 'call',
+        text: phone,
+        hint: `Call ${phone}`,
+        href: contactLinks.call(phone),
+        icon: <PhoneIcon />,
+      },
       {
         key: 'viber',
-        label: 'Message on Viber',
+        text: 'Viber',
+        hint: 'Message on Viber',
         href: contactLinks.viber(phone),
-        icon: <ViberIcon className="size-5" />,
+        icon: <ViberIcon />,
       },
       {
         key: 'whatsapp',
-        label: 'Message on WhatsApp',
+        text: 'WhatsApp',
+        hint: 'Message on WhatsApp',
         href: contactLinks.whatsapp(phone),
-        icon: <WhatsAppIcon className="size-[18px]" />,
+        icon: <WhatsAppIcon />,
         external: true,
       },
     )
@@ -77,40 +82,55 @@ export function ContactButtons({
   if (email)
     contacts.push({
       key: 'email',
-      label: `Email ${email}`,
+      text: email,
+      hint: `Email ${email}`,
       href: `mailto:${email}`,
       icon: <MailIcon />,
+      truncate: true,
     })
-  if (linkedin)
-    contacts.push({
-      key: 'linkedin',
-      label: 'Open LinkedIn profile',
-      href: linkedin,
-      icon: <LinkedInIcon />,
-      external: true,
-    })
-  const shown = only ? contacts.filter((c) => only.includes(c.key)) : contacts
-  if (!shown.length) return null
+  if (!contacts.length) return null
   return (
-    <div className={cn('flex items-center gap-1.5', className)}>
-      {shown.map((contact) => (
-        <Hint key={contact.key} label={contact.label}>
-          <IconButton
-            asChild
-            label={contact.label}
-            title={undefined}
-            variant="outline"
-            className="size-11 sm:size-9 [&_svg:not([class*='size-'])]:size-[18px]"
-          >
+    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+      {contacts.map((contact) => (
+        <Hint key={contact.key} label={contact.hint}>
+          <Button asChild variant="outline" size="sm" className="min-w-0 rounded-full font-normal">
             <a
               href={contact.href}
+              aria-label={contact.hint}
               {...(contact.external ? { target: '_blank', rel: 'noreferrer' } : {})}
             >
               {contact.icon}
+              <span className={cn(contact.truncate && 'max-w-48 truncate')}>{contact.text}</span>
             </a>
-          </IconButton>
+          </Button>
         </Hint>
       ))}
     </div>
   )
+}
+
+/** LinkedIn · GitHub · website as small icon buttons with a tooltip. */
+export function ProfileLinks({
+  linkedin,
+  github,
+  website,
+}: {
+  linkedin?: string | null
+  github?: string | null
+  website?: string | null
+}) {
+  const links = [
+    { key: 'li', href: linkedin, label: 'LinkedIn profile', icon: <LinkedInIcon /> },
+    { key: 'gh', href: github, label: 'GitHub profile', icon: <GitHubIcon /> },
+    { key: 'web', href: website, label: 'Website', icon: <WebsiteIcon /> },
+  ].filter((l): l is typeof l & { href: string } => !!l.href)
+  return links.map((link) => (
+    <Hint key={link.key} label={link.label}>
+      <IconButton asChild label={link.label} size="sm" className="text-muted-foreground">
+        <a href={link.href} target="_blank" rel="noreferrer">
+          {link.icon}
+        </a>
+      </IconButton>
+    </Hint>
+  ))
 }

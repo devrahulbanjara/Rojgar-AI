@@ -22,7 +22,7 @@ function RowSkeleton() {
 /** List on the left, candidate on the right. */
 export function PipelineSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(300px,380px)_1fr]" aria-busy="true">
+    <div className="grid gap-6 lg:grid-cols-[300px_1fr] xl:grid-cols-[minmax(300px,380px)_1fr]" aria-busy="true">
       <div className="flex flex-col gap-3 lg:gap-1">
         {Array.from({ length: 6 }, (_, i) => (
           <RowSkeleton key={i} />

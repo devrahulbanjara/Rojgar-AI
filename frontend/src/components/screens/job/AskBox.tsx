@@ -13,7 +13,8 @@ import {
 } from '@/lib/api/recruiter'
 
 import { AiGlow, AiSpark, AiText } from '@/components/app/Ai'
-import { Button } from '@/components/ui/button'
+import { AskedIcon, ChevronDownIcon, CloseIcon, QuoteIcon, SendIcon } from '@/components/icons'
+import { Button, IconButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const SUGGESTIONS = [
@@ -31,11 +32,83 @@ const SOURCE: Record<QuoteSource, string> = {
 }
 
 type Exchange = { question: string; answer: CandidateAnswer }
+type Memory = { open: boolean; last: Exchange | null; asked: string[] }
+
+/** Kept while the page is open, so switching applicants and back shows the last answer. */
+const memory = new Map<string, Memory>()
+
+const BULLET = /^\s*(?:[-*•·]|\d+[.)])\s+/
+
+/** The model's text as a lead sentence, paragraphs and a real list. */
+function AnswerText({ text }: { text: string }) {
+  const blocks: ({ kind: 'p'; text: string } | { kind: 'ul'; items: string[] })[] = []
+  for (const line of text.split('\n').map((l) => l.trim())) {
+    if (!line) continue
+    if (BULLET.test(line)) {
+      const item = line.replace(BULLET, '')
+      const lastBlock = blocks.at(-1)
+      if (lastBlock?.kind === 'ul') lastBlock.items.push(item)
+      else blocks.push({ kind: 'ul', items: [item] })
+    } else blocks.push({ kind: 'p', text: line })
+  }
+  return (
+    <div className="flex max-w-[68ch] flex-col gap-2 text-sm leading-relaxed">
+      {blocks.map((block, index) =>
+        block.kind === 'p' ? (
+          <p key={index} className={index === 0 ? 'font-medium text-foreground' : undefined}>
+            {block.text}
+          </p>
+        ) : (
+          <ul
+            key={index}
+            className="flex list-disc flex-col gap-1.5 pl-5 marker:text-muted-foreground"
+          >
+            {block.items.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        ),
+      )}
+    </div>
+  )
+}
+
+function Evidence({ quotes }: { quotes: CandidateAnswer['quotes'] }) {
+  const [open, setOpen] = useState(false)
+  if (!quotes.length) return null
+  const where = quotes.every((q) => q.source === 'cv') ? 'in the CV' : 'it says this'
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        variant="link"
+        size="sm"
+        className="h-auto self-start p-0 text-xs font-normal text-muted-foreground"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? 'Hide' : 'Show'} where {where} ({quotes.length})
+        <ChevronDownIcon className={open ? 'rotate-180' : undefined} />
+      </Button>
+      {open ? (
+        <ul className="flex max-w-[68ch] flex-col gap-2">
+          {quotes.map((quote) => (
+            <li key={quote.text} className="flex gap-2 text-xs text-muted-foreground">
+              <QuoteIcon weight="fill" className="mt-0.5 size-3.5 shrink-0" />
+              <span>
+                {quote.text} <span className="whitespace-nowrap">· {SOURCE[quote.source]}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  )
+}
 
 /**
- * "Ask about Nisha": one small button. Opening it shows the question box and
- * three suggestions; answers stream in with quotes from the CV. The box closes
- * again when it is empty and loses focus.
+ * "Ask about Nisha": a toggle button. Open, it shows the last answer, a
+ * one-line question box with a send button and a few suggestions. It only
+ * closes from its own controls.
  */
 export function AskBox({
   applicationId,
@@ -49,39 +122,52 @@ export function AskBox({
   actions: DecideAction[]
   onDecide: (action: DecideAction) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const [askedHere, setAskedHere] = useState(false)
+  const remembered = memory.get(applicationId)
+  const [open, setOpen] = useState(remembered?.open ?? false)
+  const [last, setLast] = useState<Exchange | null>(remembered?.last ?? null)
+  const [asked, setAsked] = useState<string[]>(remembered?.asked ?? [])
   const [question, setQuestion] = useState('')
-  const [asked, setAsked] = useState('')
+  const [pending, setPending] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [text, setText] = useState('')
-  const [last, setLast] = useState<Exchange | null>(null)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const boxId = useId()
 
-  // Show the last answer from earlier visits.
+  useEffect(() => {
+    memory.set(applicationId, { open, last, asked })
+  }, [applicationId, open, last, asked])
+
+  // The last answer from earlier visits.
   useEffect(() => {
     let live = true
-    void getCandidateHistory(applicationId).then((messages) => {
-      const answerIndex = messages.findLastIndex((m) => m.role === 'assistant')
-      const questionMessage = messages.slice(0, answerIndex).findLast((m) => m.role === 'user')
-      if (!live || answerIndex < 0 || !questionMessage) return
-      const answer = messages[answerIndex]
-      setLast(
-        (current) =>
-          current ?? {
-            question: questionMessage.content,
-            answer: {
-              answer: answer.content,
-              quotes: answer.quotes ?? [],
-              suggested_action: null,
-              cv_available: true,
+    if (!memory.get(applicationId)?.last)
+      void getCandidateHistory(applicationId).then((messages) => {
+        if (!live) return
+        setAsked((current) => [
+          ...new Set([
+            ...current,
+            ...messages.filter((m) => m.role === 'user').map((m) => m.content),
+          ]),
+        ])
+        const answerIndex = messages.findLastIndex((m) => m.role === 'assistant')
+        const questionMessage = messages.slice(0, answerIndex).findLast((m) => m.role === 'user')
+        if (answerIndex < 0 || !questionMessage) return
+        const answer = messages[answerIndex]
+        setLast(
+          (current) =>
+            current ?? {
+              question: questionMessage.content,
+              answer: {
+                answer: answer.content,
+                quotes: answer.quotes ?? [],
+                suggested_action: null,
+                cv_available: true,
+              },
             },
-          },
-      )
-    })
+        )
+      })
     return () => {
       live = false
       abortRef.current?.abort()
@@ -98,8 +184,8 @@ export function AskBox({
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
-    setAsked(clean)
-    setAskedHere(true)
+    setPending(clean)
+    setAsked((current) => [...new Set([...current, clean])])
     setQuestion('')
     setStreaming(true)
     setText('')
@@ -119,107 +205,114 @@ export function AskBox({
     }
   }
 
-  // A past answer shows once the box is opened; a new one stays after it closes.
-  const shown = streaming || (!open && !askedHere) ? null : last
   const label = `Ask about ${firstName}`
+  const suggestions = SUGGESTIONS.filter((s) => !asked.includes(s)).slice(0, 3)
+  const action = last?.answer.suggested_action
+  const shownQuestion = streaming ? pending : last?.question
+
+  if (!open)
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="self-start"
+        aria-expanded={false}
+        aria-controls={boxId}
+        onClick={() => setOpen(true)}
+      >
+        <AiSpark />
+        {label}
+      </Button>
+    )
 
   return (
-    <div
-      className="flex flex-col gap-3"
-      onBlur={(event) => {
-        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
-        if (!question.trim() && !streaming) setOpen(false)
-      }}
-    >
-      {streaming ? (
-        <AiGlow active className="p-3">
-          <p className="text-xs text-muted-foreground">{asked}</p>
-          <div className="mt-1 flex items-start gap-2 text-sm">
-            <AiSpark active className="mt-0.5" />
-            {text ? (
-              <p className="whitespace-pre-line">{text}</p>
+    <div id={boxId} className="flex flex-col gap-4 border-t pt-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-sm font-medium">
+          <AiSpark active={streaming} />
+          {label}
+        </p>
+        <IconButton label="Close" size="sm" onClick={() => setOpen(false)}>
+          <CloseIcon />
+        </IconButton>
+      </div>
+
+      {shownQuestion ? (
+        <AiGlow active={streaming} className="-mx-3 flex flex-col gap-3 rounded-xl px-3 py-2">
+          <p className="flex items-start gap-2 text-xs text-muted-foreground">
+            <AskedIcon className="mt-px size-3.5 shrink-0" />
+            <span>You asked: {shownQuestion}</span>
+          </p>
+          {streaming ? (
+            text ? (
+              <AnswerText text={text} />
             ) : (
-              <AiText>Reading the CV…</AiText>
-            )}
-          </div>
-        </AiGlow>
-      ) : null}
-      {shown ? (
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-xs text-muted-foreground">{shown.question}</p>
-          <div className="flex items-start gap-2">
-            <AiSpark className="mt-0.5" />
-            <p className="whitespace-pre-line">{shown.answer.answer}</p>
-          </div>
-          {shown.answer.quotes.map((quote) => (
-            <p key={quote.text} className="border-l-2 pl-3 text-xs text-muted-foreground">
-              “{quote.text}” <span className="whitespace-nowrap">· {SOURCE[quote.source]}</span>
-            </p>
-          ))}
-          {shown.answer.suggested_action &&
-          actions.includes(shown.answer.suggested_action.action) ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="self-start"
-              onClick={() => onDecide(shown.answer.suggested_action!.action)}
-            >
-              {ACTION_LABEL[shown.answer.suggested_action.action]}
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {open || streaming ? (
-        <div id={boxId} className="flex flex-col gap-2">
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              void ask(question)
-            }}
-          >
-            <Input
-              ref={inputRef}
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape' && !question) setOpen(false)
-              }}
-              placeholder={label}
-              aria-label={label}
-              disabled={streaming}
-              className="rounded-full bg-background"
-            />
-          </form>
-          {!streaming && !askedHere ? (
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTIONS.map((suggestion) => (
+              <AiText className="text-sm">Reading the CV…</AiText>
+            )
+          ) : last ? (
+            <>
+              <AnswerText text={last.answer.answer} />
+              <Evidence quotes={last.answer.quotes} />
+              {action && actions.includes(action.action) ? (
                 <Button
-                  key={suggestion}
                   size="sm"
                   variant="outline"
-                  className="font-normal"
-                  onClick={() => void ask(suggestion)}
+                  className="self-start"
+                  onClick={() => onDecide(action.action)}
                 >
-                  {suggestion}
+                  {ACTION_LABEL[action.action]}
                 </Button>
-              ))}
-            </div>
+              ) : null}
+            </>
           ) : null}
-        </div>
-      ) : (
-        <Button
+        </AiGlow>
+      ) : null}
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      <form
+        className="relative"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void ask(question)
+        }}
+      >
+        <Input
+          ref={inputRef}
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setQuestion('')
+          }}
+          placeholder={last ? 'Ask another question' : label}
+          aria-label={label}
+          disabled={streaming}
+          className="rounded-full bg-background pr-11"
+        />
+        <IconButton
+          type="submit"
+          label="Send"
           size="sm"
-          variant="outline"
-          className="self-start"
-          aria-expanded={false}
-          aria-controls={boxId}
-          onClick={() => setOpen(true)}
+          disabled={streaming || !question.trim()}
+          className="absolute top-1/2 right-1 -translate-y-1/2 text-primary"
         >
-          <AiSpark />
-          {askedHere ? 'Ask another question' : label}
-        </Button>
-      )}
+          <SendIcon weight="fill" />
+        </IconButton>
+      </form>
+      {!streaming && suggestions.length ? (
+        <div className="flex flex-wrap gap-2">
+          {suggestions.map((suggestion) => (
+            <Button
+              key={suggestion}
+              size="xs"
+              variant="outline"
+              className="rounded-full font-normal"
+              onClick={() => void ask(suggestion)}
+            >
+              {suggestion}
+            </Button>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

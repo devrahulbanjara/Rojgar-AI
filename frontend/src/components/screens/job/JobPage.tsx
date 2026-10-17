@@ -26,10 +26,11 @@ import { BulkBar } from '@/components/app/DataTable'
 import { EmptyState } from '@/components/app/EmptyState'
 import { ErrorState } from '@/components/app/Feedback'
 import { FilterChips } from '@/components/app/FilterChips'
+import { Hint } from '@/components/app/Hint'
 import { PageHeader } from '@/components/app/PageHeader'
 import { JobStatusPill } from '@/components/app/StatusPill'
-import { EditIcon, PlusIcon, ShareIcon } from '@/components/icons'
-import { Button } from '@/components/ui/button'
+import { EditIcon, KeyboardIcon, PlusIcon, ShareIcon } from '@/components/icons'
+import { Button, IconButton } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -98,6 +99,7 @@ export function JobPage({ jobId }: { jobId: string }) {
   const wide = useIsWide()
 
   const rawStage = params.get('stage') ?? 'new'
+  // Anything unknown (old links said "applied") opens New.
   const stage: Stage = STAGES.includes(rawStage as Stage) ? (rawStage as Stage) : 'new'
   const sort: PipelineSort = params.get('sort') === 'newest' ? 'newest' : 'best_fit'
   const activeId = params.get('app')
@@ -327,6 +329,15 @@ export function JobPage({ jobId }: { jobId: string }) {
                   <SelectItem value="newest">Newest first</SelectItem>
                 </SelectContent>
               </Select>
+              <Hint label="Keys: J / K next and previous · S shortlist · R reject · X select">
+                <IconButton
+                  label="Keyboard shortcuts"
+                  size="sm"
+                  className="hidden text-muted-foreground lg:inline-flex"
+                >
+                  <KeyboardIcon />
+                </IconButton>
+              </Hint>
               <Button
                 size="sm"
                 variant="outline"
@@ -359,7 +370,7 @@ export function JobPage({ jobId }: { jobId: string }) {
           No applicants yet.
         </EmptyState>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(300px,380px)_1fr] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-[300px_1fr] xl:grid-cols-[minmax(300px,380px)_1fr] lg:items-start">
           <div
             className={cn(
               'flex flex-col gap-2 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)]',
@@ -424,11 +435,6 @@ export function JobPage({ jobId }: { jobId: string }) {
             ) : (
               <EmptyState>{EMPTY_STAGE[stage]}</EmptyState>
             )}
-            {items.length ? (
-              <p className="hidden px-3 pt-2 text-xs text-muted-foreground lg:block">
-                J/K move · S shortlist · R reject · X select
-              </p>
-            ) : null}
           </div>
 
           <div className={cn('min-w-0', !activeId && 'hidden lg:block')}>
