@@ -683,7 +683,7 @@ async def list_candidate_applications(
     """Return candidate applications across all companies (SWR-cached)."""
     cache_key = f"applications:candidate:{user_id}:p{page}:s{size}"
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_candidate_applications(db, user_id, page, size)
         return [item.model_dump(mode="json") for item in items]
 
@@ -747,7 +747,7 @@ async def list_company_applications(
         str(company_id), str(job_id) if job_id else None, page, size
     )
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_company_applications(db, company_id, job_id, page, size)
         return [item.model_dump(mode="json") for item in items]
 
@@ -860,7 +860,7 @@ async def list_company_candidates(
         size,
     )
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_company_candidates(
             db, company_id, job_id, status_filter, page, size
         )
@@ -953,7 +953,7 @@ async def get_company_candidate_detail(
     company_id = await _get_active_company_id(db, user)
     cache_key = _company_candidate_detail_cache_key(str(company_id), application_id)
 
-    async def _load() -> dict:
+    async def _load(db: AsyncSession = db) -> dict:
         response = await _build_company_candidate_detail(db, company_id, application_id)
         return response.model_dump(mode="json")
 

@@ -177,7 +177,7 @@ async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileRespo
     """Fetch a public profile response by user ID (SWR-cached)."""
     cache_key = f"profile:detail:{user_id}"
 
-    async def _load() -> dict:
+    async def _load(db: AsyncSession = db) -> dict:
         response = await _build_profile_by_user_id(db, user_id)
         return response.model_dump(mode="json")
 

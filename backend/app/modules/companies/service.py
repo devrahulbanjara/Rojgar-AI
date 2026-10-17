@@ -262,8 +262,10 @@ async def list_company_recruiters(
     company = await get_admin_company(db, user)
     cache_key = _company_recruiters_cache_key(str(company.id))
 
-    async def _load() -> list:
-        items = await _build_company_recruiters(db, company.id)
+    company_id = company.id
+
+    async def _load(db: AsyncSession = db) -> list:
+        items = await _build_company_recruiters(db, company_id)
         return [item.model_dump(mode="json") for item in items]
 
     payload = await swr_get(cache_key, _load, soft_ttl=60, hard_ttl=300)

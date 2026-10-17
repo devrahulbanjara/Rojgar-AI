@@ -109,7 +109,7 @@ async def list_interviews(
         )
     cache_key = _interview_list_cache_key(str(company_id), job_id, start, end)
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_interview_list(db, company_id, job_id, start, end)
         return [item.model_dump(mode="json") for item in items]
 

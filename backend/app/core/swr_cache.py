@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import time
 from collections.abc import Awaitable, Callable
@@ -39,7 +40,10 @@ async def swr_get(
     """Stale-while-revalidate read.
 
     - Returns fresh payload when age < soft_ttl.
-    - Returns stale payload and refreshes in background when soft_ttl <= age < hard_ttl.
+    - When soft_ttl <= age < hard_ttl: if the loader accepts a ``db`` keyword,
+      returns the stale payload and refreshes in the background on its own
+      session; otherwise refreshes inline (loaders closing over the request
+      session must never run concurrently with the request).
     - Blocks on loader for cold miss, gated by NX lock to prevent stampede.
 
     Loader must return a value that survives ``json.loads(json.dumps(x))``
@@ -55,8 +59,13 @@ async def swr_get(
             age = now - ts
             if age < soft_ttl:
                 return payload
-            _schedule_refresh(key, loader, hard_ttl, lock_ttl)
-            return payload
+            if _accepts_session(loader):
+                _schedule_refresh(key, loader, hard_ttl, lock_ttl)
+                return payload
+            # The loader is bound to the request's AsyncSession; running it in a
+            # background task would use that session concurrently with the
+            # request (and after it closes). Refresh inline instead.
+            return await _refresh(key, loader, hard_ttl, lock_ttl)
 
     return await _refresh(key, loader, hard_ttl, lock_ttl)
 
@@ -66,14 +75,34 @@ async def swr_set(key: str, payload: Any, *, hard_ttl: int = 3600) -> None:
     await redis_service.set(key, _envelope(payload), ttl_seconds=hard_ttl)
 
 
+def _accepts_session(loader: Callable[..., Awaitable[Any]]) -> bool:
+    """True when the loader takes a ``db`` keyword to run on its own session."""
+    try:
+        return "db" in inspect.signature(loader).parameters
+    except (TypeError, ValueError):
+        return False
+
+
+async def _load_with_own_session(loader: Callable[..., Awaitable[Any]]) -> Any:
+    from app.core.database import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as session:
+        return await loader(db=session)
+
+
 def _schedule_refresh(
     key: str,
-    loader: Callable[[], Awaitable[Any]],
+    loader: Callable[..., Awaitable[Any]],
     hard_ttl: int,
     lock_ttl: int,
 ) -> None:
+    """Refresh in the background on a fresh session (never the request's)."""
+
+    async def _isolated_loader() -> Any:
+        return await _load_with_own_session(loader)
+
     try:
-        task = asyncio.create_task(_refresh(key, loader, hard_ttl, lock_ttl))
+        task = asyncio.create_task(_refresh(key, _isolated_loader, hard_ttl, lock_ttl))
     except RuntimeError:
         return
     _in_flight.add(task)
