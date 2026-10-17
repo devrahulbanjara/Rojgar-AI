@@ -1,12 +1,11 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-import { BRAND } from '@/lib/brand'
 import { useAppSelector } from '@/store/hooks'
 
+import { Logo } from '@/components/app/Logo'
 import {
   Sidebar,
   SidebarContent,
@@ -44,14 +43,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 justify-center px-4 group-data-[collapsible=icon]:px-2">
         <Link href="/recruiter" className="flex items-center">
-          <Image
-            src="/logo/logo.png"
-            alt={BRAND.name}
-            width={120}
-            height={26}
-            priority
-            className="group-data-[collapsible=icon]:hidden"
-          />
+          <Logo className="h-7 group-data-[collapsible=icon]:hidden" />
+          <Logo variant="mark" className="hidden size-8 group-data-[collapsible=icon]:block" />
         </Link>
       </SidebarHeader>
       <SidebarContent>

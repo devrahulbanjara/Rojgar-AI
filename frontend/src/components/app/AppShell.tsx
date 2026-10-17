@@ -2,12 +2,11 @@
 
 import type { ReactNode } from 'react'
 
-import Image from 'next/image'
 import Link from 'next/link'
 
-import { BRAND } from '@/lib/brand'
 import { cn } from '@/lib/utils'
 
+import { Logo } from '@/components/app/Logo'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 import { AccountMenu } from './AccountMenu'
@@ -49,7 +48,7 @@ export function CandidateShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b bg-card/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
           <Link href="/me/applications" className="shrink-0">
-            <Image src="/logo/logo.png" alt={BRAND.name} width={112} height={24} priority />
+            <Logo className="h-6" />
           </Link>
           <div className="ml-auto">
             <AccountMenu showName={false} />

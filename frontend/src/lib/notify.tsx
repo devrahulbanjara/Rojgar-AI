@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 
 import { type ExternalToast, toast } from 'sonner'
 
+import { Button } from '@/components/ui/button'
+
 type NotifyType = 'success' | 'error' | 'info' | 'warning'
 type ToastId = string | number
 
@@ -62,12 +64,71 @@ const make =
   (message, descriptionOrOptions, options) =>
     fire(type, message, descriptionOrOptions, options)
 
+type UndoableOptions = {
+  /** Called when the person presses Undo. Revert the optimistic change here. */
+  onUndo: () => void
+  /** Called once the window closes without Undo (e.g. actually send the email). */
+  onCommit?: () => void
+  description?: ReactNode
+  /** Undo window in ms. Default 8 s. */
+  duration?: number
+}
+
+/**
+ * A toast for a reversible action: message, Undo, and a bar that shows the
+ * time left. Make the change optimistically, pass a revert in onUndo, and put
+ * anything that can't be taken back (sending an email) in onCommit.
+ */
+function undoable(
+  message: ReactNode,
+  { onUndo, onCommit, description, duration = 8000 }: UndoableOptions,
+) {
+  let undone = false
+  return toast.custom(
+    (id) => (
+      <div className="relative w-[356px] max-w-[calc(100vw-32px)] overflow-hidden rounded-xl border bg-card p-4 pr-3 text-card-foreground shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">{message}</p>
+            {description ? (
+              <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+            ) : null}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              undone = true
+              onUndo()
+              toast.dismiss(id)
+            }}
+          >
+            Undo
+          </Button>
+        </div>
+        <span
+          aria-hidden="true"
+          className="toast-countdown absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+          style={{ animationDuration: `${duration}ms` }}
+        />
+      </div>
+    ),
+    {
+      duration,
+      onAutoClose: () => {
+        if (!undone) onCommit?.()
+      },
+    },
+  )
+}
+
 export const notify = {
   success: make('success'),
   error: make('error'),
   info: make('info'),
   warning: make('warning'),
   warn: make('warning'),
+  undoable,
   dismiss: (id?: ToastId) => toast.dismiss(id),
 }
 

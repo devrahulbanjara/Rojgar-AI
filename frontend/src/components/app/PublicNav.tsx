@@ -4,9 +4,9 @@ import { type ReactNode, useState } from 'react'
 
 import Link from 'next/link'
 
-import { BRAND } from '@/lib/brand'
 import { cn } from '@/lib/utils'
 
+import { Logo } from '@/components/app/Logo'
 import { MenuIcon } from '@/components/icons'
 import { Button, IconButton } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -16,17 +16,8 @@ export type NavLink = { href: string; label: string }
 /** The wordmark. Links home; the name comes from lib/brand.ts. */
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <Link
-      href="/"
-      className={cn(
-        'inline-flex items-center gap-2 font-heading text-lg font-bold tracking-tight text-foreground',
-        className,
-      )}
-    >
-      <span aria-hidden="true" className="grid size-7 place-items-center rounded-lg bg-primary">
-        <span className="size-2.5 rounded-full bg-primary-foreground" />
-      </span>
-      {BRAND.name}
+    <Link href="/" className={cn('inline-flex items-center', className)}>
+      <Logo className="h-7" />
     </Link>
   )
 }

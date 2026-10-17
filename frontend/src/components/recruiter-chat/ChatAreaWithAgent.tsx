@@ -5,7 +5,6 @@ import type { ComponentPropsWithoutRef, FormEvent, KeyboardEvent, UIEvent, Wheel
 import ReactMarkdown from 'react-markdown'
 import { useStore } from 'react-redux'
 
-import Image from 'next/image'
 
 import { LIVE_DATA_UNAVAILABLE_MESSAGE, isBackendConnectionStatus } from '@/lib/backendConnection'
 import { notify } from '@/lib/notify'
@@ -31,6 +30,8 @@ import { updateAccessToken } from '@/store/slices/authSlice'
 import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '@/store/slices/uiSlice'
 import { ArrowUp, Check, Copy, Pencil, RotateCcw, Square } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
+
+import { Logo } from '@/components/app/Logo'
 
 import { CandidateCardGrid } from './CandidateCardGrid'
 import { JobCardGrid } from './JobCardGrid'
@@ -67,13 +68,7 @@ function ChatBotBadge() {
       className="recruiter-chat-message-avatar recruiter-chat-message-avatar--assistant"
       aria-hidden="true"
     >
-      <Image
-        src="/logo/icon-light.png"
-        alt=""
-        width={16}
-        height={16}
-        className="recruiter-chat-bot-mark"
-      />
+      <Logo variant="mark" className="recruiter-chat-bot-mark" />
     </span>
   )
 }

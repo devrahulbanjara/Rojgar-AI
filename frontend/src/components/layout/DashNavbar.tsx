@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
@@ -24,6 +23,7 @@ import {
   X,
 } from 'lucide-react'
 
+import { Logo } from '@/components/app/Logo'
 import Avatar from '@/components/common/Avatar'
 
 // DashRole uses the canonical roles.
@@ -205,14 +205,7 @@ export default function DashNavbar({
       <div className="dash-navbar__inner container container--app-shell">
         {/* Logo — links to the role's dashboard root */}
         <Link href={isCandidate ? '/candidate' : '/recruiter'} className="dash-navbar__logo">
-          <Image
-            src="/logo/logo.png"
-            alt="Rojgar AI"
-            width={140}
-            height={30}
-            className="dash-navbar__logo-image"
-            priority
-          />
+          <Logo className="dash-navbar__logo-image" />
         </Link>
 
         {/* Nav links — centred via grid */}

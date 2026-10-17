@@ -32,83 +32,102 @@
   --navbar-height: 68px;
   --radius: 1rem;
 
-  /* One accent (Rojgar AI blue) on calm, warm neutrals. */
-  --background: #f5f5f4;
-  --foreground: #1c1917;
+  /*
+    Rojgar AI palette: indigo brand on cool, calm neutrals. The AI gradient
+    (indigo -> blue -> cyan -> teal) is reserved for moments where AI is
+    working or speaking. Text pairs pass WCAG AA; see docs/DESIGN_SYSTEM.md.
+  */
+  --background: #f6f7fb;
+  --foreground: #141a2e;
   --card: #ffffff;
-  --card-foreground: #1c1917;
+  --card-foreground: #141a2e;
   --popover: #ffffff;
-  --popover-foreground: #1c1917;
-  --primary: #2563eb;
+  --popover-foreground: #141a2e;
+  --primary: #4338ca;
+  --primary-hover: #3730a3;
   --primary-foreground: #ffffff;
-  --secondary: #f5f5f4;
-  --secondary-foreground: #1c1917;
-  --muted: #f5f5f4;
-  --muted-foreground: #78716c;
-  --accent: #f0f0ef;
-  --accent-foreground: #1c1917;
-  --destructive: #dc2626;
-  --border: #e7e5e4;
-  --input: #e7e5e4;
-  --ring: #93b4f5;
+  --primary-tint: #eef0fe;
+  --secondary: #eef0f6;
+  --secondary-foreground: #141a2e;
+  --muted: #eef0f6;
+  --muted-foreground: #5b6275;
+  --accent: #eef0fe;
+  --accent-foreground: #3730a3;
+  --destructive: #b42318;
+  --border: #e4e7ef;
+  --input: #dfe3ec;
+  --ring: #a5b4fc;
+
+  --ai-1: #4f46e5;
+  --ai-2: #3b82f6;
+  --ai-3: #22d3ee;
+  --ai-4: #2dd4bf;
+  --ai-gradient: linear-gradient(120deg, var(--ai-1), var(--ai-2) 40%, var(--ai-3) 75%, var(--ai-4));
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #44403c;
-  --sidebar-primary: #2563eb;
+  --sidebar-foreground: #3a4157;
+  --sidebar-primary: #4338ca;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eff4ff;
-  --sidebar-accent-foreground: #1d4ed8;
-  --sidebar-border: #e7e5e4;
-  --sidebar-ring: #93b4f5;
+  --sidebar-accent: #eef0fe;
+  --sidebar-accent-foreground: #3730a3;
+  --sidebar-border: #e4e7ef;
+  --sidebar-ring: #a5b4fc;
 
-  /* Semantic tones (pills, fit meters, deltas). Text passes WCAG AA on bg. */
-  --tone-success: #15803d;
-  --tone-success-bg: #dcfce7;
-  --tone-warning: #b45309;
-  --tone-warning-bg: #fef3c7;
-  --tone-danger: #b91c1c;
-  --tone-danger-bg: #fee2e2;
-  --tone-neutral: #57534e;
-  --tone-neutral-bg: #f0efee;
+  /* Semantic tones (pills, fit meters). Text passes WCAG AA on its bg. */
+  --tone-success: #157347;
+  --tone-success-bg: #e7f6ee;
+  --tone-warning: #a15c07;
+  --tone-warning-bg: #fdf3e1;
+  --tone-danger: #b42318;
+  --tone-danger-bg: #fdecec;
+  --tone-neutral: #4a5163;
+  --tone-neutral-bg: #eef0f6;
 }
 
 .dark {
-  --background: #0c0a09;
-  --foreground: #fafaf9;
-  --card: #1c1917;
-  --card-foreground: #fafaf9;
-  --popover: #1c1917;
-  --popover-foreground: #fafaf9;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #292524;
-  --secondary-foreground: #fafaf9;
-  --muted: #292524;
-  --muted-foreground: #a8a29e;
-  --accent: #292524;
-  --accent-foreground: #fafaf9;
-  --destructive: #ef4444;
-  --border: #292524;
-  --input: #292524;
-  --ring: #1d4ed8;
+  --background: #0b1020;
+  --foreground: #eef0f8;
+  --card: #121a30;
+  --card-foreground: #eef0f8;
+  --popover: #121a30;
+  --popover-foreground: #eef0f8;
+  --primary: #818cf8;
+  --primary-hover: #a5b4fc;
+  --primary-foreground: #0b1020;
+  --primary-tint: #1e2350;
+  --secondary: #1a2340;
+  --secondary-foreground: #eef0f8;
+  --muted: #1a2340;
+  --muted-foreground: #a3abc2;
+  --accent: #1e2350;
+  --accent-foreground: #c7d2fe;
+  --destructive: #f87171;
+  --border: #243052;
+  --input: #2a3760;
+  --ring: #6366f1;
 
-  --sidebar: #1c1917;
-  --sidebar-foreground: #e7e5e4;
-  --sidebar-primary: #3b82f6;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e293b;
-  --sidebar-accent-foreground: #93c5fd;
-  --sidebar-border: #292524;
-  --sidebar-ring: #1d4ed8;
+  --ai-1: #818cf8;
+  --ai-2: #60a5fa;
+  --ai-3: #22d3ee;
+  --ai-4: #5eead4;
+
+  --sidebar: #0e1528;
+  --sidebar-foreground: #c9cfe0;
+  --sidebar-primary: #818cf8;
+  --sidebar-primary-foreground: #0b1020;
+  --sidebar-accent: #1e2350;
+  --sidebar-accent-foreground: #c7d2fe;
+  --sidebar-border: #243052;
+  --sidebar-ring: #6366f1;
 
   --tone-success: #4ade80;
-  --tone-success-bg: #14532d;
+  --tone-success-bg: #12301f;
   --tone-warning: #fbbf24;
-  --tone-warning-bg: #451a03;
+  --tone-warning-bg: #35260a;
   --tone-danger: #f87171;
-  --tone-danger-bg: #450a0a;
-  --tone-neutral: #d6d3d1;
-  --tone-neutral-bg: #292524;
+  --tone-danger-bg: #3a1214;
+  --tone-neutral: #c9cfe0;
+  --tone-neutral-bg: #1a2340;
 }
 
 @theme inline {
@@ -129,6 +148,12 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-tint: var(--primary-tint);
+  --color-ai-1: var(--ai-1);
+  --color-ai-2: var(--ai-2);
+  --color-ai-3: var(--ai-3);
+  --color-ai-4: var(--ai-4);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -165,8 +190,8 @@
 */
 html,
 body {
-  background-color: #ffffff;
-  color: #111827;
+  background-color: #f6f7fb;
+  color: #141a2e;
 }
 
 /* Migrated app surfaces opt in to the new tokens via the AppShell. */
@@ -194,4 +219,189 @@ body {
 .app-surface p,
 [data-slot] p {
   margin-bottom: 0;
+}
+
+/*
+  Motion. AI moments get a soft gradient light that flows while work is in
+  progress (glow ring, sparkle, shimmer text). Everything else stays still.
+  All of it stops under prefers-reduced-motion.
+*/
+@property --ai-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ai-rotate {
+  to {
+    --ai-angle: 360deg;
+  }
+}
+
+@keyframes ai-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes ai-twinkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.72) rotate(18deg);
+    opacity: 0.75;
+  }
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The arc grows, then shrinks while the whole ring turns: never symmetrical. */
+@keyframes spinner-dash {
+  0% {
+    stroke-dasharray: 1 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+@keyframes skeleton-sheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.ai-glow {
+  position: relative;
+  isolation: isolate;
+}
+
+.ai-glow::before,
+.ai-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--ai-angle),
+    var(--ai-1),
+    var(--ai-2),
+    var(--ai-3),
+    var(--ai-4),
+    var(--ai-1)
+  );
+  animation: ai-rotate 3.2s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Thin crisp ring + a soft halo behind it. */
+.ai-glow::before {
+  padding: 2px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.ai-glow::after {
+  filter: blur(14px);
+  opacity: 0.35;
+}
+
+.ai-text {
+  background-image: linear-gradient(
+    90deg,
+    var(--ai-1),
+    var(--ai-2),
+    var(--ai-3),
+    var(--ai-4),
+    var(--ai-2),
+    var(--ai-1)
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: ai-shimmer 2.4s linear infinite;
+}
+
+.ai-twinkle {
+  animation: ai-twinkle 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.ai-twinkle-delayed {
+  animation: ai-twinkle 1.6s ease-in-out 0.5s infinite;
+  transform-origin: center;
+}
+
+.spinner {
+  animation: spinner-rotate 1.4s linear infinite;
+}
+
+.spinner circle {
+  animation: spinner-dash 1.4s ease-in-out infinite;
+}
+
+.skeleton-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-sheen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+  animation: skeleton-sheen 1.6s ease-in-out infinite;
+}
+
+.dark .skeleton-sheen::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+}
+
+.toast-countdown {
+  transform-origin: left;
+  animation-name: toast-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-glow::before,
+  .ai-glow::after,
+  .ai-text,
+  .ai-twinkle,
+  .ai-twinkle-delayed,
+  .skeleton-sheen::after {
+    animation: none;
+  }
+  .spinner {
+    animation-duration: 2.8s;
+  }
 }

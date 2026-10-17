@@ -3,13 +3,13 @@
 import type { WheelEvent } from 'react'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
-import Image from 'next/image'
 
 import { useRecruiterChatSessions } from '@/hooks/useRecruiterChatSessions'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { setRecruiterChatOpen, toggleRecruiterChat } from '@/store/slices/uiSlice'
 import { Clock, Plus, X } from 'lucide-react'
 
+import { Logo } from '@/components/app/Logo'
 import { ChatAreaWithAgent } from '@/components/recruiter-chat/ChatAreaWithAgent'
 import { ChatSidebar } from '@/components/recruiter-chat/ChatSidebar'
 import { RecruiterChatPanelSkeleton } from '@/components/recruiter-chat/skeletons'
@@ -72,13 +72,7 @@ export default function FloatingRecruiterChat() {
         onClick={handleToggle}
         aria-label={isOpen ? 'Close recruiter chat' : 'Open recruiter chat'}
       >
-        <Image
-          src="/logo/icon-light.png"
-          alt="Chat"
-          width={48}
-          height={48}
-          className="floating-chat-fab__icon"
-        />
+        <Logo variant="mark" className="floating-chat-fab__icon" />
       </button>
 
       {hasInitialized && (
@@ -88,13 +82,7 @@ export default function FloatingRecruiterChat() {
         >
           <div className="floating-chat-panel__header">
             <div className="floating-chat-panel__header-left">
-              <Image
-                src="/logo/icon-light.png"
-                alt=""
-                width={20}
-                height={20}
-                className="floating-chat-panel__logo"
-              />
+              <Logo variant="mark" className="floating-chat-panel__logo" />
               <span className="floating-chat-panel__title">Rojgar AI Assistant</span>
             </div>
             <div className="floating-chat-panel__header-right">
