@@ -2,7 +2,7 @@
 
 Guards used by other modules (see docs in the final report for call sites):
 - ``ensure_can_open_job`` / ``on_job_opened``  when a job becomes open
-- ``ensure_can_add_member``                     when a recruiter becomes active
+- ``ensure_can_add_member``                     when someone joins the team
 - ``claim_review`` / ``release_review``         around each AI review
 - ``job_features``                              e.g. whether a job sends SMS
 
@@ -141,8 +141,8 @@ def _limit_reached(message: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=message)
 
 
-def _plural(n: int, word: str) -> str:
-    return f"{n} {word}" if n == 1 else f"{n} {word}s"
+def _plural(n: int, word: str, many: str | None = None) -> str:
+    return f"{n} {word}" if n == 1 else f"{n} {many or word + 's'}"
 
 
 async def ensure_can_open_job(
@@ -201,12 +201,12 @@ async def grant_job_pass(
 
 
 async def ensure_can_add_member(db: AsyncSession, company_id: uuid.UUID) -> None:
-    """Raise 402 when one more active recruiter would exceed the plan."""
+    """Raise 402 when one more person would exceed the plan's team size."""
     plan = await company_plan(db, company_id)
     if await count_active_members(db, company_id) >= plan.recruiters:
         raise _limit_reached(
-            f"The {plan.name} plan allows {_plural(plan.recruiters, 'recruiter')}. "
-            "Remove someone or upgrade to add more."
+            f"Your plan allows {_plural(plan.recruiters, 'person', 'people')}. "
+            "Remove someone or choose a bigger plan."
         )
 
 

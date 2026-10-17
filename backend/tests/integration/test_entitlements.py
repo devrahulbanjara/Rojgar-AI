@@ -9,6 +9,7 @@ from app.modules.entitlements.models import JobPass
 from app.modules.entitlements.plans import SMS, PassKind, PlanId
 from tests.integration.helpers import (
     auth_headers,
+    make_member,
     make_active_job,
     make_recruiter_admin,
 )
@@ -27,7 +28,7 @@ async def test_plan_endpoint_shows_limits_usage_and_catalog(client, db):
     assert data["limits"] == {
         "active_jobs": 1,
         "reviews_per_month": 25,
-        "recruiters": 1,
+        "recruiters": 2,
     }
     assert data["usage"]["active_jobs"] == 0  # the pass job is not counted
     assert data["reviews_left_this_month"] == 25
@@ -90,6 +91,8 @@ async def test_free_plan_first_job_free_then_one_active_job(client, db):
 async def test_seat_limit_on_invites(client, db):
     admin, company = await make_recruiter_admin(db, email="seats@test.dev")
     url = f"/businesses/{company.id}/invites"
+    # Free: the owner plus one more person.
+    await make_member(db, company.id, email="second@test.dev")
 
     blocked = await client.post(
         url, json={"role": "manager"}, headers=auth_headers(admin.id)

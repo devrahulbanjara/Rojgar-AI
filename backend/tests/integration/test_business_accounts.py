@@ -347,3 +347,30 @@ class TestTeam:
         refreshed = await db.get(Company, company.id)
         assert refreshed.status == BusinessStatus.pending
         assert refreshed.status_reason is None
+
+
+class TestFreePlanTeam:
+    async def test_free_plan_owner_plus_one_person(self, client, db):
+        owner, company = await make_recruiter_admin(db, email="shop@test.com")
+        headers = auth_headers(owner.id)
+
+        async def invite_and_accept(email):
+            created = await client.post(
+                f"/businesses/{company.id}/invites",
+                json={"role": "manager"},
+                headers=headers,
+            )
+            if created.status_code != 201:
+                return created
+            token = created.json()["data"]["url"].rsplit("/", 1)[1]
+            person = await make_candidate(db, email=email)
+            return await client.post(
+                f"/invites/{token}/accept", headers=auth_headers(person.id)
+            )
+
+        assert (await invite_and_accept("manager@test.com")).status_code == 200
+        third = await invite_and_accept("third@test.com")
+        assert third.status_code == 402
+        assert third.json()["message"] == (
+            "Your plan allows 2 people. Remove someone or choose a bigger plan."
+        )

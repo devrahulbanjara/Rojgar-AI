@@ -40,7 +40,7 @@ class Plan:
     price_npr_per_year: int | None
     active_jobs: int | None  # None = unlimited
     reviews_per_month: int
-    recruiters: int  # active members, admins included
+    recruiters: int  # people on the team, the owner included
     features: frozenset[str] = field(default_factory=frozenset)
 
 
@@ -55,7 +55,8 @@ class PassType:
 
 
 PLANS: dict[PlanId, Plan] = {
-    PlanId.free: Plan(PlanId.free, "Free", 0, None, 1, 25, 1),
+    # Free: the owner and one more person (e.g. a manager).
+    PlanId.free: Plan(PlanId.free, "Free", 0, None, 1, 25, 2),
     PlanId.team: Plan(
         PlanId.team, "Team", 3_499, 34_990, 5, 400, 5, frozenset({SMS, BULK_INVITES})
     ),
