@@ -39,10 +39,7 @@ export function PublicNav({
 
   return (
     <header
-      className={cn(
-        'sticky top-0 z-40 w-full border-b border-border/70 bg-background',
-        className,
-      )}
+      className={cn('sticky top-0 z-40 w-full border-b border-border/70 bg-background', className)}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <BrandMark />

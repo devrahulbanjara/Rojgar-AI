@@ -176,10 +176,7 @@ export function InterviewsView() {
 
   return (
     <PageContainer>
-      <PageHeader
-        title="Interviews"
-        secondaryAction={availability}
-      />
+      <PageHeader title="Interviews" secondaryAction={availability} />
       {isLoading ? (
         <InterviewsSkeleton />
       ) : isError ? (

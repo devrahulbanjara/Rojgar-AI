@@ -176,8 +176,7 @@ export const interviewsApi = baseApi.injectEndpoints({
           .filter((item) => item.status !== 'cancelled')
           .map(fromAgenda)
           .filter(
-            (item) =>
-              new Date(item.starts_at) >= startOfToday || item.scorecard_state === 'due',
+            (item) => new Date(item.starts_at) >= startOfToday || item.scorecard_state === 'due',
           )
           .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
       },
