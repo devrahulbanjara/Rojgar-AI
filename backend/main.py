@@ -23,6 +23,7 @@ from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.activity.router import router as activity_router
 from app.modules.applications.router import router as applications_router
+from app.modules.assistant.router import router as assistant_router
 from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.companies.router import router as companies_router
@@ -31,15 +32,12 @@ from app.modules.interviews.evaluation_router import router as evaluation_router
 from app.modules.interviews.recording_router import router as recording_router
 from app.modules.interviews.router import router as interviews_router
 from app.modules.interviews.webhook import router as cal_webhook_router
-from app.modules.job_ai.router import router as job_ai_router
-from app.modules.job_ai.runtime import job_ai_runtime
 from app.modules.jobs.router import router as jobs_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.outreach.router import router as outreach_router
 from app.modules.profiles.router import router as profiles_router
 from app.modules.public.router import router as public_router
 from app.infrastructures.storage.router import router as files_router
-from app.modules.recruiter_chat.router import router as recruiter_chat_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
@@ -69,10 +67,8 @@ async def lifespan(app: FastAPI):
         # Refuse to serve with a missing ML pre-filter model rather than
         # silently mis-scoring every application.
         await asyncio.to_thread(assert_model_available)
-    # vector store — job/candidate search and recruiter chat
+    # vector store — job/candidate search
     await qdrant_service.initialize()
-    # LangGraph runner — job drafting AI
-    await job_ai_runtime.start()
     # cache layer — jobs, applications, companies
     await redis_service.connect()
     # Expiry + shortlisting recovery can run LLM reviews for many applications;
@@ -97,7 +93,6 @@ async def lifespan(app: FastAPI):
             pass
 
     await redis_service.disconnect()
-    await job_ai_runtime.stop()
     await engine.dispose()
 
 
@@ -139,8 +134,7 @@ app.include_router(profiles_router)
 app.include_router(public_router)
 app.include_router(files_router)
 app.include_router(resumes_router)
-app.include_router(job_ai_router)
-app.include_router(recruiter_chat_router)
+app.include_router(assistant_router)
 app.include_router(notifications_router)
 app.include_router(recruiter_preferences_router)
 app.include_router(jobs_router)

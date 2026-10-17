@@ -162,16 +162,18 @@ class Settings(BaseSettings):
     guardrails_enabled: bool = True
     guardrails_groq_model: str = "openai/gpt-oss-120b"
 
-    # Recruiter chat
-    recruiter_chat_candidate_min_score: float = 0.55
-    recruiter_chat_pronoun_max_turn_gap: int = 2
-    recruiter_chat_title_min_chars: int = 4
-    recruiter_chat_title_fallback_after_turns: int = 3
-    recruiter_chat_summarize_trigger_messages: int = 40
-    recruiter_chat_summarize_keep_messages: int = 6
-    recruiter_chat_handler_context_messages: int = 8
+    # Assistant: job draft + "ask about this candidate"
+    assistant_model: str = "openai/gpt-oss-120b"
+    assistant_temperature: float = 0.2
+    assistant_max_tokens: int = 3000
+    # Hard deadline for one turn, retries included.
+    assistant_turn_timeout_seconds: float = 30.0
+    # Longest wait for the input guardrail before falling back to a marker scan.
+    assistant_guard_timeout_seconds: float = 6.0
+    # Turns (question + answer) kept per thread and sent to the model.
+    assistant_history_turns: int = 8
 
-    # Recruiter chat hybrid search
+    # Candidate hybrid search (read by the Qdrant service; old names kept)
     recruiter_chat_hybrid_search_enabled: bool = True
     candidate_sparse_model: str = "Qdrant/bm25"
     candidate_hybrid_prefetch_limit: int = 50
@@ -213,11 +215,6 @@ class Settings(BaseSettings):
     def test_database_url(self) -> str:
         """Async SQLAlchemy URL for the test database."""
         return f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
-
-    @property
-    def langgraph_postgres_dsn(self) -> str:
-        """Sync PostgreSQL DSN used by LangGraph runtime components."""
-        return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
     def s3_base_url(self) -> str:
