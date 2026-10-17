@@ -41,7 +41,6 @@ from app.modules.recruiter_chat.router import router as recruiter_chat_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
-from app.modules.resume_gap.router import router as resume_gap_router
 from app.modules.resumes.router import router as resumes_router
 from app.modules.shortlisting.ml_bouncer import assert_model_available
 from app.modules.shortlisting.router import router as shortlisting_router
@@ -142,7 +141,6 @@ app.include_router(notifications_router)
 app.include_router(recruiter_preferences_router)
 app.include_router(jobs_router)
 app.include_router(applications_router)
-app.include_router(resume_gap_router)
 app.include_router(shortlisting_router)
 app.include_router(interviews_router)
 app.include_router(evaluation_router)

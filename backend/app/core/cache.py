@@ -133,11 +133,6 @@ async def invalidate_resume_caches(user_id: str, resume_id: str | None = None) -
     await redis_service.delete_many(*keys)
 
 
-async def invalidate_resume_gap_caches(resume_id: str) -> None:
-    """Invalidate all resume-gap cache entries for a resume."""
-    await redis_service.invalidate_pattern(f"resume_gap:{resume_id}:*")
-
-
 async def get_company_applicant_user_ids(
     db: AsyncSession, company_id: str
 ) -> list[str]:

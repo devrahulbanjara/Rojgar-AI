@@ -8,7 +8,7 @@ AI-assisted recruitment platform running the full hiring funnel end-to-end. Sing
 
 | Role | Description | Approval | Capabilities |
 |------|-------------|----------|--------------|
-| **Candidate** | Job seekers | Instant | Browse, apply, track, chat with AI gap analyzer |
+| **Candidate** | Job seekers | Instant | Apply from a shared job link (no account needed), track status, optional passwordless account |
 | **Recruiter** | Company hiring team | Admin approval (pending → active) | Jobs, applications, evaluation, shortlisting, outreach, interviews, AI chat |
 | **Recruiter Admin** | Founder / lead | Instant | All recruiter capabilities + company registration, team management, settings, logo |
 
@@ -30,12 +30,12 @@ AI-assisted recruitment platform running the full hiring funnel end-to-end. Sing
 
 **Find Jobs.** `/jobs` lists active jobs. Search by keyword, filter by location type (remote/onsite/hybrid) + salary range. **Hybrid semantic search** combines Qdrant dense vectors (Gemini 3072-d embeddings) with BM25 sparse retrieval — natural-language queries like "Python backend" match by meaning, not keyword. Side-panel preview (full JD, responsibilities, requirements, benefits, salary, expiry) without leaving the list.
 
-**Apply Flow (5 steps).**
-1. Select a saved resume (or create / import one)
-2. **Resume Gap Analysis** (optional) — Groq compares chosen resume against JD; returns score 0–100, critical / preferred / bonus gaps, "already strong" items, "add to summary" / "de-emphasize" suggestions, 2-sentence verdict; result cached in Redis 10 min
-3. **Auto-Patch** (optional) — Groq rewrites headline (≤120 chars) + summary (≤400 chars) + skills (≤30, ≤5 new) + experience bullets to address gaps. **Frozen Facts** (company, title, dates, institution, certs) are immutable. Server guardrail caps skill additions. Candidate approves every change before save (pending-patch workflow with confirm / discard).
-4. Confirm profile share with company
-5. Submit — auto-evaluation kicks off if enabled on job
+**Apply Flow.**
+1. Open the job's public link (shared on LinkedIn, Facebook, Merojob, or the company careers page)
+2. Upload a CV (name, email, phone and links are pre-filled from it)
+3. Answer any job questions, give consent, submit — no account needed
+4. A confirmation email carries a private status link (withdraw + delete data from there)
+5. Optional: "Continue with email" magic link to see every application in one list
 
 Constraints: one application per job; cannot apply to draft or expired jobs.
 
@@ -144,11 +144,11 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 
 ## 8. Guardrails (defense in depth)
 
-**Input rail (Groq prompt-injection classifier).** A direct Groq classifier (`app/infrastructures/guardrails`; the NeMo config in `guardrails_config/` is only used by a test script) inspects user-controlled input for prompt-injection / role-hijack / system-prompt-exfil patterns. Untrusted text is wrapped in random per-call delimiter tags. Wired at: application submit and shortlisting (flag → recruiter review, never a silent rejection), resume-gap analyze + auto-patch, recruiter chat send + stream, job-AI generate + refine. Interactive surfaces fail open on classifier errors; unattended flows fall back to a deterministic marker scan. Toggle: `guardrails_enabled`.
+**Input rail (Groq prompt-injection classifier).** A direct Groq classifier (`app/infrastructures/guardrails`; the NeMo config in `guardrails_config/` is only used by a test script) inspects user-controlled input for prompt-injection / role-hijack / system-prompt-exfil patterns. Untrusted text is wrapped in random per-call delimiter tags. Wired at: application submit and shortlisting (flag → recruiter review, never a silent rejection), public guest apply, recruiter chat send + stream, job-AI generate + refine. Interactive surfaces fail open on classifier errors; unattended flows fall back to a deterministic marker scan. Toggle: `guardrails_enabled`.
 
 **PII redaction (LangChain `PIIMiddleware`).** Email, URL, and phone-number patterns redacted before prompts reach the shortlisting LLM. Defense in depth alongside input rail.
 
-**Hallucination prevention.** Resume auto-patch enforces **Frozen Facts** in code: identity fields are rebuilt from the database, new skills must already be evidenced in the resume text, and rewrites that introduce numbers or technologies the resume never mentions are discarded. Job-edit chat tool restricts writes to **14-field allowlist** with before / after preview + explicit human confirm. Auto-patch additionally caps skill additions (max 5 new, 30 total).
+**Hallucination prevention.** Job-edit chat tool restricts writes to a **14-field allowlist** with before / after preview + explicit human confirm.
 
 **Other safety layers.** XML tag scrubber + `<user_message>` wrapping in chat. Recruiter DB strings sanitised before LLM. Idempotency keys prevent double LLM calls on retry. Rate limits stop abuse. Row-level locks stop concurrent state corruption.
 
@@ -157,7 +157,7 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 ## 9. Data & Infrastructure
 
 **PostgreSQL** — primary store. Alembic migrations. SQLAlchemy 2 async end-to-end.
-**Redis** — caches (gap analysis 10 min, salary research 24 h, idempotency 10 min, recruiter-chat retry cache 10 min); rate limiter (`fastapi-limiter`); session locks.
+**Redis** — caches (salary research 24 h, idempotency 10 min, recruiter-chat retry cache 10 min); rate limiter (`fastapi-limiter`); session locks.
 **Qdrant** — 3072-d Gemini embeddings of jobs (for candidate semantic search) + applications (for recruiter chat candidate search). **Outbox pattern**: every job mutation writes a `JobSyncEvent` row (`PENDING`); a worker reads pending events and upserts / deletes the Qdrant point, then marks `COMPLETED`. Crash-safe — failed events retry.
 **S3** — image storage (avatars, company logos) + interview audio. Presigned URLs for private playback. Old logos cleaned on replace.
 **HuggingFace Space** — Whisper Small fine-tuned on Nepali audio for interview transcription. Cold-start aware client with retry.
@@ -172,7 +172,7 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 **Backend.** Python 3.12, FastAPI, SQLAlchemy 2 async, Pydantic v2, Alembic, PostgreSQL, Redis, Qdrant, LangChain v1.x, LangGraph, UV, APScheduler, Argon2, PyJWT, fastapi-limiter, aiosmtplib, WeasyPrint, Jinja2, pytest-asyncio, loguru.
 **Frontend.** Next.js 16 App Router, React 19, TypeScript, Redux Toolkit + RTK Query, raw fetch + SSE for chat streams, SCSS tokens (`_variables.scss`), single-source button system (`_buttons.scss`), pnpm.
 **AI / ML.**
-- **Groq** — recruiter chat, job drafting, resume gap analysis, intent classifier, summarization
+- **Groq** — recruiter chat, job drafting, intent classifier, summarization
 - **AWS Bedrock Claude** — shortlisting multi-agent only (heavier reasoning)
 - **Gemini** — 3072-d text embeddings
 - **Tavily** — web search (salary research, persona context)
@@ -190,7 +190,7 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 ## 11. Pipeline at a Glance
 
 ```
-Apply (with optional Gap Analysis + Auto-Patch using Frozen Facts)
+Apply (public job link, no account needed)
    ↓
 applied  ──[ML pre-filter top 20% ➜ CTO + HR critique loop ➜ Judge ➜ Final merge]──► shortlisted | rejected
                                                                                           ↓
@@ -220,5 +220,5 @@ applied  ──[ML pre-filter top 20% ➜ CTO + HR critique loop ➜ Judge ➜ F
 - **One application per job. One booking per application.**
 - **Job edits always preview.** Before / after diff with explicit confirm; never silent writes.
 - **Humans decide.** AI ranks and summarises; shortlist/reject decisions are confirmed by a recruiter and audit-logged.
-- **Defense in depth.** Prompt-injection rail + PIIMiddleware + Frozen Facts + 14-field allowlist + rate limits + idempotency + row-level locks.
+- **Defense in depth.** Prompt-injection rail + PIIMiddleware + 14-field allowlist + rate limits + idempotency + row-level locks.
 - **Cost-aware AI.** ML ranking for large jobs, prompt caching, schema caps, optional critique, summarization, salary cache, cheap-model final merge.

@@ -66,13 +66,10 @@ from app.modules.jobs.models import Job
 from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
 from app.infrastructures.guardrails import guardrails_service
-from app.modules.resume_gap.service import (
-    consume_pending_patch as consume_pending_resume_patch,
-    resume_text_for_guardrails,
-)
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, JobStatus
+from app.shared.resume_text import resume_text_for_guardrails
 
 
 async def _compute_resume_embedding(
@@ -465,11 +462,6 @@ async def apply_to_job(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid resume ID or access denied.",
         )
-
-    # 2b. Apply any pending AI resume patch the candidate accepted in the apply flow.
-    if payload.apply_pending_patch:
-        await consume_pending_resume_patch(db, user, payload.resume_id, payload.job_id)
-        resume = await db.scalar(resume_stmt)
 
     # 2c. Prompt-injection guardrail on candidate-controlled resume text.
     # A flag quarantines the application for recruiter review instead of
