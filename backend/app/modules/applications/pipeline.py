@@ -473,6 +473,13 @@ async def decide(
         enqueue_application_sync_event(db, application.id)
         email = None
         if template:
+            booking_url = None
+            if template == "interview_invite" and emails.candidate_email(application):
+                # The person inviting is the interviewer; the email carries
+                # the link to pick a time.
+                from app.modules.interviews.service import scheduling_url_for
+
+                booking_url = await scheduling_url_for(db, application.id, user.id)
             email = emails.schedule_email(
                 db,
                 application=application,
@@ -481,6 +488,7 @@ async def decide(
                 template=template,
                 actor_user_id=user.id,
                 decision_event_id=event.id,
+                booking_url=booking_url,
             )
             if email is not None:
                 event.payload = {**event.payload, "email_event_id": str(email.id)}

@@ -220,6 +220,14 @@ class TestDecide:
         assert (await _decide(client, admin, "withdraw", [app_id])).json()["data"][
             "results"
         ][0]["stage"] == "withdrawn"
+        invite = await db.scalar(
+            select(ApplicationEvent).where(
+                ApplicationEvent.application_id == app_id,
+                ApplicationEvent.type == "email_scheduled",
+                ApplicationEvent.payload["template"].astext == "interview_invite",
+            )
+        )
+        assert "/schedule/" in invite.payload["html"]
 
     async def test_move_back_returns_to_the_stage_it_came_from(self, client, db):
         admin, _job, apps = await _job_with_apps(
@@ -344,8 +352,17 @@ class TestQuickAddReferrersExport:
         assert "Sita didi" in export.text and "Strong fit" in export.text
 
 
-class TestPublicRecommend:
-    async def test_recommend_creates_referral_application(self, client, db):
+class TestPublicSuggestion:
+    async def test_suggestion_through_a_share_link_credits_that_referrer(
+        self, client, db, monkeypatch
+    ):
+        from app.modules.public import notify
+        from app.modules.public.models import JobSuggestion
+
+        async def _sms(_phone, _text):
+            return True
+
+        monkeypatch.setattr(notify, "sender", _sms)
         admin, company = await make_recruiter_admin(db, email="admin_rec@t.com")
         job = await make_active_job(db, company.id)
         referrer = JobReferrer(job_id=job.id, name="Ram Thapa (staff)", token="tok123")
@@ -357,14 +374,27 @@ class TestPublicRecommend:
         resp = await client.post(
             f"/public/jobs/{job.slug}/recommend",
             json={
-                "ref_token": "tok123",
+                "ref": "tok123",
                 "referrer_name": "Ram",
-                "candidate_name": "Gita Rai",
-                "candidate_phone": "9812345678",
+                "name": "Gita Rai",
+                "phone": "9812345678",
                 "note": "Worked with her at a hotel",
             },
         )
-        assert resp.status_code == 201, resp.text
+        assert resp.status_code == 200, resp.text
+        suggestion = await db.scalar(
+            select(JobSuggestion).where(JobSuggestion.job_id == job.id)
+        )
+        applied = await client.post(
+            f"/public/jobs/{job.slug}/applications",
+            data={
+                "full_name": "Gita Rai",
+                "phone": "9812345678",
+                "consent": "true",
+                "ref": suggestion.token,
+            },
+        )
+        assert applied.status_code == 201, applied.text
         application = await db.scalar(
             select(Application).where(Application.job_id == job.id)
         )
@@ -377,13 +407,3 @@ class TestPublicRecommend:
         item = pipeline.json()["data"]["items"][0]
         assert item["referred_by"]["name"] == "Ram Thapa (staff)"
         assert item["phone"] == "+9779812345678"
-
-        again = await client.post(
-            f"/public/jobs/{job.slug}/recommend",
-            json={
-                "referrer_name": "Someone",
-                "candidate_name": "Gita",
-                "candidate_phone": "+977-9812345678",
-            },
-        )
-        assert again.status_code == 409

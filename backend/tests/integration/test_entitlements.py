@@ -50,11 +50,11 @@ async def test_free_plan_first_job_free_then_one_active_job(client, db):
     def post(status):
         return client.post(
             "/jobs/",
-            json={"title": "Dev", "location_type": "remote", "status": status},
+            json={"title": "Dev", "location_type": "remote", "status": status, "description": "x"},
             headers=headers,
         )
 
-    first = await post("active")
+    first = await post("open")
     assert first.status_code == 201
     first_pass = await db.scalar(
         select(JobPass).where(JobPass.company_id == company.id)
@@ -62,22 +62,22 @@ async def test_free_plan_first_job_free_then_one_active_job(client, db):
     assert first_pass.kind == "first_job"
     assert SMS in await entitlements.job_features(db, first_pass.job_id)
 
-    assert (await post("active")).status_code == 201  # the plan's 1 active job
-    third = await post("active")
+    assert (await post("open")).status_code == 201  # the plan's 1 active job
+    third = await post("open")
     assert third.status_code == 402
     assert "Free plan allows 1 active job" in third.json()["message"]
 
     draft = await post("draft")
     draft_id = draft.json()["data"]["id"]
     publish = await client.patch(
-        f"/jobs/{draft_id}", json={"status": "active"}, headers=headers
+        f"/jobs/{draft_id}", json={"status": "open"}, headers=headers
     )
     assert publish.status_code == 402
 
     # A Job Pass lets that job open regardless of the plan.
     await entitlements.grant_job_pass(db, company.id, draft_id, PassKind.job_pass)
     publish = await client.patch(
-        f"/jobs/{draft_id}", json={"status": "active"}, headers=headers
+        f"/jobs/{draft_id}", json={"status": "open"}, headers=headers
     )
     assert publish.status_code == 200
 

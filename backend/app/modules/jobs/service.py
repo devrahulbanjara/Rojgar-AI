@@ -390,9 +390,8 @@ def _open_job_conditions(
 ) -> list:
     """SQL filters for jobs a candidate can see, mirroring the Qdrant filters."""
     conditions = [
-        Job.status == JobStatus.active,
-        Job.hiring_completed.is_(False),
-        or_(Job.expires_at.is_(None), Job.expires_at > _utcnow()),
+        Job.status == JobStatus.open,
+        or_(Job.closes_at.is_(None), Job.closes_at > _utcnow()),
     ]
     if location:
         conditions.append(Job.location.icontains(location.strip(), autoescape=True))
@@ -423,8 +422,8 @@ async def _search_jobs_in_db(
         where.append(
             or_(
                 Job.title.icontains(word, autoescape=True),
-                Job.overview.icontains(word, autoescape=True),
-                func.array_to_string(Job.requirements, " ").icontains(
+                Job.description.icontains(word, autoescape=True),
+                func.array_to_string(Job.must_haves, " ").icontains(
                     word, autoescape=True
                 ),
             )

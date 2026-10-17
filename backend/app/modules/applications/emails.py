@@ -49,8 +49,12 @@ def schedule_email(
     template: str,
     actor_user_id: uuid.UUID | None,
     decision_event_id: uuid.UUID | None,
+    booking_url: str | None = None,
 ) -> ApplicationEvent | None:
-    """Add an `email_scheduled` event (caller commits). None if no address."""
+    """Add an `email_scheduled` event (caller commits). None if no address.
+
+    ``booking_url`` is the interview scheduling link (interview invites).
+    """
     to = candidate_email(application)
     if not to:
         return None
@@ -61,7 +65,7 @@ def schedule_email(
         job_title=job.title,
         company_name=company.name if company else "The hiring team",
         status_link=status_url(create_status_token(application.id)),
-        booking_url=company.cal_booking_url if company else None,
+        booking_url=booking_url,
     )
     event = ApplicationEvent(
         id=uuid.uuid4(),

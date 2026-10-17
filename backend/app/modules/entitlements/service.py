@@ -24,7 +24,7 @@ from sqlalchemy import exists, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.applications.models import Application
+from app.modules.applications.models import Application, Review
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.entitlements.models import (
@@ -57,7 +57,7 @@ from app.shared.enums import JobStatus
 
 # Billing months follow Nepal time.
 BILLING_TZ = ZoneInfo("Asia/Kathmandu")
-# Application review state while the company is out of reviews.
+# Review.state while the company is out of reviews.
 REVIEW_WAITING_FOR_QUOTA = "waiting_for_quota"
 
 ReviewClaim = Literal["pass", "plan", "extra"]
@@ -79,15 +79,10 @@ async def company_plan(db: AsyncSession, company_id: uuid.UUID) -> Plan:
 
 
 def _open_job_filter():
-    """Jobs that are open to applicants.
-
-    B1 merge: becomes ``Job.status == JobStatus.open`` once jobs use
-    draft/open/closed.
-    """
+    """Jobs that are open to applicants."""
     return (
-        Job.status == JobStatus.active,
-        Job.hiring_completed.is_(False),
-        or_(Job.expires_at.is_(None), Job.expires_at > func.now()),
+        Job.status == JobStatus.open,
+        or_(Job.closes_at.is_(None), Job.closes_at > func.now()),
     )
 
 
@@ -409,11 +404,12 @@ async def get_company_plan(db: AsyncSession, user_id: uuid.UUID) -> CompanyPlanR
     reviews_used = usage.reviews_used if usage else 0
     extra_left = credits.remaining if credits else 0
     waiting = await db.scalar(
-        select(func.count(Application.id))
+        select(func.count(Review.id))
+        .join(Application, Application.id == Review.application_id)
         .join(Job, Job.id == Application.job_id)
         .where(
             Job.company_id == company_id,
-            Application.ai_review_status == REVIEW_WAITING_FOR_QUOTA,
+            Review.state == REVIEW_WAITING_FOR_QUOTA,
         )
     )
     pass_rows = await db.execute(
