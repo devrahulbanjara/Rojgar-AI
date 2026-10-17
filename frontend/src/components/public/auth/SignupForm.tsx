@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 import { apiErrorStatus } from '@/lib/apiErrorCode'
 import { parseApiError } from '@/lib/apiError'
-import { BRAND } from '@/lib/brand'
+import { useT } from '@/lib/i18n/client'
 import { getSafeRedirect, rememberPostAuthRedirect } from '@/lib/roleRoutes'
 import { useGoogleRegisterMutation, useSignupMutation } from '@/store/services/authApi'
 import {
@@ -35,6 +35,7 @@ type Role = 'recruiter_admin' | 'recruiter'
 type Errors = Partial<Record<'fullName' | 'email' | 'password' | 'company', string>>
 
 export function SignupForm() {
+  const t = useT()
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextUrl = getSafeRedirect(searchParams.get('next'))
@@ -70,12 +71,12 @@ export function SignupForm() {
   function validate(): Errors {
     const next: Errors = {}
     if (!isOAuth) {
-      if (!fullName.trim()) next.fullName = 'Enter your name.'
-      if (!email.trim()) next.email = 'Enter your work email.'
-      else if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email.'
-      if (!passwordMeetsRules(password)) next.password = 'Use a stronger password.'
+      if (!fullName.trim()) next.fullName = t.auth.nameRequired
+      if (!email.trim()) next.email = t.auth.signup.workEmailRequired
+      else if (!EMAIL_RE.test(email.trim())) next.email = t.auth.emailInvalid
+      if (!passwordMeetsRules(password)) next.password = t.auth.weakPassword
     }
-    if (!company.trim()) next.company = 'Enter your company name.'
+    if (!company.trim()) next.company = t.auth.signup.businessRequired
     return next
   }
 
@@ -93,7 +94,7 @@ export function SignupForm() {
     if (!result.success || !data?.setup_token) {
       // A Google user who already has an account is signed in directly.
       if (isOAuth && result.success) router.push('/recruiter')
-      else setFormError(result.message ?? 'Could not create the account. Try again.')
+      else setFormError(result.message ?? t.auth.signup.failed)
       return null
     }
     tokenRef.current = { role, token: data.setup_token }
@@ -159,10 +160,10 @@ export function SignupForm() {
     return (
       <CheckEmail
         email={isOAuth ? (oauthUser.email ?? '') : email.trim()}
-        title={done === 'created' ? 'Check your email' : 'Request sent'}
+        title={done === 'created' ? t.auth.checkEmail : t.auth.signup.requestSent}
         line={
           done === 'join-sent'
-            ? `${company.trim()} will approve your request. Meanwhile, verify your email.`
+            ? t.auth.signup.approveLine(company.trim())
             : undefined
         }
         onResend={resend}
@@ -184,20 +185,20 @@ export function SignupForm() {
 
   return (
     <AuthCard
-      title={joining && companyLocked ? `Join ${company}` : 'Create your company account'}
+      title={joining && companyLocked ? t.auth.signup.join(company) : t.auth.signup.title}
       footer={
         <>
-          Already have an account?{' '}
+          {t.auth.signup.haveAccount}{' '}
           <Link href="/login" className="font-medium text-primary hover:underline">
-            Log in
+            {t.auth.login.submit}
           </Link>
         </>
       }
       below={
         <>
-          Applying for a job?{' '}
+          {t.auth.signup.applying}{' '}
           <Link href="/signin" className="font-medium text-foreground hover:underline">
-            You don&apos;t need an account
+            {t.auth.signup.noAccount}
           </Link>
         </>
       }
@@ -212,7 +213,7 @@ export function SignupForm() {
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
         {!isOAuth ? (
           <>
-            <FormField id="fullName" label="Full name" error={errors.fullName}>
+            <FormField id="fullName" label={t.auth.fullName} error={errors.fullName}>
               <Input
                 id="fullName"
                 autoComplete="name"
@@ -223,7 +224,7 @@ export function SignupForm() {
                 onChange={(e) => setFullName(e.target.value)}
               />
             </FormField>
-            <FormField id="email" label="Work email" error={errors.email}>
+            <FormField id="email" label={t.auth.signup.workEmail} error={errors.email}>
               <Input
                 id="email"
                 type="email"
@@ -236,7 +237,7 @@ export function SignupForm() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </FormField>
-            <FormField id="password" label="Password" error={errors.password}>
+            <FormField id="password" label={t.auth.password} error={errors.password}>
               <PasswordInput
                 id="password"
                 autoComplete="new-password"
@@ -250,7 +251,7 @@ export function SignupForm() {
           </>
         ) : null}
 
-        <FormField id="company" label="Company name" error={errors.company}>
+        <FormField id="company" label={t.auth.signup.business} error={errors.company}>
           <Input
             id="company"
             autoComplete="organization"
@@ -270,26 +271,28 @@ export function SignupForm() {
           <Alert>
             <CompanyIcon />
             <AlertDescription>
-              {company.trim()} is already on {BRAND.name}. Ask to join their team?
+              {t.auth.signup.exists(company.trim())}
             </AlertDescription>
           </Alert>
         ) : null}
 
         <Button type="submit" size="lg" className="w-full" loading={busy}>
           <span className="truncate">
-            {joining ? `Ask to join ${company.trim() || 'company'}` : 'Create account'}
+            {joining
+              ? t.auth.signup.askJoin(company.trim() || t.auth.signup.theBusiness)
+              : t.auth.signup.create}
           </span>
         </Button>
       </form>
 
       <p className="text-center text-xs text-muted-foreground">
-        By continuing you agree to the{' '}
+        {t.auth.signup.agree}{' '}
         <Link href="/terms" className="underline">
-          Terms
+          {t.nav.terms}
         </Link>{' '}
-        and{' '}
+        {t.auth.signup.and}{' '}
         <Link href="/privacy" className="underline">
-          Privacy Policy
+          {t.auth.signup.privacyPolicy}
         </Link>
         .
       </p>

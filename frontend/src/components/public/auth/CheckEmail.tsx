@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
+import { useT } from '@/lib/i18n/client'
+
 import { Button } from '@/components/ui/button'
 
 import { AuthCard } from './AuthCard'
@@ -11,7 +13,7 @@ const COOLDOWN_SECONDS = 60
 /** "Check {email} for a link" with Resend (cooldown) and Change email. */
 export function CheckEmail({
   email,
-  title = 'Check your email',
+  title,
   line,
   onResend,
   resending,
@@ -24,6 +26,7 @@ export function CheckEmail({
   resending?: boolean
   onChangeEmail?: () => void
 }) {
+  const t = useT()
   const [cooldown, setCooldown] = useState(COOLDOWN_SECONDS)
 
   useEffect(() => {
@@ -33,7 +36,7 @@ export function CheckEmail({
   }, [cooldown])
 
   return (
-    <AuthCard title={title}>
+    <AuthCard title={title ?? t.auth.checkEmail}>
       <p className="text-sm text-foreground">
         {line ? (
           <>
@@ -41,7 +44,7 @@ export function CheckEmail({
             <br />
           </>
         ) : null}
-        We sent a link to <strong>{email}</strong>.
+        {t.auth.sentLink(email)}
       </p>
       <div className="flex flex-col gap-2">
         {onResend ? (
@@ -55,12 +58,12 @@ export function CheckEmail({
               setCooldown(COOLDOWN_SECONDS)
             }}
           >
-            {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend'}
+            {cooldown > 0 ? t.auth.resendIn(cooldown) : t.auth.resend}
           </Button>
         ) : null}
         {onChangeEmail ? (
           <Button variant="ghost" className="w-full" onClick={onChangeEmail}>
-            Change email
+            {t.auth.changeEmail}
           </Button>
         ) : null}
       </div>

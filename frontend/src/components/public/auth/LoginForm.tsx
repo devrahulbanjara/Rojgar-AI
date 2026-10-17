@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 import { apiErrorCode } from '@/lib/apiErrorCode'
 import { parseApiError } from '@/lib/apiError'
-import { BRAND } from '@/lib/brand'
+import { useT } from '@/lib/i18n/client'
 import {
   consumePostAuthRedirect,
   getRoleDashboard,
@@ -31,13 +31,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 type Errors = { email?: string; password?: string }
 
-/** Messages for ?error= values that other flows redirect here with. */
-const ERROR_PARAM_MESSAGES: Record<string, string> = {
-  oauth_failed: 'Google sign-in did not finish. Try again.',
-  link_invalid: 'That sign-in link has expired. Ask for a new one.',
-}
-
 export function LoginForm() {
+  const t = useT()
+  // Messages for ?error= values that other flows redirect here with.
+  const errorParams: Record<string, string> = {
+    oauth_failed: t.auth.login.oauthFailed,
+    link_invalid: t.auth.login.linkInvalid,
+  }
   const searchParams = useSearchParams()
   const nextUrl = getSafeRedirect(searchParams.get('next'))
   const router = useRouter()
@@ -49,7 +49,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string | null>(
-    ERROR_PARAM_MESSAGES[searchParams.get('error') ?? ''] ?? null,
+    errorParams[searchParams.get('error') ?? ''] ?? null,
   )
   const [unverified, setUnverified] = useState(false)
 
@@ -71,9 +71,9 @@ export function LoginForm() {
 
   function validate(): Errors {
     const next: Errors = {}
-    if (!email.trim()) next.email = 'Enter your email.'
-    else if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email.'
-    if (!password) next.password = 'Enter your password.'
+    if (!email.trim()) next.email = t.auth.emailRequired
+    else if (!EMAIL_RE.test(email.trim())) next.email = t.auth.emailInvalid
+    if (!password) next.password = t.auth.passwordRequired
     return next
   }
 
@@ -91,7 +91,7 @@ export function LoginForm() {
         remember_me: true,
       }).unwrap()
       if (!result.success) {
-        setFormError(result.message ?? 'Could not log in. Try again.')
+        setFormError(result.message ?? t.auth.login.failed)
         return
       }
       router.push(
@@ -104,7 +104,7 @@ export function LoginForm() {
         return
       }
       if (code === 'account_deleted') {
-        setFormError('This account was deleted.')
+        setFormError(t.auth.login.deleted)
         return
       }
       const parsed = parseApiError(err, { email: 'email', password: 'password' }, '')
@@ -112,7 +112,7 @@ export function LoginForm() {
         setErrors(parsed.fieldErrors as Errors)
       } else {
         setFormError(
-          parsed.status === 401 || !parsed.message ? 'Wrong email or password.' : parsed.message,
+          parsed.status === 401 || !parsed.message ? t.auth.login.wrong : parsed.message,
         )
       }
     }
@@ -120,12 +120,10 @@ export function LoginForm() {
 
   if (unverified) {
     return (
-      <AuthCard title="Verify your email">
-        <p className="text-sm text-foreground">
-          Open the link we sent to <strong>{email.trim()}</strong>, then log in.
-        </p>
+      <AuthCard title={t.auth.login.verifyTitle}>
+        <p className="text-sm text-foreground">{t.auth.login.verifyLine(email.trim())}</p>
         <Button variant="outline" className="w-full" onClick={() => setUnverified(false)}>
-          Back to log in
+          {t.auth.backToLogin}
         </Button>
       </AuthCard>
     )
@@ -137,20 +135,20 @@ export function LoginForm() {
 
   return (
     <AuthCard
-      title="Log in"
+      title={t.auth.login.title}
       footer={
         <>
-          New to {BRAND.name}?{' '}
+          {t.auth.login.newHere}{' '}
           <Link href="/signup" className="font-medium text-primary hover:underline">
-            Create a company account
+            {t.auth.login.createAccount}
           </Link>
         </>
       }
       below={
         <>
-          Applied for a job?{' '}
+          {t.auth.login.applied}{' '}
           <Link href="/signin" className="font-medium text-foreground hover:underline">
-            Get a sign-in link
+            {t.auth.login.getLink}
           </Link>
         </>
       }
@@ -163,7 +161,7 @@ export function LoginForm() {
       ) : null}
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-        <FormField id="email" label="Email" error={errors.email}>
+        <FormField id="email" label={t.auth.email} error={errors.email}>
           <Input
             id="email"
             type="email"
@@ -183,11 +181,11 @@ export function LoginForm() {
 
         <FormField
           id="password"
-          label="Password"
+          label={t.auth.password}
           error={errors.password}
           aside={
             <Link href={forgotHref} className="text-sm text-primary hover:underline">
-              Forgot password?
+              {t.auth.login.forgot}
             </Link>
           }
         >
@@ -206,7 +204,7 @@ export function LoginForm() {
         </FormField>
 
         <Button type="submit" size="lg" className="w-full" loading={isLoading}>
-          Log in
+          {t.auth.login.submit}
         </Button>
       </form>
 
@@ -214,7 +212,7 @@ export function LoginForm() {
 
       <Button variant="outline" size="lg" className="w-full" onClick={() => initiateGoogleOAuth()}>
         <GoogleIcon className="size-4" />
-        Continue with Google
+        {t.auth.google}
       </Button>
     </AuthCard>
   )

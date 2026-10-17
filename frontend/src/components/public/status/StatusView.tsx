@@ -8,7 +8,6 @@ import { formatDate } from '@/lib/i18n'
 import { useLocale, useT } from '@/lib/i18n/client'
 import { type ApplicationStatusView, publicApi } from '@/lib/publicApi'
 
-import { LanguageToggle } from '@/components/app/LanguageToggle'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -68,11 +67,9 @@ export function StatusView({ token }: { token: string | null }) {
     }
   }
 
-  const toggle = <LanguageToggle className="mx-auto" />
-
   if (state.kind === 'loading') {
     return (
-      <AuthCard title={t.status.title} below={toggle}>
+      <AuthCard title={t.status.title}>
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="h-4 w-1/2" />
       </AuthCard>
@@ -81,7 +78,7 @@ export function StatusView({ token }: { token: string | null }) {
 
   if (state.kind === 'error') {
     return (
-      <AuthCard title={t.status.invalidTitle} below={toggle}>
+      <AuthCard title={t.status.invalidTitle}>
         <p className="text-sm text-foreground">{state.message}</p>
         <Button asChild variant="outline" size="lg" className="w-full">
           <Link href="/signin">{t.status.getLink}</Link>
@@ -92,7 +89,7 @@ export function StatusView({ token }: { token: string | null }) {
 
   if (state.kind === 'withdrawn') {
     return (
-      <AuthCard title={t.status.withdrawnTitle} below={toggle}>
+      <AuthCard title={t.status.withdrawnTitle}>
         <p className="text-sm text-foreground">{t.status.withdrawnLine}</p>
       </AuthCard>
     )
@@ -109,7 +106,7 @@ export function StatusView({ token }: { token: string | null }) {
           {t.status.seeAll}
         </Link>
       }
-      below={toggle}
+     
     >
       <div className="flex flex-col gap-3">
         <Link href={`/c/${view.company_slug}`} className="w-fit text-sm font-medium hover:underline">
