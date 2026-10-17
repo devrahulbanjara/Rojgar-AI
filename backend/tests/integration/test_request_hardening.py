@@ -26,3 +26,9 @@ def test_status_email_escapes_recruiter_controlled_values():
     assert "<script>" not in body
     assert 'href="https://phish.example"' not in body
     assert "&lt;script&gt;" in body
+
+
+async def test_malformed_path_id_is_client_error(client):
+    resp = await client.get("/jobs/not-a-uuid")
+
+    assert resp.status_code == 400

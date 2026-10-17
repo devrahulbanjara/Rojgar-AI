@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, File, UploadFile, status
 
-from app.core.dependencies import ActiveMember, DbSession, RecruiterAdmin
+from app.core.dependencies import ActiveMember, DbSession, RecruiterAdmin, UUIDPath
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.infrastructures.storage.service import storage_service
 from app.modules.companies import service
@@ -99,7 +99,7 @@ async def get_company_recruiters(
     summary="Approve or reject a recruiter membership request",
 )
 async def update_recruiter_status(
-    membership_id: str,
+    membership_id: UUIDPath,
     payload: UpdateRecruiterStatusRequest,
     user: RecruiterAdmin,
     db: DbSession,
@@ -114,7 +114,7 @@ async def update_recruiter_status(
     summary="Remove a recruiter from the company",
 )
 async def remove_recruiter(
-    membership_id: str,
+    membership_id: UUIDPath,
     user: RecruiterAdmin,
     db: DbSession,
 ) -> UnifiedResponse[None]:

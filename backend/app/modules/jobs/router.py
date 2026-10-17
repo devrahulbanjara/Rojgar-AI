@@ -3,7 +3,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Query, status
 
-from app.core.dependencies import ActiveMember, CurrentUser, DbSession, OptionalUser
+from app.core.dependencies import (
+    ActiveMember,
+    CurrentUser,
+    DbSession,
+    OptionalUser,
+    UUIDPath,
+)
 from app.core.responses import PaginatedData, ResponseBuilder, UnifiedResponse
 from app.modules.jobs import service
 from app.modules.jobs.schemas import (
@@ -88,7 +94,7 @@ async def list_company_jobs(
     summary="Get full job details including description",
 )
 async def get_job(
-    job_id: str,
+    job_id: UUIDPath,
     user: OptionalUser,
     db: DbSession,
 ) -> UnifiedResponse[JobDetailResponse]:
@@ -102,7 +108,7 @@ async def get_job(
     summary="Update a job posting (owner only)",
 )
 async def update_job(
-    job_id: str,
+    job_id: UUIDPath,
     payload: JobUpdate,
     bg_tasks: BackgroundTasks,
     user: CurrentUser,
@@ -118,7 +124,7 @@ async def update_job(
     summary="Delete a job posting (owner only)",
 )
 async def delete_job(
-    job_id: str,
+    job_id: UUIDPath,
     bg_tasks: BackgroundTasks,
     user: CurrentUser,
     db: DbSession,

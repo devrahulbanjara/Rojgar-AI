@@ -4,7 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Query, status
 from pydantic import BaseModel
 
-from app.core.dependencies import ActiveMember, CandidateUser, CurrentUser, DbSession
+from app.core.dependencies import (
+    ActiveMember,
+    CandidateUser,
+    CurrentUser,
+    DbSession,
+    UUIDPath,
+)
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.applications import service
 from app.modules.applications.schemas import (
@@ -131,7 +137,7 @@ async def list_my_company_candidates(
     summary="Find candidates similar to a given application",
 )
 async def get_similar_candidates(
-    application_id: str,
+    application_id: UUIDPath,
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
     user: ActiveMember = None,
     db: DbSession = None,
@@ -149,7 +155,7 @@ async def get_similar_candidates(
     summary="Get recruiter-safe candidate details for one application",
 )
 async def get_company_candidate_detail(
-    application_id: str,
+    application_id: UUIDPath,
     user: ActiveMember,
     db: DbSession,
 ) -> UnifiedResponse[RecruiterCandidateDetailView]:
@@ -163,7 +169,7 @@ async def get_company_candidate_detail(
     summary="List all applications for a specific job (company/recruiter only)",
 )
 async def list_job_applications(
-    job_id: str,
+    job_id: UUIDPath,
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=100)] = 20,
     user: CurrentUser = None,
@@ -179,7 +185,7 @@ async def list_job_applications(
     summary="Get full details of a specific application",
 )
 async def get_application(
-    application_id: str,
+    application_id: UUIDPath,
     user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ApplicationResponse]:
@@ -193,7 +199,7 @@ async def get_application(
     summary="Get the event timeline for a specific application",
 )
 async def get_application_timeline(
-    application_id: str,
+    application_id: UUIDPath,
     user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[list[ActivityEventResponse]]:
@@ -207,7 +213,7 @@ async def get_application_timeline(
     summary="Get the recruiter timeline for a specific candidate application",
 )
 async def get_company_candidate_timeline(
-    application_id: str,
+    application_id: UUIDPath,
     user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[list[ActivityEventResponse]]:
@@ -221,7 +227,7 @@ async def get_company_candidate_timeline(
     summary="Update application score and feedback (company/recruiter only)",
 )
 async def update_application_review(
-    application_id: str,
+    application_id: UUIDPath,
     payload: UpdateApplicationReviewRequest,
     bg_tasks: BackgroundTasks,
     user: CurrentUser,
@@ -239,7 +245,7 @@ async def update_application_review(
     summary="Update application status (company/recruiter only)",
 )
 async def update_application_status(
-    application_id: str,
+    application_id: UUIDPath,
     payload: UpdateApplicationStatusRequest,
     bg_tasks: BackgroundTasks,
     user: CurrentUser,

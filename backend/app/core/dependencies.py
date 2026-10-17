@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -32,3 +32,13 @@ RecruiterUser = Annotated[User, Depends(require_recruiter)]
 RecruiterAdmin = Annotated[User, Depends(require_recruiter_admin)]
 RecruiterPrivileges = Annotated[User, Depends(require_recruiter_privileges)]
 AdminUser = Annotated[User, Depends(require_admin)]
+
+# Path IDs: validated as UUIDs (malformed values -> 400 instead of a 500 from
+# the database), passed to services as canonical strings.
+UUIDPath = Annotated[
+    str,
+    Path(
+        pattern=r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?"
+        r"[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
+    ),
+]
