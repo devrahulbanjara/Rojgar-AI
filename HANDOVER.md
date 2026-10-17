@@ -9,17 +9,62 @@ Everything below is what was asked for in the revamp session, what is done, what
 
 | Folder / branch | What it is | State |
 |---|---|---|
-| `ConvexHire-wt-b1` / `wave/b1` | Data model v2: stages (new, shortlisted, interview, offer, hired, rejected, withdrawn), Review table with must-have checks + verified quotes, Event timeline, referrers ("suggest someone"), sector templates, quick add, CSV export, protected-ground filter, cheap triage review, non-tech Nepal seed data | In progress; check `git log` + run tests before merging |
+| `ConvexHire-wt-b1` / `wave/b1` | Data model v2: stages (new, shortlisted, interview, offer, hired, rejected, withdrawn), Review table with must-have checks + verified quotes, Event timeline, referrers ("suggest someone"), sector templates, quick add, CSV export, protected-ground filter, cheap triage review, non-tech Nepal seed data | **MERGED** into `production-hardening` (commit `c7f9f77e`, alembic chain `e8dd80fa`, adapter switch `92292149`, bugfix `b3fed4a0`). |
 | `ConvexHire-wt-b4` / `wave/b4` | People without global roles; business roles Owner / Manager / Interviewer; phone OTP sign-up; create business → pending → platform approval; invite-only teams; `/admin` panel (approvals, businesses, reports, payments) | In progress |
 | `ConvexHire-wt-f4` / `wave/f4` | Public side: Nepali/English toggle, phone-first apply, photo CVs, "suggest someone" page, QR poster, careers page, landing + pricing for small businesses, `/me/applications` shell fix | In progress |
 | `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | In progress |
 
 To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline production-hardening..HEAD` (same for b4, f4, f5).
 
+## Session Update — Multi-Model Handover (2026-10-17 16:55)
+
+### What Claude Opus 4.6 (Thinking) did:
+1. **Handover analysis & strategy:** Analyzed repo status, commit logs across `production-hardening` and the 4 branches, merge base divergences, and confirmed merge order.
+2. **Initiated `wave/b1` merge:** Executed `git merge --no-commit --no-ff wave/b1` into `production-hardening`.
+3. **Resolved 14 modify/delete conflicts:** Cleanly preserved deletions of deprecated modules (`recruiter_chat`, `job_ai`, `interviews/webhook`, `interviews/evaluation_schemas`, `test_cal_webhook`, `outreach`) as mandated by the handover rules.
+4. **Architectural analysis:** Explained the native interview scheduling system that replaced Cal.com (`scheduling.py`, `service.py`, `stage.py`, `notify.py`, `reminders.py`, Jitsi Meet, Scorecards).
+5. **Conflict subagents:** Defined and dispatched 4 specialized subagents to resolve remaining content conflicts across 12 files before individual Opus API quota limits were reached.
+
+### What Gemini did:
+1. **Clean subagent lifecycle:** Terminated all remaining/exhausted subagents to cleanly release workspace locks and resources.
+2. **Resolved all remaining `wave/b1` content conflicts (12 files):**
+   - `backend/alembic/env.py`: Clean model registration imports.
+   - `backend/tests/integration/test_recruiter_home.py`: Merged enum imports (`ApplicationStage`, `ApplicationStatus`, etc.).
+   - `backend/main.py`: Preserved new routers (`recruiter_router`, `job_templates_router`) while keeping deleted modules removed.
+   - `backend/app/modules/dashboards/home.py`: Switched query to `Application.stage == ApplicationStage.interview` and `~_interview_done()`.
+   - `backend/scripts/seed_e2e.py`: Switched to `import app.core.model_registry`.
+   - `backend/app/modules/jobs/service.py`: Resolved `JobStatus.open`, `closes_at`, and entitlement checks alongside v2 criteria/question processing.
+   - `DOCUMENTATION.md`: Kept native scheduling details, v2 pipeline diagram, and cleaned deprecated service mentions.
+   - `backend/app/modules/applications/schemas.py`: Retained v2 schema fields (`fit`, `summary`, `flagged`, `source`) and purged legacy v1 structures.
+   - `backend/app/modules/interviews/service.py`: Kept native scheduling, removed residual Cal.com logic (`cal_booking_uid`, old complete handlers), and wired `stage` into `CandidateInterviewView`.
+   - `backend/app/modules/applications/service.py`: Stripped obsolete v1 recruiter endpoints (superseded by `pipeline.py` & `recruiter_router.py`).
+   - `backend/seed_data.py`: Integrated non-tech Nepal companies, v2 reviews/events, Jitsi interview scheduling, and pruned legacy outreach/recording mocks.
+   - Committed merge: `c7f9f77e`.
+3. **Alembic migration chain resolution (Handover step 4):**
+   - Pointed `backend/alembic/versions/2017037b521a_data_model_v2.py` `down_revision` to `668b934a505f`.
+   - Verified single migration head: `2017037b521a (head)` (commit `e8dd80fa`).
+4. **Adapter switches to data model v2 (Handover step 6):**
+   - `backend/app/modules/interviews/stage.py`: Rewrote mappings to use `ApplicationStage` and `ApplicationEvent` timeline.
+   - `backend/app/modules/dashboards/insights.py`: Updated `STATUS_RANK`, `WAITING_STATUSES`, and query filters to `ApplicationStage`.
+   - `backend/app/modules/assistant/context.py`: Updated `load_candidate_context` to read `Review` (fit, summary, checks with quotes) and `ApplicationStage`.
+   - `frontend/src/lib/api/recruiter.ts`: Enabled `CAPABILITIES` (`notes`, `markHired`, `withdraw`, `questionTypes`, `jobCategory`, `addCandidate`) and routed candidate endpoints to `/recruiter/v2`.
+   - Committed adapter updates: `92292149`.
+5. **Runtime bugfix:**
+   - Fixed missing positional `scope` argument in `_per_ip` rate-limiter on recommend endpoint (`backend/app/modules/public/router.py`): commit `b3fed4a0`.
+6. **Clean checkpoint:**
+   - Dry-ran `wave/b4` merge, identified 8 conflicted files.
+   - Per stop instruction, cleanly aborted the uncommitted merge (`git merge --abort`), leaving `production-hardening` in a clean, working committed state.
+
+### Next steps for subsequent sessions:
+1. Merge `wave/b4`: `git merge --no-ff wave/b4`. Resolve 8 conflicted files (notably `CurrentUser` replacing `CandidateUser`, and removing legacy `join_requests`).
+2. Merge `wave/f4`, then `wave/f5`.
+3. Run gates (`pytest`, `ruff`, `pnpm lint`, `pnpm build`).
+4. Merge `production-hardening` into `main`.
+
 ## How to merge the rest (in this order)
 
-1. `wave/b1` first: it changes the core tables everything else reads.
-2. Then `wave/b4`, `wave/f4`, `wave/f5`.
+1. `wave/b1`: **DONE & MERGED** (commit `c7f9f77e`).
+2. Next is `wave/b4`, then `wave/f4`, `wave/f5`.
 3. For each: `cd ~/Documents/Rojgar-AI && git merge --no-ff wave/<name>`. Resolve conflicts by keeping both sides' intent. Deleted modules stay deleted (`recruiter_chat`, `job_ai`, recordings, Cal.com, resume gap).
 4. **Alembic:** after every merge run `cd backend && uv run alembic heads`. If there are two heads, set the newer branch's first migration's `down_revision` to the other head (that's how the earlier merges were done), then `uv run alembic upgrade head`.
 5. Run the gates (see Commands). Then push: `git push origin production-hardening`.
