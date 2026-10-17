@@ -26,7 +26,9 @@ class FinalResponse(BaseModel):
 
 
 class ShortlistState(TypedDict):
-    applicant_name: str
+    # Opaque reference (application id) used for logs and tool caching; never the
+    # candidate's name, so names stay out of logs and traces.
+    application_ref: str
     job_title: str
     jd: str
     resume: str
