@@ -2,6 +2,9 @@ import Link from 'next/link'
 
 import { ago, closingLabel } from '@/lib/dates'
 import type { RecruiterHomeRole } from '@/store/services/dashboardApi'
+import { Share2 } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 
 import { ActionTile } from './ActionTile'
 import { ShareJobDialog } from './ShareJobDialog'
@@ -19,21 +22,21 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
     <article className="flex flex-col gap-4 rounded-xl border bg-card p-5">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={jobHref}
-              className="truncate font-semibold text-foreground underline-offset-4 hover:underline"
-            >
-              {role.title}
-            </Link>
+          <Link
+            href={jobHref}
+            className="line-clamp-2 font-semibold text-foreground underline-offset-4 hover:underline"
+          >
+            {role.title}
+          </Link>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <JobStatusPill status={role.status} />
+            <span>
+              {meta}
+              {role.upcoming_interviews > 0
+                ? ` · ${role.upcoming_interviews} interview${role.upcoming_interviews === 1 ? '' : 's'} booked`
+                : ''}
+            </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {meta}
-            {role.upcoming_interviews > 0
-              ? ` · ${role.upcoming_interviews} interview${role.upcoming_interviews === 1 ? '' : 's'} booked`
-              : ''}
-          </p>
         </div>
         {isOpen ? (
           <ShareJobDialog
@@ -44,6 +47,11 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
               location: role.location,
               locationType: role.location_type,
             }}
+            trigger={
+              <Button variant="ghost" size="icon-sm" aria-label={`Share ${role.title}`}>
+                <Share2 />
+              </Button>
+            }
           />
         ) : null}
       </div>

@@ -175,3 +175,22 @@ body {
   font-family: var(--font-manrope), system-ui, sans-serif;
   min-height: 100dvh;
 }
+
+/*
+  The legacy reset doesn't set a border colour (Tailwind's preflight would),
+  so `border` utilities would fall back to currentColor. Layered, so any
+  legacy rule that sets its own colour still wins.
+*/
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+}
+
+/* Neutralise legacy element styles inside migrated surfaces (portals carry data-slot). */
+.app-surface p,
+[data-slot] p {
+  margin-bottom: 0;
+}
