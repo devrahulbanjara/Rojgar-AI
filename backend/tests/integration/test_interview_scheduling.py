@@ -198,6 +198,11 @@ async def test_availability_defaults_and_update(client, db):
     assert (
         await client.put("/me/availability", json=data, headers=headers)
     ).status_code == 400
+    # A mistyped Google Meet code is caught on save, not on interview day.
+    data["meeting_link"] = "https://meet.google.com/demo-f1soft-int"
+    assert (
+        await client.put("/me/availability", json=data, headers=headers)
+    ).status_code == 400
 
 
 async def test_invite_requires_shortlisted(client, db):

@@ -4,6 +4,7 @@ from typing import Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+
 from pydantic import AwareDatetime, Field, field_validator
 
 from app.core.schemas import BaseSchema
@@ -62,8 +63,16 @@ class Availability(BaseSchema):
     @classmethod
     def _link(cls, value: str) -> str:
         value = value.strip()
-        if value != "auto" and not value.startswith("https://"):
+        if value == "auto":
+            return value
+        if not value.startswith("https://"):
             raise ValueError('Use "auto" or a meeting link starting with https://')
+        # A mistyped Meet code only fails on the day, for the applicant.
+        meet = re.fullmatch(r"https://meet\.google\.com/([^/?#]*)(?:[?#].*)?", value)
+        if meet and not re.fullmatch(r"[a-z]{3}-[a-z]{4}-[a-z]{3}", meet.group(1)):
+            raise ValueError(
+                "That Google Meet link looks wrong. It should end like abc-defg-hij."
+            )
         return value
 
 

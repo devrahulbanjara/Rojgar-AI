@@ -19,12 +19,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy import text
 
+from app.modules.interviews.scheduling import jitsi_link
 from app.core.database import engine
 from app.core.destructive_guard import assert_local_target
 
 COMPANY = "F1Soft%"
 CANDIDATE_EMAIL = "aashish.basnet@gmail.com"
-MEET_LINK = "https://meet.google.com/demo-f1soft-int"
 
 # Kathmandu wall-clock times for interviews today and tomorrow.
 TODAY_SLOTS = ["10:30", "15:00"]
@@ -87,7 +87,7 @@ async def refresh() -> None:
                         "reminder_24h_sent_at = NULL, reminder_1h_sent_at = NULL "
                         "WHERE application_id = :a AND status = 'booked'"
                     ),
-                    {**params, "loc": MEET_LINK},
+                    {**params, "loc": jitsi_link()},
                 )
             else:
                 await conn.execute(
@@ -107,7 +107,7 @@ async def refresh() -> None:
                         "iv": interviewer,
                         "n": name,
                         "e": email,
-                        "loc": MEET_LINK,
+                        "loc": jitsi_link(),
                         "ti": f"Interview: {title}",
                     },
                 )
