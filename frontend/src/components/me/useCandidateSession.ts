@@ -37,9 +37,10 @@ function refreshFromCookie(): Promise<string | null> {
 /**
  * Restores the session from the refresh cookie set by a sign-in link.
  * Unlike AuthGuard it never redirects to onboarding: applicants have no profile
- * to complete.
+ * to complete. With `enabled` false it doesn't ask the server (no 401 for visitors
+ * who were never signed in) and reports signed-out.
  */
-export function useCandidateSession(): CandidateSession {
+export function useCandidateSession(enabled = true): CandidateSession {
   const dispatch = useAppDispatch()
   const token = useAppSelector((s) => s.auth.accessToken)
   const [getMe] = useLazyGetMeQuery()
@@ -47,7 +48,7 @@ export function useCandidateSession(): CandidateSession {
 
   useEffect(() => {
     // A token in memory means we are signed in; only try the cookie otherwise.
-    if (token) return
+    if (token || !enabled) return
     let cancelled = false
     refreshFromCookie()
       .then(async (fresh) => {
@@ -66,8 +67,8 @@ export function useCandidateSession(): CandidateSession {
     return () => {
       cancelled = true
     }
-  }, [token, getMe, dispatch])
+  }, [token, enabled, getMe, dispatch])
 
   if (token) return { status: 'signed-in', accessToken: token }
-  return checked ? { status: 'signed-out' } : { status: 'checking' }
+  return checked || !enabled ? { status: 'signed-out' } : { status: 'checking' }
 }

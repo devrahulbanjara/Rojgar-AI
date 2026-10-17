@@ -12,7 +12,8 @@ import { useCandidateSession } from '@/components/me/useCandidateSession'
 /** Sends signed-in users straight to their workspace, but only once the session is confirmed live. */
 export function RedirectSignedIn() {
   const user = useAppSelector((s) => s.auth.user)
-  const session = useCandidateSession()
+  // Only someone remembered as signed in can have a session to confirm.
+  const session = useCandidateSession(!!user)
   const router = useRouter()
 
   useEffect(() => {
