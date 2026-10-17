@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 
 import { getCompanyAccent } from '@/lib/companyAccent'
 import { LOCATION_TYPE_LABELS, formatDate, formatSalary } from '@/lib/jobHelpers'
@@ -153,14 +154,45 @@ function JobCard({ job, onApply }: { job: JobListItem; onApply: (job: JobListIte
 // Main page
 // ---------------------------------------------------------------------------
 
+// Filters live in the URL so "back" from a job, a refresh or a shared link
+// keeps the search. This page renders client-only (behind AuthGuard).
+function readUrlFilters() {
+  const params = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search)
+  const type = params.get('type')
+  return {
+    q: params.get('q') ?? '',
+    location: params.get('location') ?? '',
+    type: (type && type in LOCATION_TYPE_LABELS ? type : 'all') as LocationType | 'all',
+    min: params.get('min') ?? '',
+    max: params.get('max') ?? '',
+  }
+}
+
+function toSearchParams(filters: ReturnType<typeof readUrlFilters>): SearchJobsParams {
+  return {
+    q: filters.q || undefined,
+    location: filters.location || undefined,
+    location_type: filters.type === 'all' ? undefined : filters.type,
+    salary_min: filters.min ? Number(filters.min) : undefined,
+    salary_max: filters.max ? Number(filters.max) : undefined,
+  }
+}
+
 export default function UserJobsPage() {
-  const [searchInput, setSearchInput] = useState('')
-  const [locationInput, setLocationInput] = useState('')
-  const [locationTypeDraft, setLocationTypeDraft] = useState<LocationType | 'all'>('all')
-  const [salaryMinInput, setSalaryMinInput] = useState('')
-  const [salaryMaxInput, setSalaryMaxInput] = useState('')
+  const router = useRouter()
+  const pathname = usePathname()
+  const [initialFilters] = useState(readUrlFilters)
+  const [searchInput, setSearchInput] = useState(initialFilters.q)
+  const [locationInput, setLocationInput] = useState(initialFilters.location)
+  const [locationTypeDraft, setLocationTypeDraft] = useState<LocationType | 'all'>(
+    initialFilters.type,
+  )
+  const [salaryMinInput, setSalaryMinInput] = useState(initialFilters.min)
+  const [salaryMaxInput, setSalaryMaxInput] = useState(initialFilters.max)
   const [applyingToJob, setApplyingToJob] = useState<JobListItem | null>(null)
-  const [appliedParams, setAppliedParams] = useState<SearchJobsParams>({})
+  const [appliedParams, setAppliedParams] = useState<SearchJobsParams>(() =>
+    toSearchParams(initialFilters),
+  )
 
   const {
     data: jobsResp,
@@ -171,7 +203,8 @@ export default function UserJobsPage() {
   } = useSearchJobsQuery(appliedParams)
   const { items: jobs = [], pagination } = jobsResp?.data ?? {}
 
-  function handleSearch() {
+  function handleSearch(overrides: { type?: LocationType | 'all' } = {}) {
+    const type = overrides.type ?? locationTypeDraft
     if (salaryMinInput && Number(salaryMinInput) < 0) {
       notify.error('Minimum salary cannot be negative.')
       return
@@ -184,13 +217,18 @@ export default function UserJobsPage() {
       notify.error('Maximum salary must be greater than or equal to minimum.')
       return
     }
-    setAppliedParams({
-      q: searchInput || undefined,
-      location: locationInput || undefined,
-      location_type: locationTypeDraft === 'all' ? undefined : locationTypeDraft,
-      salary_min: salaryMinInput ? Number(salaryMinInput) : undefined,
-      salary_max: salaryMaxInput ? Number(salaryMaxInput) : undefined,
-    })
+    const filters = {
+      q: searchInput.trim(),
+      location: locationInput.trim(),
+      type,
+      min: salaryMinInput,
+      max: salaryMaxInput,
+    }
+    setAppliedParams(toSearchParams(filters))
+    const query = new URLSearchParams(
+      Object.entries(filters).filter(([, value]) => value && value !== 'all') as [string, string][],
+    ).toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
   }
 
   return (
@@ -199,9 +237,6 @@ export default function UserJobsPage() {
         <div className="dash-page-header">
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Find Jobs</h2>
-            <p className="dash-page-header__subtitle">
-              Discover active roles, refine the search, and preview details before you apply.
-            </p>
           </div>
           <div className="dash-page-header__actions">
             <span className="page-header-hint">
@@ -217,12 +252,15 @@ export default function UserJobsPage() {
             value={searchInput}
             onChange={(next) => setSearchInput(next)}
             placeholder="Search jobs by title"
-            onEnter={handleSearch}
+            onEnter={() => handleSearch()}
           />
           <div className={styles.filterGroup}>
             <FilterSelect<LocationType | 'all'>
               value={locationTypeDraft}
-              onChange={(next) => setLocationTypeDraft(next)}
+              onChange={(next) => {
+                setLocationTypeDraft(next)
+                handleSearch({ type: next })
+              }}
               options={WORK_TYPE_OPTIONS}
               ariaLabel="Filter by work type"
             />
@@ -279,14 +317,14 @@ export default function UserJobsPage() {
           <button
             type="button"
             className={`btn btn--primary ${isFetching ? 'btn--loading' : ''}`}
-            onClick={handleSearch}
+            onClick={() => handleSearch()}
             disabled={isFetching}
           >
             Search
           </button>
         </Toolbar>
 
-        {isLoading || isFetching ? (
+        {isLoading ? (
           <div className={styles.skeleton}>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className={styles.skeletonCard} />
