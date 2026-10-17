@@ -50,7 +50,12 @@ async def test_free_plan_first_job_free_then_one_active_job(client, db):
     def post(status):
         return client.post(
             "/jobs/",
-            json={"title": "Dev", "location_type": "remote", "status": status, "description": "x"},
+            json={
+                "title": "Dev",
+                "location_type": "remote",
+                "status": status,
+                "description": "x",
+            },
             headers=headers,
         )
 

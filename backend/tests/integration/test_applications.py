@@ -112,7 +112,9 @@ class TestListApplications:
         )
 
         assert resp.status_code == 200
-        assert [row["applicant_email"] for row in resp.json()["data"]] == ["cand_rlist@test.com"]
+        assert [row["applicant_email"] for row in resp.json()["data"]] == [
+            "cand_rlist@test.com"
+        ]
 
     async def test_business_members_are_people_too(self, client, db):
         admin, _ = await make_recruiter_admin(db, email="admin_block@test.com")
