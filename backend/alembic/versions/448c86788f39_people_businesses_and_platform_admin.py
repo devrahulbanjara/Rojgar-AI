@@ -20,6 +20,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "448c86788f39"
 down_revision: Union[str, None] = "b0acfd8bc7d7"
@@ -171,7 +172,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "role",
-            sa.Enum(name="membershiprole", create_type=False),
+            postgresql.ENUM(name="membershiprole", create_type=False),
             nullable=False,
         ),
         sa.Column("token_hash", sa.String(64), nullable=False, unique=True),

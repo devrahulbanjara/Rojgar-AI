@@ -256,15 +256,13 @@ async def _invalidate_public_job_pages(db: AsyncSession, company_id: uuid.UUID) 
         await invalidate_job_detail_caches(str(job_id))
 
 
-async def suspend(db: AsyncSession, business_id: str, reason: str) -> None:
+async def suspend(db: AsyncSession, business_id: str, admin: User, reason: str) -> None:
     company = await _business(db, business_id)
     _require_status(company, BusinessStatus.active, BusinessStatus.pending)
     company.status = BusinessStatus.suspended
     company.status_reason = reason
-    await db.execute(
-        update(JobReport)
-        .where(JobReport.company_id == company.id, JobReport.resolved_at.is_(None))
-        .values(resolved_at=_now(), resolution="business_suspended")
+    await _resolve_reports(
+        db, admin, "business_suspended", JobReport.company_id == company.id
     )
     await _audit(
         db,
@@ -358,20 +356,22 @@ async def list_flagged_jobs(
 
 
 async def _resolve_reports(
-    db: AsyncSession, job_id: uuid.UUID, resolution: str
+    db: AsyncSession, admin: User, resolution: str, *conditions
 ) -> None:
     await db.execute(
         update(JobReport)
-        .where(JobReport.job_id == job_id, JobReport.resolved_at.is_(None))
-        .values(resolved_at=_now(), resolution=resolution)
+        .where(JobReport.resolved_at.is_(None), *conditions)
+        .values(resolved_at=_now(), resolution=resolution, resolved_by_user_id=admin.id)
     )
 
 
-async def unpublish_job(db: AsyncSession, job_id: str, reason: str | None) -> None:
+async def unpublish_job(
+    db: AsyncSession, job_id: str, admin: User, reason: str | None
+) -> None:
     job, company = await _job_with_company(db, job_id)
     if await db.get(JobTakedown, job.id) is None:
-        db.add(JobTakedown(job_id=job.id, reason=reason))
-    await _resolve_reports(db, job.id, "unpublished")
+        db.add(JobTakedown(job_id=job.id, reason=reason, created_by_user_id=admin.id))
+    await _resolve_reports(db, admin, "unpublished", JobReport.job_id == job.id)
     await _audit(
         db,
         action="job_unpublished",
@@ -400,9 +400,9 @@ async def restore_job(db: AsyncSession, job_id: str) -> None:
     await invalidate_job_detail_caches(str(job.id))
 
 
-async def dismiss_reports(db: AsyncSession, job_id: str) -> None:
+async def dismiss_reports(db: AsyncSession, job_id: str, admin: User) -> None:
     job, company = await _job_with_company(db, job_id)
-    await _resolve_reports(db, job.id, "dismissed")
+    await _resolve_reports(db, admin, "dismissed", JobReport.job_id == job.id)
     await _audit(
         db,
         action="job_reports_dismissed",

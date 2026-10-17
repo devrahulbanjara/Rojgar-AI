@@ -38,7 +38,7 @@ _PAN = re.compile(r"^\d{9}$")
 
 
 def _bad(detail: str) -> HTTPException:
-    return HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+    return HTTPException(status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
 def _clean_pan(value: str | None) -> str | None:

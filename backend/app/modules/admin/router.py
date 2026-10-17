@@ -79,9 +79,9 @@ async def businesses(
     summary="Suspend a business; its public pages stop showing",
 )
 async def suspend(
-    business_id: UUIDPath, payload: ReasonRequest, _: PlatformAdmin, db: DbSession
+    business_id: UUIDPath, payload: ReasonRequest, user: PlatformAdmin, db: DbSession
 ) -> UnifiedResponse[None]:
-    await service.suspend(db, business_id, payload.reason)
+    await service.suspend(db, business_id, user, payload.reason)
     return ResponseBuilder.success(message="Suspended.")
 
 
@@ -106,9 +106,9 @@ async def reports(
 
 @admin.post("/jobs/{job_id}/unpublish", summary="Hide a job from the public")
 async def unpublish_job(
-    job_id: UUIDPath, payload: OptionalReasonRequest, _: PlatformAdmin, db: DbSession
+    job_id: UUIDPath, payload: OptionalReasonRequest, user: PlatformAdmin, db: DbSession
 ) -> UnifiedResponse[None]:
-    await service.unpublish_job(db, job_id, payload.reason)
+    await service.unpublish_job(db, job_id, user, payload.reason)
     return ResponseBuilder.success(message="Unpublished.")
 
 
@@ -122,9 +122,9 @@ async def restore_job(
 
 @admin.post("/jobs/{job_id}/dismiss", summary="Close the reports on a job, no action")
 async def dismiss(
-    job_id: UUIDPath, _: PlatformAdmin, db: DbSession
+    job_id: UUIDPath, user: PlatformAdmin, db: DbSession
 ) -> UnifiedResponse[None]:
-    await service.dismiss_reports(db, job_id)
+    await service.dismiss_reports(db, job_id, user)
     return ResponseBuilder.success(message="Dismissed.")
 
 
