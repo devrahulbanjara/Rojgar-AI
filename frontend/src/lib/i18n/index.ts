@@ -51,30 +51,33 @@ function neTime(date: Date): string {
   return `${part} ${neDigits(h % 12 || 12)}:${neDigits(minutes)}`
 }
 
-/** "17 Oct 2026" · "१७ अक्टोबर २०२६" */
+/** "17 Oct" this year, else "17 Oct 2025" · "१७ अक्टोबर" */
 export function formatDate(iso: string, locale: Locale): string {
   const date = new Date(iso)
+  const thisYear = date.getFullYear() === new Date().getFullYear()
   if (locale === 'ne') {
-    return `${neDigits(date.getDate())} ${NE_MONTHS[date.getMonth()]} ${neDigits(date.getFullYear())}`
+    const day = `${neDigits(date.getDate())} ${NE_MONTHS[date.getMonth()]}`
+    return thisYear ? day : `${day} ${neDigits(date.getFullYear())}`
   }
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
-    year: 'numeric',
+    year: thisYear ? undefined : 'numeric',
   }).format(date)
 }
 
-/** "Sun 18 Oct, 11:00" · "आइत १८ अक्टोबर, बिहान ११:००" */
+/** "Sun 18 Oct, 8:45 PM" · "आइत १८ अक्टोबर, बेलुका ८:४५" */
 export function formatDateTime(iso: string, locale: Locale): string {
   const date = new Date(iso)
   if (locale === 'ne') {
     return `${NE_DAYS[date.getDay()]} ${neDigits(date.getDate())} ${NE_MONTHS[date.getMonth()]}, ${neTime(date)}`
   }
-  return new Intl.DateTimeFormat('en-GB', {
+  const day = new Intl.DateTimeFormat('en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
   }).format(date)
+  const h = date.getHours()
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${day}, ${h % 12 || 12}:${minutes} ${h < 12 ? 'AM' : 'PM'}`
 }

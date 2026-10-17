@@ -11,7 +11,6 @@ export const en = {
     startHiring: 'Start hiring',
     openApp: `Open ${BRAND.name}`,
     menu: 'Open menu',
-    myApplications: 'My applications',
     signOut: 'Sign out',
     account: 'Account',
     language: 'Language',

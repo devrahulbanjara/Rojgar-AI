@@ -13,7 +13,6 @@ export const ne: Dict = {
     startHiring: 'भर्ना सुरु गर्नुहोस्',
     openApp: `${BRAND.name} खोल्नुहोस्`,
     menu: 'मेनु खोल्नुहोस्',
-    myApplications: 'मेरा आवेदनहरू',
     signOut: 'साइन आउट',
     account: 'खाता',
     language: 'भाषा',

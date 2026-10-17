@@ -11,9 +11,11 @@ import { type MyApplication, publicApi } from '@/lib/publicApi'
 
 import { EmptyState } from '@/components/app/EmptyState'
 import { EntityAvatar } from '@/components/app/EntityAvatar'
+import { CalendarIcon } from '@/components/icons'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import {
+  AddToCalendar,
   StagePill,
   isClosedStage,
   isUpcoming,
@@ -97,38 +99,47 @@ export function MyApplications() {
   )
 }
 
+/** "Hotel Thamel Park" → "Hotel"; legal words like "Pvt. Ltd." never become initials. */
+const avatarName = (company: string) => company.split(/\s+/)[0] ?? company
+
 function ApplicationRow({ app }: { app: MyApplication }) {
   const t = useT()
   const locale = useLocale()
-  const interviewSoon = app.stage === 'interview' && isUpcoming(app.interview)
-  const next = interviewSoon
-    ? `${t.status.interview} · ${formatDateTime(app.interview!.starts_at, locale)}`
-    : nextStepLine(t, app.stage, app.interview)
+  const interview = app.stage === 'interview' && isUpcoming(app.interview) ? app.interview! : null
 
   return (
-    <li>
-      <Link
-        href={`/applications/status?token=${encodeURIComponent(app.status_token)}`}
-        className="flex items-start gap-3 px-4 py-4 transition-colors hover:bg-accent sm:px-5"
-      >
-        <EntityAvatar name={app.company_name} src={app.company_logo_url} kind="company" />
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <p className="line-clamp-2 font-semibold text-foreground">{app.job_title}</p>
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <StagePill stage={app.stage} />
-            <span className="min-w-0 truncate text-sm text-muted-foreground">
-              {app.company_name} · {formatDate(app.updated_at, locale)}
-            </span>
-          </div>
-          <p
-            className={
-              interviewSoon ? 'text-sm font-medium text-foreground' : 'text-sm text-foreground'
-            }
-          >
-            {next}
-          </p>
+    <li className="relative flex items-start gap-3 px-4 py-4 transition-colors hover:bg-accent sm:px-5">
+      <EntityAvatar name={avatarName(app.company_name)} src={app.company_logo_url} kind="company" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <Link
+          href={`/applications/status?token=${encodeURIComponent(app.status_token)}`}
+          className="line-clamp-2 font-semibold text-foreground after:absolute after:inset-0"
+        >
+          {app.job_title}
+        </Link>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <StagePill stage={app.stage} />
+          <span className="min-w-0 truncate text-sm text-muted-foreground">
+            {app.company_name} · {t.status.applied(formatDate(app.applied_at, locale))}
+          </span>
         </div>
-      </Link>
+        {interview ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <CalendarIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              {t.status.interview} · {formatDateTime(interview.starts_at, locale)}
+            </p>
+            <AddToCalendar
+              size="md"
+              title={`${app.job_title} · ${app.company_name}`}
+              interview={interview}
+              className="relative z-10"
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-foreground">{nextStepLine(t, app.stage, app.interview)}</p>
+        )}
+      </div>
     </li>
   )
 }

@@ -73,11 +73,39 @@ function calendarHref(title: string, interview: InterviewInfo): { href: string; 
   return { href: `https://calendar.google.com/calendar/render?${params}` }
 }
 
+/** "Add to calendar": an .ics file on Apple devices, Google Calendar elsewhere. */
+export function AddToCalendar({
+  title,
+  interview,
+  size = 'lg',
+  className,
+}: {
+  title: string
+  interview: InterviewInfo
+  size?: 'md' | 'lg'
+  className?: string
+}) {
+  const t = useT()
+  const calendar = calendarHref(title, interview)
+  return (
+    <Button asChild size={size} variant="outline" className={className}>
+      <a
+        href={calendar.href}
+        download={calendar.download}
+        target={calendar.download ? undefined : '_blank'}
+        rel="noopener noreferrer"
+      >
+        <CalendarIcon />
+        {t.status.addToCalendar}
+      </a>
+    </Button>
+  )
+}
+
 /** Interview time, Join (video link) and Add to calendar. */
 export function InterviewBlock({ title, interview }: { title: string; interview: InterviewInfo }) {
   const t = useT()
   const locale = useLocale()
-  const calendar = calendarHref(title, interview)
   const place = interview.join_url ? null : interview.location
   return (
     <div className="flex flex-col gap-3 rounded-xl border bg-background p-4">
@@ -97,17 +125,7 @@ export function InterviewBlock({ title, interview }: { title: string; interview:
             </a>
           </Button>
         ) : null}
-        <Button asChild size="lg" variant="outline" className="sm:flex-1">
-          <a
-            href={calendar.href}
-            download={calendar.download}
-            target={calendar.download ? undefined : '_blank'}
-            rel="noopener noreferrer"
-          >
-            <CalendarIcon />
-            {t.status.addToCalendar}
-          </a>
-        </Button>
+        <AddToCalendar title={title} interview={interview} className="sm:flex-1" />
       </div>
     </div>
   )
