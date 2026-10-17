@@ -17,19 +17,11 @@
 
 // ── 4. Components ────────────────────────────────────────────
 @use 'buttons';
-@use 'components/header';
-@use 'components/footer';
-@use 'components/explore-categories';
 @use 'components/cookie-banner';
-@use 'components/why-prefer-us';
 @use 'components/loader';
-@use 'components/faq';
-@use 'components/pricing';
-@use 'components/featured-jobs';
 @use 'components/connection-status';
 
 // ── 5. Pages ─────────────────────────────────────────────────
-@use 'pages/homepage';
 @use 'pages/public-jobs';
 @use 'pages/legal';
 @use 'pages/auth';
@@ -79,7 +71,6 @@ body {
 
 .page {
   min-height: 100vh;
-  padding-top: $space-24; // offset for fixed header (top: 20px + height: 68px = 88px)
 }
 
 // Selection
