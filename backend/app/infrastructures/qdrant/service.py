@@ -1,3 +1,5 @@
+import asyncio
+import threading
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -40,6 +42,7 @@ class QdrantService:
             api_key=settings.qdrant_api_key,
         )
         self._sparse_embedder: Any | None = None
+        self._sparse_embedder_lock = threading.Lock()
 
     def _get_sparse_embedder(self) -> Any:
         """Lazily build the BM25 sparse embedder used for candidate hybrid search.
@@ -48,12 +51,13 @@ class QdrantService:
         Initialising at import time would slow boot and surprise the test suite
         when no model directory exists yet.
         """
-        if self._sparse_embedder is None:
-            from fastembed import SparseTextEmbedding
+        with self._sparse_embedder_lock:
+            if self._sparse_embedder is None:
+                from fastembed import SparseTextEmbedding
 
-            self._sparse_embedder = SparseTextEmbedding(
-                model_name=settings.candidate_sparse_model
-            )
+                self._sparse_embedder = SparseTextEmbedding(
+                    model_name=settings.candidate_sparse_model
+                )
         return self._sparse_embedder
 
     def _build_sparse_vector(self, text: str) -> models.SparseVector:
@@ -70,8 +74,22 @@ class QdrantService:
             values=embedding.values.tolist(),
         )
 
+    async def _abuild_sparse_vector(self, text: str) -> models.SparseVector:
+        """Non-blocking BM25 vector: fastembed is CPU-bound and synchronous."""
+        return await asyncio.to_thread(self._build_sparse_vector, text)
+
     async def initialize(self) -> None:
         """Robust initialization: create collections and payload indexes."""
+        if (
+            settings.recruiter_chat_hybrid_search_enabled
+            or settings.jobs_hybrid_search_enabled
+        ):
+            try:
+                # Load (and on first boot download) the BM25 model off the event
+                # loop so the first search request doesn't stall the server.
+                await asyncio.to_thread(self._get_sparse_embedder)
+            except Exception as exc:
+                logger.error("Sparse embedder preload failed: {}", exc)
         try:
             await self._ensure_job_collection()
             await self._ensure_candidate_collection()
@@ -314,7 +332,6 @@ class QdrantService:
     def _build_application_document(self, application, job) -> str:
         """Serialise an application and its resume into searchable plain text."""
         resume = application.resume
-        user = application.user
         resume_experiences = []
         if resume is not None:
             resume_experiences = [
@@ -337,9 +354,10 @@ class QdrantService:
                 skill.skill_name for skill in (resume.skills or []) if skill.skill_name
             ]
 
+        # Name and email are deliberately not embedded: they would be sent to
+        # the embedding provider and let identity (gender/ethnicity-coded
+        # names) influence semantic similarity. Filter on payload fields instead.
         parts = [
-            f"CANDIDATE: {user.full_name}",
-            f"EMAIL: {user.email}",
             f"JOB TITLE: {job.title}",
             f"APPLICATION STATUS: {application.status.value}",
             f"SCORE: {application.score if application.score is not None else 'unknown'}",
@@ -396,7 +414,7 @@ class QdrantService:
             }
 
             if settings.jobs_hybrid_search_enabled:
-                sparse_vector = self._build_sparse_vector(text_content)
+                sparse_vector = await self._abuild_sparse_vector(text_content)
                 vector_payload: dict[str, Any] = {
                     DENSE_VECTOR_NAME: dense_vector,
                     SPARSE_VECTOR_NAME: sparse_vector,
@@ -453,7 +471,7 @@ class QdrantService:
             }
 
             if settings.recruiter_chat_hybrid_search_enabled:
-                sparse_vector = self._build_sparse_vector(text_content)
+                sparse_vector = await self._abuild_sparse_vector(text_content)
                 vector_payload: dict[str, Any] = {
                     CANDIDATE_DENSE_NAME: dense_vector,
                     CANDIDATE_SPARSE_NAME: sparse_vector,
@@ -638,7 +656,7 @@ class QdrantService:
     ) -> tuple[list[dict], int]:
         """Dense + BM25 prefetch fused via RRF, with strict→fallback escalation."""
         dense_vector = await ai_service.get_embeddings(query)
-        sparse_vector = self._build_sparse_vector(query)
+        sparse_vector = await self._abuild_sparse_vector(query)
 
         strict_response = await self.client.query_points(
             collection_name=self.collection_name,
@@ -837,20 +855,11 @@ class QdrantService:
     ) -> list[dict]:
         """Dense + BM25 prefetch fused server-side via Reciprocal Rank Fusion.
 
-        Tags each hit with `relevance: "high" | "low"` based on a two-pass
-        threshold:
-          1. Hard cut-off (`recruiter_chat_hard_min_score`) — anything below
-             is dropped entirely and never sent to the frontend.
-          2. Absolute floor (`recruiter_chat_hybrid_min_score`) — anything
-             below (but above the hard cut-off) is treated as low-relevance.
-          3. Relative floor (`top_score * recruiter_chat_hybrid_relative_floor`)
-             — keeps the front-of-list cluster as "high", everything past the
-             gap as "low".
-        Frontend renders `high` by default and reveals `low` behind a
-        "Show more" toggle.
+        RRF decides the order; relevance tagging uses dense cosine similarity
+        (see `_tag_relevance`).
         """
         dense_vector = await ai_service.get_embeddings(query)
-        sparse_vector = self._build_sparse_vector(query)
+        sparse_vector = await self._abuild_sparse_vector(query)
         prefetch_limit = settings.candidate_hybrid_prefetch_limit
         # Pull `prefetch_limit` so the relevance filter has a healthy candidate
         # pool to truncate, even though the caller only wants `limit` final hits.
@@ -876,25 +885,52 @@ class QdrantService:
             limit=fused_limit,
             with_payload=False,
         )
-        all_hits = [
-            {"application_id": uuid.UUID(str(hit.id)), "score": hit.score}
-            for hit in response.points
-        ]
-        if not all_hits:
+        fused_ids = [str(hit.id) for hit in response.points]
+        if not fused_ids:
             return []
 
-        # Hard cut-off: drop anything below the absolute floor so the frontend
-        # never has to render completely irrelevant matches.
+        # RRF scores depend only on rank, so thresholds on them cannot tell a
+        # relevant hit from an irrelevant one (the top hit is always "high").
+        # Re-score the fused candidates by dense cosine similarity and apply the
+        # relevance thresholds to that real similarity signal instead.
+        cosine_response = await self.client.query_points(
+            collection_name=self.candidate_collection_name,
+            query=dense_vector,
+            using=CANDIDATE_DENSE_NAME,
+            query_filter=models.Filter(must=[models.HasIdCondition(has_id=fused_ids)]),
+            limit=len(fused_ids),
+            with_payload=False,
+        )
+        cosine_by_id = {str(hit.id): hit.score for hit in cosine_response.points}
+        all_hits = [
+            {
+                "application_id": uuid.UUID(point_id),
+                "score": cosine_by_id.get(point_id, 0.0),
+            }
+            for point_id in fused_ids  # keep the fused (RRF) ordering
+        ]
+
+        return self._tag_relevance(all_hits, limit)
+
+    @staticmethod
+    def _tag_relevance(all_hits: list[dict], limit: int) -> list[dict]:
+        """Drop irrelevant hits and tag the rest high/low by cosine similarity.
+
+        1. Hard cut-off (`recruiter_chat_hard_min_score`): dropped entirely.
+        2. Absolute floor (`recruiter_chat_hybrid_min_score`) and relative floor
+           (`best * recruiter_chat_hybrid_relative_floor`): below either is "low".
+        The frontend shows `high` by default and `low` behind "Show more".
+        """
         hard_floor = settings.recruiter_chat_hard_min_score
         all_hits = [h for h in all_hits if h["score"] >= hard_floor]
         if not all_hits:
             return []
 
-        absolute_floor = settings.recruiter_chat_hybrid_min_score
-        relative_floor = (
-            all_hits[0]["score"] * settings.recruiter_chat_hybrid_relative_floor
+        best = max(h["score"] for h in all_hits)
+        threshold = max(
+            settings.recruiter_chat_hybrid_min_score,
+            best * settings.recruiter_chat_hybrid_relative_floor,
         )
-        threshold = max(absolute_floor, relative_floor)
         for hit in all_hits:
             hit["relevance"] = "high" if hit["score"] >= threshold else "low"
         return all_hits[:limit]

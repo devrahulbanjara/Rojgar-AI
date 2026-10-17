@@ -593,13 +593,12 @@ export default function CompanyJobsPage() {
             </p>
           </div>
           <div className="dash-page-header__actions">
-            <Link href="/recruiter/jobs/new" className="btn btn--secondary btn--sm">
-              <Plus size={14} aria-hidden="true" />
-              AI Draft Job
+            <Link href="/recruiter/jobs/manual" className="btn btn--secondary btn--sm">
+              Write it myself
             </Link>
-            <Link href="/recruiter/jobs/manual" className="btn btn--primary btn--sm">
+            <Link href="/recruiter/jobs/new" className="btn btn--primary btn--sm">
               <Plus size={14} aria-hidden="true" />
-              Post Manually
+              Post a job
             </Link>
           </div>
         </div>
@@ -659,9 +658,9 @@ export default function CompanyJobsPage() {
                 : `You have no ${getJobDisplayStatusLabel(activeFilter).toLowerCase()} job postings.`}
             </p>
             {activeFilter === 'all' ? (
-              <Link href="/recruiter/jobs/manual" className="btn btn--primary btn--sm">
+              <Link href="/recruiter/jobs/new" className="btn btn--primary btn--sm">
                 <Plus size={14} aria-hidden="true" />
-                Create Job
+                Post a job
               </Link>
             ) : null}
           </div>

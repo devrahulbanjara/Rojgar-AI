@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -23,6 +23,13 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState<string | undefined>()
   const [sent, setSent] = useState(false)
+
+  // Carry over the email typed on the login page so it is not typed twice.
+  useEffect(() => {
+    const prefill = new URLSearchParams(window.location.search).get('email')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (prefill) setEmail(prefill)
+  }, [])
 
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation()
 
@@ -54,7 +61,7 @@ export default function ForgotPasswordPage() {
     <main className="auth">
       {/* Background decorations */}
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={700}
         height={700}
@@ -63,7 +70,7 @@ export default function ForgotPasswordPage() {
         priority={false}
       />
       <Image
-        src="/bg/bg-ui-v5.svg"
+        src="/bg/bg-ui-v5.webp"
         alt=""
         width={650}
         height={650}

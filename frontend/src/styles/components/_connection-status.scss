@@ -6,7 +6,8 @@
 
 .conn-status {
   position: fixed;
-  right: 1.5rem;
+  // Bottom-left so it never covers the cookie banner (bottom-right).
+  left: 1.5rem;
   bottom: 1.5rem;
   z-index: $z-tooltip + 100;
   display: flex;

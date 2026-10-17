@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ComponentPropsWithoutRef, FormEvent, KeyboardEvent, UIEvent, WheelEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useStore } from 'react-redux'
 
 import Image from 'next/image'
 
@@ -23,7 +24,10 @@ import type {
   SalaryResearchResult,
   SourceItem,
 } from '@/lib/types/recruiterChat'
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import type { RootState } from '@/store'
+import { useAppDispatch } from '@/store/hooks'
+import { useRefreshMutation } from '@/store/services/authApi'
+import { updateAccessToken } from '@/store/slices/authSlice'
 import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '@/store/slices/uiSlice'
 import { ArrowUp, Check, Copy, Pencil, RotateCcw, Square } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
@@ -103,6 +107,10 @@ function MarkdownMessage({ content, footer }: { content: string; footer?: React.
     <div className="recruiter-chat-markdown-container">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        // LLM output may echo attacker-controlled text; never load remote images
+        // (tracking pixels / data exfiltration via image URLs).
+        disallowedElements={['img']}
+        unwrapDisallowed
         components={{
           a: ({ children, ...props }: ComponentPropsWithoutRef<'a'>) => (
             <a
@@ -391,7 +399,35 @@ function renderAssistantCard(
 
 export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentProps) {
   const dispatch = useAppDispatch()
-  const accessToken = useAppSelector((state) => state.auth.accessToken)
+  const store = useStore<RootState>()
+  const [refreshSession] = useRefreshMutation()
+
+  // fetch with the freshest in-memory token; on 401 refresh once and retry.
+  const authedFetch = useCallback(
+    async (url: string, init: RequestInit = {}) => {
+      const send = (token: string | null) =>
+        fetch(url, {
+          ...init,
+          credentials: 'include',
+          headers: {
+            ...((init.headers as Record<string, string> | undefined) ?? {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        })
+      const response = await send(store.getState().auth.accessToken)
+      if (response.status !== 401) return response
+      try {
+        const refreshed = await refreshSession().unwrap()
+        const token = refreshed.data?.access_token
+        if (!token) return response
+        dispatch(updateAccessToken(token))
+        return send(token)
+      } catch {
+        return response
+      }
+    },
+    [dispatch, refreshSession, store],
+  )
   const [history, setHistory] = useState<ChatHistoryMessage[]>([])
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [draftMessage, setDraftMessage] = useState('')
@@ -429,6 +465,12 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
     })
   }, [history, isAutoScrollEnabled, isSending, isThinking, pendingAction, streamingAssistantText])
 
+  // Abort an in-flight stream when switching sessions or unmounting, so the
+  // backend stops generating (and billing) for a reply nobody will see.
+  useEffect(() => {
+    return () => abortControllerRef.current?.abort()
+  }, [session.id])
+
   useEffect(() => {
     setIsAutoScrollEnabled(true)
     setStreamError(null)
@@ -448,10 +490,8 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       setIsLoadingHistory(true)
 
       try {
-        const response = await fetch(`/api/recruiter-chat/sessions/${session.id}/history`, {
+        const response = await authedFetch(`/api/recruiter-chat/sessions/${session.id}/history`, {
           method: 'GET',
-          credentials: 'include',
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
           signal: controller.signal,
         })
 
@@ -489,7 +529,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       cancelled = true
       controller.abort()
     }
-  }, [accessToken, dispatch, session.id])
+  }, [authedFetch, dispatch, session.id])
 
   const applyExchange = (payload: ChatExchangeApiResponse) => {
     const nextHistory = payload.data?.history ?? []
@@ -599,16 +639,15 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
     }
 
     try {
-      const response = await fetch(`/api/recruiter-chat/sessions/${session.id}/messages/stream`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      const response = await authedFetch(
+        `/api/recruiter-chat/sessions/${session.id}/messages/stream`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, client_message_id: clientMessageId }),
+          signal: abortControllerRef.current.signal,
         },
-        body: JSON.stringify({ message, client_message_id: clientMessageId }),
-        signal: abortControllerRef.current.signal,
-      })
+      )
 
       if (!response.ok || !response.body) {
         if (handleRateLimitedResponse(response)) {
@@ -817,15 +856,11 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       setHistory((currentHistory) => [...currentHistory, echoedSelection])
     }
     try {
-      const response = await fetch(
+      const response = await authedFetch(
         `/api/recruiter-chat/sessions/${session.id}/confirm-job-selection`,
         {
           method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ job_id: jobId }),
         },
       )
@@ -864,15 +899,14 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
   const handleConfirmJobEdit = async (approve: boolean) => {
     setIsSending(true)
     try {
-      const response = await fetch(`/api/recruiter-chat/sessions/${session.id}/confirm-job-edit`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      const response = await authedFetch(
+        `/api/recruiter-chat/sessions/${session.id}/confirm-job-edit`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approve }),
         },
-        body: JSON.stringify({ approve }),
-      })
+      )
       if (handleRateLimitedResponse(response)) {
         return
       }

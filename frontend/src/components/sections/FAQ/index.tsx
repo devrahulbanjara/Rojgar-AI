@@ -75,7 +75,7 @@ export default function FAQ() {
     <section className="faq" id="faq">
       {/* Decorative bg */}
       <Image
-        src="/bg/bg-ui-v4.svg"
+        src="/bg/bg-ui-v4.webp"
         alt=""
         width={520}
         height={520}

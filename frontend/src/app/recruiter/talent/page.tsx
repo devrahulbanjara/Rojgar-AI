@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
+  useLazySemanticSearchCandidatesQuery,
 } from '@/store/services/applicationsApi'
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
 import { ChevronRight, UserRound } from 'lucide-react'
@@ -87,9 +88,36 @@ export default function RecruiterTalentPage() {
   const jobs = jobsResp?.data ?? []
   const candidates = useMemo(() => resp?.data ?? [], [resp?.data])
 
+  // Multi-word searches ("react developer with payments experience") run a
+  // semantic search on Enter; single words keep the instant name/email filter.
+  const [triggerSemanticSearch, semanticResult] = useLazySemanticSearchCandidatesQuery()
+  const [semanticQuery, setSemanticQuery] = useState<string | null>(null)
+  const runSemanticSearch = () => {
+    const query = searchTerm.trim()
+    if (query.split(/\s+/).length < 2) return
+    setSemanticQuery(query)
+    void triggerSemanticSearch({ q: query, size: 50 })
+  }
+  const semanticOrder = useMemo(() => {
+    if (!semanticQuery || semanticQuery !== searchTerm.trim() || !semanticResult.data) return null
+    const order = new Map<string, number>()
+    semanticResult.data.data.candidates.forEach((result, index) => {
+      if (!order.has(result.candidate_id)) order.set(result.candidate_id, index)
+    })
+    return order
+  }, [searchTerm, semanticQuery, semanticResult.data])
+
   const filteredCandidates = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
-    return candidates.filter((candidate) => {
+    const pool = semanticOrder
+      ? candidates
+          .filter((candidate) => semanticOrder.has(candidate.candidate_id))
+          .sort(
+            (a, b) =>
+              (semanticOrder.get(a.candidate_id) ?? 0) - (semanticOrder.get(b.candidate_id) ?? 0),
+          )
+      : candidates
+    return pool.filter((candidate) => {
       if (
         selectedJobId !== 'all' &&
         !candidate.applications.some((application) => application.job_id === selectedJobId)
@@ -102,7 +130,7 @@ export default function RecruiterTalentPage() {
       ) {
         return false
       }
-      if (!normalizedSearch) return true
+      if (!normalizedSearch || semanticOrder) return true
       return [
         candidate.applicant_name,
         candidate.applicant_email,
@@ -110,17 +138,13 @@ export default function RecruiterTalentPage() {
         ...candidate.applications.map((application) => application.job_title),
       ].some((value) => value.toLowerCase().includes(normalizedSearch))
     })
-  }, [candidates, searchTerm, selectedJobId, selectedStatus])
+  }, [candidates, searchTerm, selectedJobId, selectedStatus, semanticOrder])
 
   return (
     <div className={`dash-content container container--app-shell ${styles.page}`}>
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Talent</h2>
-          <p className="dash-page-header__subtitle">
-            Cross-job library of everyone who applied to your company. Click any card to open the
-            full drawer.
-          </p>
         </div>
       </div>
 
@@ -128,7 +152,8 @@ export default function RecruiterTalentPage() {
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Search by name, email, or role"
+          onEnter={runSemanticSearch}
+          placeholder="Search by name, or describe who you need"
         />
         <FilterSelect
           value={selectedJobId}
@@ -146,7 +171,9 @@ export default function RecruiterTalentPage() {
           options={STATUS_OPTIONS}
         />
         <ToolbarCount>
-          {filteredCandidates.length} candidate{filteredCandidates.length === 1 ? '' : 's'} found
+          {semanticResult.isFetching
+            ? 'Searching…'
+            : `${filteredCandidates.length} candidate${filteredCandidates.length === 1 ? '' : 's'} found`}
         </ToolbarCount>
       </Toolbar>
 

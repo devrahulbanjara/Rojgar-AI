@@ -75,8 +75,9 @@ class TestLogin:
             json={"email": user.email, "password": TEST_PASSWORD},
         )
         assert resp.status_code == 403
+        assert resp.json()["errors"][0]["code"] == "email_not_verified"
 
-    async def test_deleted_account_401(self, client, db):
+    async def test_deleted_account_403(self, client, db):
         from datetime import datetime, timezone
 
         user = await make_candidate(db, email="deleted@example.com")
@@ -88,7 +89,8 @@ class TestLogin:
             "/auth/login",
             json={"email": user.email, "password": TEST_PASSWORD},
         )
-        assert resp.status_code == 401
+        assert resp.status_code == 403
+        assert resp.json()["errors"][0]["code"] == "account_deleted"
 
 
 class TestGetMe:

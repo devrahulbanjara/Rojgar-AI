@@ -2,16 +2,11 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - dev
-      - "feat/**"
-
   pull_request:
-    branches:
-      - main
-      - dev
-      - "feat/**"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   backend:
@@ -33,6 +28,18 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      # Without Redis every integration test is skipped by conftest
+      # (redis_test_client), so CI used to pass while running nothing.
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     defaults:
       run:
         working-directory: backend
@@ -45,7 +52,8 @@ jobs:
       FRONTEND_URL: http://localhost:3000
       BACKEND_URL: http://localhost:8000
       SEND_EMAILS: "false"
-      REDIS_ENABLED: "false"
+      REDIS_ENABLED: "true"
+      TEST_REDIS_URL: redis://localhost:6379/0
       SMTP_HOST: smtp.gmail.com
       SMTP_PORT: "587"
       SMTP_USER: noreply@example.com
@@ -89,19 +97,41 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          version: "0.7.12"
 
       - name: Install dependencies
         run: uv sync --frozen
 
+      # Pinned: newer ruff releases add rules that fail the existing codebase.
       - name: Run Ruff linter
-        run: uvx ruff check
+        run: uvx ruff@0.14.10 check
 
       - name: Check code formatting
-        run: uvx ruff format --check
+        run: uvx ruff@0.14.10 format --check
 
       - name: Run tests
-        run: uv run pytest -v
+        run: |
+          uv run pytest -v -rs | tee /tmp/pytest.txt
+          # Guard against silently skipping everything (e.g. Redis/DB unreachable).
+          tail -n 1 /tmp/pytest.txt | grep -q " passed" \
+            || { echo "No tests passed — test infrastructure is not reachable." >&2; exit 1; }
+
+  backend-docker:
+    name: Backend Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Builds the production image; the Dockerfile fails the build if the
+      # ML pre-filter model is missing.
+      - name: Build image
+        run: docker build -t convexhire-backend:ci backend
+
+      - name: Smoke-test runtime tools
+        run: |
+          docker run --rm --entrypoint sh convexhire-backend:ci -c \
+            "test -s /app/ml_bouncer_model.pkl && ffmpeg -version >/dev/null"
 
   frontend:
     name: Frontend

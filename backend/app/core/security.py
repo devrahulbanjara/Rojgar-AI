@@ -1,9 +1,12 @@
+import base64
+import hashlib
 import uuid
 from datetime import datetime, timedelta, timezone
 
 import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
+from cryptography.fernet import Fernet, InvalidToken
 
 from app.core.config import settings
 
@@ -106,6 +109,12 @@ def decode_setup_token(token: str) -> str | None:
         return None
 
 
+def _pending_token_cipher() -> Fernet:
+    """Symmetric cipher for secrets carried inside pending-signup JWTs."""
+    digest = hashlib.sha256(f"pending-signup:{settings.secret_key}".encode()).digest()
+    return Fernet(base64.urlsafe_b64encode(digest))
+
+
 def create_pending_signup_token(data: dict) -> str:
     """
     24-hour JWT holding everything needed to create a user (and optionally a
@@ -121,6 +130,15 @@ def create_pending_signup_token(data: dict) -> str:
         **data,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24),
     }
+    # JWTs are signed, not encrypted, and these tokens travel in API responses
+    # and email links; never expose the Argon2 hash in readable form.
+    password_hash = payload.pop("password_hash", None)
+    if password_hash:
+        payload["password_hash_enc"] = (
+            _pending_token_cipher().encrypt(password_hash.encode()).decode()
+        )
+    else:
+        payload["password_hash"] = None
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
@@ -148,8 +166,13 @@ def decode_pending_signup_token(token: str) -> dict | None:
         )
         if payload.get("type") not in _VALID_TYPES:
             return None
+        encrypted = payload.pop("password_hash_enc", None)
+        if encrypted:
+            payload["password_hash"] = (
+                _pending_token_cipher().decrypt(encrypted.encode()).decode()
+            )
         return payload
-    except (jwt.PyJWTError, KeyError):
+    except (jwt.PyJWTError, KeyError, InvalidToken):
         return None
 
 

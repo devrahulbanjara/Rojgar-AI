@@ -15,10 +15,9 @@ async def critique_node(state: ShortlistState) -> dict:
         hr_eval=state["hr_evals"][-1].model_dump_json(),
     )
     response = cast(JudgeResponse, await judge_llm.ainvoke(prompt))
-    name = state["applicant_name"]
     logger.info(
-        "[{}] Critique said (iter={}, satisfied={}, conf={:.2f}): {}",
-        name,
+        "[app={}] Critique (iter={}, satisfied={}, conf={:.2f}): {}",
+        state["application_ref"],
         state["iteration"] + 1,
         response.is_satisfied,
         response.confidence,

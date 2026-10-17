@@ -10,6 +10,7 @@ import {
   calculateProfileCompletionPercentage,
   getProfileCompletionMeta,
 } from '@/lib/profileCompletion'
+import { getSafeRedirect } from '@/lib/roleRoutes'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useDeleteAccountMutation } from '@/store/services/authApi'
 import {
@@ -63,6 +64,17 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [showResumeImportModal, setShowResumeImportModal] = useState(false)
+  const [importReturnTo, setImportReturnTo] = useState<string | null>(null)
+
+  // `?import=1&next=…` (from the apply modal) opens the AI import straight away
+  // and returns the candidate to the job once the import is applied.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('import') !== '1') return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowResumeImportModal(true)
+    setImportReturnTo(getSafeRedirect(params.get('next')))
+  }, [])
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -438,6 +450,9 @@ export default function ProfilePage() {
         <ResumeImportModal
           currentProfile={profileResp?.data ?? null}
           onClose={() => setShowResumeImportModal(false)}
+          onCommitted={() => {
+            if (importReturnTo) router.push(importReturnTo)
+          }}
         />
       )}
     </div>

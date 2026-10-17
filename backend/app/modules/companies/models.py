@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Uuid, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Uuid, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.modules.auth.models import User
 from app.core.database import Base
@@ -12,6 +12,9 @@ from app.modules.auth.enums import MembershipRole, MembershipStatus
 
 class Company(Base):
     __tablename__ = "companies"
+    __table_args__ = (
+        Index("ix_companies_name_lower", text("lower(name)"), unique=True),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)

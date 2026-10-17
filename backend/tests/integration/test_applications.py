@@ -159,6 +159,45 @@ class TestStatusTransitions:
         assert resp.status_code == 200
         assert resp.json()["data"]["status"] == "offer"
 
+    async def test_recruiter_cannot_forge_candidate_offer_answer(self, client, db):
+        candidate, resume = await make_candidate_with_resume(
+            db, email="cand_forge@test.com"
+        )
+        admin, company = await make_recruiter_admin(db, email="admin_forge@test.com")
+        job = await make_active_job(db, company.id)
+        application = await make_application(
+            db, candidate.id, job.id, resume.id, ApplicationStatus.offer
+        )
+
+        for forged in ("offer_accepted", "offer_declined", "applied"):
+            resp = await client.patch(
+                f"/applications/{application.id}/status",
+                json={"status": forged},
+                headers=auth_headers(admin.id),
+            )
+            assert resp.status_code == 400, forged
+
+        await db.refresh(application)
+        assert application.status == ApplicationStatus.offer
+
+    async def test_invalid_transition_conflict(self, client, db):
+        candidate, resume = await make_candidate_with_resume(
+            db, email="cand_skip@test.com"
+        )
+        admin, company = await make_recruiter_admin(db, email="admin_skip@test.com")
+        job = await make_active_job(db, company.id)
+        application = await make_application(
+            db, candidate.id, job.id, resume.id, ApplicationStatus.applied
+        )
+
+        resp = await client.patch(
+            f"/applications/{application.id}/status",
+            json={"status": "offer"},
+            headers=auth_headers(admin.id),
+        )
+
+        assert resp.status_code == 409
+
     async def test_candidate_accepts_offer(self, client, db):
         candidate, resume = await make_candidate_with_resume(
             db, email="cand_accept@test.com"

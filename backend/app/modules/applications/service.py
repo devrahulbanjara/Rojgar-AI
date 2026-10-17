@@ -1,3 +1,4 @@
+import html
 import os
 import uuid
 from datetime import datetime, timezone
@@ -47,6 +48,7 @@ from app.modules.applications.schemas import (
     SimilarCandidateResult,
     SimilarCandidatesResponse,
     UpdateApplicationReviewRequest,
+    RECRUITER_STATUS_TRANSITIONS,
     UpdateApplicationStatusRequest,
 )
 from app.modules.applications.sync import (
@@ -149,7 +151,12 @@ def _status_email_html(
     app_href: str,
 ) -> tuple[str, str]:
     """Returns (subject, html_body) for candidate status notification emails."""
-    link = f"{settings.frontend_url}{app_href}"
+    link = html.escape(f"{settings.frontend_url}{app_href}", quote=True)
+    # Recruiter-controlled values (company name, job title) and the candidate's
+    # own name are interpolated into HTML sent from the platform domain.
+    applicant_name = html.escape(applicant_name)
+    job_title = html.escape(job_title)
+    company_name = html.escape(company_name)
     if status == ApplicationStatus.shortlisted:
         subject = f"You've been shortlisted for {job_title}"
         body = (
@@ -465,18 +472,13 @@ async def apply_to_job(
         resume = await db.scalar(resume_stmt)
 
     # 2c. Prompt-injection guardrail on candidate-controlled resume text.
-    # Block submission outright so injected payloads never sit in the DB or hit
-    # downstream LLM hops (shortlisting, recruiter chat candidate summaries).
-    scanned_text = resume_text_for_guardrails(resume)
-    logger.info(
-        "Apply guardrail scan | resume_id={} | text_len={} | preview={!r}",
-        payload.resume_id,
-        len(scanned_text),
-        scanned_text[:300],
-    )
-    await guardrails_service.assert_input_safe(
-        scanned_text,
+    # A flag quarantines the application for recruiter review instead of
+    # blocking the candidate: false positives (e.g. security engineers who
+    # describe injection testing) must not silently cost someone a job.
+    guardrail_verdict = await guardrails_service.check_input(
+        resume_text_for_guardrails(resume),
         source="applications.apply",
+        fail_closed=True,
     )
 
     # 3. Check for duplicate application before inserting
@@ -507,6 +509,12 @@ async def apply_to_job(
         **share_settings.model_dump(),
         **_build_shared_profile_snapshot(user, profile, share_settings),
     )
+    if not guardrail_verdict.safe:
+        application.ai_review_status = "needs_human_review"
+        application.ai_flag_reason = (
+            "Flagged for manual review by the prompt-injection rail: "
+            f"{guardrail_verdict.reason or 'suspicious content'}"
+        )
     db.add(application)
     try:
         await db.flush()
@@ -605,6 +613,26 @@ def _app_to_list_item(app: Application) -> ApplicationListItem:
     )
 
 
+def _shared_email(application: Application) -> str | None:
+    """Candidate email as recruiters may see it (None when not shared)."""
+    return application.shared_email_value if application.share_email else None
+
+
+def _recruiter_safe_resume(application: Application) -> ResumeResponse | None:
+    """Resume as shown to recruiters, honouring the candidate's share settings."""
+    if not application.resume:
+        return None
+    resume = ResumeResponse.model_validate(application.resume)
+    hidden: dict[str, None] = {}
+    if not application.share_phone:
+        hidden["phone"] = None
+    if not application.share_location:
+        hidden["location"] = None
+    if not application.share_links:
+        hidden.update(linkedin_url=None, github_url=None, portfolio_url=None)
+    return resume.model_copy(update=hidden) if hidden else resume
+
+
 async def _get_active_company_id(db: AsyncSession, user: User) -> UUID:
     """Return the user's active company ID or raise HTTP 403."""
     result = await db.execute(
@@ -668,7 +696,7 @@ async def list_candidate_applications(
     """Return candidate applications across all companies (SWR-cached)."""
     cache_key = f"applications:candidate:{user_id}:p{page}:s{size}"
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_candidate_applications(db, user_id, page, size)
         return [item.model_dump(mode="json") for item in items]
 
@@ -708,13 +736,15 @@ async def _build_company_applications(
             created_at=application.created_at,
             updated_at=application.updated_at,
             applicant_name=application.shared_full_name or applicant.full_name,
-            applicant_email=application.shared_email_value or applicant.email,
+            applicant_email=_shared_email(application),
             applicant_avatar_url=application.shared_avatar_url,
             job_title=job.title,
             job_id=job.id,
             score=application.score,
             strengths=application.strengths,
             weaknesses=application.weaknesses,
+            ai_review_status=application.ai_review_status,
+            ai_flag_reason=application.ai_flag_reason,
         )
         for application, applicant, job in rows
     ]
@@ -732,7 +762,7 @@ async def list_company_applications(
         str(company_id), str(job_id) if job_id else None, page, size
     )
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_company_applications(db, company_id, job_id, page, size)
         return [item.model_dump(mode="json") for item in items]
 
@@ -778,13 +808,15 @@ async def _build_company_candidates(
             score=application.score,
             strengths=application.strengths,
             weaknesses=application.weaknesses,
+            ai_review_status=application.ai_review_status,
+            ai_flag_reason=application.ai_flag_reason,
         )
 
         if bucket is None:
             grouped[str(applicant.id)] = {
                 "candidate_id": applicant.id,
                 "applicant_name": application.shared_full_name or applicant.full_name,
-                "applicant_email": application.shared_email_value or applicant.email,
+                "applicant_email": _shared_email(application),
                 "applicant_avatar_url": application.shared_avatar_url,
                 "latest_application_id": application.id,
                 "latest_status": application.status,
@@ -845,7 +877,7 @@ async def list_company_candidates(
         size,
     )
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_company_candidates(
             db, company_id, job_id, status_filter, page, size
         )
@@ -921,12 +953,12 @@ async def _build_company_candidate_detail(
         score=application.score,
         strengths=application.strengths,
         weaknesses=application.weaknesses,
+        ai_review_status=application.ai_review_status,
+        ai_flag_reason=application.ai_flag_reason,
         interview=RecruiterCandidateInterviewView.model_validate(interview)
         if interview
         else None,
-        resume=ResumeResponse.model_validate(application.resume)
-        if application.resume
-        else None,
+        resume=_recruiter_safe_resume(application),
         share_settings=share,
         timeline=timeline,
         outreach_audit=outreach_audit,
@@ -940,7 +972,7 @@ async def get_company_candidate_detail(
     company_id = await _get_active_company_id(db, user)
     cache_key = _company_candidate_detail_cache_key(str(company_id), application_id)
 
-    async def _load() -> dict:
+    async def _load(db: AsyncSession = db) -> dict:
         response = await _build_company_candidate_detail(db, company_id, application_id)
         return response.model_dump(mode="json")
 
@@ -1099,9 +1131,7 @@ async def get_application(
                 score=application.score,
                 strengths=application.strengths,
                 weaknesses=application.weaknesses,
-                resume=ResumeResponse.model_validate(application.resume)
-                if application.resume
-                else None,
+                resume=_recruiter_safe_resume(application),
                 job_title=job.title,
                 company_name=company.name if company is not None else None,
                 company_logo_url=company.logo_url if company is not None else None,
@@ -1201,6 +1231,18 @@ async def update_application_status(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This application's job does not belong to your company.",
+        )
+
+    current = ApplicationStatus(application.status)
+    if current == payload.status:
+        return ApplicationResponse.model_validate(application)
+    if payload.status not in RECRUITER_STATUS_TRANSITIONS.get(current, frozenset()):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Cannot change status from '{current.value}' "
+                f"to '{payload.status.value}'."
+            ),
         )
 
     company = await db.scalar(select(Company).where(Company.id == company_id))
@@ -1549,6 +1591,9 @@ async def respond_to_offer(
     )
 
 
+_SEMANTIC_SEARCH_MAX_HITS = 500
+
+
 async def semantic_search_candidates(
     db: AsyncSession,
     user: User,
@@ -1565,11 +1610,13 @@ async def semantic_search_candidates(
     """
     company_id = await _get_active_company_id(db, user)
 
+    # Fetch enough hits to cover the requested page (previously limit=size,
+    # so every page after the first was empty).
     qdrant_results = await qdrant_service.search_applications(
         query=query,
         company_id=uuid.UUID(str(company_id)),
         statuses=statuses,
-        limit=size,
+        limit=min(page * size, _SEMANTIC_SEARCH_MAX_HITS),
     )
 
     if not qdrant_results:
@@ -1577,11 +1624,12 @@ async def semantic_search_candidates(
 
     application_ids = [res["application_id"] for res in qdrant_results]
 
+    # Re-check tenancy in SQL; never rely on the vector store filter alone.
     stmt = (
         select(Application, User, Job)
         .join(User, User.id == Application.user_id)
         .join(Job, Job.id == Application.job_id)
-        .where(Application.id.in_(application_ids))
+        .where(Application.id.in_(application_ids), Job.company_id == company_id)
     )
     rows = (await db.execute(stmt)).all()
 
@@ -1601,7 +1649,7 @@ async def semantic_search_candidates(
                 application_id=application.id,
                 candidate_id=applicant.id,
                 applicant_name=application.shared_full_name or applicant.full_name,
-                applicant_email=application.shared_email_value or applicant.email,
+                applicant_email=_shared_email(application),
                 applicant_avatar_url=application.shared_avatar_url,
                 job_title=job.title,
                 job_id=job.id,
@@ -1709,7 +1757,7 @@ async def find_similar_candidates(
                 application_id=application.id,
                 candidate_id=applicant.id,
                 applicant_name=application.shared_full_name or applicant.full_name,
-                applicant_email=application.shared_email_value or applicant.email,
+                applicant_email=_shared_email(application),
                 applicant_avatar_url=application.shared_avatar_url,
                 job_title=job.title,
                 job_id=job.id,

@@ -49,6 +49,8 @@ async def evaluate_single_application(
             score=application.score,
             strengths=application.strengths,
             weaknesses=application.weaknesses,
+            ai_review_status=application.ai_review_status,
+            ai_flag_reason=application.ai_flag_reason,
         ),
         message="Application evaluated successfully.",
     )

@@ -24,3 +24,17 @@ export function recruiterChatUnavailableResponse() {
 export function recruiterChatMisconfiguredResponse() {
   return Response.json(buildUnavailablePayload(), { status: 500 })
 }
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Session ids are interpolated into backend URLs; accept only UUIDs. */
+export function isValidSessionId(sessionId: string): boolean {
+  return UUID_PATTERN.test(sessionId)
+}
+
+export function invalidSessionIdResponse() {
+  return Response.json(
+    { ...buildUnavailablePayload(), message: 'Invalid chat session id.' },
+    { status: 400 },
+  )
+}

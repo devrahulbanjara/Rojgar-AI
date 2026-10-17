@@ -46,7 +46,16 @@ export interface AuthState {
   isAuthenticated: boolean
 }
 
-const storedToken = readFromStorage(TOKEN_KEY)
+// The access token lives in memory only. Persisting it to web storage lets any
+// XSS read it; after a reload the HttpOnly refresh cookie mints a new one
+// (AuthGuard / the 401 re-auth wrapper). Purge tokens stored by older builds.
+removeFromStorage(TOKEN_KEY)
+
+function hasAuthCookie(): boolean {
+  if (!isBrowser) return false
+  return document.cookie.split(';').some((c) => c.trim().startsWith(`${AUTH_COOKIE}=1`))
+}
+
 const storedUser = (() => {
   try {
     const raw = readFromStorage(USER_KEY)
@@ -57,9 +66,9 @@ const storedUser = (() => {
 })()
 
 const initialState: AuthState = {
-  accessToken: storedToken,
+  accessToken: null,
   user: storedUser,
-  isAuthenticated: !!storedToken,
+  isAuthenticated: !!storedUser && hasAuthCookie(),
 }
 const authSlice = createSlice({
   name: 'auth',
@@ -81,14 +90,10 @@ const authSlice = createSlice({
       if (isBrowser) {
         localStorage.setItem(REMEMBER_KEY, String(rememberMe))
         if (rememberMe) {
-          sessionStorage.removeItem(TOKEN_KEY)
           sessionStorage.removeItem(USER_KEY)
-          localStorage.setItem(TOKEN_KEY, accessToken)
           localStorage.setItem(USER_KEY, JSON.stringify(user))
         } else {
-          localStorage.removeItem(TOKEN_KEY)
           localStorage.removeItem(USER_KEY)
-          sessionStorage.setItem(TOKEN_KEY, accessToken)
           sessionStorage.setItem(USER_KEY, JSON.stringify(user))
         }
         setAuthCookie()
@@ -103,7 +108,6 @@ const authSlice = createSlice({
     updateAccessToken(state, action: PayloadAction<string>) {
       state.accessToken = action.payload
       state.isAuthenticated = Boolean(action.payload)
-      saveToStorage(TOKEN_KEY, action.payload)
     },
 
     clearCredentials(state) {

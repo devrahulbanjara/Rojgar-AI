@@ -100,7 +100,7 @@ async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListI
     """List all resumes for a user ID (SWR-cached, lightweight)."""
     cache_key = _resume_list_cache_key(str(user_id))
 
-    async def _load() -> list:
+    async def _load(db: AsyncSession = db) -> list:
         items = await _build_resume_list(db, user_id)
         return [item.model_dump(mode="json") for item in items]
 

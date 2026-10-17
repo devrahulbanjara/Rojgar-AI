@@ -46,9 +46,9 @@ export default function Home() {
     <section className="homepage">
       <div className="heroSection">
         <HeroAnimations />
-        <Image src="/bg/bg-ui.svg" alt="" fill className="homepage__bg-top" aria-hidden="true" />
+        <Image src="/bg/bg-ui.webp" alt="" fill className="homepage__bg-top" aria-hidden="true" />
         <Image
-          src="/bg/bg-ui-v2.svg"
+          src="/bg/bg-ui-v2.webp"
           alt=""
           width={200}
           height={200}
@@ -97,23 +97,15 @@ export default function Home() {
               Search
             </button>
           </form>
-          {/* Social proof */}
           <div className="homepage__proof-container">
-            <Image
-              src="/homepage/testimonial.svg"
-              width={100}
-              height={50}
-              className="homepage__proofImg"
-              alt="Testimonials Image"
-            />
             <p className="homepage__proof">
-              Trusted by <strong>12,000+</strong> job seekers. 3,400 hired last month.
+              <strong>Free for job seekers.</strong> A recruiter makes every final decision.
             </p>
           </div>
         </div>
         <div className="homepage__bottomImg">
           <Image
-            src="/homepage/promotion.svg"
+            src="/homepage/promotion.webp"
             width={1200}
             height={600}
             alt="Promotion Img"
@@ -155,7 +147,7 @@ export default function Home() {
       {/* Closing CTA */}
       <section className="closing-cta" data-reveal>
         <Image
-          src="/bg/bg-ui.svg"
+          src="/bg/bg-ui.webp"
           alt=""
           width={400}
           height={400}
@@ -164,7 +156,7 @@ export default function Home() {
           priority={false}
         />
         <Image
-          src="/bg/bg-ui-v2.svg"
+          src="/bg/bg-ui-v2.webp"
           alt=""
           width={400}
           height={400}

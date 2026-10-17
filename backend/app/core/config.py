@@ -11,9 +11,14 @@ class Settings(BaseSettings):
     app_name: str = "ConvexHire API"
     app_version: str = "1.0.0"
     debug: bool = False
-    environment: Literal["dev", "prod", "test"] = "dev"
+    # Defaults to prod so a missing ENVIRONMENT never exposes /docs or drops the
+    # Secure flag on auth cookies. Local setups set environment=dev (.env.example).
+    environment: Literal["dev", "prod", "test"] = "prod"
     allowed_origins: list[str] = ["http://localhost:3000"]
     frontend_url: str = "http://localhost:3000"
+    # Number of reverse proxies in front of the API that append to
+    # X-Forwarded-For (e.g. 1 on Render). 0 = trust only the socket peer.
+    trusted_proxy_hops: int = 0
 
     # Auth
     secret_key: str
@@ -113,8 +118,15 @@ class Settings(BaseSettings):
     aws_bedrock_shortlisting_merge_max_tokens: int = 600
     shortlisting_prompt_cache_ttl: str = "5m"
     shortlisting_web_search_budget_per_persona: int = 1
+    # Number of persona review rounds. 1 = single pass (no critique call);
+    # 2 = one critique-driven reflection round when the critique is not satisfied.
     shortlisting_reflection_max_iterations: int = 1
     shortlisting_web_search_max_results: int = 3
+    # Jobs with at most this many applications get an LLM review for everyone;
+    # the ML pre-filter only ranks, it never decides who is seen.
+    shortlisting_full_review_max_applicants: int = 30
+    # Per-application LLM review attempts before routing to a human.
+    shortlisting_max_review_attempts: int = 3
 
     # Resume import
     resume_import_max_upload_bytes: int = 10 * 1024 * 1024
@@ -159,6 +171,9 @@ class Settings(BaseSettings):
     hf_whisper_max_retries: int = 4
     hf_whisper_retry_delays: tuple[int, ...] = (5, 15, 30, 60)
     hf_whisper_token: str | None = None
+
+    # Cal.com webhook: HMAC-SHA256 secret configured on the Cal webhook.
+    cal_webhook_secret: str | None = None
 
     # Derived URLs
     @property

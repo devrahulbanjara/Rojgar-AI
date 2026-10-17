@@ -147,9 +147,11 @@ export const authApi = baseApi.injectEndpoints({
           await queryFulfilled
         } finally {
           dispatch(clearCredentials())
+          // Drop every cached query so the next user on this browser never
+          // sees the previous user's data (and no refetch fires with no token).
+          dispatch(baseApi.util.resetApiState())
         }
       },
-      invalidatesTags: ['User', 'Company', 'Jobs', 'Applications', 'Candidates', 'Interviews'],
     }),
 
     /** POST /auth/forgot-password — 200, data: null */
@@ -314,5 +316,7 @@ export function initiateGoogleOAuth(): void {
     return
   }
 
+  // Absolute backend URL (full-page redirect to Google), not an internal route.
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
   window.location.href = `${apiUrl}/auth/google`
 }

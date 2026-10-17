@@ -1,0 +1,155 @@
+import { useState } from 'react'
+
+import Link from 'next/link'
+
+import type { ApiResumeData } from '@/store/services/resumeApi'
+import { Info } from 'lucide-react'
+
+import StepShareProfile, { type ShareSettingsDraft } from './StepShareProfile'
+import styles from './applyModal.module.scss'
+
+interface StepReviewProps {
+  resumes: ApiResumeData[]
+  loading: boolean
+  selectedResumeId: string | null
+  onSelect: (resumeId: string) => void
+  shareSettings: ShareSettingsDraft
+  onToggleShare: <K extends keyof ShareSettingsDraft>(key: K, value: ShareSettingsDraft[K]) => void
+  onCreateFromProfile: () => void
+  creatingFromProfile: boolean
+  importHref: string
+  hasPendingPatch: boolean
+}
+
+function describeSharing(settings: ShareSettingsDraft): string {
+  if (settings.share_profile_all) return 'full profile'
+  const shared = [
+    settings.share_headline_summary && 'profile summary',
+    'email',
+    settings.share_links && 'links',
+    settings.share_avatar && 'photo',
+    settings.share_phone && 'phone',
+    settings.share_location && 'location',
+  ].filter(Boolean)
+  return shared.join(', ')
+}
+
+export default function StepReview({
+  resumes,
+  loading,
+  selectedResumeId,
+  onSelect,
+  shareSettings,
+  onToggleShare,
+  onCreateFromProfile,
+  creatingFromProfile,
+  importHref,
+  hasPendingPatch,
+}: StepReviewProps) {
+  const [showSharing, setShowSharing] = useState(false)
+
+  if (loading) {
+    return (
+      <div className={styles.applyModal__loading}>
+        <div className={styles.applyModal__loadingDots}>
+          <span className={styles.applyModal__loadingDot} />
+          <span className={styles.applyModal__loadingDot} />
+          <span className={styles.applyModal__loadingDot} />
+        </div>
+        <div>
+          <p className={styles.applyModal__loadingTitle}>Loading your resumes</p>
+          <p className={styles.applyModal__loadingCopy}>Fetching your latest resume versions.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (resumes.length === 0) {
+    return (
+      <div className={styles.applyModal__empty}>
+        <p>You need a resume to apply.</p>
+        <div className={styles.applyModal__stepActions}>
+          <button
+            className="btn btn--primary"
+            disabled={creatingFromProfile}
+            onClick={onCreateFromProfile}
+            type="button"
+          >
+            {creatingFromProfile ? 'Creating resume…' : 'Use my profile'}
+          </button>
+          <Link href={importHref} className="btn btn--ghost">
+            Import a PDF instead
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const selectedResume = resumes.find((resume) => resume.id === selectedResumeId)
+
+  return (
+    <div className={styles.applyModal__body}>
+      {resumes.length > 1 ? (
+        <div className={styles.applyModal__resumeList} role="radiogroup" aria-label="Resume">
+          {resumes.map((resume) => {
+            const selected = selectedResumeId === resume.id
+
+            return (
+              <button
+                key={resume.id}
+                aria-checked={selected}
+                className={`${styles.applyModal__resumeCard} ${
+                  selected ? styles['applyModal__resumeCard--selected'] : ''
+                }`}
+                onClick={() => onSelect(resume.id)}
+                role="radio"
+                type="button"
+              >
+                <span
+                  className={`${styles.applyModal__resumeIndicator} ${
+                    selected ? styles['applyModal__resumeIndicator--selected'] : ''
+                  }`}
+                />
+                <div className={styles.applyModal__resumeMeta}>
+                  <div className={styles.applyModal__resumeName}>{resume.resume_name}</div>
+                  <p className={styles.applyModal__resumeHeadline}>
+                    {resume.headline || 'No headline yet. You can still apply with this resume.'}
+                  </p>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <p className={styles.applyModal__intro}>
+          Applying with <strong>{selectedResume?.resume_name ?? resumes[0].resume_name}</strong>.
+        </p>
+      )}
+
+      {hasPendingPatch ? (
+        <p className={styles.applyModal__intro}>
+          AI changes will be saved to your resume when you submit.
+        </p>
+      ) : null}
+
+      <p className={styles.applyModal__intro}>
+        Sharing: {describeSharing(shareSettings)} ·{' '}
+        <button
+          aria-expanded={showSharing}
+          className={styles.applyModal__inlineLink}
+          onClick={() => setShowSharing((value) => !value)}
+          type="button"
+        >
+          {showSharing ? 'Done' : 'Edit'}
+        </button>
+      </p>
+
+      {showSharing ? <StepShareProfile onToggle={onToggleShare} settings={shareSettings} /> : null}
+
+      <p className={styles.applyModal__notice}>
+        <Info size={14} aria-hidden="true" />
+        <span>Screened with AI help. A recruiter makes the final decision.</span>
+      </p>
+    </div>
+  )
+}

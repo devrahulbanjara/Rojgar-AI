@@ -8,7 +8,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 import { applyFieldErrors, parseApiError } from '@/lib/apiError'
 import { notify } from '@/lib/notify'
-import { getRoleDashboard } from '@/lib/roleRoutes'
+import {
+  consumePostAuthRedirect,
+  getRoleDashboard,
+  getSafeRedirect,
+  rememberPostAuthRedirect,
+} from '@/lib/roleRoutes'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'
 import { clearCredentials } from '@/store/slices/authSlice'
@@ -91,20 +96,23 @@ function validateForm(values: LoginFormState): FormErrors {
   return errors
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-
-/** Allow only safe relative paths — blocks open redirect via protocol or // */
-function getSafeRedirect(value: string | null): string | null {
-  if (!value) return null
-  if (value.startsWith('/') && !value.startsWith('//')) return value
-  return null
-}
-
 // ── Component ──────────────────────────────────────────────────────────────
 
 function LoginPageInner() {
   const searchParams = useSearchParams()
   const nextUrl = getSafeRedirect(searchParams.get('next'))
+  const nextQuery = nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ''
+
+  // Remember where the user was heading so signup / verification / OAuth can
+  // return them there, even when the verification link opens in a new tab.
+  useEffect(() => {
+    rememberPostAuthRedirect(nextUrl)
+  }, [nextUrl])
+
+  const oauthError = searchParams.get('error')
+  useEffect(() => {
+    if (oauthError) notify.error('Google sign-in did not complete. Please try again.')
+  }, [oauthError])
 
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
@@ -117,7 +125,7 @@ function LoginPageInner() {
     if (!isAuthenticated) return
     const hasCookie = document.cookie.split(';').some((c) => c.trim().startsWith('auth_present=1'))
     if (hasCookie) {
-      router.replace(nextUrl ?? getRoleDashboard(user?.primary_role))
+      router.replace(consumePostAuthRedirect() ?? nextUrl ?? getRoleDashboard(user?.primary_role))
     } else {
       dispatch(clearCredentials())
     }
@@ -164,7 +172,9 @@ function LoginPageInner() {
 
       if (result.success) {
         notify.success('Signed in! Redirecting…')
-        router.push(nextUrl ?? getRoleDashboard(result.data?.user?.primary_role))
+        router.push(
+          consumePostAuthRedirect() ?? nextUrl ?? getRoleDashboard(result.data?.user?.primary_role),
+        )
       } else {
         notify.error(result.message ?? 'Login failed. Please try again.')
       }
@@ -176,7 +186,9 @@ function LoginPageInner() {
       // Check for email-not-verified error (403 or specific message)
       const rtkErr = err as { status?: number; data?: { message?: string } }
       const errMsg = rtkErr?.data?.message ?? ''
-      if (rtkErr?.status === 403 || /not verified|email.*verif|verif.*email/i.test(errMsg)) {
+      // The backend has no error codes yet; only the verification message means
+      // "unverified". Other 403s (e.g. a blocked account) show their own message.
+      if (/not verified|email.*verif|verif.*email/i.test(errMsg)) {
         setEmailUnverified(true)
         return
       }
@@ -197,7 +209,7 @@ function LoginPageInner() {
     <main className="auth">
       {/* Background decorations */}
       <Image
-        src="/bg/bg-ui-v3.svg"
+        src="/bg/bg-ui-v3.webp"
         alt=""
         width={700}
         height={700}
@@ -206,7 +218,7 @@ function LoginPageInner() {
         priority={false}
       />
       <Image
-        src="/bg/bg-ui-v5.svg"
+        src="/bg/bg-ui-v5.webp"
         alt=""
         width={650}
         height={650}
@@ -326,7 +338,14 @@ function LoginPageInner() {
                     />
                     <span>Remember me</span>
                   </label>
-                  <Link href="/forgot-password" className="auth__forgot">
+                  <Link
+                    href={
+                      formValues.email
+                        ? `/forgot-password?email=${encodeURIComponent(formValues.email.trim())}`
+                        : '/forgot-password'
+                    }
+                    className="auth__forgot"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -366,7 +385,7 @@ function LoginPageInner() {
         {/* Switch to signup */}
         <p className="auth__switch">
           Don&apos;t have an account?
-          <Link href="/signup">Create one for free</Link>
+          <Link href={`/signup${nextQuery}`}>Create one for free</Link>
         </p>
       </div>
     </main>

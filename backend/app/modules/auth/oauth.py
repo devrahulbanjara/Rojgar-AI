@@ -3,9 +3,10 @@ from urllib.parse import urlencode
 import httpx
 from fastapi import HTTPException, Response, status
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.shared.normalize import normalize_email
 from app.core.config import settings
 from app.core.security import create_signup_token, create_tokens
 from app.modules.auth.models import OAuthAccount, RefreshToken, User
@@ -72,14 +73,28 @@ async def google_oauth_callback(
             detail="Failed to authenticate with Google",
         )
 
+    # Linking by email is only safe when Google vouches for inbox ownership.
+    if user_info.get("email_verified") is not True:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google account email is not verified",
+        )
+
     google_id: str = user_info["sub"]
-    email: str = user_info["email"]
+    email: str = user_info["email"].strip().lower()
     full_name: str = user_info.get("name", "")
     avatar_url: str | None = user_info.get("picture")
 
     # 2. Check if a user with this email already exists
-    user_result = await db.execute(select(User).where(User.email == email))
+    user_result = await db.execute(
+        select(User).where(func.lower(User.email) == normalize_email(email))
+    )
     user = user_result.scalar_one_or_none()
+
+    if user and user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account has been deleted"
+        )
 
     if user:
         # CASE 1: Existing user — log them in immediately.

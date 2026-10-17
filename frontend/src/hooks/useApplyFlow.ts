@@ -12,16 +12,31 @@ import {
 } from '@/store/services/resumeGapApi'
 
 export type FlowStep =
-  | 'select_resume'
-  | 'gap_choice'
+  | 'review'
   | 'analyzing'
   | 'gap_results'
   | 'patching'
   | 'patch_preview'
   | 'committing_patch'
-  | 'patch_committed'
-  | 'share_profile'
   | 'submitting'
+
+const LAST_RESUME_KEY = 'convexhire:lastAppliedResumeId'
+
+export function readLastResumeId(): string | null {
+  try {
+    return window.localStorage.getItem(LAST_RESUME_KEY)
+  } catch {
+    return null
+  }
+}
+
+function rememberResumeId(resumeId: string) {
+  try {
+    window.localStorage.setItem(LAST_RESUME_KEY, resumeId)
+  } catch {
+    // Storage unavailable (private mode); remembering is only a convenience.
+  }
+}
 
 export interface ShareSettingsDraft {
   share_profile_all: boolean
@@ -33,7 +48,7 @@ export interface ShareSettingsDraft {
   share_headline_summary: boolean
 }
 
-const DEFAULT_SHARE_SETTINGS: ShareSettingsDraft = {
+const FULL_SHARE_SETTINGS: ShareSettingsDraft = {
   share_profile_all: true,
   share_avatar: true,
   share_email: true,
@@ -43,13 +58,21 @@ const DEFAULT_SHARE_SETTINGS: ShareSettingsDraft = {
   share_headline_summary: true,
 }
 
+// Privacy by default: phone number and location are shared only on opt-in.
+const DEFAULT_SHARE_SETTINGS: ShareSettingsDraft = {
+  ...FULL_SHARE_SETTINGS,
+  share_profile_all: false,
+  share_phone: false,
+  share_location: false,
+}
+
 interface UseApplyFlowOptions {
   jobId: string
   onSuccess: () => void
 }
 
 export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
-  const [step, setStep] = useState<FlowStep>('select_resume')
+  const [step, setStep] = useState<FlowStep>('review')
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
   const [gapResult, setGapResult] = useState<GapAnalysisResult | null>(null)
   const [patchedFields, setPatchedFields] = useState<string[]>([])
@@ -59,9 +82,6 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
   const [hasPendingPatch, setHasPendingPatch] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [shareSettings, setShareSettings] = useState<ShareSettingsDraft>(DEFAULT_SHARE_SETTINGS)
-  const [shareReturnStep, setShareReturnStep] = useState<
-    'gap_choice' | 'gap_results' | 'patch_committed'
-  >('gap_choice')
 
   const [analyzeResumeGap] = useAnalyzeResumeGapMutation()
   const [autoPatchResume] = useAutoPatchResumeMutation()
@@ -69,22 +89,19 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
   const [discardPendingPatch] = useDiscardPendingPatchMutation()
   const [applyToJob] = useApplyToJobMutation()
 
-  const handleResumeConfirmed = useCallback((resumeId: string) => {
+  const selectResume = useCallback((resumeId: string) => {
     setSelectedResumeId(resumeId)
     setGapResult(null)
     setPatchedFields([])
     setPatchedDiffs([])
     setPatchMessage('')
-    setIsPatching(false)
     setHasPendingPatch(false)
-    setShareSettings(DEFAULT_SHARE_SETTINGS)
     setError(null)
-    setStep('gap_choice')
   }, [])
 
-  const handleBackToChoice = useCallback(() => {
+  const handleBackToReview = useCallback(() => {
     setError(null)
-    setStep('gap_choice')
+    setStep('review')
   }, [])
 
   const handleAnalyze = useCallback(async () => {
@@ -107,18 +124,9 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         'Gap analysis failed. You can still apply directly.'
       setError(message)
       notify.error(message)
-      setStep('gap_choice')
+      setStep('review')
     }
   }, [analyzeResumeGap, jobId, selectedResumeId])
-
-  const handleOpenShareStep = useCallback(
-    (fromStep: 'gap_choice' | 'gap_results' | 'patch_committed') => {
-      setShareReturnStep(fromStep)
-      setError(null)
-      setStep('share_profile')
-    },
-    [],
-  )
 
   const handleAutoPatch = useCallback(async () => {
     if (!selectedResumeId || !gapResult) return
@@ -166,7 +174,8 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         job_id: jobId,
       }).unwrap()
       setHasPendingPatch(false)
-      setStep('patch_committed')
+      notify.success('Resume updated. Submit when you are ready.')
+      setStep('review')
     } catch (err: unknown) {
       const message =
         (err as { data?: { detail?: string; message?: string } })?.data?.detail ||
@@ -197,10 +206,6 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     setStep('gap_results')
   }, [discardPendingPatch, jobId, selectedResumeId])
 
-  const handleBackFromShare = useCallback(() => {
-    setStep(shareReturnStep)
-  }, [shareReturnStep])
-
   const updateShareSetting = useCallback(
     <K extends keyof ShareSettingsDraft>(key: K, value: ShareSettingsDraft[K]) => {
       setShareSettings((prev) => {
@@ -212,7 +217,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         }
 
         if (key === 'share_profile_all') {
-          return value ? DEFAULT_SHARE_SETTINGS : { ...prev, share_profile_all: false }
+          return value ? FULL_SHARE_SETTINGS : { ...prev, share_profile_all: false }
         }
 
         return {
@@ -239,6 +244,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         ...shareSettings,
         apply_pending_patch: hasPendingPatch,
       }).unwrap()
+      rememberResumeId(selectedResumeId)
       onSuccess()
     } catch (err: unknown) {
       const message =
@@ -247,7 +253,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         'Failed to submit application.'
       setError(message)
       notify.error(message)
-      setStep('share_profile')
+      setStep('review')
     }
   }, [applyToJob, hasPendingPatch, jobId, onSuccess, selectedResumeId, shareSettings])
 
@@ -261,11 +267,10 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
     isPatching,
     shareSettings,
     error,
-    handleResumeConfirmed,
-    handleBackToChoice,
-    handleBackFromShare,
+    hasPendingPatch,
+    selectResume,
+    handleBackToReview,
     handleAnalyze,
-    handleOpenShareStep,
     handleAutoPatch,
     handleConfirmPatch,
     handleCancelPatch,
