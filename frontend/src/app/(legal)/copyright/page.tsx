@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Copyright Notice - ConvexHire',
+  title: 'Copyright Notice - Rojgar AI',
   description:
-    'ConvexHire copyright notice: all original content on this platform is protected under the Copyright Act 2059 (2002) of Nepal.',
+    'Rojgar AI copyright notice: all original content on this platform is protected under the Copyright Act 2059 (2002) of Nepal.',
 }
 
 const TOC = [
@@ -78,7 +78,7 @@ export default function CopyrightPage() {
         <main className="legal__content">
           <div className="legal__callout">
             <p>
-              <strong>© {new Date().getFullYear()} Convex Technologies Pvt. Ltd.</strong> All rights
+              <strong>© {new Date().getFullYear()} Rojgar AI</strong> All rights
               reserved. All original content on this platform is protected under the{' '}
               <strong>Copyright Act 2059 (2002)</strong> of Nepal and applicable international
               copyright conventions, including the <strong>Berne Convention</strong> to which Nepal
@@ -89,10 +89,10 @@ export default function CopyrightPage() {
           <section className="legal__section" id="ownership">
             <h2 className="legal__section-title">1. Ownership of Content</h2>
             <p className="legal__text">
-              The ConvexHire platform, including its original design, user interface, graphics,
+              The Rojgar AI platform, including its original design, user interface, graphics,
               text, code, databases, logos, and all other original content (&quot;Platform
               Content&quot;), is owned by or exclusively licensed to{' '}
-              <strong>Convex Technologies Pvt. Ltd.</strong> and is protected as an original work
+              <strong>Rojgar AI</strong> and is protected as an original work
               under:
             </p>
             <ul className="legal__list">
@@ -134,28 +134,28 @@ export default function CopyrightPage() {
             <ul className="legal__list">
               <li>
                 <strong>Software and source code:</strong> All proprietary source code, algorithms,
-                and software components of the ConvexHire platform
+                and software components of the Rojgar AI platform
               </li>
               <li>
                 <strong>Visual design:</strong> The graphical user interface, layouts, colour
-                schemes, typography choices, icons, and illustrations created by ConvexHire
+                schemes, typography choices, icons, and illustrations created by Rojgar AI
               </li>
               <li>
                 <strong>Written content:</strong> All original articles, help documentation,
-                marketing copy, and blog posts published on convexhire.com
+                marketing copy, and blog posts published on rojgarai.app
               </li>
               <li>
                 <strong>Database rights:</strong> The compilation, structure, and selection of data
-                within the ConvexHire jobs database constitute a protected database under Section 4
+                within the Rojgar AI jobs database constitute a protected database under Section 4
                 of the Copyright Act 2059
               </li>
               <li>
-                <strong>Brand assets:</strong> The ConvexHire logo, wordmark, and brand identity
+                <strong>Brand assets:</strong> The Rojgar AI logo, wordmark, and brand identity
                 materials
               </li>
               <li>
                 <strong>Audiovisual content:</strong> Any video, animations, or multimedia content
-                produced by ConvexHire
+                produced by Rojgar AI
               </li>
             </ul>
           </section>
@@ -175,11 +175,11 @@ export default function CopyrightPage() {
               <li>
                 <strong>Research and education:</strong> Quotation or reproduction of limited
                 extracts for purposes of criticism, review, reporting, or teaching, provided{' '}
-                <strong>ConvexHire is clearly attributed</strong> as the source
+                <strong>Rojgar AI is clearly attributed</strong> as the source
               </li>
               <li>
-                <strong>Sharing links:</strong> Sharing hyperlinks to any page on convexhire.com on
-                social media or other platforms, so long as ConvexHire is not misrepresented
+                <strong>Sharing links:</strong> Sharing hyperlinks to any page on rojgarai.app on
+                social media or other platforms, so long as Rojgar AI is not misrepresented
               </li>
               <li>
                 <strong>Media coverage:</strong> Journalists and publishers may refer to and quote
@@ -188,7 +188,7 @@ export default function CopyrightPage() {
             </ul>
             <p className="legal__text">
               Any use beyond what is expressly permitted above requires prior written permission
-              from <strong>copyright@convexhire.com</strong>.
+              from <strong>copyright@rojgarai.app</strong>.
             </p>
           </section>
 
@@ -234,12 +234,12 @@ export default function CopyrightPage() {
           <section className="legal__section" id="user-content">
             <h2 className="legal__section-title">5. User-Submitted Content</h2>
             <p className="legal__text">
-              You retain full copyright ownership of any original content you submit to ConvexHire,
+              You retain full copyright ownership of any original content you submit to Rojgar AI,
               including your CV, cover letters, profile descriptions, and portfolio items
               (&quot;User Content&quot;).
             </p>
             <p className="legal__text">
-              By submitting User Content, you grant Convex Technologies Pvt. Ltd. a{' '}
+              By submitting User Content, you grant Rojgar AI a{' '}
               <strong>non-exclusive, royalty-free, worldwide, sublicensable licence</strong> to use,
               host, store, reproduce, publish, and display your User Content solely for the purposes
               of operating and improving the Service.
@@ -266,7 +266,7 @@ export default function CopyrightPage() {
             <p className="legal__text">
               The Service may display content from third parties, including company logos submitted
               by Employers, job descriptions, and links to external websites. Such content remains
-              the intellectual property of the respective third parties. ConvexHire does not claim
+              the intellectual property of the respective third parties. Rojgar AI does not claim
               ownership of third-party content and is not responsible for its accuracy or legality.
             </p>
             <p className="legal__text">
@@ -280,8 +280,8 @@ export default function CopyrightPage() {
           <section className="legal__section" id="takedown">
             <h2 className="legal__section-title">7. Copyright Takedown Procedure</h2>
             <p className="legal__text">
-              If you believe that content on ConvexHire infringes your copyright, please submit a
-              written notice to copyright@convexhire.com containing all of the following
+              If you believe that content on Rojgar AI infringes your copyright, please submit a
+              written notice to copyright@rojgarai.app containing all of the following
               information, as required under the <strong>Copyright Act 2059</strong> and
               international best practice:
             </p>
@@ -289,7 +289,7 @@ export default function CopyrightPage() {
               <li>Your full name, address, telephone number, and email address</li>
               <li>A description of the copyrighted work you claim has been infringed</li>
               <li>
-                The exact URL(s) on convexhire.com where the allegedly infringing content appears
+                The exact URL(s) on rojgarai.app where the allegedly infringing content appears
               </li>
               <li>
                 A statement that you have a good-faith belief that the use is not authorised by the
@@ -311,12 +311,12 @@ export default function CopyrightPage() {
           <section className="legal__section" id="trademarks">
             <h2 className="legal__section-title">8. Trademarks</h2>
             <p className="legal__text">
-              &quot;ConvexHire&quot;, the ConvexHire logo, and all related marks, logos, and service
-              names are trademarks or service marks of Convex Technologies Pvt. Ltd., registered or
+              &quot;Rojgar AI&quot;, the Rojgar AI logo, and all related marks, logos, and service
+              names are trademarks or service marks of Rojgar AI, registered or
               applied for under the <strong>Trademark Act 2022 BS</strong> of Nepal.
             </p>
             <p className="legal__text">
-              You may not use ConvexHire trademarks, logos, or brand assets without prior written
+              You may not use Rojgar AI trademarks, logos, or brand assets without prior written
               consent, except as expressly permitted by these Terms. Unauthorised use may constitute
               trademark infringement or passing off under Nepal law.
             </p>
@@ -329,10 +329,10 @@ export default function CopyrightPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>Company:</strong> Convex Technologies Pvt. Ltd., Kathmandu, Nepal
+                <strong>Company:</strong> Rojgar AI, Kathmandu, Nepal
               </li>
               <li>
-                <strong>Email:</strong> copyright@convexhire.com
+                <strong>Email:</strong> copyright@rojgarai.app
               </li>
               <li>
                 <strong>Response time:</strong> Within 5 business days for takedown requests; within

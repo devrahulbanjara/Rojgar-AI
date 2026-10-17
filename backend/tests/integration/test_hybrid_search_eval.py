@@ -194,7 +194,7 @@ async def _seed(
 @pytest.mark.asyncio
 async def test_search_ranks_expected_job_first(db, real_qdrant, capsys):
     user, company = await make_recruiter_admin(
-        db, email="eval-harness@convexhire.test", company_name="EvalHarness Co"
+        db, email="eval-harness@rojgarai.test", company_name="EvalHarness Co"
     )
     label_to_id = await _seed(db, company.id, user.id)
     id_to_label = {v: k for k, v in label_to_id.items()}

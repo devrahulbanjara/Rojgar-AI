@@ -95,7 +95,7 @@ export default function FloatingRecruiterChat() {
                 height={20}
                 className="floating-chat-panel__logo"
               />
-              <span className="floating-chat-panel__title">ConvexHire Assistant</span>
+              <span className="floating-chat-panel__title">Rojgar AI Assistant</span>
             </div>
             <div className="floating-chat-panel__header-right">
               <button

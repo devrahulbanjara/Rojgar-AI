@@ -1,18 +1,18 @@
 services:
   postgres-test:
     image: postgres:16
-    container_name: convexhire-postgres-test
+    container_name: rojgarai-postgres-test
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-convexhire_test}
+      POSTGRES_DB: ${POSTGRES_DB:-rojgarai_test}
     ports:
       - "5433:5432"
 
   qdrant-test:
     image: qdrant/qdrant:latest
-    container_name: convexhire-qdrant-test
+    container_name: rojgarai-qdrant-test
     restart: always
     ports:
       - "6335:6333"
@@ -22,7 +22,7 @@ services:
 
   redis-test:
     image: redis:7-alpine
-    container_name: convexhire-redis-test
+    container_name: rojgarai-redis-test
     restart: always
     ports:
       - "6380:6379"

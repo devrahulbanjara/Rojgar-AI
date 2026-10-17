@@ -8,7 +8,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # App
-    app_name: str = "ConvexHire API"
+    app_name: str = "Rojgar AI API"
     app_version: str = "1.0.0"
     debug: bool = False
     # Defaults to prod so a missing ENVIRONMENT never exposes /docs or drops the
@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     test_db_name: str
 
     # Redis
-    redis_url: str | None = None  # using upstash from convexhire gmail
+    redis_url: str | None = None
     redis_enabled: bool = True
 
     # Redis (local test, docker-compose redis-test)

@@ -58,7 +58,7 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
           <Link href="/recruiter" className="flex items-center">
             <Image
               src="/logo/logo.png"
-              alt="ConvexHire"
+              alt="Rojgar AI"
               width={120}
               height={26}
               priority
@@ -103,7 +103,7 @@ export function CandidateShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b bg-card/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
           <Link href="/me/applications" className="shrink-0">
-            <Image src="/logo/logo.png" alt="ConvexHire" width={112} height={24} priority />
+            <Image src="/logo/logo.png" alt="Rojgar AI" width={112} height={24} priority />
           </Link>
           <div className="ml-auto">
             <AccountMenu showName={false} />

@@ -57,7 +57,7 @@ DEFAULT_LOGIN_PASSWORD = "Password@123"
 
 NOW = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 EXPIRED_DATE = NOW - timedelta(days=3)  # Jobs expired 3 days ago
-SEED_AUDIT_USER_AGENT = "ConvexHire Seed Script"
+SEED_AUDIT_USER_AGENT = "Rojgar AI Seed Script"
 AUDIT_REDACTED_FIELDS = {
     "password_hash",
     "password_reset_token",
@@ -4651,7 +4651,7 @@ def generate_shortlist_email(
         f"Please book your interview slot using the link below:\n"
         f"{cal_url}\n\n"
         f"IMPORTANT: When booking, please use the same name and email address you registered "
-        f"with on ConvexHire so we can automatically match your booking to your application.\n\n"
+        f"with on Rojgar AI so we can automatically match your booking to your application.\n\n"
         f"If you have any questions or need to reschedule, please don't hesitate to reach out "
         f"to us at this email address.\n\n"
         f"We look forward to speaking with you!\n\n"
@@ -5618,7 +5618,7 @@ async def seed_preferences_and_activity(
                     outreach_signature=(
                         f"{member.full_name}\n"
                         f"{company_context['company_data']['name']}\n"
-                        "ConvexHire Recruiting Team"
+                        "Rojgar AI Recruiting Team"
                     ),
                     chat_default_scope="company"
                     if company_index == 0
@@ -7396,7 +7396,7 @@ async def seed() -> None:
 
     async with AsyncSessionLocal() as db:
         db.sync_session.info["audit_logs_disabled"] = True
-        print("\n🚀 Seeding ConvexHire – Nepal IT Hiring Platform\n")
+        print("\n🚀 Seeding Rojgar AI – Nepal IT Hiring Platform\n")
         print("📊 Data Overview:")
         print(f"   • Companies: {len(COMPANIES)}")
         print(f"   • Candidates: {len(CANDIDATES)}")

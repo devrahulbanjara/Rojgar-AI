@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy - ConvexHire',
+  title: 'Cookie Policy - Rojgar AI',
   description:
-    'Understand how ConvexHire uses cookies and similar technologies on its platform, in compliance with the Electronic Transactions Act 2063 of Nepal.',
+    'Understand how Rojgar AI uses cookies and similar technologies on its platform, in compliance with the Electronic Transactions Act 2063 of Nepal.',
 }
 
 const TOC = [
@@ -148,7 +148,7 @@ export default function CookiePolicyPage() {
               </li>
             </ul>
             <p className="legal__text">
-              ConvexHire has no control over third-party cookies. Please refer to the respective
+              Rojgar AI has no control over third-party cookies. Please refer to the respective
               third-party privacy and cookie policies.
             </p>
           </section>
@@ -182,7 +182,7 @@ export default function CookiePolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>Cookie banner:</strong> When you first visit ConvexHire you are presented
+                <strong>Cookie banner:</strong> When you first visit Rojgar AI you are presented
                 with a consent banner. You may accept all cookies or only accept strictly necessary
                 ones.
               </li>
@@ -252,10 +252,10 @@ export default function CookiePolicyPage() {
             <p className="legal__text">For questions about our use of cookies, please contact:</p>
             <ul className="legal__list">
               <li>
-                <strong>Company:</strong> ConvexHire
+                <strong>Company:</strong> Rojgar AI
               </li>
               <li>
-                <strong>Email:</strong> contact@convexhire.rahuldevbanjara.com.np
+                <strong>Email:</strong> hello@rojgarai.app
               </li>
             </ul>
           </section>

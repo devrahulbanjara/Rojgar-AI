@@ -14,12 +14,12 @@ const TEST_ENV = {
   db_password: 'testpassword',
   db_host: 'localhost',
   db_port: '5433',
-  db_name: 'convexhire_test',
+  db_name: 'rojgarai_test',
   test_db_user: 'testuser',
   test_db_password: 'testpassword',
   test_db_host: 'localhost',
   test_db_port: '5433',
-  test_db_name: 'convexhire_test',
+  test_db_name: 'rojgarai_test',
   redis_url: 'redis://localhost:6380/0',
   qdrant_url: 'http://localhost:6335',
   test_qdrant_url: 'http://localhost:6335',
@@ -46,14 +46,14 @@ function checkPostgres() {
   return (
     spawnSync(
       'docker',
-      ['exec', 'convexhire-postgres-test', 'pg_isready', '-U', 'testuser', '-d', 'convexhire_test'],
+      ['exec', 'rojgarai-postgres-test', 'pg_isready', '-U', 'testuser', '-d', 'rojgarai_test'],
       { stdio: 'ignore' },
     ).status === 0
   )
 }
 
 function checkRedis() {
-  const r = spawnSync('docker', ['exec', 'convexhire-redis-test', 'redis-cli', 'ping'], {
+  const r = spawnSync('docker', ['exec', 'rojgarai-redis-test', 'redis-cli', 'ping'], {
     encoding: 'utf8',
   })
   return r.status === 0 && r.stdout.trim() === 'PONG'

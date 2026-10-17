@@ -46,7 +46,7 @@ export function getRequiredRoles(pathname: string): PrimaryRole[] | null {
 // a new tab), onboarding and Google OAuth so the user lands where they started.
 // ---------------------------------------------------------------------------
 
-const POST_AUTH_NEXT_KEY = 'convexhire:postAuthNext'
+const POST_AUTH_NEXT_KEY = 'rojgarai:postAuthNext'
 
 /** Allow only safe relative paths — blocks open redirect via protocol or // */
 export function getSafeRedirect(value: string | null | undefined): string | null {

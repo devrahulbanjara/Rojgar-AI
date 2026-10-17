@@ -110,7 +110,7 @@ export interface CandidateProfile extends BaseUser {
   primary_role: 'candidate'
   phone: string | null
   location: string | null
-  headline: string | null // e.g. "Frontend Engineer @ Convex"
+  headline: string | null // e.g. "Frontend Engineer @ F1Soft"
   bio: string | null
   skills: string[] // ["React", "TypeScript", ...]
   target_roles: string[] // ["Frontend Developer", "Backend Developer"]

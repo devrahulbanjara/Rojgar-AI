@@ -109,7 +109,7 @@ function VerifyEmailInner() {
               Email verified!
             </h1>
             <p className="auth__subtitle">
-              Your account is now active. You can sign in and start using ConvexHire.
+              Your account is now active. You can sign in and start using Rojgar AI.
             </p>
             <Link href="/login" className="btn btn--ghost btn--sm" style={{ marginTop: '1.5rem' }}>
               Go to Login
@@ -134,7 +134,7 @@ function VerifyEmailInner() {
       </div>
 
       <p className="auth__switch">
-        Need help? <a href="mailto:support@convexhire.com">Contact support</a>
+        Need help? <a href="mailto:support@rojgarai.app">Contact support</a>
       </p>
     </div>
   )

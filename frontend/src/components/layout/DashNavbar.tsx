@@ -207,7 +207,7 @@ export default function DashNavbar({
         <Link href={isCandidate ? '/candidate' : '/recruiter'} className="dash-navbar__logo">
           <Image
             src="/logo/logo.png"
-            alt="ConvexHire"
+            alt="Rojgar AI"
             width={140}
             height={30}
             className="dash-navbar__logo-image"

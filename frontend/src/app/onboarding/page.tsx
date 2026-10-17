@@ -96,7 +96,7 @@ function OnboardingForm() {
       if (result.success && user) {
         // Update user state smoothly
         dispatch(updateUser({ ...user, is_onboarded: true }))
-        notify.success('Welcome to ConvexHire!')
+        notify.success('Welcome to Rojgar AI!')
 
         // Since user roles dictate dashboards, redirect to home which then routes identically
         router.replace(consumePostAuthRedirect() ?? '/candidate')

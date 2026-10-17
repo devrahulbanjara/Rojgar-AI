@@ -63,7 +63,7 @@ def build_user_prompt(spec: ResumeSpec) -> str:
         f"Resume date display feel: {spec.date_style.replace('_', ' ')}\n"
         f"Render inconsistency variant for this slot: {spec.render_variant}\n"
         "Real-world resume guidance:\n"
-        "- Write this as if a real person is preparing a resume, not as if they know anything about ConvexHire.\n"
+        "- Write this as if a real person is preparing a resume, not as if they know anything about Rojgar AI.\n"
         "- Do not create a dedicated Target Roles or Preferred Roles section.\n"
         "- Keep target_roles as an empty list unless a role preference is explicitly embedded in the resume text, which should be rare.\n"
         "- Use a concise, realistic resume structure focused on header, technical skills, experience or projects, and education.\n"

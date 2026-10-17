@@ -1,5 +1,5 @@
 """
-Golden dataset generator for ConvexHire resume extraction evaluation.
+Golden dataset generator for Rojgar AI resume extraction evaluation.
 
 The implementation is intentionally split across smaller modules:
 - `dataset_personas.py` for persona/reference data

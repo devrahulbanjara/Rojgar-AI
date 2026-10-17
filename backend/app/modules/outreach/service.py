@@ -59,7 +59,7 @@ def _build_footer(recruiter_name: str, company_name: str) -> str:
     """Build the deterministic email footer appended to every outreach email."""
     safe_name = html.escape(recruiter_name)
     safe_company = html.escape(company_name)
-    return f"<p>{safe_name}<br />{safe_company}<br />ConvexHire Recruiting Team</p>"
+    return f"<p>{safe_name}<br />{safe_company}<br />Rojgar AI Recruiting Team</p>"
 
 
 async def _get_company_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
@@ -203,7 +203,7 @@ def _compose_draft(
             safe_booking_url = html.escape(booking_url, quote=True)
             body += (
                 "<p>Please book your interview using the same name and email address "
-                "you used on ConvexHire so we can match your booking automatically.</p>"
+                "you used on Rojgar AI so we can match your booking automatically.</p>"
                 f'<p><a href="{safe_booking_url}">Book your interview</a></p>'
             )
     else:
@@ -300,7 +300,7 @@ async def _upsert_generated_draft(
             detail="Cannot regenerate a draft that has already been sent.",
         )
 
-    company_name = company.name if company else "ConvexHire"
+    company_name = company.name if company else "Rojgar AI"
     recruiter_name = (
         await _get_recruiter_name(db, generated_by_user_id)
         if generated_by_user_id
@@ -349,7 +349,7 @@ async def prepare_drafts(
     company_id = await _get_company_id(db, user_id)
     job = await _get_job_for_company(db, job_id, company_id)
     company = await _get_company(db, company_id)
-    company_name = company.name if company else "ConvexHire"
+    company_name = company.name if company else "Rojgar AI"
     recruiter_name = await _get_recruiter_name(db, user_id)
 
     apps_result = await db.execute(

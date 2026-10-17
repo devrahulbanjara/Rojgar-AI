@@ -164,7 +164,7 @@ async def register_company(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=(
-                f"A company named '{company_name}' already exists on ConvexHire. "
+                f"A company named '{company_name}' already exists on Rojgar AI. "
                 "Ask its admin to approve you as a recruiter instead."
             ),
         )
@@ -220,7 +220,7 @@ async def request_join_company(
     if not result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No company named '{payload.company_name}' was found on ConvexHire.",
+            detail=f"No company named '{payload.company_name}' was found on Rojgar AI.",
         )
 
     # Guard: email already verified

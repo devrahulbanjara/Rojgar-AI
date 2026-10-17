@@ -42,7 +42,7 @@ export default function CommunicationCard({ form, isAdmin, onChange }: Props) {
           placeholder={'Priya Maharjan\nSenior Recruiter\nPinnacle Tech Nepal Pvt. Ltd.'}
         />
         <span className={styles.fieldHint}>
-          Appended to outreach emails you send from ConvexHire. {form.outreach_signature.length}/
+          Appended to outreach emails you send from Rojgar AI. {form.outreach_signature.length}/
           {LIMITS.signature} characters.
         </span>
       </div>

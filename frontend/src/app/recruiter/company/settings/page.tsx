@@ -522,7 +522,7 @@ export default function CompanySettingsPage() {
                       onChange={(event) =>
                         setForm((prev) => ({ ...prev, name: event.target.value }))
                       }
-                      placeholder="ConvexHire"
+                      placeholder="Rojgar AI"
                       disabled={isReadOnly}
                       type="text"
                     />

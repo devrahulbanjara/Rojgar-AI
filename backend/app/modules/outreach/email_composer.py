@@ -20,7 +20,7 @@ Rules:
 - Address them by first name only
 - Mention the job title and company name
 - Include the interview booking link naturally
-- Explicitly tell them to book using the exact name and email address they used to sign up to ConvexHire, so we can match their booking automatically
+- Explicitly tell them to book using the exact name and email address they used to sign up to Rojgar AI, so we can match their booking automatically
 - Keep it under 180 words
 - Sound human, not corporate
 - Do NOT include any closing, sign-off, signature, or footer (e.g. no "Warm regards", "Best", "[Your Name]", etc.)
@@ -89,7 +89,7 @@ def _static_template(
             safe_link = html.escape(booking_url, quote=True)
             body += (
                 "<p>Please book a time using the same name and email you used "
-                "to sign up to ConvexHire so we can match your booking automatically:</p>"
+                "to sign up to Rojgar AI so we can match your booking automatically:</p>"
                 f'<p><a href="{safe_link}">Book your interview</a></p>'
             )
         body += "<p>Looking forward to speaking soon.</p>"

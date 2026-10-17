@@ -1,4 +1,4 @@
-# ConvexHire
+# Rojgar AI
 
 AI-assisted recruitment platform running the full hiring funnel end-to-end. Single source of truth for product behaviour, AI internals, security guardrails, and data flow.
 

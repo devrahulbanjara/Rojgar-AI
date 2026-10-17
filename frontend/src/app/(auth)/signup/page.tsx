@@ -600,11 +600,11 @@ function SignupContent() {
     },
     intent: {
       title: 'What brings you here?',
-      subtitle: 'Tell us how you plan to use ConvexHire so we can personalise your experience.',
+      subtitle: 'Tell us how you plan to use Rojgar AI so we can personalise your experience.',
     },
     'company-choice': {
       title: 'Set up your company',
-      subtitle: 'Create a new company profile or join one that already exists on ConvexHire.',
+      subtitle: 'Create a new company profile or join one that already exists on Rojgar AI.',
     },
     'company-details': {
       title: 'Create your company',
@@ -918,7 +918,7 @@ function SignupContent() {
                 <div className="auth__intent-body">
                   <span className="auth__intent-title">Join an existing company</span>
                   <span className="auth__intent-desc">
-                    Request to join your company&apos;s workspace on ConvexHire.
+                    Request to join your company&apos;s workspace on Rojgar AI.
                   </span>
                 </div>
                 <span className="auth__intent-arrow" aria-hidden="true">
@@ -1118,7 +1118,7 @@ function SignupContent() {
                   </span>
                 )}
                 <p className="auth__field-hint">
-                  Enter the company name exactly as it appears on ConvexHire. An email will be sent
+                  Enter the company name exactly as it appears on Rojgar AI. An email will be sent
                   to the company admin to verify your request.
                 </p>
               </div>

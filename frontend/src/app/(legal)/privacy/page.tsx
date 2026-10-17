@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { Calendar, ChevronRight, Clock, ShieldCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - ConvexHire',
+  title: 'Privacy Policy - Rojgar AI',
   description:
-    'Learn how ConvexHire collects, uses, and protects your personal data in accordance with the Privacy Act 2075 (2018) and the Electronic Transactions Act 2063 of Nepal.',
+    'Learn how Rojgar AI collects, uses, and protects your personal data in accordance with the Privacy Act 2075 (2018) and the Electronic Transactions Act 2063 of Nepal.',
 }
 
 const TOC = [
@@ -90,7 +90,7 @@ export default function PrivacyPolicyPage() {
           {/* Callout */}
           <div className="legal__callout">
             <p>
-              <strong>Summary:</strong> ConvexHire is operated by Convex Technologies Pvt. Ltd.,
+              <strong>Summary:</strong> Rojgar AI is operated by Rojgar AI,
               registered in Nepal. We collect only the personal data necessary to provide our
               job-board services and do so in compliance with the{' '}
               <strong>Privacy Act 2075 (2018)</strong> and the{' '}
@@ -102,10 +102,10 @@ export default function PrivacyPolicyPage() {
           <section className="legal__section" id="about">
             <h2 className="legal__section-title">1. About This Policy</h2>
             <p className="legal__text">
-              This Privacy Policy describes how Convex Technologies Pvt. Ltd.
-              (&quot;ConvexHire&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) collects,
+              This Privacy Policy describes how Rojgar AI
+              (&quot;Rojgar AI&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) collects,
               uses, stores, and discloses information about you when you use our website at{' '}
-              <strong>convexhire.com</strong> and the services we provide (collectively, the
+              <strong>rojgarai.app</strong> and the services we provide (collectively, the
               &quot;Service&quot;).
             </p>
             <p className="legal__text">
@@ -233,7 +233,7 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <strong>Contractual necessity:</strong> To perform the agreement between you and
-                ConvexHire when you register and use the Service.
+                Rojgar AI when you register and use the Service.
               </li>
               <li>
                 <strong>Legitimate interest:</strong> For fraud prevention, security monitoring, and
@@ -351,7 +351,7 @@ export default function PrivacyPolicyPage() {
               </li>
             </ul>
             <p className="legal__text">
-              To exercise any of these rights, email us at <strong>privacy@convexhire.com</strong>.
+              To exercise any of these rights, email us at <strong>privacy@rojgarai.app</strong>.
               We will respond within <strong>30 days</strong> as required under Nepal law. You also
               have the right to lodge a complaint with the{' '}
               <strong>
@@ -410,7 +410,7 @@ export default function PrivacyPolicyPage() {
               <strong>Children&apos;s Act 2075 (2018)</strong> of Nepal, if we become aware that a
               child under 16 has provided us personal data without verifiable parental consent, we
               will promptly delete it. If you believe a child has submitted information to us,
-              please contact privacy@convexhire.com.
+              please contact privacy@rojgarai.app.
             </p>
           </section>
 
@@ -438,7 +438,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>Company:</strong> Convex Technologies Pvt. Ltd.
+                <strong>Company:</strong> Rojgar AI
               </li>
               <li>
                 <strong>Registration:</strong> Registered under the Companies Act 2063 (2006), Nepal
@@ -447,7 +447,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Address:</strong> Kathmandu, Bagmati Province, Nepal
               </li>
               <li>
-                <strong>Email:</strong> privacy@convexhire.com
+                <strong>Email:</strong> privacy@rojgarai.app
               </li>
               <li>
                 <strong>Phone:</strong> +977-1-XXXXXXX

@@ -13,7 +13,7 @@ class RedisService:
 
     def __init__(self) -> None:
         self._client: redis.Redis | None = None
-        self.prefix = f"convexhire:{settings.environment}"
+        self.prefix = f"rojgarai:{settings.environment}"
 
     async def connect(self) -> None:
         """Connect to Redis if enabled; fail gracefully on connection errors."""

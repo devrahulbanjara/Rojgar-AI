@@ -1,3 +1,4 @@
+import { BRAND } from '@/lib/brand'
 import type { Metadata } from 'next'
 import { DM_Sans, EB_Garamond, Geist_Mono, Manrope } from 'next/font/google'
 
@@ -46,8 +47,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'ConvexHire',
-  description: 'ConvexHire is a job board for software engineers built with Next.js and Convex.',
+  title: { default: BRAND.name, template: `%s · ${BRAND.name}` },
+  description: BRAND.tagline,
 }
 
 export default function RootLayout({

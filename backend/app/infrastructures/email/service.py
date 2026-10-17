@@ -45,7 +45,7 @@ class EmailService:
         link = f"{settings.frontend_url}/verify-email?token={token}"
         html = f"""
         <div style="font-family: sans-serif; padding: 20px;">
-            <h2>Welcome to ConvexHire!</h2>
+            <h2>Welcome to Rojgar AI!</h2>
             <p>Please click the button below to verify your email address:</p>
             <a href="{link}"
                style="display: inline-block; background: #007bff; color: white;
@@ -60,7 +60,7 @@ class EmailService:
             </p>
         </div>
         """
-        await cls._send("Verify your ConvexHire Account", email, html)
+        await cls._send("Verify your Rojgar AI Account", email, html)
 
     @classmethod
     async def send_password_reset(cls, email: str, token: str) -> None:
@@ -83,7 +83,7 @@ class EmailService:
             </p>
         </div>
         """
-        await cls._send("Reset your ConvexHire Password", email, html)
+        await cls._send("Reset your Rojgar AI Password", email, html)
 
     @classmethod
     async def send_generic_email(

@@ -230,7 +230,7 @@ function LoginPageInner() {
       <div className="auth__inner">
         {/* Header */}
         <header className="auth__header">
-          <h1 className="auth__title">Sign in to ConvexHire</h1>
+          <h1 className="auth__title">Sign in to Rojgar AI</h1>
           <p className="auth__subtitle">
             Access thousands of job listings and career opportunities.
           </p>

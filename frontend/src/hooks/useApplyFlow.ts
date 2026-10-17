@@ -20,7 +20,7 @@ export type FlowStep =
   | 'committing_patch'
   | 'submitting'
 
-const LAST_RESUME_KEY = 'convexhire:lastAppliedResumeId'
+const LAST_RESUME_KEY = 'rojgarai:lastAppliedResumeId'
 
 export function readLastResumeId(): string | null {
   try {

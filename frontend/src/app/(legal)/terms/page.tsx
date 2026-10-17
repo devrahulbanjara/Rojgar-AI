@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions - ConvexHire',
+  title: 'Terms & Conditions - Rojgar AI',
   description:
-    'Read the Terms and Conditions governing your use of ConvexHire, drafted in accordance with the Nepal Contract Act 2056, Consumer Protection Act 2075, and Electronic Transactions Act 2063.',
+    'Read the Terms and Conditions governing your use of Rojgar AI, drafted in accordance with the Nepal Contract Act 2056, Consumer Protection Act 2075, and Electronic Transactions Act 2063.',
 }
 
 const TOC = [
@@ -86,8 +86,8 @@ export default function TermsPage() {
           <div className="legal__callout">
             <p>
               <strong>Please read carefully.</strong> These Terms constitute a legally binding
-              agreement between you and Convex Technologies Pvt. Ltd. under the{' '}
-              <strong>Nepal Contract Act 2056 (2000)</strong>. By using ConvexHire you agree to
+              agreement between you and Rojgar AI under the{' '}
+              <strong>Nepal Contract Act 2056 (2000)</strong>. By using Rojgar AI you agree to
               these Terms. If you do not agree, do not use the Service.
             </p>
           </div>
@@ -96,14 +96,14 @@ export default function TermsPage() {
             <h2 className="legal__section-title">1. Acceptance of Terms</h2>
             <p className="legal__text">
               These Terms and Conditions (&quot;Terms&quot;) govern your access to and use of the
-              ConvexHire platform and related services operated by{' '}
-              <strong>Convex Technologies Pvt. Ltd.</strong> (&quot;Company&quot;, &quot;we&quot;,
+              Rojgar AI platform and related services operated by{' '}
+              <strong>Rojgar AI</strong> (&quot;Company&quot;, &quot;we&quot;,
               &quot;us&quot;), a private limited company incorporated under the{' '}
               <strong>Companies Act 2063 (2006)</strong> of Nepal.
             </p>
             <p className="legal__text">
               By clicking &quot;Accept&quot;, registering an account, accessing the website at
-              convexhire.com, or otherwise using any part of the Service, you agree to be bound by
+              rojgarai.app, or otherwise using any part of the Service, you agree to be bound by
               these Terms. These Terms form a valid legal contract enforceable under the{' '}
               <strong>Nepal Contract Act 2056 (2000)</strong>.
             </p>
@@ -143,7 +143,7 @@ export default function TermsPage() {
               <li>Maintain and promptly update your account information to keep it accurate</li>
               <li>Keep your password secure and confidential</li>
               <li>
-                Notify us immediately at support@convexhire.com of any unauthorised use of your
+                Notify us immediately at support@rojgarai.app of any unauthorised use of your
                 account
               </li>
               <li>Accept full responsibility for all activities conducted through your account</li>
@@ -158,7 +158,7 @@ export default function TermsPage() {
           <section className="legal__section" id="services">
             <h2 className="legal__section-title">4. Our Services</h2>
             <p className="legal__text">
-              ConvexHire provides an online platform connecting job seekers (&quot;Candidates&quot;)
+              Rojgar AI provides an online platform connecting job seekers (&quot;Candidates&quot;)
               with hiring organisations (&quot;Employers&quot;). Our core services include:
             </p>
             <ul className="legal__list">
@@ -227,7 +227,7 @@ export default function TermsPage() {
                 the specific role advertised
               </li>
               <li>
-                Provide a response to every applicant, in keeping with ConvexHire&apos;s no-ghosting
+                Provide a response to every applicant, in keeping with Rojgar AI&apos;s no-ghosting
                 commitment
               </li>
               <li>
@@ -249,7 +249,7 @@ export default function TermsPage() {
                 Post or transmit any content that is false, defamatory, obscene, or in violation of
                 any Nepal law
               </li>
-              <li>Infringe the intellectual property rights of ConvexHire or any third party</li>
+              <li>Infringe the intellectual property rights of Rojgar AI or any third party</li>
               <li>
                 Engage in scraping, crawling, or automated data extraction without prior written
                 consent
@@ -274,8 +274,8 @@ export default function TermsPage() {
             <h2 className="legal__section-title">8. Intellectual Property</h2>
             <p className="legal__text">
               All content on the Service, including but not limited to text, graphics, logos, icons,
-              images, audio, video, data compilations, and software, is the property of Convex
-              Technologies Pvt. Ltd. or its licensors and is protected under the{' '}
+              images, audio, video, data compilations, and software, is the property of Rojgar AI
+              or its licensors and is protected under the{' '}
               <strong>Copyright Act 2059 (2002)</strong> of Nepal. Refer to our{' '}
               <Link href="/copyright" className="legal__link">
                 Copyright Notice
@@ -292,7 +292,7 @@ export default function TermsPage() {
           <section className="legal__section" id="payments">
             <h2 className="legal__section-title">9. Payments &amp; Refunds</h2>
             <p className="legal__text">
-              ConvexHire is free for Candidates. Employer subscription plans are offered on a
+              Rojgar AI is free for Candidates. Employer subscription plans are offered on a
               monthly or annual basis. By subscribing, you agree to the following:
             </p>
             <ul className="legal__list">
@@ -351,13 +351,13 @@ export default function TermsPage() {
             <h2 className="legal__section-title">11. Limitation of Liability</h2>
             <p className="legal__text">
               To the fullest extent permitted by the <strong>Nepal Contract Act 2056</strong> and
-              other applicable law, in no event shall Convex Technologies Pvt. Ltd., its directors,
+              other applicable law, in no event shall Rojgar AI, its directors,
               employees, or agents be liable for any indirect, incidental, special, consequential,
               or punitive damages arising from your use of or inability to use the Service.
             </p>
             <p className="legal__text">
               Our total aggregate liability to you for any claim arising out of or related to these
-              Terms or the Service shall not exceed the total fees paid by you to ConvexHire in the{' '}
+              Terms or the Service shall not exceed the total fees paid by you to Rojgar AI in the{' '}
               <strong>3 months preceding</strong> the event giving rise to the claim, or{' '}
               <strong>NPR 5,000</strong>, whichever is greater.
             </p>
@@ -371,7 +371,7 @@ export default function TermsPage() {
           <section className="legal__section" id="indemnification">
             <h2 className="legal__section-title">12. Indemnification</h2>
             <p className="legal__text">
-              You agree to defend, indemnify, and hold harmless Convex Technologies Pvt. Ltd. and
+              You agree to defend, indemnify, and hold harmless Rojgar AI and
               its officers, directors, employees, and agents from and against any claims, damages,
               obligations, losses, liabilities, costs, or debt, and expenses (including reasonable
               legal fees) arising from:
@@ -391,7 +391,7 @@ export default function TermsPage() {
             <h2 className="legal__section-title">13. Termination</h2>
             <p className="legal__text">
               You may close your account at any time by visiting your account settings or contacting
-              support@convexhire.com.
+              support@rojgarai.app.
             </p>
             <p className="legal__text">
               We reserve the right to suspend or permanently terminate your access to the Service,
@@ -449,10 +449,10 @@ export default function TermsPage() {
             <p className="legal__text">For questions about these Terms, contact:</p>
             <ul className="legal__list">
               <li>
-                <strong>Legal Team:</strong> Convex Technologies Pvt. Ltd., Kathmandu, Nepal
+                <strong>Legal Team:</strong> Rojgar AI, Kathmandu, Nepal
               </li>
               <li>
-                <strong>Email:</strong> legal@convexhire.com
+                <strong>Email:</strong> legal@rojgarai.app
               </li>
             </ul>
           </section>
