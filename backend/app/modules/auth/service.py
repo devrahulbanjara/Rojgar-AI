@@ -269,16 +269,22 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
 
+    if user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "account_deleted",
+                "message": "This account has been deleted",
+            },
+        )
+
     if not user.is_email_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Please verify your email before logging in",
-        )
-
-    if user.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="This account has been deleted",
+            detail={
+                "code": "email_not_verified",
+                "message": "Please verify your email before logging in",
+            },
         )
 
     bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
@@ -483,6 +489,13 @@ async def refresh_tokens(
 
     # 4. Token Rotation: Delete the old token row
     await db.delete(token_row)
+
+    owner = await db.get(User, token_row.user_id)
+    if owner is None or owner.is_deleted:
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Account unavailable"
+        )
 
     # 5. Generate NEW tokens
     new_tokens, new_jti, new_expires_at = create_tokens(user_id)

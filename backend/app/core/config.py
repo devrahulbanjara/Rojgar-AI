@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     environment: Literal["dev", "prod", "test"] = "dev"
     allowed_origins: list[str] = ["http://localhost:3000"]
     frontend_url: str = "http://localhost:3000"
+    # Number of reverse proxies in front of the API that append to
+    # X-Forwarded-For (e.g. 1 on Render). 0 = trust only the socket peer.
+    trusted_proxy_hops: int = 0
 
     # Auth
     secret_key: str

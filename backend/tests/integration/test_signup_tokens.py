@@ -79,3 +79,33 @@ class TestPendingTokenSecrecy:
             {"type": "setup", "email": "g@b.com", "password_hash": None}
         )
         assert decode_pending_signup_token(token)["password_hash"] is None
+
+
+class TestSetupTokenRetry:
+    async def test_setup_token_can_retry_company_registration(self, client, db):
+        signup = await client.post(
+            "/auth/signup",
+            json={
+                "full_name": "Retry Admin",
+                "email": "retry.admin@example.com",
+                "password": "Password@123",
+                "primary_role": "recruiter_admin",
+            },
+        )
+        setup_token = signup.json()["data"]["setup_token"]
+        body = {
+            "setup_token": setup_token,
+            "company_name": "Retry Co",
+            "industry": "Software",
+            "company_size": "11-50",
+        }
+
+        first = await client.post("/companies/register", json=body)
+        second = await client.post("/companies/register", json=body)
+
+        assert first.status_code == second.status_code
+        assert first.status_code < 300
+        user = await db.scalar(
+            select(User).where(User.email == "retry.admin@example.com")
+        )
+        assert user is None

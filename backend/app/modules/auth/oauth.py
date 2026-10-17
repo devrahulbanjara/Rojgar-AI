@@ -72,14 +72,26 @@ async def google_oauth_callback(
             detail="Failed to authenticate with Google",
         )
 
+    # Linking by email is only safe when Google vouches for inbox ownership.
+    if user_info.get("email_verified") is not True:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google account email is not verified",
+        )
+
     google_id: str = user_info["sub"]
-    email: str = user_info["email"]
+    email: str = user_info["email"].strip().lower()
     full_name: str = user_info.get("name", "")
     avatar_url: str | None = user_info.get("picture")
 
     # 2. Check if a user with this email already exists
     user_result = await db.execute(select(User).where(User.email == email))
     user = user_result.scalar_one_or_none()
+
+    if user and user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account has been deleted"
+        )
 
     if user:
         # CASE 1: Existing user — log them in immediately.
