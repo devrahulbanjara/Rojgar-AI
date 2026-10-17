@@ -4,6 +4,7 @@ import { type FormEvent, useState } from 'react'
 
 import { parseApiError } from '@/lib/apiError'
 import { notify } from '@/lib/notify'
+import { localPhone } from '@/lib/session'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
   useChangeMyPasswordMutation,
@@ -103,9 +104,16 @@ function ProfileCard() {
             onChange={(event) => setName(event.target.value)}
           />
         </FormField>
-        <FormField id="profile-email" label="Email">
-          <Input id="profile-email" value={user.email ?? ''} readOnly disabled />
-        </FormField>
+        {user.email ? (
+          <FormField id="profile-email" label="Email">
+            <Input id="profile-email" value={user.email} readOnly disabled />
+          </FormField>
+        ) : null}
+        {user.phone ? (
+          <FormField id="profile-phone" label="Mobile number">
+            <Input id="profile-phone" value={localPhone(user.phone) ?? ''} readOnly disabled />
+          </FormField>
+        ) : null}
       </SettingsCard>
     </form>
   )
@@ -248,12 +256,14 @@ function DeleteAccount() {
   )
 }
 
-/** Personal settings: name and photo, password, notifications. */
+/** Personal settings: name and photo, password (email accounts), notifications. */
 export function ProfileSettings() {
+  // People who sign in with a mobile code have no password to change.
+  const hasEmail = Boolean(useAppSelector((s) => s.auth.user?.email))
   return (
     <>
       <ProfileCard />
-      <PasswordCard />
+      {hasEmail ? <PasswordCard /> : null}
       <NotificationsCard />
       <DeleteAccount />
     </>
