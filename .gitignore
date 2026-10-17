@@ -117,3 +117,6 @@ test-results/
 
 .claude
 .local-storage/
+
+# Vercel CLI link
+.vercel
