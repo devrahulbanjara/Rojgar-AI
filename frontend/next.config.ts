@@ -97,9 +97,47 @@ function assertPublicBackendUrl() {
   )
 }
 
+const backendOrigin = (() => {
+  try {
+    const url =
+      process.env.NEXT_PUBLIC_BACKEND_URL ?? readEnvValue('.env.local', 'NEXT_PUBLIC_BACKEND_URL')
+    return url ? new URL(url).origin : ''
+  } catch {
+    return ''
+  }
+})()
+
+// Report-only first: enforce once the report stream is clean in production.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "object-src 'none'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline'",
+  `connect-src 'self' ${backendOrigin}`.trim(),
+].join('; ')
+
+const securityHeaders = [
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()',
+  },
+  { key: 'Content-Security-Policy-Report-Only', value: contentSecurityPolicy },
+]
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns,
+  },
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }]
   },
 }
 
