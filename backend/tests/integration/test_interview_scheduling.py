@@ -21,7 +21,8 @@ from app.modules.interviews.scheduling import (
     open_slots,
     read_token,
 )
-from app.shared.enums import ApplicationStatus
+from app.modules.applications.models import ApplicationEvent
+from app.shared.enums import ApplicationStage
 from main import app
 from tests.integration.helpers import (
     auth_headers,
@@ -147,11 +148,11 @@ async def _shortlisted(db, n=1, company=None, admin=None, job=None):
     if company is None:
         admin, company = await make_recruiter_admin(db, email=f"admin{n}@test.dev")
         job = await make_active_job(
-            db, company.id, title="Backend Engineer", requirements=["Python", "SQL"]
+            db, company.id, title="Backend Engineer", must_haves=["Python", "SQL"]
         )
     user, resume = await make_candidate_with_resume(db, email=f"cand{n}@test.dev")
     application = await make_application(
-        db, user.id, job.id, resume.id, status=ApplicationStatus.shortlisted
+        db, user.id, job.id, resume.id, ApplicationStage.shortlisted
     )
     application.shared_phone_value = "+977 9801234567"
     await db.flush()
@@ -234,7 +235,7 @@ async def test_book_reschedule_cancel_flow(client, db, outbox):
     link = booked.json()["data"]["meeting_link"]
     assert link.startswith("https://meet.jit.si/rojgarai-")
     await db.refresh(application)
-    assert application.status == ApplicationStatus.interview_booked
+    assert application.stage == ApplicationStage.interview
     invites = [m for m in outbox if m["method"] == "REQUEST"]
     assert {m["to"] for m in invites} == {"cand1@test.dev", "admin1@test.dev"}
     assert "SEQUENCE:0" in invites[0]["ics"]
@@ -261,7 +262,7 @@ async def test_book_reschedule_cancel_flow(client, db, outbox):
     assert cancelled.json()["data"]["status"] == "cancelled"
     assert outbox[-1]["method"] == "CANCEL" and "SEQUENCE:2" in outbox[-1]["ics"]
     await db.refresh(application)
-    assert application.status == ApplicationStatus.shortlisted
+    assert application.stage == ApplicationStage.shortlisted
     assert len(provider.sent) - sms_before == 4  # invite, booked, moved, cancelled
 
     rebook = await client.post(
@@ -273,7 +274,7 @@ async def test_book_reschedule_cancel_flow(client, db, outbox):
 async def test_rejected_candidate_link_is_closed(client, db):
     admin, _, _, application = await _shortlisted(db)
     token = await _invite(client, admin, application, notify=False)
-    application.status = ApplicationStatus.rejected
+    application.stage = ApplicationStage.rejected
     await db.flush()
 
     assert (await client.get(f"/public/schedule/{token}")).status_code == 410
@@ -473,8 +474,16 @@ async def test_scorecard_and_agenda(client, db, outbox):
     ).json()
     assert len(form["data"]["scorecards"]) == 1
 
+    # The interview is on the timeline; the stage stays for a person to decide.
     await db.refresh(application)
-    assert application.status == ApplicationStatus.interview_completed
+    assert application.stage == ApplicationStage.interview
+    done = await db.scalar(
+        select(ApplicationEvent).where(
+            ApplicationEvent.application_id == application.id,
+            ApplicationEvent.type == "interview_done",
+        )
+    )
+    assert done is not None
     agenda = await client.get(
         "/interviews",
         params={"range": "day", "start": past.astimezone(KTM).date().isoformat()},

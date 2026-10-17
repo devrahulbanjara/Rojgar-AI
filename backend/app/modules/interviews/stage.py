@@ -223,7 +223,7 @@ async def on_done(db, application, job, interview, actor_user_id) -> None:
         job,
         event_type="interview_done",
         candidate_title=None,
-        recruiter_title=f"Scorecard added for {application.user.full_name}",
+        recruiter_title=f"Interview notes added for {application.user.full_name}",
         interview_id=interview.id,
         actor_user_id=actor_user_id,
     )
