@@ -6,7 +6,7 @@ import { notify } from '@/lib/notify'
 import { type ShareableJob, applyUrl, facebookPost, linkedInPost } from '@/lib/shareLinks'
 import { QRCodeCanvas } from 'qrcode.react'
 
-import { CheckIcon, CopyIcon, DownloadIcon, ShareIcon } from '@/components/icons'
+import { CopyIcon, DownloadIcon, ShareIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 
-async function copy(text: string, what: string) {
+export async function copyText(text: string, what: string) {
   try {
     await navigator.clipboard.writeText(text)
     notify.success(`${what} copied`)
@@ -33,7 +33,12 @@ function CopyRow({ label, value, what }: { label: string; value: string; what: s
         <p className="text-sm font-medium text-foreground">{label}</p>
         <p className="truncate text-xs text-muted-foreground">{value.split('\n')[0]}</p>
       </div>
-      <Button size="sm" variant="outline" onClick={() => void copy(value, what)}>
+      <Button
+        size="sm"
+        variant="outline"
+        className="shrink-0"
+        onClick={() => void copyText(value, what)}
+      >
         <CopyIcon />
         Copy
       </Button>
@@ -41,8 +46,8 @@ function CopyRow({ label, value, what }: { label: string; value: string; what: s
   )
 }
 
-/** Share a job: apply link, LinkedIn/Facebook post text, Merojob link, QR. */
-export function ShareMenu({ job, trigger }: { job: ShareableJob; trigger?: React.ReactNode }) {
+/** The share content: apply link, LinkedIn/Facebook post text, Merojob link, QR. */
+export function SharePanel({ job }: { job: ShareableJob }) {
   const qrRef = useRef<HTMLCanvasElement>(null)
   const directLink = applyUrl(job.slug, 'direct')
 
@@ -56,6 +61,39 @@ export function ShareMenu({ job, trigger }: { job: ShareableJob; trigger?: React
   }
 
   return (
+    // min-w-0: inside a grid (dialog) or flex (sheet) parent, a long link must
+    // truncate instead of widening the panel past its container.
+    <div className="flex min-w-0 flex-col gap-4">
+      <CopyRow label="Apply link" value={directLink} what="Link" />
+      <CopyRow label="LinkedIn post" value={linkedInPost(job)} what="LinkedIn post" />
+      <CopyRow label="Facebook post" value={facebookPost(job)} what="Facebook post" />
+      <CopyRow
+        label="Merojob external link"
+        value={applyUrl(job.slug, 'merojob')}
+        what="Merojob link"
+      />
+
+      <Separator />
+
+      <div className="flex items-center gap-4">
+        <div className="shrink-0 rounded-lg border bg-white p-2">
+          <QRCodeCanvas ref={qrRef} value={directLink} size={112} marginSize={1} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-2">
+          <p className="text-sm text-muted-foreground">For posters and job fairs</p>
+          <Button size="sm" variant="outline" onClick={downloadQr}>
+            <DownloadIcon />
+            Download QR
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Share a job from a button: the same panel in a dialog. */
+export function ShareMenu({ job, trigger }: { job: ShareableJob; trigger?: React.ReactNode }) {
+  return (
     <Dialog>
       <DialogTrigger asChild>
         {trigger ?? (
@@ -67,41 +105,10 @@ export function ShareMenu({ job, trigger }: { job: ShareableJob; trigger?: React
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share {job.title}</DialogTitle>
+          <DialogTitle className="truncate">Share {job.title}</DialogTitle>
         </DialogHeader>
-
-        <div className="flex flex-col gap-4">
-          <CopyRow label="Apply link" value={directLink} what="Link" />
-          <CopyRow label="LinkedIn post" value={linkedInPost(job)} what="LinkedIn post" />
-          <CopyRow label="Facebook post" value={facebookPost(job)} what="Facebook post" />
-          <CopyRow
-            label="Merojob external link"
-            value={applyUrl(job.slug, 'merojob')}
-            what="Merojob link"
-          />
-        </div>
-
-        <Separator />
-
-        <div className="flex items-center gap-4">
-          <div className="rounded-lg border bg-white p-2">
-            <QRCodeCanvas ref={qrRef} value={directLink} size={112} marginSize={1} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <CheckIcon className="size-4 text-status-offer-foreground" />
-              For posters and job fairs
-            </p>
-            <Button size="sm" variant="outline" onClick={downloadQr}>
-              <DownloadIcon />
-              Download QR
-            </Button>
-          </div>
-        </div>
+        <SharePanel job={job} />
       </DialogContent>
     </Dialog>
   )
 }
-
-/** @deprecated Use ShareMenu. */
-export const ShareJobDialog = ShareMenu

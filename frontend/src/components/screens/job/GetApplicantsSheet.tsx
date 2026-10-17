@@ -14,7 +14,7 @@ import {
 import { notify } from '@/lib/notify'
 import type { JobDetail } from '@/store/services/jobsApi'
 
-import { ShareMenu } from '@/components/app/ShareMenu'
+import { SharePanel, copyText } from '@/components/app/ShareMenu'
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -28,7 +28,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
-type View = 'menu' | 'ask'
+type View = 'menu' | 'ask' | 'post'
 
 function Option({
   icon,
@@ -72,15 +72,6 @@ function Option({
       {body}
     </Button>
   )
-}
-
-async function copy(text: string, what: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    notify.success(`${what} copied`)
-  } catch {
-    notify.error("Couldn't copy. Select the text and copy it instead.")
-  }
 }
 
 function AskPeople({ job }: { job: JobDetail }) {
@@ -147,7 +138,7 @@ function AskPeople({ job }: { job: JobDetail }) {
                 SMS
               </a>
             </Button>
-            <Button size="lg" variant="outline" onClick={() => void copy(message, 'Message')}>
+            <Button size="lg" variant="outline" onClick={() => void copyText(message, 'Message')}>
               <CopyIcon />
               Copy
             </Button>
@@ -200,7 +191,7 @@ function AskPeople({ job }: { job: JobDetail }) {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => void copy(referrer.link, `${referrer.name}'s link`)}
+                onClick={() => void copyText(referrer.link, `${referrer.name}'s link`)}
               >
                 <LinkIcon />
                 Copy link
@@ -248,7 +239,11 @@ export function GetApplicantsSheet({
             </Button>
           ) : null}
           <SheetTitle className="font-heading text-xl font-normal">
-            {view === 'ask' ? 'Ask people you know' : 'Get applicants'}
+            {view === 'ask'
+              ? 'Ask people you know'
+              : view === 'post'
+                ? 'Post online'
+                : 'Get applicants'}
           </SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-3 p-5">
@@ -256,6 +251,16 @@ export function GetApplicantsSheet({
             <p className="text-sm text-muted-foreground">Publish the job to get its link.</p>
           ) : view === 'ask' ? (
             <AskPeople job={job} />
+          ) : view === 'post' ? (
+            <SharePanel
+              job={{
+                slug,
+                title: job.title,
+                companyName: job.company.name,
+                location: job.location,
+                locationType: job.location_type,
+              }}
+            />
           ) : (
             <>
               <Option
@@ -270,31 +275,11 @@ export function GetApplicantsSheet({
                 detail="For your shop, office or notice board"
                 href={posterUrl(slug)}
               />
-              <ShareMenu
-                job={{
-                  slug,
-                  title: job.title,
-                  companyName: job.company.name,
-                  location: job.location,
-                  locationType: job.location_type,
-                }}
-                trigger={
-                  <Button
-                    variant="outline"
-                    className="h-auto w-full justify-start gap-4 rounded-2xl px-4 py-4"
-                  >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary [&_svg]:size-5">
-                      <LinkIcon />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col items-start text-left">
-                      <span className="text-base font-medium text-foreground">Post online</span>
-                      <span className="text-sm font-normal whitespace-normal text-muted-foreground">
-                        Link and ready text for LinkedIn, Facebook and Merojob
-                      </span>
-                    </span>
-                    <ChevronRightIcon className="text-muted-foreground" />
-                  </Button>
-                }
+              <Option
+                icon={<LinkIcon />}
+                title="Post online"
+                detail="Link and ready text for LinkedIn, Facebook and Merojob"
+                onClick={() => setView('post')}
               />
             </>
           )}
