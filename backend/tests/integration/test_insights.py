@@ -63,6 +63,7 @@ async def test_hiring_progress_counts_are_cumulative(client, db):
             company_id=company.id,
             location="https://meet.jit.si/rojgarai-test",
             title="Interview",
+            ics_uid="insights-test@rojgarai",
             candidate_name="C",
             candidate_email="c@test.com",
             start_time=NOW - timedelta(hours=5),
