@@ -1,3 +1,4 @@
+import html
 import os
 import uuid
 from datetime import datetime, timezone
@@ -150,7 +151,12 @@ def _status_email_html(
     app_href: str,
 ) -> tuple[str, str]:
     """Returns (subject, html_body) for candidate status notification emails."""
-    link = f"{settings.frontend_url}{app_href}"
+    link = html.escape(f"{settings.frontend_url}{app_href}", quote=True)
+    # Recruiter-controlled values (company name, job title) and the candidate's
+    # own name are interpolated into HTML sent from the platform domain.
+    applicant_name = html.escape(applicant_name)
+    job_title = html.escape(job_title)
+    company_name = html.escape(company_name)
     if status == ApplicationStatus.shortlisted:
         subject = f"You've been shortlisted for {job_title}"
         body = (
@@ -469,12 +475,6 @@ async def apply_to_job(
     # Block submission outright so injected payloads never sit in the DB or hit
     # downstream LLM hops (shortlisting, recruiter chat candidate summaries).
     scanned_text = resume_text_for_guardrails(resume)
-    logger.info(
-        "Apply guardrail scan | resume_id={} | text_len={} | preview={!r}",
-        payload.resume_id,
-        len(scanned_text),
-        scanned_text[:300],
-    )
     await guardrails_service.assert_input_safe(
         scanned_text,
         source="applications.apply",

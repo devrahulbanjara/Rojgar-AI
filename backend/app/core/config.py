@@ -11,7 +11,9 @@ class Settings(BaseSettings):
     app_name: str = "ConvexHire API"
     app_version: str = "1.0.0"
     debug: bool = False
-    environment: Literal["dev", "prod", "test"] = "dev"
+    # Defaults to prod so a missing ENVIRONMENT never exposes /docs or drops the
+    # Secure flag on auth cookies. Local setups set environment=dev (.env.example).
+    environment: Literal["dev", "prod", "test"] = "prod"
     allowed_origins: list[str] = ["http://localhost:3000"]
     frontend_url: str = "http://localhost:3000"
     # Number of reverse proxies in front of the API that append to
