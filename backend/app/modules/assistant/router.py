@@ -6,9 +6,10 @@ from fastapi.responses import StreamingResponse
 from fastapi_limiter.depends import RateLimiter
 from pyrate_limiter import Duration, Limiter, Rate
 
-from app.core.dependencies import ActiveMember, DbSession
+from app.core.dependencies import ActiveMember, DbSession, ManagerUser
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.core.security import decode_access_token
+from app.modules.applications.pipeline import ensure_can_view
 from app.modules.assistant import service
 from app.modules.assistant.schemas import (
     CandidateHistory,
@@ -51,7 +52,7 @@ def _sse(stream: AsyncIterator[str]) -> StreamingResponse:
 
 @router.post("/job-draft", dependencies=_limit(20))
 async def job_draft_turn(
-    payload: JobDraftTurnRequest, user: ActiveMember, db: DbSession
+    payload: JobDraftTurnRequest, user: ManagerUser, db: DbSession
 ) -> StreamingResponse:
     """SSE: `token` {text}* then `final` {draft_id, reply, follow_up, draft, sources}
     or `error` {code, message}."""
@@ -60,7 +61,7 @@ async def job_draft_turn(
 
 @router.get("/job-draft/{draft_id}", dependencies=_limit(60))
 async def job_draft_history(
-    draft_id: uuid.UUID, user: ActiveMember, db: DbSession
+    draft_id: uuid.UUID, user: ManagerUser, db: DbSession
 ) -> UnifiedResponse[JobDraftHistory]:
     data = await service.job_draft_history(db, user, draft_id)
     return ResponseBuilder.success(data=data, message="Draft fetched.")
@@ -75,6 +76,7 @@ async def candidate_turn(
 ) -> StreamingResponse:
     """SSE: `token` {text}* then `final` {answer, quotes, suggested_action,
     cv_available} or `error` {code, message}."""
+    await ensure_can_view(db, user, application_id)
     return _sse(await service.candidate_turn(db, user, application_id, payload))
 
 
@@ -82,5 +84,6 @@ async def candidate_turn(
 async def candidate_history(
     application_id: uuid.UUID, user: ActiveMember, db: DbSession
 ) -> UnifiedResponse[CandidateHistory]:
+    await ensure_can_view(db, user, application_id)
     data = await service.candidate_history(db, user, application_id)
     return ResponseBuilder.success(data=data, message="History fetched.")

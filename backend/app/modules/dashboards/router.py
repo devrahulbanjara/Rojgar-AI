@@ -3,7 +3,7 @@ from datetime import date
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import ActiveMember, DbSession
+from app.core.dependencies import ActiveMember, DbSession, ManagerUser
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.dashboards import home, insights
 from app.modules.dashboards.schemas import (
@@ -41,7 +41,7 @@ async def get_recruiter_jobs_overview(
 
 @router.get("/insights")
 async def get_recruiter_insights(
-    current_user: ActiveMember,
+    current_user: ManagerUser,
     db: DbSession,
     job_id: uuid.UUID | None = None,
     start: date | None = Query(None, alias="from"),

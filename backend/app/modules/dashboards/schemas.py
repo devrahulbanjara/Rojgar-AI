@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.core.schemas import BaseSchema
+from app.modules.auth.enums import MembershipRole
 from app.shared.enums import (
     JobClosedReason,
     JobStatus,
@@ -57,7 +58,10 @@ class DraftRole(BaseSchema):
 class RecruiterHomeResponse(BaseSchema):
     first_name: str
     company_name: str
+    # True for the business owner.
     is_admin: bool
+    # owner | manager | interviewer (None outside a business).
+    role: MembershipRole | None = None
     interviews_today: list[HomeInterview]
     next_interview: HomeInterview | None = None
     roles: list[RoleCard]

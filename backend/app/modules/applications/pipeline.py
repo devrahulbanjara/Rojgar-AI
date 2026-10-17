@@ -54,6 +54,8 @@ from app.modules.applications.service import (
     create_application,
     display_name,
     get_active_company_id,
+    member_access,
+    visible_job_ids,
     invalidate_after_new_application,
     is_flagged,
     schedule_review,
@@ -64,6 +66,7 @@ from app.modules.applications.service import (
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.models import User
+from app.modules.auth.enums import MembershipRole
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job, JobReferrer
 from app.modules.resumes.models import Resume
@@ -128,16 +131,24 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def actions_for(stage: ApplicationStage) -> list[str]:
+# Interviewers see applicants and write notes; owners and managers decide.
+_DECIDERS = frozenset({MembershipRole.owner, MembershipRole.manager})
+
+
+def actions_for(
+    stage: ApplicationStage, role: MembershipRole = MembershipRole.owner
+) -> list[str]:
+    if role not in _DECIDERS:
+        return []
     return [a for a in _PANEL_ORDER if stage in ACTIONS[a][0]]
 
 
 async def _company_job(db: AsyncSession, user: User, job_id) -> tuple[uuid.UUID, Job]:
-    company_id = await get_active_company_id(db, user)
+    company_id, _role, job_ids = await visible_job_ids(db, user)
     job = await db.scalar(
         select(Job).where(Job.id == job_id, Job.company_id == company_id)
     )
-    if job is None:
+    if job is None or (job_ids is not None and job.id not in job_ids):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Job not found.")
     return company_id, job
 
@@ -242,7 +253,7 @@ async def job_pipeline(
 async def _company_application(
     db: AsyncSession, user: User, application_id
 ) -> tuple[uuid.UUID, Application, Job]:
-    company_id = await get_active_company_id(db, user)
+    company_id, _role, job_ids = await visible_job_ids(db, user)
     row = await db.execute(
         select(Application, Job)
         .join(Job, Job.id == Application.job_id)
@@ -255,9 +266,14 @@ async def _company_application(
         )
     )
     found = row.one_or_none()
-    if found is None:
+    if found is None or (job_ids is not None and found[1].id not in job_ids):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Application not found.")
     return company_id, found[0], found[1]
+
+
+async def ensure_can_view(db: AsyncSession, user: User, application_id) -> None:
+    """404 unless this person may see the application (interviewers: their jobs)."""
+    await _company_application(db, user, application_id)
 
 
 async def _events(db: AsyncSession, application_id) -> list[EventView]:
@@ -302,6 +318,7 @@ async def candidate_panel(
     db: AsyncSession, user: User, application_id: uuid.UUID
 ) -> CandidatePanelResponse:
     company_id, application, job = await _company_application(db, user, application_id)
+    _company, role = await member_access(db, user)
     review = await db.scalar(
         select(Review)
         .where(Review.application_id == application.id)
@@ -377,7 +394,8 @@ async def candidate_panel(
         resume=_recruiter_safe_resume(application),
         other_applications=int(others or 0),
         events=await _events(db, application.id),
-        actions=actions_for(application.stage),
+        actions=actions_for(application.stage, role),
+        notify_channel="email" if emails.candidate_email(application) else "none",
     )
 
 
@@ -755,10 +773,13 @@ async def quick_add(
     resume_id = None
     cv_key = None
     if cv is not None:
-        data = await cv_text.read_cv_upload(cv)
-        text = await cv_text.extract_text(data)
+        cv_file = await cv_text.read_cv_upload(cv)
+        text = "" if cv_file.is_photo else await cv_text.extract_text(cv_file.data)
         cv_key = await storage_service.upload_private_document(
-            data, "cvs", extension="pdf", content_type="application/pdf"
+            cv_file.data,
+            f"cv/{job.company_id}",
+            extension=cv_file.extension,
+            content_type=cv_file.content_type,
         )
         resume = Resume(
             user_id=person.id,

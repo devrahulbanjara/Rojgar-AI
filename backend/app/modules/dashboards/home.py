@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import and_, case, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.applications.service import visible_job_ids
 from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.auth.enums import MembershipRole, MembershipStatus
 from app.modules.auth.models import User
@@ -58,8 +59,18 @@ def _interview_done():
     )
 
 
+def _only(job_ids: set[uuid.UUID] | None) -> list:
+    """Interviewers see only the jobs they interview for."""
+    return [] if job_ids is None else [Job.id.in_(job_ids)]
+
+
 async def _interviews_between(
-    db: AsyncSession, company_id: uuid.UUID, start: datetime, end: datetime, limit: int
+    db: AsyncSession,
+    company_id: uuid.UUID,
+    start: datetime,
+    end: datetime,
+    limit: int,
+    job_ids: set[uuid.UUID] | None = None,
 ) -> list[HomeInterview]:
     rows = await db.execute(
         select(
@@ -80,6 +91,7 @@ async def _interviews_between(
             Interview.start_time < end,
             Application.stage == ApplicationStage.interview,
             ~_interview_done(),
+            *_only(job_ids),
         )
         .order_by(Interview.start_time.asc())
         .limit(limit)
@@ -88,7 +100,12 @@ async def _interviews_between(
 
 
 async def _role_cards(
-    db: AsyncSession, company_id: uuid.UUID, now: datetime, *, everything: bool = False
+    db: AsyncSession,
+    company_id: uuid.UUID,
+    now: datetime,
+    *,
+    everything: bool = False,
+    job_ids: set[uuid.UUID] | None = None,
 ) -> list[RoleCard]:
     """Per-role counts. Today only wants roles with live work; the jobs list
     (``everything=True``) wants every role the company has."""
@@ -155,7 +172,11 @@ async def _role_cards(
         .select_from(Job)
         .outerjoin(Application, Application.job_id == Job.id)
         .outerjoin(Review, Review.application_id == Application.id)
-        .where(Job.company_id == company_id, *([] if everything else today_filter))
+        .where(
+            Job.company_id == company_id,
+            *_only(job_ids),
+            *([] if everything else today_filter),
+        )
         .group_by(Job.id)
     )
 
@@ -209,32 +230,22 @@ async def company_context(
     return result[0], result[1]
 
 
-async def _is_owner(db: AsyncSession, user_id: uuid.UUID) -> bool:
-    role = await db.scalar(
-        select(CompanyMembership.role).where(
-            CompanyMembership.user_id == user_id,
-            CompanyMembership.status == MembershipStatus.active,
-        )
-    )
-    return role == MembershipRole.owner
-
-
 async def get_recruiter_home(
     db: AsyncSession, current_user: User, tz: str | None = None
 ) -> RecruiterHomeResponse:
-    is_admin = await _is_owner(db, current_user.id)
     company_id, company_name = await company_context(db, current_user.id)
     first_name = _first_name(current_user.full_name)
-
     if company_id is None:
         return RecruiterHomeResponse(
             first_name=first_name,
             company_name="",
-            is_admin=is_admin,
+            is_admin=False,
+            role=None,
             interviews_today=[],
             roles=[],
             drafts=[],
         )
+    _company, role, job_ids = await visible_job_ids(db, current_user)
 
     zone = _resolve_tz(tz)
     now = datetime.now(UTC)
@@ -243,23 +254,27 @@ async def get_recruiter_home(
     day_end = day_start + timedelta(days=1)
 
     interviews_today = await _interviews_between(
-        db, company_id, day_start, day_end, limit=20
+        db, company_id, day_start, day_end, limit=20, job_ids=job_ids
     )
     next_interview = None
     if not interviews_today:
         upcoming = await _interviews_between(
-            db, company_id, now, now + timedelta(days=14), limit=1
+            db, company_id, now, now + timedelta(days=14), limit=1, job_ids=job_ids
         )
         next_interview = upcoming[0] if upcoming else None
 
     return RecruiterHomeResponse(
         first_name=first_name,
         company_name=company_name,
-        is_admin=is_admin,
+        is_admin=role == MembershipRole.owner,
+        role=role,
         interviews_today=interviews_today,
         next_interview=next_interview,
-        roles=await _role_cards(db, company_id, now),
-        drafts=await _draft_roles(db, company_id),
+        roles=await _role_cards(db, company_id, now, job_ids=job_ids),
+        # Drafts are for the people who write jobs.
+        drafts=[]
+        if role == MembershipRole.interviewer
+        else await _draft_roles(db, company_id),
     )
 
 
@@ -270,4 +285,7 @@ async def get_recruiter_jobs_overview(
     company_id, _ = await company_context(db, current_user.id)
     if company_id is None:
         return []
-    return await _role_cards(db, company_id, datetime.now(UTC), everything=True)
+    _company, _role, job_ids = await visible_job_ids(db, current_user)
+    return await _role_cards(
+        db, company_id, datetime.now(UTC), everything=True, job_ids=job_ids
+    )

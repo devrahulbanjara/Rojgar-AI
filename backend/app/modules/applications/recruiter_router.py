@@ -17,7 +17,7 @@ from fastapi import (
 from fastapi.responses import Response
 from pydantic import ValidationError
 
-from app.core.dependencies import ActiveMember, DbSession
+from app.core.dependencies import ActiveMember, DbSession, ManagerUser
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.applications import pipeline
 from app.modules.applications.schemas import (
@@ -67,7 +67,7 @@ async def get_panel(
 async def decide(
     payload: DecideRequest,
     bg_tasks: BackgroundTasks,
-    user: ActiveMember,
+    user: ManagerUser,
     db: DbSession,
 ) -> UnifiedResponse[DecideResponse]:
     return ResponseBuilder.success(
@@ -77,7 +77,7 @@ async def decide(
 
 @router.post("/undo", summary="Undo decisions before their email goes out")
 async def undo(
-    payload: UndoRequest, user: ActiveMember, db: DbSession
+    payload: UndoRequest, user: ManagerUser, db: DbSession
 ) -> UnifiedResponse[UndoResponse]:
     return ResponseBuilder.success(
         data=await pipeline.undo(db, user, payload.event_ids)
@@ -103,7 +103,7 @@ async def add_note(
 async def clear_flag(
     application_id: uuid.UUID,
     bg_tasks: BackgroundTasks,
-    user: ActiveMember,
+    user: ManagerUser,
     db: DbSession,
 ) -> UnifiedResponse[CandidatePanelResponse]:
     data = await pipeline.clear_flag(db, user, application_id, bg_tasks)
@@ -118,7 +118,7 @@ async def clear_flag(
 async def quick_add(
     job_id: uuid.UUID,
     bg_tasks: BackgroundTasks,
-    user: ActiveMember,
+    user: ManagerUser,
     db: DbSession,
     full_name: Annotated[str, Form(max_length=255)],
     phone: Annotated[str, Form(max_length=30)],
@@ -173,7 +173,7 @@ async def quick_add(
     summary="Create a personal share link for someone who can pass the job on",
 )
 async def create_referrer(
-    job_id: uuid.UUID, payload: ReferrerCreate, user: ActiveMember, db: DbSession
+    job_id: uuid.UUID, payload: ReferrerCreate, user: ManagerUser, db: DbSession
 ) -> UnifiedResponse[ReferrerResponse]:
     data = await pipeline.create_referrer(db, user, job_id, payload)
     return ResponseBuilder.success(data=data, status_code=status.HTTP_201_CREATED)
@@ -181,14 +181,14 @@ async def create_referrer(
 
 @router.get("/jobs/{job_id}/referrers", summary="Share links and how many applied")
 async def list_referrers(
-    job_id: uuid.UUID, user: ActiveMember, db: DbSession
+    job_id: uuid.UUID, user: ManagerUser, db: DbSession
 ) -> UnifiedResponse[list[ReferrerResponse]]:
     return ResponseBuilder.success(data=await pipeline.list_referrers(db, user, job_id))
 
 
 @router.get("/jobs/{job_id}/export.csv", summary="Download applications as CSV")
 async def export_applications(
-    job_id: uuid.UUID, user: ActiveMember, db: DbSession
+    job_id: uuid.UUID, user: ManagerUser, db: DbSession
 ) -> Response:
     filename, body = await pipeline.export_csv(db, user, job_id)
     return Response(

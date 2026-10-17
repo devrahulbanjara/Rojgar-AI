@@ -236,21 +236,23 @@ async def create_job(
     job, applications_count = result.one()
     logger.info(f"Job '{job.title}' created by user {user.id}")
 
-
     response = _job_detail_response_from_row(job, applications_count)
     response.warnings = _warnings_for(job)
     return response
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
-    """List all jobs belonging to the user's company."""
-    company_id = await _get_user_company_id(db, user)
+    """Jobs of the person's business (interviewers: the ones they interview for)."""
+    from app.modules.applications.service import visible_job_ids
+
+    company_id, _role, job_ids = await visible_job_ids(db, user)
+    only = [] if job_ids is None else [Job.id.in_(job_ids)]
 
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
         .outerjoin(Application, Application.job_id == Job.id)
-        .where(Job.company_id == company_id)
+        .where(Job.company_id == company_id, *only)
         .group_by(Job.id)
         .order_by(Job.created_at.desc())
     )

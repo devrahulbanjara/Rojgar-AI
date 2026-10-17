@@ -2,10 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import (
-    ActiveMember,
-    DbSession,
-)
+from app.core.dependencies import DbSession, ManagerUser
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.applications import service
 from app.modules.applications.schemas import (
@@ -26,7 +23,7 @@ async def search_candidates_semantic(
     stage: Annotated[list[str] | None, Query()] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=100)] = 20,
-    user: ActiveMember = None,
+    user: ManagerUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[SemanticCandidateSearchResponse]:
     data = await service.semantic_search_candidates(db, user, q, stage, page, size)
@@ -41,7 +38,7 @@ async def list_my_company_candidates(
     stage: Annotated[ApplicationStage | None, Query()] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=200)] = 50,
-    user: ActiveMember = None,
+    user: ManagerUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[list[RecruiterCandidateListItem]]:
     data = await service.list_company_candidates(db, user, job_id, stage, page, size)

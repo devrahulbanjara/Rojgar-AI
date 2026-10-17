@@ -220,8 +220,12 @@ class CandidatePanelResponse(BaseSchema):
     # Other applications by this person to this company's jobs.
     other_applications: int = 0
     events: list[EventView] = Field(default_factory=list)
-    # Decide actions valid for the current stage, in button order.
+    # Decisions this person may make now, in button order (none for
+    # interviewers).
     actions: list[str] = Field(default_factory=list)
+    # How the applicant hears about a decision: "email", or "none" when they
+    # gave no email (call or Viber them).
+    notify_channel: Literal["email", "none"] = "email"
 
 
 DecideAction = Literal[

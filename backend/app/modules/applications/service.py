@@ -41,7 +41,7 @@ from app.modules.applications.sync import (
 from app.modules.applications.sync import (
     process_sync_event as process_application_sync_event,
 )
-from app.modules.auth.enums import MembershipStatus
+from app.modules.auth.enums import MembershipRole, MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 from app.modules.jobs.models import Job
@@ -224,6 +224,53 @@ async def get_active_company_id(db: AsyncSession, user: User) -> UUID:
             detail="Only active company members can view applications.",
         )
     return company_id
+
+
+async def member_access(db: AsyncSession, user: User) -> tuple[UUID, MembershipRole]:
+    """The business the person works in now, and their role there."""
+    row = (
+        await db.execute(
+            select(CompanyMembership.company_id, CompanyMembership.role).where(
+                CompanyMembership.user_id == user.id,
+                CompanyMembership.status == MembershipStatus.active,
+            )
+        )
+    ).first()
+    if row is None:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail="You're not part of a business yet."
+        )
+    return row[0], row[1]
+
+
+async def visible_job_ids(
+    db: AsyncSession, user: User
+) -> tuple[UUID, MembershipRole, set[UUID] | None]:
+    """(business, role, jobs this person may see; None = every job).
+
+    Interviewers see only the jobs they interview for: an interview invite or
+    a booked interview with them as the interviewer.
+    """
+    from app.modules.interviews.models import Interview, InterviewInvite
+
+    company_id, role = await member_access(db, user)
+    if role != MembershipRole.interviewer:
+        return company_id, role, None
+    invited = (
+        select(Application.job_id)
+        .join(InterviewInvite, InterviewInvite.application_id == Application.id)
+        .where(InterviewInvite.interviewer_user_id == user.id)
+    )
+    booked = (
+        select(Application.job_id)
+        .join(Interview, Interview.application_id == Application.id)
+        .where(
+            Interview.interviewer_user_id == user.id,
+            Interview.company_id == company_id,
+        )
+    )
+    job_ids = set(await db.scalars(invited.union(booked)))
+    return company_id, role, job_ids
 
 
 # ---------------------------------------------------------------- candidate side

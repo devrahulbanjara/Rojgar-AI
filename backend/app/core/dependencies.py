@@ -30,6 +30,8 @@ OptionalUser = Annotated[User | None, Depends(get_optional_user)]
 # Business members (active business, or {business_id} from the path).
 ActiveMember = Annotated[User, Depends(require_member_user())]
 OwnerUser = Annotated[User, Depends(require_member_user(_OWNER))]
+# Owners and managers: decisions, jobs, invites to interview. Not interviewers.
+ManagerUser = Annotated[User, Depends(require_member_user(_OWNER, _MANAGER))]
 MemberContext = Annotated[BusinessContext, Depends(require_business_member())]
 ManagerContext = Annotated[
     BusinessContext, Depends(require_business_member(_OWNER, _MANAGER))

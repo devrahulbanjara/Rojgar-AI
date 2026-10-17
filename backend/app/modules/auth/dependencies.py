@@ -92,7 +92,7 @@ _ROLE_DENIED = {
     frozenset({MembershipRole.owner}): "Only the business owner can do this.",
     frozenset(
         {MembershipRole.owner, MembershipRole.manager}
-    ): "Only owners and managers can do this.",
+    ): "Only the owner or a manager can do this. Ask them.",
 }
 
 

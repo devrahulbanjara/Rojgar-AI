@@ -1,11 +1,11 @@
 from fastapi import APIRouter, BackgroundTasks, status
 
 from app.core.dependencies import (
-    ActiveMember,
     CurrentUser,
     DbSession,
     OptionalUser,
     UUIDPath,
+    ManagerUser,
 )
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.jobs import service
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
 async def create_job(
     payload: JobCreate,
     bg_tasks: BackgroundTasks,
-    user: CurrentUser,
+    user: ManagerUser,
     db: DbSession,
 ) -> UnifiedResponse[JobDetailResponse]:
     """Create a new job for the recruiter's active company."""
@@ -76,7 +76,7 @@ async def update_job(
     job_id: UUIDPath,
     payload: JobUpdate,
     bg_tasks: BackgroundTasks,
-    user: CurrentUser,
+    user: ManagerUser,
     db: DbSession,
 ) -> UnifiedResponse[JobDetailResponse]:
     """Update a company job."""
@@ -91,7 +91,7 @@ async def update_job(
 async def delete_job(
     job_id: UUIDPath,
     bg_tasks: BackgroundTasks,
-    user: CurrentUser,
+    user: ManagerUser,
     db: DbSession,
 ) -> UnifiedResponse[None]:
     """Delete a company job."""
@@ -104,7 +104,7 @@ async def delete_job(
     summary="Suggest must-haves, nice-to-haves and questions from a description",
 )
 async def suggest_must_haves(
-    payload: SuggestMustHavesRequest, user: ActiveMember
+    payload: SuggestMustHavesRequest, user: ManagerUser
 ) -> UnifiedResponse[SuggestMustHavesResponse]:
     del user  # company members only
     data = await service.suggest_must_haves(payload)

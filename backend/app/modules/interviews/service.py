@@ -535,8 +535,13 @@ async def agenda(
     start: date | None,
     job_id: uuid.UUID | None,
 ) -> list[AgendaItem]:
-    """Company interviews from ``start`` (default today, Nepal time) for the range."""
-    company_id = await _member_company_id(db, user.id)
+    """Company interviews from ``start`` (default today, Nepal time) for the range.
+
+    Interviewers see the interviews for the jobs they interview for.
+    """
+    from app.modules.applications.service import visible_job_ids
+
+    company_id, _role, job_ids = await visible_job_ids(db, user)
     zone = ZoneInfo(DEFAULT_TIMEZONE)
     first = start or _now().astimezone(zone).date()
     window_start = datetime.combine(first, time.min, zone)
@@ -559,6 +564,8 @@ async def agenda(
     )
     if job_id is not None:
         stmt = stmt.where(Job.id == job_id)
+    if job_ids is not None:
+        stmt = stmt.where(Job.id.in_(job_ids))
     now = _now()
     return [
         AgendaItem(

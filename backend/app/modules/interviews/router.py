@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query
 
-from app.core.dependencies import ActiveMember, DbSession, OptionalUser
+from app.core.dependencies import ActiveMember, DbSession, OptionalUser, ManagerUser
 from app.core.rate_limit import RateLimit
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.interviews import service
@@ -55,7 +55,7 @@ async def put_availability(
 )
 async def invite(
     application_id: uuid.UUID,
-    user: ActiveMember,
+    user: ManagerUser,
     db: DbSession,
     bg: BackgroundTasks,
     payload: InviteRequest | None = None,
