@@ -10,11 +10,12 @@ Roles: recruiter, company admin (recruiter + team/company settings/audit), candi
 ## What the owner wants (non-negotiable)
 1. Think like the end user, not like an AI showcase. Each screen answers "what needs me now?" with the next action one click away.
 2. Fewest steps for every task. Count clicks. Inline actions over navigation, smart defaults over questions, keyboard for frequent work.
-3. Plain English. No filler: no subtitle under headings, no helper paragraphs, no "Manage your X" lines, no duplicated titles (a page titled "Notifications" must not contain a card titled "Notifications"), no text that restates what is visible. It must not read like AI-generated UI.
-4. Easy for someone with no expertise. Every number has a label people understand; no unexplained scores, chips or icons; no jargon ("pipeline", "AI screening", "evaluation"). Use the words in RECRUITER_FLOW.md section 5.
-5. One consistent design across every page, built only from the shared library. Reuse, never re-create.
-6. Smaller codebase. Delete what you replace: old pages, components, SCSS, hooks, API slices, endpoints. Never leave dead code.
-7. AI is quiet plumbing, but when AI is working, show it with the AI motion system (below), the way Galaxy AI does.
+3. No repeated information: a breadcrumb only on nested pages (never "Jobs" above the title "Jobs"), never a facts line that repeats filter-chip counts or tiles shown right below it.
+4. Plain English. No filler: no subtitle under headings, no helper paragraphs, no "Manage your X" lines, no duplicated titles (a page titled "Notifications" must not contain a card titled "Notifications"), no text that restates what is visible. It must not read like AI-generated UI.
+5. Easy for someone with no expertise. Every number has a label people understand; no unexplained scores, chips or icons; no jargon ("pipeline", "AI screening", "evaluation"). Use the words in RECRUITER_FLOW.md section 5.
+6. One consistent design across every page, built only from the shared library. Reuse, never re-create.
+7. Smaller codebase. Delete what you replace: old pages, components, SCSS, hooks, API slices, endpoints. Never leave dead code.
+8. AI is quiet plumbing, but when AI is working, show it with the AI motion system (below), the way Galaxy AI does.
 
 ## Voice and key phrases
 - Human oversight, short: **"AI assists. You decide."** Long: "AI helps you review every application, but it never decides alone. Every hiring decision is made by a person." Never "A person makes this decision" or "A recruiter makes every final decision".
