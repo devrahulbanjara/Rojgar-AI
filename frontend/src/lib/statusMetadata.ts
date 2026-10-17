@@ -39,14 +39,6 @@ export function getApplicationStatusLabel(status: ApplicationLifecycleStatus): s
   return APPLICATION_STATUS_METADATA[status].label
 }
 
-export function getAllRecruiterSelectableStatuses(
-  current: ApplicationLifecycleStatus,
-): ApplicationLifecycleStatus[] {
-  return (Object.keys(APPLICATION_STATUS_METADATA) as ApplicationLifecycleStatus[]).filter(
-    (status) => status !== current,
-  )
-}
-
 export function getApplicationStatusVariant(
   status: ApplicationLifecycleStatus,
 ): StatusMetadata['variant'] {

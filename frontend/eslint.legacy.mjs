@@ -53,7 +53,6 @@ export const LEGACY_LUCIDE = [
   'src/components/common/AvatarCropModal/AvatarCropModal.tsx',
   'src/components/common/DashboardErrorState.tsx',
   'src/components/common/Toolbar/index.tsx',
-  'src/components/recruiter/CandidateDrawer/CandidateDrawer.tsx',
 ]
 
 /** Route files that still import SCSS. */
