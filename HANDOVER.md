@@ -10,13 +10,13 @@ Everything below is what was asked for in the revamp session, what is done, what
 | Folder / branch | What it is | State |
 |---|---|---|
 | `ConvexHire-wt-b1` / `wave/b1` | Data model v2: stages (new, shortlisted, interview, offer, hired, rejected, withdrawn), Review table with must-have checks + verified quotes, Event timeline, referrers ("suggest someone"), sector templates, quick add, CSV export, protected-ground filter, cheap triage review, non-tech Nepal seed data | **MERGED** into `production-hardening` (commit `c7f9f77e`, alembic chain `e8dd80fa`, adapter switch `92292149`, bugfix `b3fed4a0`). |
-| `ConvexHire-wt-b4` / `wave/b4` | People without global roles; business roles Owner / Manager / Interviewer; phone OTP sign-up; create business → pending → platform approval; invite-only teams; `/admin` panel (approvals, businesses, reports, payments) | In progress |
-| `ConvexHire-wt-f4` / `wave/f4` | Public side: Nepali/English toggle, phone-first apply, photo CVs, "suggest someone" page, QR poster, careers page, landing + pricing for small businesses, `/me/applications` shell fix | In progress |
-| `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | In progress |
+| `ConvexHire-wt-b4` / `wave/b4` | People without global roles; business roles Owner / Manager / Interviewer; phone OTP sign-up; create business → pending → platform approval; invite-only teams; `/admin` panel (approvals, businesses, reports, payments) | **MERGED** into `production-hardening` (commit `d2d4677d`, alembic chain `448c86788f39` chained to `2017037b521a`, all 8 conflicts resolved). |
+| `ConvexHire-wt-f4` / `wave/f4` | Public side: Nepali/English toggle, phone-first apply, photo CVs, "suggest someone" page, QR poster, careers page, landing + pricing for small businesses, `/me/applications` shell fix | In progress (next to merge) |
+| `ConvexHire-wt-f5` / `wave/f5` | Calmer applicant panel: icon contact row (Call / Viber / WhatsApp / Email), collapsed CV, accordion must-have checks, "Ask about <name>" button | In progress (merge after f4) |
 
 To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline production-hardening..HEAD` (same for b4, f4, f5).
 
-## Session Update — Multi-Model Handover (2026-10-17 16:55)
+## Session Update — Multi-Model Handover (2026-10-17 17:15)
 
 ### What Claude Opus 4.6 (Thinking) did:
 1. **Handover analysis & strategy:** Analyzed repo status, commit logs across `production-hardening` and the 4 branches, merge base divergences, and confirmed merge order.
@@ -51,15 +51,27 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
    - Committed adapter updates: `92292149`.
 5. **Runtime bugfix:**
    - Fixed missing positional `scope` argument in `_per_ip` rate-limiter on recommend endpoint (`backend/app/modules/public/router.py`): commit `b3fed4a0`.
-6. **Clean checkpoint:**
-   - Dry-ran `wave/b4` merge, identified 8 conflicted files.
-   - Per stop instruction, cleanly aborted the uncommitted merge (`git merge --abort`), leaving `production-hardening` in a clean, working committed state.
+6. **Executed and completed `wave/b4` merge (commit `d2d4677d`):**
+   - Resolved 8 conflicted files:
+     - `backend/app/modules/applications/router.py`: Replaced deprecated `CandidateUser` with `CurrentUser`.
+     - `backend/app/modules/dashboards/home.py`: Combined b1 `ApplicationEvent, Review` with b4 `MembershipRole, MembershipStatus`.
+     - `backend/app/modules/dashboards/schemas.py`: Retained `ApplicationStage` and b4 admin dashboard response schemas.
+     - `backend/app/modules/dashboards/service.py`: Reconciled dashboard imports and retained recruiter admin dashboard service handlers.
+     - `backend/app/modules/public/service.py`: Combined imports, integrated `is_publicly_visible` job checks with `job_is_open`.
+     - `backend/seed_data.py`: Merged b1's `NONTECH_COMPANIES` with b4's `PLATFORM_ADMIN`, `PENDING_BUSINESS`, and query logic.
+     - `backend/tests/integration/helpers.py`: Combined imports for `Review` and `BusinessStatus`.
+     - `backend/tests/integration/test_applications.py`: Preserved both test suites.
+   - **Alembic chain updated:** Pointed `448c86788f39` `down_revision` to `2017037b521a`. Verified single head: `448c86788f39 (head)`.
 
-### Next steps for subsequent sessions:
-1. Merge `wave/b4`: `git merge --no-ff wave/b4`. Resolve 8 conflicted files (notably `CurrentUser` replacing `CandidateUser`, and removing legacy `join_requests`).
-2. Merge `wave/f4`, then `wave/f5`.
-3. Run gates (`pytest`, `ruff`, `pnpm lint`, `pnpm build`).
-4. Merge `production-hardening` into `main`.
+### Next steps for subsequent sessions / immediate continuation:
+1. Merge `wave/f4`: `git merge --no-ff wave/f4`.
+   - Reconcile public pages with b1's data model (`JobReferrer`, nullable emails, `send_sms`, `ApplicationStage`).
+2. Merge `wave/f5`: `git merge --no-ff wave/f5`.
+   - Fix candidate panel imports (`CallButtons` -> `ContactButtons`).
+3. Run gates:
+   - Backend: `cd backend && uv run pytest -p no:cacheprovider -o addopts="" -q`
+   - Frontend: `cd frontend && npx tsc --noEmit && npx -y pnpm@10 build`
+4. Merge `production-hardening` into `main`: `git checkout main && git merge production-hardening`.
 
 ## How to merge the rest (in this order)
 
