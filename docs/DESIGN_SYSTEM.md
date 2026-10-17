@@ -39,7 +39,7 @@ then use it. Never style a one-off copy inside a page.
 | `--border` | `#e7e5e4` | 1px borders everywhere. Shadows are ~zero. |
 | `--radius` | `1rem` | `rounded-xl` = 16px for cards; `rounded-full` for buttons, pills, chips |
 | `--tone-{success,warning,danger,neutral}` (+ `-bg`) | green / amber / red / gray | Status pills, fit bars, tiles |
-| `--sidebar-*` | white surface, blue-tint active | Recruiter sidebar |
+| `--sidebar-*` | white surface, blue-tint active | App sidebar |
 
 Tailwind exposes these as `bg-background`, `text-primary`, `bg-success-bg text-success`, and so
 on. Dark-mode values are defined under `.dark` but not polished yet. Don't hard-code hex colours
@@ -55,7 +55,7 @@ in components.
 
 There are two typefaces, both loaded once in `app/layout.tsx` through `next/font`:
 - **Manrope** (`font-heading`): h1–h3, PageHeader titles, Section titles, large numerals
-  (StatStrip values, RoleCard tiles) and the wordmark.
+  (RoleCard and `ActionTile` values) and the wordmark.
 - **DM Sans** (`font-sans`, the body default): everything else. That covers body text, table
   cells, buttons, inputs, pills, labels and nav.
 
@@ -65,7 +65,7 @@ There are two typefaces, both loaded once in `app/layout.tsx` through `next/font
 | h1 | 30px / 1.2 (`text-3xl`) | 400 | Manrope | `PageHeader` title |
 | h2 | 16px / 1.4 (`text-base`) | 600 | Manrope | `Section` title |
 | h3 | 15px / 1.4 | 600 | Manrope | Card titles |
-| numeral | 20–24px / 1 | 300 | Manrope | `StatStrip`, `ActionTile` |
+| numeral | 20–24px / 1 | 300 | Manrope | `ActionTile` |
 | body | 14px / 1.5 (`text-sm`) | 400 | DM Sans | Default |
 | small | 12px / 1.4 (`text-xs`) | 400–500 | DM Sans | Meta, pills, table secondary |
 | caption | 11px / 1.3, uppercase, tracking-wide | 500 | DM Sans | Sparing eyebrows ("STEP 2 OF 4") |
@@ -115,8 +115,8 @@ See the file for the rest.
 ## Product components (`@/components/app/*`)
 
 **Layout**
-- **`RecruiterShell`** / **`AppShell role`**: the recruiter app frame. It contains `AppSidebar`
-  (Today · Jobs · Candidates · Interviews · Team for admins, with Settings pinned to the bottom,
+- **`RecruiterShell`** / **`AppShell role`**: the business app frame. It contains `AppSidebar`
+  (Today · Jobs · Applicants · Interviews · Team for owners, then Insights, with Settings pinned to the bottom,
   collapsible, and an off-canvas sheet on mobile) and `TopBar` (`MobileNav` trigger, ⌘K
   `CommandSearch`, `NotificationsBell`, `AccountMenu` with avatar, name and role).
 - **`CandidateShell`**: a simple mobile-first top bar.
@@ -134,14 +134,9 @@ See the file for the rest.
   rest is opt-in. See [DataTable](#datatable) below.
 - **`PersonCell name meta? src?`**: avatar plus a bold name and a muted meta line.
 - **`StatusPill tone`**: dot, tinted background and matching text.
-  - `ApplicationStatusPill` and `JobStatusPill` map statuses to wording and tone (see
-    `APPLICATION_STATUS` / `JOB_STATUS`).
+  - `StagePill` and `JobStatusPill` map an application stage or a job's status to wording and tone.
   - **`Tag`** is the neutral pill for "Remote", "Kathmandu" and so on.
-- **`ScoreBar score outOf?`**: "8/10 ▬ 80%", coloured by threshold (≥70 green, ≥40 amber, else
-  red). **`FitPill`** is the compact "8/10" for dense rows.
-- **`StatStrip items`**: one bordered row of 3–4 action numbers, with a small muted label above
-  each value.
-- **`KeyFacts items`**: a grid of icon, label and value for the ⅓-width side card on detail pages.
+- **`FitPill`**: the review's fit (strong, possible, weak) as a pill, for rows and the applicant panel.
 - **`RoleCard role companyName`**: one role and the work waiting on it, shown as `ActionTile`s
   ("+12 to review", "+3 to contact", "+1 to decide"). Each tile links to the job's matching
   stage. Use it on Today only.
@@ -239,17 +234,16 @@ const columns: ColumnDef<JobReply>[] = [
   - filter chips as pills (`ToggleGroup`, with a black pill for the active chip) plus search;
   - a `DataTable`.
 - **Detail page:**
-  - a main column (about ⅔) plus a side card (about ⅓) with `KeyFacts` and the decision buttons;
+  - a main column (about ⅔) plus a side card (about ⅓) with key facts and the decision buttons;
   - tabs with counts: `<TabsTrigger count={48}>Applicants</TabsTrigger>`.
 - **Builder:** a `BuilderLayout` with autosave and a character counter on long text. No tip
   boxes.
 - **Mapping:**
   - **Jobs list:** a table with Job · Posted · Applicants · To review · Status · Open →, plus
     "Post a job".
-  - **Job page:** a header with Share and Edit, then an Applicants tab: a table with fit pill,
-    stage pill, source and applied date, plus bulk ✓/✗.
-  - **Candidate review:** the main column shows the why and the CV; the side card holds the
-    decision buttons and key facts.
+  - **Job page:** a header with Share and Edit, applicants grouped by stage, and a side panel for
+    the selected applicant: the reason, must-have checks with quotes, the CV, and the decision
+    buttons (Shortlist / Reject, with undo).
 
 ## Copy rules
 
@@ -259,59 +253,18 @@ const columns: ColumnDef<JobReply>[] = [
 - Status lines must be facts with dates: "Interview Tue 2:00 PM · Join", "Not selected".
 - Errors say what to do: "Couldn't copy. Select the text and copy it instead."
 
-## How Tailwind coexists with the legacy SCSS
+## Tailwind setup
 
-- **No preflight.** `globals.css` imports only Tailwind's theme and utilities. The legacy reset
-  in `styles/_reset.scss` stays in force, so unmigrated pages look the same (verified with
-  before/after screenshots of login, /jobs, recruiter jobs, pipeline and talent).
-- **Important utilities.** They are imported `important`, so they beat the legacy unlayered
-  rules on migrated elements.
-- **Scanning.** Tailwind scans only `components/{ui,app,public,me,today}`, so legacy class names
-  such as `container` or `hidden` never generate utilities. Keep markup in those folders and
-  keep route files thin.
-- **Base-layer fixes:**
+- `globals.css` imports Tailwind's theme, preflight and utilities, and `tw-animate-css`. There is no SCSS.
+- Tailwind only scans the folders listed with `@source` in `globals.css` (`components/{ui,app,public,me,today,screens}`). Keep markup in those folders and keep route files thin. If you add a folder, add an `@source` line and restart `next dev`.
+- Base-layer fixes:
   - border colour defaults to `--border`;
   - `p` margins are zeroed inside `.app-surface` and `[data-slot]`.
 
 ## Enforcement (ESLint, errors)
 
-The rules live in `eslint.config.mjs`, with legacy exemptions in `eslint.legacy.mjs`:
+The rules live in `frontend/eslint.config.mjs`:
 
-- No raw `<button>`, `<input>` (except `type="file"`), `<select>`, `<textarea>`, `<table>` or
-  `<dialog>` in `src/app/**` or the new folders. Use `components/ui`.
-- No `lucide-react` or `@phosphor-icons/react` imports outside `components/icons.ts`.
-- New folders may not import legacy chrome: `common/header`, `common/footer`, `Loader`,
-  `SegmentedControl`, `Toolbar`, `sections/*`, `DashNavbar`.
-- No `.scss` imports in new folders or in route files that aren't on the legacy list.
-
-The legacy lists in `eslint.legacy.mjs` may only shrink.
-
-## Migration TODO
-
-The legacy lists hold:
-- 61 route files that still use raw elements;
-- 74 files that still import `lucide-react` (`lucide-react` stays in `package.json` until this
-  list is empty);
-- 34 route files that import SCSS.
-
-When a route migrates:
-1. Rebuild it from `components/app` and `components/ui`, with markup in a screen folder.
-2. Delete its `.module.scss` and remove it from the legacy lists.
-3. Delete the global SCSS partial once nothing uses it.
-
-| Route | Owner | Becomes | SCSS to delete |
-|---|---|---|---|
-| `/recruiter` | recruiter | ✅ Today (`components/today`) | ✅ old insights removed |
-| `/recruiter/jobs` | recruiter | Jobs table | `recruiter/jobs/page.module.scss` |
-| `/recruiter/jobs/[id]` | recruiter | Job page + Applicants table + bulk ✓/✗ | `JobPipelineWorkspace.module.scss` |
-| `/recruiter/jobs/new`, `/manual`, `/[id]/edit` | recruiter | `BuilderLayout` | `jobs/new/page.module.scss`, `pages/_job-drafting.scss` |
-| `/recruiter/candidates/[application_id]` (+ drawer) | recruiter | Candidate review (main + side card) | `CandidateDrawer` styles |
-| `/recruiter/talent`, `/recruiter/candidates` | recruiter | Candidates table | `talent/page.module.scss` |
-| `/recruiter/interviews`, `/[id]` | recruiter | Interviews table + detail | `pages/_interviews.scss` |
-| `/recruiter/team`, `/recruiters`, `/audit` | recruiter | Team table + approvals | — |
-| `/recruiter/settings`, `/profile`, `/company/settings` | recruiter | Settings forms | `settings/page.module.scss`, `profile/page.module.scss`, `pages/_profile.scss` |
-| `/recruiter/chat` | recruiter | Phase 2 helper (see REDESIGN.md) | `components/_recruiter-chat.scss` |
-| `/`, `/jobs`, legal pages | public | `PublicNav`/`PublicFooter` pages | `pages/_homepage.scss`, `_public-jobs.scss`, `_legal.scss`, `components/_header|_footer|_pricing|_faq|_featured-jobs|_explore-categories|_why-prefer-us.scss` |
-| `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/verify-email` | public | `Field`/`Form` auth pages | `pages/_auth.scss` |
-| `/candidate/**`, `/onboarding`, `/interviews` | public | `/me/applications` + guest apply; resume builder, gap analysis and auto-patch are **removed** | `pages/_applications.scss`, `_resume.scss`, candidate `*.module.scss` |
-| Global | — | Delete `styles/main.scss` once every route has migrated | `styles/**` |
+- No raw `<button>`, `<input>` (except `type="file"`), `<select>`, `<textarea>`, `<table>` or `<dialog>` outside `components/ui`. Use `components/ui`.
+- No `@phosphor-icons/react` imports outside `components/icons.ts`.
+- No `.scss` or `.sass` imports.

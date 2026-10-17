@@ -22,17 +22,17 @@ Business (status: pending → active · suspended · rejected)
 |---|---|
 | Owner | Everything in the business: plan and billing, members, all jobs |
 | Manager | Post and edit jobs, decide on applicants, invite to interview |
-| Interviewer | See applicants of jobs they're added to, add notes and scorecards |
+| Interviewer | See applicants of jobs they're added to, add interview notes ("How did it go?") |
 | Applicant | Apply (no account needed), see status, withdraw, delete their data |
 | Platform staff | Approve or reject businesses, suspend, review reports and flagged jobs, adjust plans, read-only support view |
 
 ### How a business starts
-A business doesn't "sign up". A **person** signs up (phone number + SMS code, or email), then **creates a business** (name, type, district, phone, optional PAN/registration number and a photo of the certificate). The business is **pending**: the owner can set everything up and draft jobs, but **jobs can't go public until platform staff approve the business** (usually the same day; staff check PAN on the IRD site or call the owner). Approved businesses get a "Verified" badge on their job pages.
+A business doesn't "sign up". A **person** signs up (email and password, or Google), then **creates a business** (name, type, district, phone, optional PAN/registration number and a photo of the certificate). The business is **pending**: the owner can set everything up and draft jobs, but **jobs can't go public until platform staff approve the business** (usually the same day; staff check PAN on the IRD site or call the owner). Approved businesses get a "Verified" badge on their job pages.
 
 People join an existing business **only through an invite link** from an Owner. There is no "request to join" by typing a business name.
 
 ### Platform admin panel (/admin)
-- **Approvals**: queue of pending businesses with details and documents; Approve, Ask for more info (sends SMS/email), Reject (with reason).
+- **Approvals**: queue of pending businesses with details and documents; Approve, Ask for more info (sends an email), Reject (with reason).
 - **Businesses**: search, status, plan and usage, members, suspend/restore.
 - **Reports and flags**: applicants' "Report this job", jobs flagged automatically (fee requests, phone numbers asking for money, discriminatory must-haves); Unpublish / Restore / Suspend business.
 - **Payments**: passes and subscriptions; mark a bank-transfer payment as received until eSewa/Khalti is live.
@@ -86,7 +86,8 @@ Company 1─* Job 1─* Application *─1 Person
 | description | rich text | One field. Replaces overview + responsibilities + requirements + preferred + benefits arrays |
 | must_haves | text[] (≤ 6) | Short criteria the review checks, e.g. "3+ years Python in production". Confirmed by the recruiter at posting |
 | nice_to_haves | text[] (≤ 6) | Same, weighted lower |
-| questions | json[] (≤ 3) | {label, type: short_text/yes_no, required} shown on the apply form |
+| cv_required | bool | Applying needs a CV (a PDF or a photo). Defaults from the category: on for office, IT, bank, health, education, NGO and government jobs; off for the rest |
+| questions | json[] (≤ 3, or ≤ 5 when no CV is required) | {label, type: short_text/yes_no, required} shown on the apply form |
 | status | draft · open · closed | Replaces draft/active/expired + hiring_completed + final_shortlist_completed |
 | closes_at | timestamp, optional | Open jobs close themselves at this time |
 | closed_reason | hired · cancelled · expired | |
@@ -203,7 +204,7 @@ Shortlist: preview of the invite with the booking link, Send (default) or Edit. 
 Table: person, latest job, stage, fit, last activity. Search by name, skill or "who has used Kafka". Opens the same candidate panel.
 
 ### Interviews
-List grouped by day. Each row: time, candidate, job, link, scorecard state. After the time passes, the row asks for a scorecard.
+List grouped by day. Each row: time, applicant, job, video link, and whether notes are in. After the time passes, the row asks "How did it go?".
 
 ## 5. Words
 

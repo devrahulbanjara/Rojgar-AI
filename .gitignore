@@ -99,7 +99,7 @@ temp/
 .idea/
 *.swp
 Thumbs.db
-CLAUDE.md
+frontend/CLAUDE.md
 
 .pypirc
 marimo/_static/

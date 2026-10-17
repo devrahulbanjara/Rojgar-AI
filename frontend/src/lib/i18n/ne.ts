@@ -4,7 +4,7 @@ import { authNe } from './auth'
 import { neDigits } from './digits'
 import type { Dict } from './en'
 
-/** नेपाली. Words from docs/AGENT_BRIEF.md: व्यवसाय, टिम, जागिर, आवेदक. Never "सिफारिस". */
+/** नेपाली. Words from AGENTS.md: व्यवसाय, टिम, जागिर, आवेदक. Never "सिफारिस". */
 export const ne: Dict = {
   nav: {
     howItWorks: 'कसरी काम गर्छ',
