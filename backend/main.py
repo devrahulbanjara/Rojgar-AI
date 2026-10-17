@@ -19,6 +19,7 @@ from app.core.body_limit import BodySizeLimitMiddleware
 from app.core.request_middleware import RequestContextMiddleware
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.core.tasks import sync_daemon_loop
+from app.modules.interviews.reminders import reminder_loop
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.activity.router import router as activity_router
@@ -28,10 +29,8 @@ from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.companies.router import router as companies_router
 from app.modules.dashboards.router import router as dash_router
-from app.modules.interviews.evaluation_router import router as evaluation_router
-from app.modules.interviews.recording_router import router as recording_router
+from app.modules.entitlements.router import router as entitlements_router
 from app.modules.interviews.router import router as interviews_router
-from app.modules.interviews.webhook import router as cal_webhook_router
 from app.modules.jobs.router import router as jobs_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.outreach.router import router as outreach_router
@@ -78,6 +77,8 @@ async def lifespan(app: FastAPI):
 
     # background loop — retries failed qdrant sync events every 60s
     daemon_task = asyncio.create_task(sync_daemon_loop())
+    # interview reminders 24 h / 1 h ahead (one worker sends, DB lock)
+    reminder_task = asyncio.create_task(reminder_loop())
     # daily cron — marks overdue active jobs as expired
     job_expiry_scheduler = create_job_expiry_scheduler()
     job_expiry_scheduler.start()
@@ -85,7 +86,7 @@ async def lifespan(app: FastAPI):
     yield
 
     job_expiry_scheduler.shutdown(wait=False)
-    for task in (daemon_task, startup_backlog_task):
+    for task in (daemon_task, reminder_task, startup_backlog_task):
         task.cancel()
         try:
             await task
@@ -130,6 +131,7 @@ app.include_router(audit_router)
 app.include_router(activity_router)
 app.include_router(dash_router)
 app.include_router(companies_router)
+app.include_router(entitlements_router)
 app.include_router(profiles_router)
 app.include_router(public_router)
 app.include_router(files_router)
@@ -141,10 +143,7 @@ app.include_router(jobs_router)
 app.include_router(applications_router)
 app.include_router(shortlisting_router)
 app.include_router(interviews_router)
-app.include_router(evaluation_router)
-app.include_router(recording_router)
 app.include_router(outreach_router)
-app.include_router(cal_webhook_router)
 
 
 @app.get("/", tags=["System"])

@@ -33,8 +33,7 @@ from sqlalchemy.orm import selectinload
 
 from app.modules.activity.models import ActivityEvent
 from app.modules.applications.models import Application
-from app.modules.interviews.evaluation_models import CandidateEvaluationScore
-from app.modules.interviews.models import Interview
+from app.modules.interviews.models import Interview, Scorecard
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
 from app.shared.text_safety import redact_pii
@@ -148,25 +147,25 @@ async def load_candidate_context(
 
     scorecards = (
         await db.scalars(
-            select(CandidateEvaluationScore)
-            .where(CandidateEvaluationScore.application_id == application.id)
-            .order_by(CandidateEvaluationScore.created_at.asc())
+            select(Scorecard)
+            .join(Interview, Interview.id == Scorecard.interview_id)
+            .where(Interview.application_id == application.id)
+            .order_by(Scorecard.created_at.asc())
         )
     ).all()
     scorecard_lines: list[str] = []
     for card in scorecards:
-        labels = {c.get("key"): c.get("label") for c in card.criteria_snapshot or []}
-        who = card.evaluator_label or (
-            "AI" if card.evaluator_type == "llm" else "Interviewer"
-        )
         ratings = ", ".join(
-            f"{labels.get(k) or k}: {v:g}"
-            for k, v in (card.scores or {}).items()
-            if v is not None
+            f"{r.get('criterion')}: {r.get('rating')}/4"
+            for r in card.ratings or []
+            if r.get("rating") is not None
         )
-        scorecard_lines.append(f"{who} rated {ratings or 'nothing yet'}")
+        recommendation = card.recommendation.replace("_", " ")
+        scorecard_lines.append(
+            f"Interviewer rated {ratings or 'nothing yet'}; recommendation: {recommendation}"
+        )
         if card.notes:
-            scorecard_lines.append(f"{who} notes: {card.notes}")
+            scorecard_lines.append(f"Interviewer notes: {card.notes}")
 
     interviews = (
         await db.scalars(

@@ -121,10 +121,11 @@ class ResumeExtractionService:
         temp_path: Path | None = None
 
         try:
+            content = await file.read()
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
                 temp_path = Path(temp_file.name)
-                content = await file.read()
-                temp_file.write(content)
+            # Up to 10 MB of disk I/O: keep it off the event loop.
+            await asyncio.to_thread(temp_path.write_bytes, content)
 
             logger.info(
                 "Starting LlamaExtract structured resume extraction for file='{}' mode='{}'",

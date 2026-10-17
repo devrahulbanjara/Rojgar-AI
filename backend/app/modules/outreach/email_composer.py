@@ -19,8 +19,7 @@ forward in the hiring process.
 Rules:
 - Address them by first name only
 - Mention the job title and company name
-- Include the interview booking link naturally
-- Explicitly tell them to book using the exact name and email address they used to sign up to Rojgar AI, so we can match their booking automatically
+- Include the interview scheduling link naturally; it lets them pick, move or cancel a time
 - Keep it under 180 words
 - Sound human, not corporate
 - Do NOT include any closing, sign-off, signature, or footer (e.g. no "Warm regards", "Best", "[Your Name]", etc.)
@@ -45,7 +44,7 @@ _shortlist_chain = (
                 (
                     "Candidate name: {candidate_name}\n"
                     "Job title: {job_title}\n"
-                    "Interview booking link: {booking_url}\n"
+                    "Interview scheduling link: {booking_url}\n"
                     "What stood out in their application: {feedback}"
                 ),
             ),
@@ -88,9 +87,8 @@ def _static_template(
         if booking_url:
             safe_link = html.escape(booking_url, quote=True)
             body += (
-                "<p>Please book a time using the same name and email you used "
-                "to sign up to Rojgar AI so we can match your booking automatically:</p>"
-                f'<p><a href="{safe_link}">Book your interview</a></p>'
+                "<p>Pick an interview time that suits you:</p>"
+                f'<p><a href="{safe_link}">Choose an interview time</a></p>'
             )
         body += "<p>Looking forward to speaking soon.</p>"
         return subject, body

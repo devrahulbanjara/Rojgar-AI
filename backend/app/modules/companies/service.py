@@ -20,6 +20,7 @@ from app.modules.activity.service import create_activity_event
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
+from app.modules.entitlements.service import ensure_can_add_member
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
 from app.modules.companies.schemas import (
@@ -85,30 +86,6 @@ async def update_my_company(
     """Update the authenticated admin's company profile and invalidate caches."""
     company = await get_admin_company(db, user)
     update_data = payload.model_dump(exclude_unset=True)
-
-    organizer_email = update_data.get("cal_organizer_email")
-    if organizer_email is not None:
-        organizer_email = organizer_email.strip().lower() or None
-        update_data["cal_organizer_email"] = organizer_email
-
-        if organizer_email is not None:
-            existing_company = await db.scalar(
-                select(Company).where(
-                    func.lower(Company.cal_organizer_email) == organizer_email,
-                    Company.id != company.id,
-                )
-            )
-            if existing_company is not None:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=(
-                        "That Cal organizer email is already connected to another company."
-                    ),
-                )
-
-    booking_url = update_data.get("cal_booking_url")
-    if booking_url is not None:
-        update_data["cal_booking_url"] = booking_url.strip() or None
 
     for field, value in update_data.items():
         setattr(company, field, value)
@@ -326,6 +303,11 @@ async def update_recruiter_status(
         )
 
     membership, recruiter_user = row
+    if (
+        payload.status == MembershipStatus.active
+        and membership.status != MembershipStatus.active
+    ):
+        await ensure_can_add_member(db, company.id)
     membership.status = payload.status
     action_label = (
         "approved" if payload.status == MembershipStatus.active else "rejected"

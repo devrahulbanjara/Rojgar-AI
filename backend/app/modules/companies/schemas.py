@@ -1,6 +1,6 @@
 from datetime import datetime
 from uuid import UUID
-from pydantic import EmailStr, Field
+from pydantic import Field
 
 from app.core.schemas import BaseSchema
 from app.modules.auth.enums import MembershipStatus
@@ -44,8 +44,6 @@ class CompanyResponse(BaseSchema):
     company_size: str | None = None
     location: str | None = None
     website_url: str | None = None
-    cal_booking_url: str | None = None
-    cal_organizer_email: EmailStr | None = None
     description: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -57,8 +55,6 @@ class UpdateCompanyRequest(BaseSchema):
     company_size: str | None = Field(default=None, max_length=50)
     location: str | None = Field(default=None, max_length=255)
     website_url: str | None = Field(default=None, max_length=255)
-    cal_booking_url: str | None = Field(default=None, max_length=500)
-    cal_organizer_email: EmailStr | None = None
     description: str | None = None
 
 

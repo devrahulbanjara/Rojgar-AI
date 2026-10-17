@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     mail_from: str
     send_emails: bool = True
 
+    # SMS (infrastructures/sms). Real SMS only when environment=prod and
+    # provider=sparrow; everything else logs to the console.
+    sms_provider: Literal["console", "sparrow"] = "console"
+    sparrow_sms_token: str | None = None
+    sparrow_sms_from: str = "RojgarAI"
+    # Candidate SMS language: "ne" (Nepali, English when Nepali runs long) or "en".
+    sms_language: Literal["ne", "en"] = "ne"
+
     # Database
     db_user: str
     db_password: str
@@ -186,18 +194,6 @@ class Settings(BaseSettings):
     # Public jobs hybrid search
     jobs_hybrid_search_enabled: bool = True
     jobs_hybrid_prefetch_limit: int = 50
-
-    # HF Whisper transcription
-    hf_whisper_url: str = (
-        "https://devrahulbanjara-nepali-whisper-small.hf.space/transcribe"
-    )
-    hf_whisper_timeout_seconds: int = 300
-    hf_whisper_max_retries: int = 4
-    hf_whisper_retry_delays: tuple[int, ...] = (5, 15, 30, 60)
-    hf_whisper_token: str | None = None
-
-    # Cal.com webhook: HMAC-SHA256 secret configured on the Cal webhook.
-    cal_webhook_secret: str | None = None
 
     # Derived URLs
     @property

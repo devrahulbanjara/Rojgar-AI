@@ -207,7 +207,7 @@ class RecruiterCandidateApplicationSummary(BaseSchema):
 
 class RecruiterCandidateInterviewView(BaseSchema):
     id: UUID
-    cal_booking_uid: str
+    status: str
     start_time: datetime
     end_time: datetime
     timezone: str | None = None

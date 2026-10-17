@@ -61,7 +61,7 @@ from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.audit.service import create_custom_audit_log
 from app.modules.companies.models import Company, CompanyMembership
-from app.modules.interviews.models import Interview
+from app.modules.interviews.service import latest_interview_stmt
 from app.modules.jobs.models import Job
 from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
@@ -918,9 +918,7 @@ async def _build_company_candidate_detail(
 
     share = _application_share_settings(application)
     applicant = application.user
-    interview = await db.scalar(
-        select(Interview).where(Interview.application_id == application.id)
-    )
+    interview = await db.scalar(latest_interview_stmt(application.id))
     timeline = await list_application_timeline(
         db,
         application_id=str(application.id),
@@ -1078,9 +1076,7 @@ async def get_application(
             if job is not None
             else None
         )
-        interview = await db.scalar(
-            select(Interview).where(Interview.application_id == application.id)
-        )
+        interview = await db.scalar(latest_interview_stmt(application.id))
         timeline = await list_application_timeline(
             db,
             application_id=str(application.id),
@@ -1141,9 +1137,7 @@ async def get_application(
             company = await db.scalar(
                 select(Company).where(Company.id == job.company_id)
             )
-            interview = await db.scalar(
-                select(Interview).where(Interview.application_id == application.id)
-            )
+            interview = await db.scalar(latest_interview_stmt(application.id))
             timeline = await list_application_timeline(
                 db,
                 application_id=str(application.id),
