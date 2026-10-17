@@ -89,7 +89,7 @@ A monorepo with a Python API and a Next.js app. The frontend talks to the backen
                                                 │
                          SMTP email · Cloudinary files · Sparrow SMS (off by default)
                                                 │
-              Groq · Bedrock (optional) · Tavily · LlamaCloud (optional)
+              Groq · Gemini (fallback) · Tavily · LlamaCloud (optional)
               local: multilingual-e5-small embeddings (fastembed) · scikit-learn
 ```
 
@@ -109,7 +109,7 @@ Background work runs inside the API process (started in `main.py`):
 **Backend:** Python 3.12, FastAPI, SQLAlchemy 2 (async) with asyncpg, Pydantic v2, Alembic, PostgreSQL, Redis, Qdrant, APScheduler, Argon2, PyJWT, aiosmtplib, Cloudinary, pypdf, `uv` for dependencies, `pytest`.
 
 **AI and ML:**
-- Groq (`gpt-oss-120b` / `gpt-oss-20b`) for review, Ask AI and job writing. AWS Bedrock is an optional review provider.
+- Groq (`gpt-oss-120b` / `gpt-oss-20b`) for review, Ask AI and job writing, through LangChain agents. When `GEMINI_API_KEY` is set, Gemini answers whenever Groq fails or is rate limited, so both free tiers add up.
 - `multilingual-e5-small`: a local Hugging Face model through fastembed. It runs on the CPU, needs no API key and has no rate limit.
 - Tavily for salary lookups. LlamaCloud, optional, for CV parsing.
 - A scikit-learn model used only to break near-ties in the ranking.
@@ -230,8 +230,9 @@ npx @google/design.md@0.4.0 lint DESIGN.md
 
 ## AI and safety
 
-- **Review order:** knockout questions first (no AI). Then a prompt-injection check, which cleans hidden Unicode first. Then a quick pass with a small model, and a full review only when needed. Every claim needs a quote that appears word for word in the CV, and fit is worked out in code. Cost and tokens are recorded per review, and retries are safe to repeat.
+- **Review order:** knockout questions first (no AI). Long CVs are cut locally to the passages that best match the criteria (about 1,000 tokens). Then a prompt-injection check, which cleans hidden Unicode first. Then a quick pass with a small model, and a full review only when needed. Every claim needs a quote that appears word for word in the CV, and fit is worked out in code. Cost and tokens are recorded per review, and retries are safe to repeat.
 - **Fails safe where it matters:** if the injection check can't run (an error or a rate limit), the unattended review treats the text as unsafe and retries; after that, a person decides. Interactive features stay usable.
+- **Free-tier limits:** each model's requests per minute and per day and tokens per minute are counted in Redis. A call that would pass a limit, or a model that just returned a 429, goes to the other provider at once (Groq to Gemini). When both are busy, chat answers say so and reviews wait without using up attempts.
 - **People decide:** AI never moves an applicant's stage. Every decision is made by a person, waits through an undo window, and is recorded in the audit log.
 - **Fair criteria:** must-haves and questions are checked against Nepal's Labour Act 2074, section 6 (gender, caste or ethnicity, religion, marital status, age and more). Saving is never blocked; the team is asked to reword.
 - **Files:** CVs and business documents are private on Cloudinary and open only through short-lived signed links. Uploads always go through the backend.

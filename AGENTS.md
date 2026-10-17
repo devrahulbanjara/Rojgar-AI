@@ -80,7 +80,12 @@ There is no job board, resume builder or candidate profile. Applicants never pay
   - No `time.sleep` in async code.
   - No slow external calls (AI, storage, email) while holding a DB transaction: upload or call first, then write.
 - **People decide:** AI never moves an applicant's stage by itself. Every decision is recorded as an Event and goes through the undo window.
-- **AI calls:** go through `app/infrastructures/ai` and the guardrail in `app/infrastructures/guardrails`. Handle rate limits with a friendly message, never a raw error.
+- **AI calls:** only through LangChain agents in `app/infrastructures/ai/llm.py` (`structured_agent`, `generate_structured`, `run_agent`). No provider SDK calls anywhere else.
+  - Answers are structured output (a Pydantic schema). Describe each field with `Field(description=...)` on the schema, not in the prompt.
+  - Every agent gets retries, the Gemini fallback, the quota guard (`quota.py`: free-tier limits per model, cooldown after a 429) and a model-call cap.
+  - Guardrails live in `app/infrastructures/ai/guards.py` (injection check, PII redaction, history trim). Output checks (quotes, salary numbers) are `after_agent` middleware.
+  - Keep long text inside a token budget (see `app/modules/review/excerpt.py`), and keep `max_tokens` small: Groq counts it against tokens per minute.
+  - Rate limits end in a friendly message, never a raw error; background reviews wait for quota instead of failing.
 - **Files:** use `app/infrastructures/storage` only. CVs and business documents are private; logos and avatars are public. Locally, files go to disk.
 - **SMS** is off (`SMS_ENABLED=false`): applicants hear back by email. Keep features working without it.
 - **Alembic:**

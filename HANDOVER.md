@@ -25,7 +25,7 @@ The current status, how to deploy, and what's left. Setup and commands are in `R
    - `GROQ_API_KEY`, `TAVILY_API_KEY`.
    - `CLOUDINARY_URL` (in prod, storage uses Cloudinary automatically).
    - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (`<BACKEND_URL>/auth/google/callback`).
-   - Optional: `TURNSTILE_SECRET`, plus the Bedrock or LlamaCloud keys.
+   - Optional: `GEMINI_API_KEY` (fallback when Groq is busy), `TURNSTILE_SECRET`, `LLAMA_CLOUD_API_KEY`.
 3. **Embedding model:**
    - On first use, the backend downloads `multilingual-e5-small` (ONNX) into `MODEL_CACHE_DIR`, so the first review after a fresh start is slower.
    - Give the service enough memory: 512 MB is tight. Use 1 GB.
@@ -45,7 +45,7 @@ The current status, how to deploy, and what's left. Setup and commands are in `R
   - `backend/credentials.json` (seeded accounts, password `Password@123`) is deleted and gitignored, but it's still in 6 old commits.
   - To purge it: `git filter-repo --path backend/credentials.json --invert-paths`, then force-push. This rewrites history.
   - Re-password any seeded accounts that exist in production.
-- **Groq:** the free tier (about 8k tokens a minute, plus a daily cap) runs out under light load. Use a paid tier before launch.
+- **AI limits:** Groq's free tier is 8,000 tokens a minute and 1,000 requests a day per model; Gemini answers when Groq is full. Google doesn't publish Gemini's free-tier numbers. Check yours at https://aistudio.google.com/rate-limit and put them in `LIMITS` in `backend/app/infrastructures/ai/quota.py` (the 429 handling corrects bad guesses, but right numbers avoid wasted calls). Use paid tiers before launch.
 - **Terms:** `/terms` promises a refund within 7 days of paying. Keep or change it before taking payments.
 - **Landing photos:** `components/public/landing/ApplicantsPreview.tsx` uses Unsplash portraits. Keep them or replace them with illustrations.
 - **Talk to employers** before launch (hotels, clinics, schools, shops, banks): how many applicants per post, who decides, and what they would pay.
