@@ -92,9 +92,9 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
             )}
             <button
               className="btn btn--danger btn--sm"
-              onClick={() => {
+              onClick={async () => {
+                await logout()
                 router.replace('/login')
-                void logout()
               }}
             >
               Log Out

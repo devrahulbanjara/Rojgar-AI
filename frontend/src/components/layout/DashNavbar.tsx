@@ -132,10 +132,12 @@ export default function DashNavbar({
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [logout] = useLogoutMutation()
 
-  function handleLogout() {
+  async function handleLogout() {
     setDropdownOpen(false)
+    // Wait for the server to clear the refresh cookie before leaving; navigating
+    // first lets AuthGuard on /login race a still-valid cookie back in.
+    await logout()
     router.replace('/login')
-    void logout()
   }
 
   const { data: notificationsResponse, isFetching: notificationsLoading } =
