@@ -1,27 +1,47 @@
-import type { RecruiterMember } from '@/lib/types/user'
+import type { BusinessRole, BusinessStatus } from '@/lib/types/user'
 
 import { type ApiResponse, baseApi } from './baseApi'
 
-export type { RecruiterMember }
-
 // ---------------------------------------------------------------------------
-// Company registration & join-request types
+// Business, team and invite types
 // ---------------------------------------------------------------------------
 
-export interface RegisterCompanyRequest {
-  setup_token: string
-  company_name: string
-  industry: string
-  company_size: string
-  website?: string
-  description?: string
-  location?: string
+export interface BusinessOptions {
+  types: string[]
+  /** All 77 districts of Nepal. */
+  districts: string[]
 }
 
-export interface JoinCompanyRequest {
-  setup_token: string
-  company_name: string
-  message?: string
+export interface TeamMember {
+  membership_id: string
+  user_id: string
+  full_name: string
+  email: string | null
+  phone: string | null
+  avatar_url: string | null
+  role: BusinessRole
+  joined_at: string
+}
+
+export interface Invite {
+  id: string
+  role: BusinessRole
+  expires_at: string
+  created_at: string
+  created_by_name: string | null
+}
+
+export interface CreatedInvite extends Invite {
+  /** Shown once: only a hash of the token is kept. */
+  url: string
+}
+
+export interface InvitePreview {
+  business_name: string
+  role: BusinessRole
+  invited_by: string | null
+  /** Why the link can't be used (expired, used, cancelled). */
+  problem: string | null
 }
 
 export interface CompanyMediaData {
@@ -34,6 +54,14 @@ export interface CompanyMediaData {
   website_url: string | null
   cal_organizer_email: string | null
   description: string | null
+  slug: string
+  district: string | null
+  phone: string | null
+  pan_number: string | null
+  status: BusinessStatus
+  status_reason: string | null
+  verified: boolean
+  has_registration_doc: boolean
   created_at: string
   updated_at: string
 }
@@ -93,55 +121,87 @@ export const companyApi = baseApi.injectEndpoints({
       invalidatesTags: ['Company'],
     }),
 
-    /** POST /companies/register — stage company details and resend verification email */
-    registerCompany: builder.mutation<EmptyResponse, RegisterCompanyRequest>({
-      query: (body) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/register`,
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['Company'],
+    /** GET /businesses/options — business types and districts. */
+    getBusinessOptions: builder.query<ApiResponse<BusinessOptions>, void>({
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/options`,
+      keepUnusedDataFor: 3600,
     }),
 
-    /** POST /companies/join-request — request to join an existing company */
-    requestJoinCompany: builder.mutation<EmptyResponse, JoinCompanyRequest>({
-      query: (body) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/join-request`,
-        method: 'POST',
-        body,
-      }),
+    /** POST /businesses (multipart) — pending until Rojgar AI approves it. */
+    createBusiness: builder.mutation<CompanyProfileResponse, FormData>({
+      query: (body) => ({ url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses`, method: 'POST', body }),
+      invalidatesTags: ['Company', 'User'],
     }),
 
-    // -----------------------------------------------------------------------
-    // Recruiter management (company admin only)
-    // -----------------------------------------------------------------------
+    /** POST /businesses/:id/verification (multipart) — PAN and certificate. */
+    updateVerification: builder.mutation<CompanyProfileResponse, { businessId: string; body: FormData }>(
+      {
+        query: ({ businessId, body }) => ({
+          url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/verification`,
+          method: 'POST',
+          body,
+        }),
+        invalidatesTags: ['Company', 'User'],
+      },
+    ),
 
-    /** GET /companies/me/recruiters */
-    getCompanyRecruiters: builder.query<ApiResponse<RecruiterMember[]>, void>({
-      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/recruiters`,
-      providesTags: ['Company'],
+    getTeam: builder.query<ApiResponse<TeamMember[]>, string>({
+      query: (businessId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/members`,
+      providesTags: ['Team'],
     }),
 
-    /** PATCH /companies/me/recruiters/:membershipId/status */
-    updateRecruiterStatus: builder.mutation<
-      ApiResponse<RecruiterMember>,
-      { membershipId: string; status: 'active' | 'rejected' }
+    changeMemberRole: builder.mutation<
+      ApiResponse<TeamMember>,
+      { businessId: string; membershipId: string; role: BusinessRole }
     >({
-      query: ({ membershipId, status }) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/recruiters/${membershipId}/status`,
+      query: ({ businessId, membershipId, role }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/members/${membershipId}`,
         method: 'PATCH',
-        body: { status },
+        body: { role },
       }),
-      invalidatesTags: ['Company'],
+      invalidatesTags: ['Team'],
     }),
 
-    /** DELETE /companies/me/recruiters/:membershipId */
-    removeRecruiter: builder.mutation<EmptyResponse, string>({
-      query: (membershipId) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/recruiters/${membershipId}`,
+    removeMember: builder.mutation<EmptyResponse, { businessId: string; membershipId: string }>({
+      query: ({ businessId, membershipId }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/members/${membershipId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Company'],
+      invalidatesTags: ['Team'],
+    }),
+
+    getInvites: builder.query<ApiResponse<Invite[]>, string>({
+      query: (businessId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/invites`,
+      providesTags: ['Team'],
+    }),
+
+    createInvite: builder.mutation<ApiResponse<CreatedInvite>, { businessId: string; role: BusinessRole }>(
+      {
+        query: ({ businessId, role }) => ({
+          url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/invites`,
+          method: 'POST',
+          body: { role },
+        }),
+        invalidatesTags: ['Team'],
+      },
+    ),
+
+    revokeInvite: builder.mutation<EmptyResponse, { businessId: string; inviteId: string }>({
+      query: ({ businessId, inviteId }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/businesses/${businessId}/invites/${inviteId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Team'],
+    }),
+
+    /** GET /invites/:token — works without signing in. */
+    getInvitePreview: builder.query<ApiResponse<InvitePreview>, string>({
+      query: (token) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/invites/${token}`,
+    }),
+
+    acceptInvite: builder.mutation<ApiResponse<{ business_id: string }>, string>({
+      query: (token) => ({ url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/invites/${token}/accept`, method: 'POST' }),
+      invalidatesTags: ['User', 'Company', 'Team'],
     }),
   }),
   overrideExisting: process.env.NODE_ENV !== 'production',
@@ -152,9 +212,15 @@ export const {
   useUpdateCompanyMutation,
   useUploadCompanyLogoMutation,
   useRemoveCompanyLogoMutation,
-  useRegisterCompanyMutation,
-  useRequestJoinCompanyMutation,
-  useGetCompanyRecruitersQuery,
-  useUpdateRecruiterStatusMutation,
-  useRemoveRecruiterMutation,
+  useGetBusinessOptionsQuery,
+  useCreateBusinessMutation,
+  useUpdateVerificationMutation,
+  useGetTeamQuery,
+  useChangeMemberRoleMutation,
+  useRemoveMemberMutation,
+  useGetInvitesQuery,
+  useCreateInviteMutation,
+  useRevokeInviteMutation,
+  useGetInvitePreviewQuery,
+  useAcceptInviteMutation,
 } = companyApi

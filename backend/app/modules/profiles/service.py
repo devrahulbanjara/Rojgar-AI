@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.core.cache import invalidate_profile_read_caches
 from app.core.swr_cache import swr_get
 from app.modules.applications.models import Application
-from app.modules.auth.enums import MembershipStatus, UserRole
+from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 from app.modules.jobs.models import Job
@@ -240,9 +240,6 @@ async def get_profile_for_viewer(
     )
     if viewer.id == user_id:
         return await get_profile_by_user_id(db, str(user_id))
-
-    if viewer.primary_role not in (UserRole.recruiter, UserRole.recruiter_admin):
-        raise not_found
 
     company_id = await db.scalar(
         select(CompanyMembership.company_id).where(

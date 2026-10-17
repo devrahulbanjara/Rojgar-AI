@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.normalize import normalize_email
 from app.core.config import settings
-from app.core.security import create_signup_token, create_tokens
-from app.modules.auth.models import OAuthAccount, RefreshToken, User
+from app.modules.auth.models import OAuthAccount, User
+from app.modules.auth.service import start_session
 
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
@@ -60,8 +60,8 @@ async def google_oauth_callback(
     db: AsyncSession,
     code: str,
     response: Response,
-) -> dict:
-    """Handle the Google OAuth callback for existing and new users."""
+) -> None:
+    """Sign the Google user in (creating them on first visit); sets the cookie."""
     # 1. Exchange code for tokens and fetch Google user info
     try:
         token_data = await exchange_google_code(code)
@@ -96,58 +96,28 @@ async def google_oauth_callback(
             status_code=status.HTTP_403_FORBIDDEN, detail="Account has been deleted"
         )
 
-    if user:
-        # CASE 1: Existing user — log them in immediately.
-        # Also link this Google account if it hasn’t been linked before.
-        oauth_result = await db.execute(
-            select(OAuthAccount).where(
-                OAuthAccount.provider == "google",
-                OAuthAccount.provider_account_id == google_id,
+    if user is None:
+        # First Google sign-in creates the person; Google vouched for the email.
+        user = User(
+            full_name=full_name,
+            email=email,
+            avatar_url=avatar_url,
+            is_email_verified=True,
+            is_onboarded=True,
+        )
+        db.add(user)
+        await db.flush()
+
+    linked = await db.scalar(
+        select(OAuthAccount).where(
+            OAuthAccount.provider == "google",
+            OAuthAccount.provider_account_id == google_id,
+        )
+    )
+    if linked is None:
+        db.add(
+            OAuthAccount(
+                user_id=user.id, provider="google", provider_account_id=google_id
             )
         )
-        if not oauth_result.scalar_one_or_none():
-            db.add(
-                OAuthAccount(
-                    user_id=user.id,
-                    provider="google",
-                    provider_account_id=google_id,
-                )
-            )
-
-        tokens, jti, refresh_expires_at = create_tokens(str(user.id))
-        response.set_cookie(
-            key="refresh_token",
-            value=tokens["refresh_token"],
-            httponly=True,
-            secure=settings.environment == "prod",
-            samesite="lax",
-            path="/",
-            expires=refresh_expires_at,
-        )
-        db.add(RefreshToken(user_id=user.id, jti=jti, expires_at=refresh_expires_at))
-        await db.commit()
-
-        tokens.pop("refresh_token")
-        return {"action": "login", "tokens": tokens, "user": user}
-
-    else:
-        # CASE 2: New user — do NOT write to the DB.
-        # Return a short-lived signed token containing the Google profile.
-        # The frontend will ask for a role then call POST /auth/google/register.
-        signup_token = create_signup_token(
-            {
-                "email": email,
-                "full_name": full_name,
-                "avatar_url": avatar_url,
-                "google_id": google_id,
-            }
-        )
-        return {
-            "action": "signup",
-            "signup_token": signup_token,
-            "user_info": {
-                "email": email,
-                "full_name": full_name,
-                "avatar_url": avatar_url,
-            },
-        }
+    await start_session(db, user, response)

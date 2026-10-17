@@ -35,9 +35,10 @@ from app.modules.applications.service import (
     schedule_review,
 )
 from app.modules.applications.sync import enqueue_application_sync_event
-from app.modules.auth.enums import UserRole
 from app.modules.auth.models import OAuthAccount, RefreshToken, User
-from app.modules.companies.models import Company
+from app.modules.admin.guards import is_publicly_visible, taken_down_job_ids
+from app.modules.auth.enums import BusinessStatus
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job, JobReferrer
 from app.modules.profiles.models import Profile
 from app.modules.public import cv_text
@@ -135,10 +136,15 @@ async def _load_open_job(db: AsyncSession, slug: str) -> Job:
     job = await db.scalar(
         select(Job).options(selectinload(Job.company)).where(Job.slug == slug)
     )
-    if job is None or not job_is_open(job):
-        # Drafts, closed and filled roles look the same as missing ones.
+if (
+        job is None
+        or not job_is_open(job)
+        or not await is_publicly_visible(db, job, job.company)
+    ):
+        # Drafts, closed, filled, suspended and unpublished roles look the
+        # same as missing ones.
         raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail="This job is no longer open."
+            status.HTTP_404_NOT_FOUND, detail="This job is no longer available."
         )
     return job
 
@@ -176,8 +182,9 @@ async def get_public_job(
 
 async def get_careers_page(db: AsyncSession, company_slug: str) -> CareersPage:
     company = await db.scalar(select(Company).where(Company.slug == company_slug))
-    if company is None:
+    if company is None or company.status == BusinessStatus.suspended:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Company not found.")
+    hidden = await taken_down_job_ids(db, company.id)
     jobs = (
         await db.scalars(
             select(Job)
@@ -190,7 +197,8 @@ async def get_careers_page(db: AsyncSession, company_slug: str) -> CareersPage:
         )
     ).all()
     return CareersPage(
-        company=_public_company(company), jobs=[_job_summary(j) for j in jobs]
+        company=_public_company(company),
+        jobs=[_job_summary(j) for j in jobs if j.id not in hidden],
     )
 
 
@@ -718,10 +726,8 @@ async def request_magic_link(db: AsyncSession, email: str) -> None:
     """Email a one-time sign-in link. Same response whether or not the email exists."""
     email = email.strip().lower()
     user = await db.scalar(select(User).where(func.lower(User.email) == email))
-    if user is not None and (
-        user.is_deleted or user.primary_role != UserRole.candidate
-    ):
-        return  # recruiters use their password; never reveal that here
+    if user is not None and user.is_deleted:
+        return
 
     since = _now() - timedelta(minutes=15)
     recent = await db.scalar(
@@ -772,13 +778,12 @@ async def consume_magic_link(db: AsyncSession, token: str, response: Response) -
         user = User(
             full_name=row.email.split("@")[0],
             email=row.email,
-            primary_role=UserRole.candidate,
             is_email_verified=True,
             is_onboarded=True,
         )
         db.add(user)
         await db.flush()
-    elif user.is_deleted or user.primary_role != UserRole.candidate:
+    elif user.is_deleted:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="link_invalid")
     # Opening the emailed link proves the address.
     user.is_email_verified = True

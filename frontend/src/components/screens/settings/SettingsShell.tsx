@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 import { cn } from '@/lib/utils'
-import { useAppSelector } from '@/store/hooks'
+import { useIsOwner } from '@/lib/session'
 
 import { PageContainer } from '@/components/app/AppShell'
 import { PageHeader } from '@/components/app/PageHeader'
@@ -14,13 +14,13 @@ import { PageHeader } from '@/components/app/PageHeader'
 const TABS = [
   { href: '/recruiter/settings', label: 'Account' },
   { href: '/recruiter/settings/availability', label: 'Availability' },
-  { href: '/recruiter/settings/company', label: 'Company', adminOnly: true },
+  { href: '/recruiter/settings/company', label: 'Business', adminOnly: true },
 ]
 
-/** "Settings" title and pill tabs: Account · Availability · Company (admins). */
+/** "Settings" title and pill tabs: Account · Availability · Business (owners). */
 export function SettingsShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const isAdmin = useAppSelector((s) => s.auth.user?.primary_role === 'recruiter_admin')
+  const isAdmin = useIsOwner()
 
   return (
     <PageContainer narrow>

@@ -3,6 +3,8 @@
 import app.modules.applications.models  # noqa: F401
 import app.modules.assistant.models  # noqa: F401
 import app.modules.activity.models  # noqa: F401
+import app.modules.admin.guards  # noqa: F401
+import app.modules.admin.models  # noqa: F401
 import app.modules.audit.models  # noqa: F401
 import app.modules.audit.service  # noqa: F401
 import app.modules.auth.models  # noqa: F401

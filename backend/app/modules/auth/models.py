@@ -18,7 +18,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.modules.auth.enums import UserRole
 
 if TYPE_CHECKING:
     from app.modules.companies.models import CompanyMembership
@@ -50,7 +49,10 @@ class User(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    primary_role: Mapped[UserRole] = mapped_column(nullable=False)
+    # Rojgar AI staff: approve businesses, handle reports. Not a business role.
+    is_platform_admin: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     email_verify_token: Mapped[str | None] = mapped_column(String(255), index=True)
     password_reset_token: Mapped[str | None] = mapped_column(String(255), index=True)
     password_reset_expires_at: Mapped[datetime | None] = mapped_column(
@@ -119,3 +121,21 @@ class RefreshToken(Base):
     )
 
     user: Mapped[User] = relationship(back_populates="refresh_tokens")
+
+
+class PhoneOtp(Base):
+    """A one-time SMS code. Only its hash is stored; 5 minutes, 5 attempts."""
+
+    __tablename__ = "phone_otps"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    attempts: Mapped[int] = mapped_column(default=0, server_default="0")
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

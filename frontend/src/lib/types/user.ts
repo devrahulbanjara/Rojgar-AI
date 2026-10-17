@@ -1,33 +1,45 @@
-// Shared user and membership types. Field names mirror the API (snake_case).
+// =============================================================================
+// People and businesses, as returned by /auth/me and the login endpoints.
+// Field names mirror the API (snake_case).
+// =============================================================================
 
-export type PrimaryRole = 'candidate' | 'recruiter_admin' | 'recruiter'
+/** A person's role inside one business. There are no global roles. */
+export type BusinessRole = 'owner' | 'manager' | 'interviewer'
 
-export type MembershipStatus = 'active' | 'pending' | 'rejected'
+/** pending → active (verified) · rejected · suspended, set by Rojgar AI staff. */
+export type BusinessStatus = 'pending' | 'active' | 'suspended' | 'rejected'
 
-export interface RecruiterMember {
+export interface Membership {
   membership_id: string
-  user_id: string
-  full_name: string
-  email: string
-  avatar_url: string | null
-  status: MembershipStatus
-  joined_at: string
+  business_id: string
+  business_name: string
+  business_status: BusinessStatus
+  /** Staff message: what to add, or why it was rejected or suspended. */
+  status_reason: string | null
+  role: BusinessRole
+  /** The business the person is working in now. */
+  active: boolean
 }
 
-/** Returned by /auth/me and embedded in the login response. */
 export interface BaseUser {
   id: string
+  /** Empty right after a phone sign-up, until the person adds it. */
   full_name: string
-  email: string
-  primary_role: PrimaryRole
+  email: string | null
+  phone: string | null
   is_email_verified: boolean
   is_onboarded: boolean
   avatar_url: string | null
   created_at: string
-  updated_at: string
-  /** Only present for recruiter users: their CompanyMembership approval status. */
-  membership_status?: MembershipStatus
+  is_platform_admin: boolean
+  memberships: Membership[]
+  active_business: Membership | null
+  has_applications: boolean
 }
+
+// ---------------------------------------------------------------------------
+// Pagination wrapper
+// ---------------------------------------------------------------------------
 
 export interface PaginationMeta {
   total: number

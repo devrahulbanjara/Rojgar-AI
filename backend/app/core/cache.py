@@ -51,7 +51,7 @@ async def invalidate_candidate_read_caches_for_users(user_ids: Iterable[str]) ->
 async def invalidate_company_dashboard_caches(
     db: AsyncSession, company_id: str
 ) -> None:
-    """Delete recruiter and recruiter-admin dashboard caches for a company."""
+    """Delete recruiter dashboard caches for a company."""
     member_ids = await _get_active_company_member_ids(db, company_id)
     if not member_ids:
         return
@@ -59,15 +59,10 @@ async def invalidate_company_dashboard_caches(
     keys: list[str] = []
     for member_id in member_ids:
         keys.append(f"dashboard:recruiter:{member_id}")
-        keys.append(f"dashboard:recruiter-admin:{member_id}")
 
     await redis_service.delete_many(*keys)
     await redis_service.invalidate_patterns(
         *(f"dashboard:recruiter:{member_id}:analytics:*" for member_id in member_ids),
-        *(
-            f"dashboard:recruiter-admin:{member_id}:analytics:*"
-            for member_id in member_ids
-        ),
     )
 
 

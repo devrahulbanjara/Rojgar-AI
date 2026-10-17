@@ -4,7 +4,12 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Query, status
 from pydantic import BaseModel
 
-from app.core.dependencies import ActiveMember, CandidateUser, DbSession, UUIDPath
+from app.core.dependencies import (
+    ActiveMember,
+    CurrentUser,
+    DbSession,
+    UUIDPath,
+)
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.activity.schemas import ActivityEventResponse
 from app.modules.applications import service
@@ -25,7 +30,7 @@ router = APIRouter(prefix="/applications", tags=["Applications"])
 async def apply_to_job(
     payload: ApplyRequest,
     bg_tasks: BackgroundTasks,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ApplicationResponse]:
     data = await service.apply_to_job(db, user, payload, bg_tasks)
@@ -38,7 +43,7 @@ async def apply_to_job(
 async def list_my_applications(
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=100)] = 20,
-    user: CandidateUser = None,
+    user: CurrentUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[list[CandidateApplicationView]]:
     data = await service.list_user_applications(db, user, page, size)
@@ -92,7 +97,7 @@ async def get_similar_candidates(
 
 @router.get("/{application_id}", summary="One of my applications (candidate)")
 async def get_application(
-    application_id: UUIDPath, user: CandidateUser, db: DbSession
+    application_id: UUIDPath, user: CurrentUser, db: DbSession
 ) -> UnifiedResponse[ApplicationResponse]:
     data = await service.get_application(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application fetched.")
@@ -102,7 +107,7 @@ async def get_application(
     "/{application_id}/timeline", summary="My application's timeline (candidate)"
 )
 async def get_application_timeline(
-    application_id: UUIDPath, user: CandidateUser, db: DbSession
+    application_id: UUIDPath, user: CurrentUser, db: DbSession
 ) -> UnifiedResponse[list[ActivityEventResponse]]:
     data = await service.get_application_timeline(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application timeline fetched.")
@@ -116,7 +121,7 @@ class OfferResponsePayload(BaseModel):
 async def respond_to_offer(
     application_id: uuid.UUID,
     payload: OfferResponsePayload,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[None]:
     await service.respond_to_offer(db, application_id, payload.accepted, user)

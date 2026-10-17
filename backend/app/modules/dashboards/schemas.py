@@ -142,8 +142,6 @@ class RecruiterAdminDashboardResponse(BaseSchema):
     todays_interviews: list[TodayInterview]
     join_requests: list[JoinRequestItem]
     team_activity: list[TeamMemberActivity]
-
-
 class RecruiterAnalyticsStats(BaseSchema):
     active_jobs: int
     applications: int
@@ -189,43 +187,6 @@ class RecruiterDashboardAnalyticsResponse(BaseSchema):
     interview_load: list[InterviewLoadPoint]
     fit_distribution: FitDistribution
     velocity: RecruiterAnalyticsVelocity
-
-
-class MembershipBreakdownPoint(BaseSchema):
-    status: MembershipStatus
-    count: int
-
-
-class JoinRequestTimeseriesPoint(BaseSchema):
-    date: date
-    requested: int
-    approved: int
-    rejected: int
-
-
-class RecruiterAdminAnalyticsStats(BaseSchema):
-    active_jobs: int
-    applications: int
-    shortlisted: int
-    interviews: int
-    offers: int
-    pending_join_requests: int
-    active_recruiters: int
-
-
-class RecruiterAdminDashboardAnalyticsResponse(BaseSchema):
-    range_key: str
-    stats: RecruiterAdminAnalyticsStats
-    company_funnel: list[StageCountPoint]
-    join_request_timeseries: list[JoinRequestTimeseriesPoint]
-    membership_breakdown: list[MembershipBreakdownPoint]
-    team_activity: list[TeamMemberActivity]
-    velocity: RecruiterAnalyticsVelocity
-
-
-# ---------------------------------------------------------------------------
-# Recruiter "Today" home
-# ---------------------------------------------------------------------------
 
 
 class HomeInterview(BaseSchema):
@@ -280,4 +241,3 @@ class RecruiterHomeResponse(BaseSchema):
     next_interview: HomeInterview | None = None
     roles: list[RoleCard]
     drafts: list[DraftRole]
-    join_requests: list[JoinRequestItem]

@@ -93,10 +93,31 @@ class TestListApplications:
         assert len(apps) == 1
 
     async def test_list_my_applications_requires_candidate_role(self, client, db):
+        """Business members can also list their own applications."""
+        admin, _ = await make_recruiter_admin(db, email="admin_block2@test.com")
+
+        resp = await client.get("/applications/me", headers=auth_headers(admin.id))
+        assert resp.status_code == 200
+
+    async def test_recruiter_lists_company_applications(self, client, db):
+        candidate, resume = await make_candidate_with_resume(
+            db, email="cand_rlist@test.com"
+        )
+        admin, company = await make_recruiter_admin(db, email="admin_rlist@test.com")
+        job = await make_active_job(db, company.id)
+        await _apply(client, candidate, resume, job)
+
+        resp = await client.get(
+            "/applications/company/me", headers=auth_headers(admin.id)
+        )
+
+        assert resp.status_code == 200
+
+    async def test_business_members_are_people_too(self, client, db):
         admin, _ = await make_recruiter_admin(db, email="admin_block@test.com")
 
         resp = await client.get("/applications/me", headers=auth_headers(admin.id))
-        assert resp.status_code == 403
+        assert resp.status_code == 200
 
 
 class TestOfferResponse:

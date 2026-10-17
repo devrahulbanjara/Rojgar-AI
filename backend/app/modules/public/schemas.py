@@ -27,6 +27,8 @@ class PublicCompany(BaseSchema):
     location: str | None = None
     industry: str | None = None
     description: str | None = None
+    # Approved by Rojgar AI staff ("Verified business" badge).
+    verified: bool = False
 
 
 class PublicCategory(BaseSchema):

@@ -38,7 +38,6 @@ from app.modules.dashboards.schemas import (
     RecruiterDashboardResponse,
     RecruiterStats,
     StageCountPoint,
-    TeamMemberActivity,
     TodayInterview,
 )
 from app.modules.interviews.models import Interview

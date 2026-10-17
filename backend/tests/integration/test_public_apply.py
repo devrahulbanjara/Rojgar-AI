@@ -11,7 +11,6 @@ from sqlalchemy import func, select
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.storage.service import storage_service
 from app.modules.applications.models import Application
-from app.modules.auth.enums import UserRole
 from app.modules.auth.models import User
 from app.modules.public.models import MagicLinkToken
 from app.modules.public.tokens import hash_magic_token
@@ -206,7 +205,6 @@ class TestGuestApply:
             select(User).where(User.email == "sita.gurung@example.com")
         )
         assert user.password_hash is None
-        assert user.primary_role == UserRole.candidate
         assert user.is_email_verified is False
 
         application = await db.scalar(
@@ -260,7 +258,7 @@ class TestGuestApply:
         job = await make_active_job(db, company.id, status=JobStatus.draft)
         assert (await _apply(client, job.slug)).status_code == 404
 
-    async def test_recruiter_email_cannot_apply(self, client, db, outbox):
+    async def test_team_cannot_apply_to_own_business(self, client, db, outbox):
         _, company = await make_recruiter_admin(db, email="a9@test.com")
         job = await make_active_job(db, company.id)
         resp = await _apply(client, job.slug, email="a9@test.com")
@@ -401,16 +399,14 @@ class TestStatusAndWithdraw:
 
 
 class TestMagicLink:
-    async def test_same_response_for_unknown_known_and_recruiter_email(
-        self, client, db, outbox
-    ):
+    async def test_same_response_for_unknown_and_known_email(self, client, db, outbox):
         await make_recruiter_admin(db, email="rec@test.com")
         for email in ("nobody@example.com", "rec@test.com"):
             resp = await client.post("/public/auth/magic-link", json={"email": email})
             assert resp.status_code == 200
             assert resp.json()["data"] == {"sent": True}
-        # Only the non-recruiter address actually gets a link.
-        assert [m["to"] for m in outbox] == ["nobody@example.com"]
+        # Everyone is a person: a business owner can also sign in by link.
+        assert [m["to"] for m in outbox] == ["nobody@example.com", "rec@test.com"]
 
     async def test_link_signs_in_once_and_links_guest_applications(
         self, client, db, outbox

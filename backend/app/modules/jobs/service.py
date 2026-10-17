@@ -27,7 +27,7 @@ from app.modules.applications.sync import (
     process_sync_event as process_application_sync_event,
 )
 from app.modules.audit.service import create_custom_audit_log
-from app.modules.auth.enums import MembershipStatus, UserRole
+from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 from app.modules.entitlements.service import ensure_can_open_job, on_job_opened
@@ -209,7 +209,7 @@ async def _get_applied_job_ids(
     job_ids: list[uuid.UUID],
 ) -> set[uuid.UUID]:
     """Return the set of job IDs already applied to by the user."""
-    if not user or user.primary_role != UserRole.candidate or not job_ids:
+    if not user or not job_ids:
         return set()
 
     result = await db.execute(
@@ -478,7 +478,7 @@ async def search_jobs(
     conditions = _open_job_conditions(location, location_type, salary_min, salary_max)
     query = normalize_search_query(q)
     search_query = query
-    if search_query is None and user and user.primary_role == UserRole.candidate:
+    if search_query is None and user:
         search_query = await _build_recommendation_query(db, user)
     if search_query is None:
         return await _search_jobs_in_db(db, user, None, conditions, page, size)
@@ -599,9 +599,7 @@ async def get_job_detail(
 ) -> JobDetailResponse:
     """Get full job details including description (SWR-cached)."""
     cache_key = (
-        f"job:detail:{job_id}:candidate:{user.id}"
-        if user and user.primary_role == UserRole.candidate
-        else f"job:detail:{job_id}"
+        f"job:detail:{job_id}:candidate:{user.id}" if user else f"job:detail:{job_id}"
     )
 
     async def _load() -> dict:

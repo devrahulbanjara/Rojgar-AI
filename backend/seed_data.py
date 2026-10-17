@@ -22,7 +22,7 @@ from app.modules.applications.models import (
     Review,
 )
 from app.modules.audit.models import AuditLog
-from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
+from app.modules.auth.enums import BusinessStatus, MembershipRole, MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.models import Interview, Scorecard
@@ -204,7 +204,9 @@ def _build_audit_snapshots(
 
 
 def _actor_role_value(actor: User | None) -> str | None:
-    return actor.primary_role.value if actor is not None else None
+    if actor is None:
+        return None
+    return "platform_admin" if actor.is_platform_admin else "member"
 
 
 def _queue_seed_audit_log(
@@ -3086,47 +3088,20 @@ EXTRA_COMPANY_JOBS = {
     ],
 }
 
-MEMBERSHIP_REQUESTS = {
-    0: [
-        {
-            "full_name": "Sujan Khadka",
-            "email": "sujan.khadka@talentmail.dev",
-            "job_title": "Recruitment Operations Specialist",
-            "status": MembershipStatus.pending,
-        },
-        {
-            "full_name": "Sneha Adhikari",
-            "email": "sneha.adhikari@talentmail.dev",
-            "job_title": "Campus Recruiter",
-            "status": MembershipStatus.pending,
-        },
-        {
-            "full_name": "Prabin Neupane",
-            "email": "prabin.neupane@talentmail.dev",
-            "job_title": "Agency Recruiter",
-            "status": MembershipStatus.rejected,
-        },
-    ],
-    1: [
-        {
-            "full_name": "Mina Ghimire",
-            "email": "mina.ghimire@talentmail.dev",
-            "job_title": "Recruiter",
-            "status": MembershipStatus.pending,
-        },
-        {
-            "full_name": "Niraj Poudel",
-            "email": "niraj.poudel@talentmail.dev",
-            "job_title": "Technical Sourcer",
-            "status": MembershipStatus.pending,
-        },
-        {
-            "full_name": "Sagar Bhatta",
-            "email": "sagar.bhatta@talentmail.dev",
-            "job_title": "Contract Recruiter",
-            "status": MembershipStatus.rejected,
-        },
-    ],
+PLATFORM_ADMIN = {"full_name": "Rojgar AI Support", "email": "admin@rojgarai.app"}
+
+# A business that signed up and waits in the approvals queue.
+PENDING_BUSINESS = {
+    "name": "Annapurna Momo Ghar",
+    "type": "Restaurant or café",
+    "district": "Kaski",
+    "phone": "+9779806123456",
+    "pan_number": "609876543",
+    "owner": {
+        "full_name": "Kamala Gurung",
+        "email": "kamala.gurung@momoghar.dev",
+        "phone": "+9779806123456",
+    },
 }
 
 LIVE_APPLICATIONS = [
@@ -3703,12 +3678,11 @@ RESUME_IMPORT_TASK_BLUEPRINTS = [
 ]
 
 
-def make_user(full_name: str, email: str, role: UserRole) -> User:
+def make_user(full_name: str, email: str) -> User:
     return User(
         full_name=full_name,
         email=email,
         password_hash=COMMON_PW,
-        primary_role=role,
         is_email_verified=True,
         is_onboarded=True,
     )
@@ -4105,17 +4079,21 @@ async def clear_existing_data() -> None:
 
 
 def build_credentials_document() -> dict:
-    accounts: list[dict] = []
+    accounts: list[dict] = [
+        {
+            "full_name": PLATFORM_ADMIN["full_name"],
+            "email": PLATFORM_ADMIN["email"],
+            "platform_admin": True,
+        }
+    ]
 
     for company in COMPANIES + NONTECH_COMPANIES:
         accounts.append(
             {
                 "full_name": company["admin"]["full_name"],
                 "email": company["admin"]["email"],
-                "primary_role": UserRole.recruiter_admin.value,
                 "company": company["name"],
-                "membership_role": MembershipRole.admin.value,
-                "membership_status": MembershipStatus.active.value,
+                "membership_role": MembershipRole.owner.value,
                 "job_title": company["admin"]["job_title"],
             }
         )
@@ -4125,44 +4103,37 @@ def build_credentials_document() -> dict:
                 {
                     "full_name": recruiter["full_name"],
                     "email": recruiter["email"],
-                    "primary_role": UserRole.recruiter.value,
                     "company": company["name"],
-                    "membership_role": MembershipRole.recruiter.value,
-                    "membership_status": MembershipStatus.active.value,
+                    "membership_role": MembershipRole.manager.value,
                     "job_title": recruiter["job_title"],
                 }
             )
+
+    accounts.append(
+        {
+            "full_name": PENDING_BUSINESS["owner"]["full_name"],
+            "email": PENDING_BUSINESS["owner"]["email"],
+            "company": PENDING_BUSINESS["name"],
+            "membership_role": MembershipRole.owner.value,
+            "business_status": BusinessStatus.pending.value,
+        }
+    )
 
     for candidate in CANDIDATES:
         accounts.append(
             {
                 "full_name": candidate["full_name"],
                 "email": candidate["email"],
-                "primary_role": UserRole.candidate.value,
+                "applicant": True,
             }
         )
-
-    for company_index, requests in MEMBERSHIP_REQUESTS.items():
-        company_name = COMPANIES[company_index]["name"]
-        for request in requests:
-            accounts.append(
-                {
-                    "full_name": request["full_name"],
-                    "email": request["email"],
-                    "primary_role": UserRole.recruiter.value,
-                    "company": company_name,
-                    "membership_role": MembershipRole.recruiter.value,
-                    "membership_status": request["status"].value,
-                    "job_title": request["job_title"],
-                }
-            )
 
     return {
         "generated_from": "backend/seed_data.py",
         "default_password": DEFAULT_LOGIN_PASSWORD,
         "notes": [
             "All seeded accounts use the default password unless the seed script is changed.",
-            "Pending and rejected recruiter membership users are included for completeness, but their company access reflects the membership_status field.",
+            "People have no global role: members have a role per business, applicants are people with applications.",
         ],
         "accounts": accounts,
     }
@@ -4242,9 +4213,7 @@ async def seed_company(
     """Seed a single company and return company context for downstream seed steps."""
 
     admin_info = company_data["admin"]
-    admin = make_user(
-        admin_info["full_name"], admin_info["email"], UserRole.recruiter_admin
-    )
+    admin = make_user(admin_info["full_name"], admin_info["email"])
     db.add(admin)
     await db.flush()
 
@@ -4256,6 +4225,9 @@ async def seed_company(
         website_url=company_data["website_url"],
         domain=company_data["domain"],
         description=company_data["description"],
+        status=BusinessStatus.active,
+        verified_at=NOW - timedelta(days=400),
+        created_by_user_id=admin.id,
     )
     db.add(company)
     await db.flush()
@@ -4263,20 +4235,18 @@ async def seed_company(
 
     db.add(
         make_membership(
-            admin.id, company.id, MembershipRole.admin, admin_info["job_title"]
+            admin.id, company.id, MembershipRole.owner, admin_info["job_title"]
         )
     )
     print(f"    • Admin: {admin.full_name} ({admin.email})")
 
     recruiter_users = []
     for rec in company_data["recruiters"]:
-        r = make_user(rec["full_name"], rec["email"], UserRole.recruiter)
+        r = make_user(rec["full_name"], rec["email"])
         db.add(r)
         await db.flush()
         db.add(
-            make_membership(
-                r.id, company.id, MembershipRole.recruiter, rec["job_title"]
-            )
+            make_membership(r.id, company.id, MembershipRole.manager, rec["job_title"])
         )
         recruiter_users.append(r)
         print(f"    • Recruiter: {r.full_name} ({r.email})")
@@ -4300,22 +4270,6 @@ async def seed_company(
         job.updated_at = job_expires_at - timedelta(days=1)
         created_jobs.append(job)
         print(f"      • Job {i + 1}: {job.title[:60]}... (status: {job.status.value})")
-
-    for request in MEMBERSHIP_REQUESTS.get(company_index, []):
-        request_user = make_user(
-            request["full_name"], request["email"], UserRole.recruiter
-        )
-        db.add(request_user)
-        await db.flush()
-        db.add(
-            make_membership(
-                request_user.id,
-                company.id,
-                MembershipRole.recruiter,
-                request["job_title"],
-                status=request["status"],
-            )
-        )
 
     for job_data in EXTRA_COMPANY_JOBS.get(company_index, []):
         poster = posters[job_data["poster_slot"] % len(posters)]
@@ -4348,7 +4302,6 @@ async def seed_candidate(db, data: dict) -> tuple[User, list[Resume]]:
         full_name=data["full_name"],
         email=data["email"],
         password_hash=COMMON_PW,
-        primary_role=UserRole.candidate,
         is_email_verified=True,
         is_onboarded=True,
     )
@@ -5038,54 +4991,6 @@ async def seed_preferences_and_activity(
 
     await db.commit()
 
-    with db.no_autoflush:
-        memberships_result = await db.execute(
-            select(CompanyMembership, Company, User)
-            .join(Company, Company.id == CompanyMembership.company_id)
-            .join(User, User.id == CompanyMembership.user_id)
-            .where(
-                CompanyMembership.role == MembershipRole.recruiter,
-                CompanyMembership.status.in_(
-                    [MembershipStatus.pending, MembershipStatus.rejected]
-                ),
-            )
-        )
-    for membership, company, recruiter in memberships_result.all():
-        await create_seed_event(
-            created_at=membership.created_at,
-            event_type="join_request_submitted",
-            audience="admin",
-            title=f"{recruiter.full_name} requested recruiter access",
-            description=f"{recruiter.email} requested access to {company.name}.",
-            href="/recruiter/recruiters",
-            company_id=company.id,
-            actor_user_id=recruiter.id,
-            metadata={
-                "membership_id": str(membership.id),
-                "status": membership.status.value,
-            },
-        )
-        activity_counter += 1
-
-        if membership.status == MembershipStatus.rejected:
-            await create_seed_event(
-                created_at=membership.created_at + timedelta(hours=6),
-                event_type="membership_rejected",
-                audience="recruiter",
-                title="Recruiter access request declined",
-                description=f"{company.name} declined your recruiter access request.",
-                href="/login",
-                user_id=recruiter.id,
-                company_id=company.id,
-                actor_user_id=company_context_by_id[company.id]["admin"].id,
-                metadata={"membership_id": str(membership.id)},
-            )
-            activity_counter += 1
-
-        # Commit every 50 events to avoid deadlock
-        if activity_counter % 50 == 0:
-            await db.commit()
-
     await db.commit()
     print(f"  ✓ Recruiter preferences: {preference_counter}")
     print(f"  ✓ Activity events: {activity_counter}")
@@ -5291,10 +5196,7 @@ async def seed_audit_history(
             action_type="signup_requested",
             target_user_id=user.id,
             company_id=company_id,
-            metadata={
-                "email": user.email,
-                "primary_role": user.primary_role.value,
-            },
+            metadata={"email": user.email},
             request_path="/auth/signup",
             request_method="POST",
         )
@@ -5404,7 +5306,7 @@ async def seed_audit_history(
             parent_entity_type="company",
             parent_entity_id=company.id,
             after_json=_serialize_audit_entity(admin_membership),
-            request_path="/companies/register",
+            request_path="/businesses",
             request_method="POST",
         )
 
@@ -5420,103 +5322,20 @@ async def seed_audit_history(
                 actor=admin,
                 is_onboarded=True,
             )
-            membership_pending = _serialize_audit_entity(recruiter_membership)
-            membership_pending["status"] = MembershipStatus.pending.value
             record(
                 created_at=recruiter_anchor + timedelta(minutes=8),
                 entity_type="membership",
                 entity_id=recruiter_membership.id,
-                action_type="create",
+                action_type="invite_accepted",
                 actor=recruiter,
                 target_user_id=recruiter.id,
                 company_id=company.id,
                 parent_entity_type="company",
                 parent_entity_id=company.id,
-                after_json=membership_pending,
-                request_path="/companies/join",
+                after_json=_serialize_audit_entity(recruiter_membership),
+                request_path="/invites/accept",
                 request_method="POST",
             )
-            membership_before, membership_after, membership_diff = (
-                _build_audit_snapshots(
-                    recruiter_membership,
-                    before_overrides={"status": MembershipStatus.pending},
-                )
-            )
-            record(
-                created_at=recruiter_anchor + timedelta(hours=3),
-                entity_type="membership",
-                entity_id=recruiter_membership.id,
-                action_type="status_transition",
-                actor=admin,
-                target_user_id=recruiter.id,
-                company_id=company.id,
-                parent_entity_type="company",
-                parent_entity_id=company.id,
-                before_json=membership_before,
-                after_json=membership_after,
-                diff_json=membership_diff,
-                request_path="/companies/memberships/approve",
-                request_method="POST",
-            )
-
-        company_requests_result = await db.execute(
-            select(CompanyMembership, User)
-            .join(User, User.id == CompanyMembership.user_id)
-            .where(
-                CompanyMembership.company_id == company.id,
-                CompanyMembership.status.in_(
-                    [MembershipStatus.pending, MembershipStatus.rejected]
-                ),
-            )
-        )
-        for request_index, (membership, recruiter) in enumerate(
-            company_requests_result.all()
-        ):
-            request_anchor = company_anchor + timedelta(days=95 + (request_index * 18))
-            queue_user_bootstrap(
-                recruiter,
-                created_at=request_anchor,
-                company_id=company.id,
-                actor=None,
-                is_onboarded=True,
-            )
-            pending_snapshot = _serialize_audit_entity(membership)
-            pending_snapshot["status"] = MembershipStatus.pending.value
-            record(
-                created_at=request_anchor + timedelta(minutes=10),
-                entity_type="membership",
-                entity_id=membership.id,
-                action_type="create",
-                actor=recruiter,
-                target_user_id=recruiter.id,
-                company_id=company.id,
-                parent_entity_type="company",
-                parent_entity_id=company.id,
-                after_json=pending_snapshot,
-                request_path="/companies/join",
-                request_method="POST",
-            )
-            if membership.status == MembershipStatus.rejected:
-                rejected_before, rejected_after, rejected_diff = _build_audit_snapshots(
-                    membership,
-                    before_overrides={"status": MembershipStatus.pending},
-                )
-                record(
-                    created_at=request_anchor + timedelta(hours=6),
-                    entity_type="membership",
-                    entity_id=membership.id,
-                    action_type="reject",
-                    actor=admin,
-                    target_user_id=recruiter.id,
-                    company_id=company.id,
-                    parent_entity_type="company",
-                    parent_entity_id=company.id,
-                    before_json=rejected_before,
-                    after_json=rejected_after,
-                    diff_json=rejected_diff,
-                    request_path="/companies/memberships/reject",
-                    request_method="POST",
-                )
 
         deleted_job_id = uuid.uuid4()
         record(
@@ -7214,6 +7033,142 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
 # ============================================================================
 
 
+def _certificate_png() -> bytes:
+    """A stand-in photo of a registration certificate for the approvals queue."""
+    import io
+
+    from PIL import Image, ImageDraw
+
+    image = Image.new("RGB", (640, 440), "#f5efe0")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((16, 16, 624, 424), outline="#8a6d3b", width=4)
+    lines = [
+        "Government of Nepal",
+        "Office of the Company Registrar",
+        "",
+        "Certificate of Registration",
+        "",
+        PENDING_BUSINESS["name"],
+        f"PAN {PENDING_BUSINESS['pan_number']}",
+        "Pokhara, Kaski",
+    ]
+    for i, line in enumerate(lines):
+        draw.text((48, 48 + i * 40), line, fill="#3b2f1e")
+    out = io.BytesIO()
+    image.save(out, format="PNG")
+    return out.getvalue()
+
+
+def _simple_job(company_id, posted_by, title, location, overview, status) -> Job:
+    return Job(
+        company_id=company_id,
+        posted_by=posted_by,
+        title=title,
+        location=location,
+        location_type=LocationType.onsite,
+        status=status,
+        overview=overview,
+        responsibilities=[],
+        requirements=[],
+        preferred_qualifications=[],
+        benefits=[],
+        expires_at=NOW + timedelta(days=30),
+    )
+
+
+async def seed_platform(db, company_contexts: list[dict]) -> None:
+    """Platform admin, a business waiting for approval, a report, a flag and payments."""
+    from app.infrastructures.storage.service import storage_service
+    from app.modules.admin import guards  # noqa: F401  (auto-flags on publish)
+    from app.modules.admin.billing import amount_due
+    from app.modules.admin.models import JobReport, ManualPayment
+
+    staff = make_user(PLATFORM_ADMIN["full_name"], PLATFORM_ADMIN["email"])
+    staff.is_platform_admin = True
+    db.add(staff)
+
+    owner_info = PENDING_BUSINESS["owner"]
+    owner = make_user(owner_info["full_name"], owner_info["email"])
+    owner.phone = owner_info["phone"]
+    db.add(owner)
+    await db.flush()
+    doc_key = await storage_service.upload_private_document(
+        _certificate_png(), "business-docs", extension="png", content_type="image/png"
+    )
+    pending = Company(
+        name=PENDING_BUSINESS["name"],
+        industry=PENDING_BUSINESS["type"],
+        district=PENDING_BUSINESS["district"],
+        location=PENDING_BUSINESS["district"],
+        phone=PENDING_BUSINESS["phone"],
+        pan_number=PENDING_BUSINESS["pan_number"],
+        registration_doc_key=doc_key,
+        status=BusinessStatus.pending,
+        created_by_user_id=owner.id,
+    )
+    db.add(pending)
+    await db.flush()
+    db.add(make_membership(owner.id, pending.id, MembershipRole.owner, "Owner"))
+    db.add(
+        _simple_job(
+            pending.id,
+            owner.id,
+            "Kitchen helper",
+            "Pokhara",
+            "Help prepare momo and keep the kitchen clean.",
+            JobStatus.draft,
+        )
+    )
+
+    first, second = company_contexts[0], company_contexts[1]
+    open_job = next(
+        job for job in first["extra_jobs"].values() if job.status == JobStatus.active
+    )
+    db.add(
+        JobReport(
+            job_id=open_job.id,
+            company_id=first["company"].id,
+            source="applicant",
+            reason="fee_requested",
+            details="The phone number on the post asked me to pay Rs 3,000 to get an interview.",
+        )
+    )
+    # Published with a fee request: the job rules flag it for staff.
+    db.add(
+        _simple_job(
+            second["company"].id,
+            second["admin"].id,
+            "Sales Representative",
+            "Kathmandu",
+            "Door-to-door sales. Candidates must pay a refundable deposit of "
+            "Rs 5,000 for the product kit before joining.",
+            JobStatus.active,
+        )
+    )
+
+    db.add_all(
+        [
+            ManualPayment(
+                company_id=first["company"].id,
+                kind="job_pass",
+                job_id=open_job.id,
+                amount_npr=amount_due("job_pass"),
+                reference="NIC Asia 778812",
+            ),
+            ManualPayment(
+                company_id=second["company"].id,
+                kind="team",
+                amount_npr=amount_due("team"),
+            ),
+        ]
+    )
+    await db.flush()
+    print(
+        f"  ✓ Platform: admin {staff.email}, {pending.name} waiting for approval, "
+        "1 report, 1 flagged job, 2 bank transfers"
+    )
+
+
 async def seed() -> None:
     await ensure_schema()
     await clear_existing_data()
@@ -7275,6 +7230,7 @@ async def seed() -> None:
         await seed_candidate_import_tasks(db, candidate_users)
         await seed_preferences_and_activity(db, company_contexts)
         await seed_audit_history(db, company_contexts, candidate_users)
+        await seed_platform(db, company_contexts)
 
         await db.commit()
         credentials_path = write_credentials_file()
@@ -7338,6 +7294,13 @@ async def seed() -> None:
             await db.scalar(text("select count(*) from recruiter_preferences"))
         ) or 0
         total_audit_logs = await db.scalar(text("select count(*) from audit_logs")) or 0
+        pending_businesses = (
+            await db.scalar(
+                select(func.count(Company.id)).where(
+                    Company.status == BusinessStatus.pending
+                )
+            )
+        ) or 0
         pending_requests = (
             await db.scalar(
                 select(func.count(CompanyMembership.id)).where(
@@ -7355,6 +7318,7 @@ async def seed() -> None:
         print(
             f"  Recruiters          : {sum(len(c['recruiters']) for c in COMPANIES + NONTECH_COMPANIES)}"
         )
+        print(f"  Waiting for approval: {pending_businesses} business")
         print(f"  Membership requests : {pending_requests} pending")
         print(
             f"  Jobs                : {total_jobs} "
@@ -7387,6 +7351,12 @@ async def seed() -> None:
         print()
         print(f"  🔑 Login credentials for all accounts: {DEFAULT_LOGIN_PASSWORD}")
         print()
+        print(f"  📧 Platform admin: {PLATFORM_ADMIN['email']}")
+        print(
+            f"  📧 Waiting for approval: {PENDING_BUSINESS['owner']['email']} "
+            f"({PENDING_BUSINESS['name']})"
+        )
+        print()
         print("  📧 Recruiter Admin logins:")
         for c in COMPANIES + NONTECH_COMPANIES:
             print(f"     • {c['admin']['email']} ({c['name']})")
@@ -7396,7 +7366,7 @@ async def seed() -> None:
             for r in c["recruiters"]:
                 print(f"     • {r['email']} ({c['name']})")
         print()
-        print("  📧 Candidate logins:")
+        print("  📧 Applicant logins:")
         for c in CANDIDATES:
             print(f"     • {c['email']} ({c['headline'][:50]}...)")
         print("=" * 70 + "\n")

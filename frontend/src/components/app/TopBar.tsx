@@ -1,6 +1,6 @@
 'use client'
 
-import { useAppSelector } from '@/store/hooks'
+import { useIsOwner } from '@/lib/session'
 
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
@@ -18,7 +18,7 @@ export function MobileNav() {
 
 /** Recruiter top bar: sidebar toggle · space · search · notifications · account. */
 export function TopBar() {
-  const isAdmin = useAppSelector((s) => s.auth.user?.primary_role === 'recruiter_admin')
+  const isAdmin = useIsOwner()
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-card/90 px-4 backdrop-blur sm:px-6">
       <MobileNav />

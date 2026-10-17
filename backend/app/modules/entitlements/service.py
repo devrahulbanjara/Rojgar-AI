@@ -118,11 +118,11 @@ async def count_open_jobs(
 
 
 async def count_active_members(db: AsyncSession, company_id: uuid.UUID) -> int:
+    """Team seats in use: every member, whichever business they're working in now."""
     return (
         await db.scalar(
             select(func.count(CompanyMembership.id)).where(
-                CompanyMembership.company_id == company_id,
-                CompanyMembership.status == MembershipStatus.active,
+                CompanyMembership.company_id == company_id
             )
         )
         or 0

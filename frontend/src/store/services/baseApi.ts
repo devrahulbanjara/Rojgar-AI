@@ -128,6 +128,8 @@ export const baseApi = createApi({
   tagTypes: [
     'User',
     'Company',
+    'Team',
+    'Admin',
     'Jobs',
     'Applications',
     'Candidates',

@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query
 
-from app.core.dependencies import ActiveMember, CandidateUser, DbSession, OptionalUser
+from app.core.dependencies import ActiveMember, CurrentUser, DbSession, OptionalUser
 from app.core.rate_limit import RateLimit
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.interviews import service
@@ -106,7 +106,7 @@ async def submit_scorecard(
 
 @router.get("/interviews/my", summary="Signed-in candidate: my interviews")
 async def my_interviews(
-    user: CandidateUser, db: DbSession
+    user: CurrentUser, db: DbSession
 ) -> UnifiedResponse[list[CandidateInterviewView]]:
     data = await service.list_candidate_interviews(db, user.id)
     return ResponseBuilder.success(data=data)

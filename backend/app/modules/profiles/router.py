@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, File, UploadFile
 
-from app.core.dependencies import CandidateUser, CurrentUser, DbSession
+from app.core.dependencies import CurrentUser, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.infrastructures.storage.service import storage_service
 from app.modules.profiles import service
@@ -33,7 +33,7 @@ router = APIRouter(prefix="/profiles", tags=["Profiles"])
     summary="Get the authenticated candidate's profile",
 )
 async def get_my_profile(
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ProfileResponse]:
     """Return the authenticated candidate's profile."""
@@ -47,7 +47,7 @@ async def get_my_profile(
 )
 async def update_my_profile(
     payload: ProfileUpdate,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ProfileResponse]:
     """Update the authenticated candidate's profile."""
@@ -62,7 +62,7 @@ async def update_my_profile(
 async def start_ai_resume_import(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(),
-    user: CandidateUser = None,
+    user: CurrentUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[AiImportTaskStartResponse]:
     """Upload a resume and start a background AI import task."""
@@ -79,7 +79,7 @@ async def start_ai_resume_import(
 )
 async def get_ai_resume_import_task(
     task_id: UUID,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[AiImportTaskStatusResponse]:
     """Fetch the current status of a resume import task."""
@@ -93,7 +93,7 @@ async def get_ai_resume_import_task(
 )
 async def preview_ai_resume_import(
     file: UploadFile = File(),
-    user: CandidateUser = None,
+    user: CurrentUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[AiImportPreviewResponse]:
     """Preview AI-extracted profile data from an uploaded resume."""
@@ -107,7 +107,7 @@ async def preview_ai_resume_import(
 )
 async def commit_ai_resume_import(
     payload: AiImportCommitRequest,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[AiImportCommitResponse]:
     """Commit imported resume data to a profile or resume target."""
@@ -124,7 +124,7 @@ async def commit_ai_resume_import(
 )
 async def upload_my_avatar(
     file: UploadFile = File(),
-    user: CandidateUser = None,
+    user: CurrentUser = None,
     db: DbSession = None,
 ) -> UnifiedResponse[ProfileResponse]:
     """Upload or replace the candidate's avatar."""
@@ -149,7 +149,7 @@ async def upload_my_avatar(
     summary="Delete the authenticated candidate's avatar",
 )
 async def delete_my_avatar(
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[None]:
     """Delete the candidate's avatar."""
@@ -172,7 +172,7 @@ async def delete_my_avatar(
 )
 async def complete_onboarding(
     payload: CandidateOnboardingRequest,
-    user: CandidateUser,
+    user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ProfileResponse]:
     """Complete candidate onboarding and persist target roles."""
