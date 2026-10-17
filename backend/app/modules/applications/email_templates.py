@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from html import escape
 
-from app.core.config import settings
+from app.core.constants import PRODUCT_NAME
 
 
 @dataclass(frozen=True)
@@ -30,7 +30,7 @@ def _shell(body_html: str) -> str:
         'max-width: 520px; margin: 0 auto; padding: 24px; color: #1c1917;">'
         f"{body_html}"
         f'<p style="font-size: 12px; color: #78716c; margin-top: 32px;">'
-        f"{escape(settings.product_name)}</p></div>"
+        f"{escape(PRODUCT_NAME)}</p></div>"
     )
 
 

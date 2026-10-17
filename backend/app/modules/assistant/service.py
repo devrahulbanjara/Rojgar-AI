@@ -24,7 +24,6 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.infrastructures.guardrails import guardrails_service
 from app.infrastructures.guardrails.service import heuristic_injection_signal
 from app.infrastructures.redis.service import redis_service
@@ -72,12 +71,18 @@ def _now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+# Turns (question + answer) kept per thread and sent to the model.
+HISTORY_TURNS = 8
+# Longest wait for the input guardrail before falling back to a marker scan.
+GUARD_TIMEOUT_SECONDS = 6.0
+
+
 def _sse(event: str, data: dict[str, Any]) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
 def _trim(messages: list[dict]) -> list[dict]:
-    return messages[-2 * settings.assistant_history_turns :]
+    return messages[-2 * HISTORY_TURNS :]
 
 
 def _history(messages: list[dict]) -> list[dict[str, str]]:
@@ -94,7 +99,7 @@ async def _guard(text: str, source: str) -> None:
     try:
         verdict = await asyncio.wait_for(
             guardrails_service.check_input(text, source=source),
-            settings.assistant_guard_timeout_seconds,
+            GUARD_TIMEOUT_SECONDS,
         )
         safe = verdict.safe
     except TimeoutError:

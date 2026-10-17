@@ -81,6 +81,8 @@ def user_message(application_text: str) -> str:
 
 
 # USD per million tokens (input, output). Upper bound: cached input is cheaper.
+USD_TO_NPR = 137.0  # provider prices are in USD; costs are shown in NPR
+
 _PRICES = {
     "openai/gpt-oss-120b": (0.15, 0.60),
     "openai/gpt-oss-20b": (0.075, 0.30),
@@ -96,7 +98,7 @@ def cost_npr(usage: Usage) -> float:
         model = usage.model.lower()
         price = next((p for k, p in _PRICES.items() if k in model), (0.15, 0.60))
     usd = (usage.tokens_in * price[0] + usage.tokens_out * price[1]) / 1_000_000
-    return round(usd * settings.usd_to_npr, 4)
+    return round(usd * USD_TO_NPR, 4)
 
 
 class Reviewer(Protocol):

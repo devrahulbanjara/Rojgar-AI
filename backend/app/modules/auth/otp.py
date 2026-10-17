@@ -15,6 +15,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.constants import PRODUCT_NAME
 from app.core.rate_limit import TOO_MANY_MESSAGE, hit
 from app.infrastructures.sms.service import send_sms, sms_available
 from app.modules.auth.models import PhoneOtp, User
@@ -70,8 +71,7 @@ async def request_code(db: AsyncSession, phone: str) -> None:
     await db.commit()
     await send_sms(
         phone,
-        f"{code} is your {settings.product_name} code. "
-        "It expires in 5 minutes. Never share it.",
+        f"{code} is your {PRODUCT_NAME} code. It expires in 5 minutes. Never share it.",
     )
 
 

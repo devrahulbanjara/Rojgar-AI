@@ -4,6 +4,7 @@ import aiosmtplib
 from loguru import logger
 
 from app.core.config import settings
+from app.core.constants import PRODUCT_NAME
 
 
 class EmailService:
@@ -15,7 +16,7 @@ class EmailService:
     async def _send(subject: str, recipient: str, html_content: str) -> None:
         """Send one HTML email or log-and-skip when email sending is disabled."""
         message = EmailMessage()
-        message["From"] = f"{settings.app_name} <{settings.mail_from}>"
+        message["From"] = f"{PRODUCT_NAME} <{settings.mail_from}>"
         message["To"] = recipient
         message["Subject"] = subject
         message.add_alternative(html_content, subtype="html")
@@ -53,7 +54,7 @@ class EmailService:
         Accept/Decline) and an invite.ics attachment for other clients.
         """
         message = EmailMessage()
-        message["From"] = f"{settings.product_name} <{settings.mail_from}>"
+        message["From"] = f"{PRODUCT_NAME} <{settings.mail_from}>"
         message["To"] = to_email
         message["Subject"] = subject
         message.set_content("Your calendar invite is attached.")
@@ -149,7 +150,7 @@ class EmailService:
             logger.info(f"Email sending disabled — skipping email to {to_email}")
             return
         message = EmailMessage()
-        message["From"] = f"{settings.app_name} <{settings.mail_from}>"
+        message["From"] = f"{PRODUCT_NAME} <{settings.mail_from}>"
         message["To"] = to_email
         message["Subject"] = subject
         message.add_alternative(html_body, subtype="html")

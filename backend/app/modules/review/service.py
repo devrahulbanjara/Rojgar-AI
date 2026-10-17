@@ -35,7 +35,6 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.config import settings
 from app.core.database import AsyncSessionLocal, release_connection
 from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.entitlements import service as entitlements
@@ -61,13 +60,21 @@ FLAG_UNCHECKED = (
 FLAG_FAILED = "The automatic review failed. Read this application yourself."
 NOTHING_YET = "No CV or answers yet"
 
+# Reviews running at once per process (startup backlog, bursts of applications).
+REVIEW_CONCURRENCY = 4
+# Cheap pass must-have coverage (0-1) at or above which the full review runs.
+FULL_REVIEW_MIN_COVERAGE = 0.25
+# Attempts per review; waits 5, 10, 20 s between them (rate limits).
+MAX_ATTEMPTS = 4
+RETRY_DELAY_SECONDS = 5.0
+
 _semaphore: asyncio.Semaphore | None = None
 
 
 def _gate() -> asyncio.Semaphore:
     global _semaphore
     if _semaphore is None:
-        _semaphore = asyncio.Semaphore(max(1, settings.review_concurrency))
+        _semaphore = asyncio.Semaphore(max(1, REVIEW_CONCURRENCY))
     return _semaphore
 
 
@@ -295,7 +302,7 @@ async def _evaluate(
     summary = cheap.output.summary
     triage = ReviewTriage.extract.value
     plausible = (rubric.coverage(checks, "must") or 0.0) >= (
-        settings.review_full_review_min_coverage
+        FULL_REVIEW_MIN_COVERAGE
     ) or rubric.coverage(checks, "must") is None
     if plausible:
         full = await _call(reviewer, inputs, cheap=False)
@@ -420,8 +427,8 @@ async def review_application(
 
     reviewer = reviewer or get_reviewer()
     guardrail = guardrail or _default_guardrail()
-    delay = settings.review_retry_delay_seconds if retry_delay is None else retry_delay
-    max_attempts = max(1, settings.review_max_attempts)
+    delay = RETRY_DELAY_SECONDS if retry_delay is None else retry_delay
+    max_attempts = max(1, MAX_ATTEMPTS)
 
     quota: entitlements.ReviewClaim | None = None
     while True:

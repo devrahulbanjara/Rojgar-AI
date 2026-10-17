@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from app.core.config import settings
+from app.core.constants import DEFAULT_TIMEZONE
 from app.infrastructures.sms.service import send_sms, sms_segments
 
 SmsEvent = Literal[
@@ -59,9 +59,11 @@ _TEMPLATES: dict[SmsEvent, dict[str, str]] = {
 }
 
 _MAX_NEPALI_SEGMENTS = 3
+# Texts are Nepali ("ne"), English when the Nepali would run long; "en" forces English.
+SMS_LANGUAGE = "ne"
 
 
-def sms_when(at: datetime, tz: str = "Asia/Kathmandu") -> str:
+def sms_when(at: datetime, tz: str = DEFAULT_TIMEZONE) -> str:
     """Compact local time, e.g. "Mon 20 Oct 10:30"."""
     return at.astimezone(ZoneInfo(tz)).strftime("%a %d %b %H:%M")
 
@@ -70,7 +72,7 @@ def render_sms(event: SmsEvent, **ctx: str) -> str:
     """Candidate text for ``event``; titles are cut so the SMS stays short."""
     ctx = {k: (v[:40] if k in {"company", "job"} else v) for k, v in ctx.items()}
     templates = _TEMPLATES[event]
-    if settings.sms_language == "ne":
+    if SMS_LANGUAGE == "ne":
         text = templates["ne"].format(**ctx)
         if sms_segments(text) <= _MAX_NEPALI_SEGMENTS:
             return text

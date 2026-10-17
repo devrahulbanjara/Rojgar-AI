@@ -39,15 +39,21 @@ def _from_http(exc: HTTPException) -> AssistantError:
     return AssistantError("unavailable", UNAVAILABLE_MESSAGE)
 
 
+# One turn: hard deadline (retries included), sampling and answer size.
+TURN_TIMEOUT_SECONDS = 30.0
+TEMPERATURE = 0.2
+MAX_TOKENS = 3000
+
+
 async def stream_json(messages: list[dict[str, str]]) -> AsyncIterator[str]:
     """Yield raw text chunks of one JSON-object completion."""
     loop = asyncio.get_running_loop()
-    deadline = loop.time() + settings.assistant_turn_timeout_seconds
+    deadline = loop.time() + TURN_TIMEOUT_SECONDS
     request: dict[str, Any] = {
         "model": settings.assistant_model,
         "messages": messages,
-        "temperature": settings.assistant_temperature,
-        "max_tokens": settings.assistant_max_tokens,
+        "temperature": TEMPERATURE,
+        "max_tokens": MAX_TOKENS,
         "response_format": {"type": "json_object"},
         "stream": True,
     }

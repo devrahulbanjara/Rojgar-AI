@@ -8,8 +8,11 @@ from datetime import UTC, datetime, timedelta
 import jwt
 
 from app.core.config import settings
+from app.core.constants import JWT_ALGORITHM
 
 _STATUS_TYPE = "application_status"
+# A status link works this long (an applicant may hear back months later).
+STATUS_TOKEN_DAYS = 180
 
 
 def create_status_token(application_id: uuid.UUID) -> str:
@@ -17,16 +20,14 @@ def create_status_token(application_id: uuid.UUID) -> str:
     payload = {
         "sub": str(application_id),
         "type": _STATUS_TYPE,
-        "exp": datetime.now(UTC) + timedelta(days=settings.public_status_token_days),
+        "exp": datetime.now(UTC) + timedelta(days=STATUS_TOKEN_DAYS),
     }
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+    return jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
 
 
 def decode_status_token(token: str) -> uuid.UUID | None:
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
+        payload = jwt.decode(token, settings.secret_key, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != _STATUS_TYPE:
             return None
         return uuid.UUID(payload["sub"])

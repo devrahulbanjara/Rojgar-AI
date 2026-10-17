@@ -9,6 +9,7 @@ from pydantic import AwareDatetime, Field, field_validator
 
 from app.core.schemas import BaseSchema
 from app.modules.interviews.scheduling import WEEKDAYS
+from app.core.constants import DEFAULT_TIMEZONE
 
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
@@ -17,7 +18,7 @@ ScorecardState = Literal["not_due", "needed", "done"]
 
 
 class Availability(BaseSchema):
-    timezone: str = "Asia/Kathmandu"
+    timezone: str = DEFAULT_TIMEZONE
     # {"sun": [["10:00", "17:00"]], ..., "sat": []}; missing days = not working.
     weekly_hours: dict[str, list[list[str]]]
     interview_minutes: int = Field(45, ge=15, le=180)

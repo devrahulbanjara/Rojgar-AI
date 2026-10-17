@@ -8,6 +8,7 @@ from sqlalchemy import text
 
 from app.core.body_limit import BodySizeLimitMiddleware
 from app.core.config import settings
+from app.core.constants import API_TITLE, API_VERSION
 from app.core.database import engine
 from app.core.dependencies import DbSession
 from app.core.exception_handlers import register_exception_handlers
@@ -101,11 +102,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=settings.app_name,
+    title=API_TITLE,
     description="AI-Powered Recruitment Platform",
     debug=settings.debug,
     lifespan=lifespan,
-    version=f"📦 {settings.app_version}",
+    version=f"📦 {API_VERSION}",
     docs_url="/docs" if settings.environment == "dev" else None,  # hide docs in prod
     redoc_url=None,
     contact={
@@ -153,8 +154,8 @@ app.include_router(interviews_router)
 async def root() -> UnifiedResponse[dict]:
     """Return basic API metadata for liveness checks and discovery."""
     data = {
-        "app": settings.app_name,
-        "version": settings.app_version,
+        "app": API_TITLE,
+        "version": API_VERSION,
         "environment": settings.environment,
     }
     return ResponseBuilder.success(data=data, message="API is online")

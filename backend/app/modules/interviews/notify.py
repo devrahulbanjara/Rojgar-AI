@@ -13,6 +13,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from app.core.config import settings
+from app.core.constants import DEFAULT_TIMEZONE, PRODUCT_NAME
 from app.infrastructures.email.service import EmailService
 from app.modules.interviews.scheduling import build_ics
 from app.modules.notifications.sms import sms_candidate, sms_when
@@ -36,7 +37,7 @@ class InterviewMessage:
     sequence: int = 0
     start: datetime | None = None
     end: datetime | None = None
-    timezone: str = "Asia/Kathmandu"
+    timezone: str = DEFAULT_TIMEZONE
     meeting_link: str | None = None
 
 
@@ -77,7 +78,7 @@ def _ics(msg: InterviewMessage, method: Literal["REQUEST", "CANCEL"]) -> str:
             f"Join: {msg.meeting_link}\nReschedule or cancel: {msg.scheduling_url}"
         ),
         location=msg.meeting_link or "",
-        organizer=(settings.product_name, settings.mail_from),
+        organizer=(PRODUCT_NAME, settings.mail_from),
         attendees=[(n, e) for n, e in attendees if e],
     )
 

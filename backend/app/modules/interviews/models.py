@@ -22,8 +22,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.applications.models import Application
+from app.core.constants import DEFAULT_TIMEZONE
 
-DEFAULT_TIMEZONE = "Asia/Kathmandu"
 # Nepal works Sunday to Friday.
 DEFAULT_WEEKLY_HOURS: dict[str, list[list[str]]] = {
     day: [["10:00", "17:00"]] for day in ("sun", "mon", "tue", "wed", "thu", "fri")

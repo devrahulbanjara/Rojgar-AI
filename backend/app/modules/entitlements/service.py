@@ -17,7 +17,6 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import Literal
-from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
 from sqlalchemy import exists, func, or_, select, update
@@ -54,9 +53,10 @@ from app.modules.entitlements.schemas import (
 )
 from app.modules.jobs.models import Job
 from app.shared.enums import JobStatus, ReviewState
+from app.core.constants import DEFAULT_TZ
 
 # Billing months follow Nepal time.
-BILLING_TZ = ZoneInfo("Asia/Kathmandu")
+BILLING_TZ = DEFAULT_TZ
 # Review.state while the company is out of reviews.
 REVIEW_WAITING_FOR_QUOTA = ReviewState.waiting_for_quota.value
 

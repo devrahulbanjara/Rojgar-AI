@@ -14,6 +14,7 @@ from app.core.cache import (
     invalidate_job_detail_caches,
 )
 from app.core.config import settings
+from app.core.constants import PRODUCT_NAME
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.sms.service import send_sms
 from app.infrastructures.storage.service import storage_service
@@ -159,9 +160,9 @@ async def approve(db: AsyncSession, business_id: str, bg: BackgroundTasks) -> No
         _send_to_owners,
         phones,
         emails,
-        f"{settings.product_name}: {company.name} is approved. Your jobs can go live now.",
+        f"{PRODUCT_NAME}: {company.name} is approved. Your jobs can go live now.",
         f"{company.name} is approved",
-        f"<p>{company.name} is approved on {settings.product_name}. "
+        f"<p>{company.name} is approved on {PRODUCT_NAME}. "
         "Your jobs can go live now.</p>",
     )
 
@@ -186,8 +187,7 @@ async def request_info(
         _send_to_owners,
         phones,
         emails,
-        f"{settings.product_name}: we need a little more to approve {company.name}. "
-        f"{message}",
+        f"{PRODUCT_NAME}: we need a little more to approve {company.name}. {message}",
         f"One more step to approve {company.name}",
         f"<p>We need a little more to approve {company.name}:</p><p>{message}</p>"
         f"<p>Open {settings.frontend_url}/start to add it.</p>",
@@ -215,9 +215,9 @@ async def reject(
         _send_to_owners,
         phones,
         emails,
-        f"{settings.product_name}: {company.name} wasn't approved. {reason}",
+        f"{PRODUCT_NAME}: {company.name} wasn't approved. {reason}",
         f"{company.name} wasn't approved",
-        f"<p>{company.name} wasn't approved on {settings.product_name}.</p><p>{reason}</p>",
+        f"<p>{company.name} wasn't approved on {PRODUCT_NAME}.</p><p>{reason}</p>",
     )
 
 
@@ -303,9 +303,9 @@ async def suspend(
         _send_to_owners,
         phones,
         emails,
-        f"{settings.product_name}: {company.name} is suspended and its jobs are hidden. {reason}",
+        f"{PRODUCT_NAME}: {company.name} is suspended and its jobs are hidden. {reason}",
         f"{company.name} is suspended",
-        f"<p>{company.name} is suspended on {settings.product_name} and its jobs are hidden.</p>"
+        f"<p>{company.name} is suspended on {PRODUCT_NAME} and its jobs are hidden.</p>"
         f"<p>{reason}</p>",
     )
 

@@ -279,7 +279,7 @@ async def test_slow_guardrail_falls_back_to_marker_scan(client, db, monkeypatch)
     async def slow(text, *, source, fail_closed=False):
         await asyncio.sleep(5)
 
-    monkeypatch.setattr(service.settings, "assistant_guard_timeout_seconds", 0.05)
+    monkeypatch.setattr(service, "GUARD_TIMEOUT_SECONDS", 0.05)
     monkeypatch.setattr(service.guardrails_service, "check_input", slow)
     fake_llm(monkeypatch, {"answer": "Not in their CV or notes.", "found": False})
     url = f"/assistant/candidates/{app.id}"

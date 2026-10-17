@@ -5,13 +5,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
+# Groq model ids used as defaults below.
+_GROQ_LARGE = "openai/gpt-oss-120b"
+_GROQ_SMALL = "openai/gpt-oss-20b"
+
 
 class Settings(BaseSettings):
+    # Settings are what differs per deployment, or is secret. Fixed product
+    # values are constants (core/constants.py or next to the module using them).
+
     # App
-    app_name: str = "Rojgar AI API"
-    # Name shown to candidates in emails; rename the product with one env var.
     product_name: str = "Rojgar AI"
-    app_version: str = "1.0.0"
     debug: bool = False
     # Defaults to prod so a missing ENVIRONMENT never exposes /docs or drops the
     # Secure flag on auth cookies. Local setups set environment=dev (.env.example).
@@ -28,9 +32,6 @@ class Settings(BaseSettings):
 
     # Auth
     secret_key: str
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 15
-    refresh_token_expire_days: int = 7
 
     # Google OAuth
     google_client_id: str
@@ -53,8 +54,6 @@ class Settings(BaseSettings):
     sms_provider: Literal["console", "sparrow"] = "console"
     sparrow_sms_token: str | None = None
     sparrow_sms_from: str = "RojgarAI"
-    # Candidate SMS language: "ne" (Nepali, English when Nepali runs long) or "en".
-    sms_language: Literal["ne", "en"] = "ne"
 
     # Database
     db_user: str
@@ -103,12 +102,8 @@ class Settings(BaseSettings):
     llama_cloud_api_key: str | None = None
     llama_cloud_base_url: str | None = None
 
-    groq_model_structured: str = "openai/gpt-oss-120b"
-    groq_model_chat: str = "openai/gpt-oss-120b"
-
-    llama_extract_mode: str = "PREMIUM"
-    llama_extract_parse_model: str = "gemini-2.5-pro"
-    llama_extract_model: str = "openai-gpt-5-mini"
+    groq_model_structured: str = _GROQ_LARGE
+    groq_model_chat: str = _GROQ_LARGE
 
     # AWS (Bedrock review provider; credentials are the *_shortlisting ones)
     aws_region: str = "us-east-1"
@@ -125,47 +120,28 @@ class Settings(BaseSettings):
     # AI review (one per application, rolling). Provider: groq | bedrock | fake.
     review_provider: str = "groq"
     # Full evidence review and the cheap first pass (Groq model ids).
-    review_model: str = "openai/gpt-oss-120b"
-    review_cheap_model: str = "openai/gpt-oss-20b"
+    review_model: str = _GROQ_LARGE
+    review_cheap_model: str = _GROQ_SMALL
     # Bedrock alternative (credentials below).
     aws_access_key_id_shortlisting: str | None = None
     aws_secret_access_key_shortlisting: str | None = None
     review_bedrock_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    # Attempts per review; waits 5, 10, 20 s between them (rate limits).
-    review_max_attempts: int = 4
-    review_retry_delay_seconds: float = 5.0
-    # Cheap pass must-have coverage (0-1) at or above which the full review runs.
-    review_full_review_min_coverage: float = 0.25
-    # Concurrent reviews per process (startup backlog, bursts of applications).
-    review_concurrency: int = 4
-    usd_to_npr: float = 137.0
 
     # Resume import
     resume_import_max_upload_bytes: int = 10 * 1024 * 1024
 
     # Public apply (no account)
     turnstile_secret: str | None = None
-    public_status_token_days: int = 180
     magic_link_ttl_minutes: int = 15
     guest_applications_per_email_per_hour: int = 10
-    recommendations_per_job_per_hour: int = 30
     magic_links_per_email_per_15_min: int = 3
-    resume_import_allowed_extensions: tuple[str, ...] = ("pdf",)
 
     # Guardrails
     guardrails_enabled: bool = True
-    guardrails_groq_model: str = "openai/gpt-oss-120b"
+    guardrails_groq_model: str = _GROQ_LARGE
 
     # Assistant: job draft + "ask about this candidate"
-    assistant_model: str = "openai/gpt-oss-120b"
-    assistant_temperature: float = 0.2
-    assistant_max_tokens: int = 3000
-    # Hard deadline for one turn, retries included.
-    assistant_turn_timeout_seconds: float = 30.0
-    # Longest wait for the input guardrail before falling back to a marker scan.
-    assistant_guard_timeout_seconds: float = 6.0
-    # Turns (question + answer) kept per thread and sent to the model.
-    assistant_history_turns: int = 8
+    assistant_model: str = _GROQ_LARGE
 
     # Derived URLs
     @property

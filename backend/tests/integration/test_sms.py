@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 
 from app.core.config import settings
+from app.modules.notifications import sms as sms_texts
 from app.infrastructures.sms import service as sms
 from app.modules.notifications.sms import render_sms, sms_candidate, sms_when
 
@@ -22,7 +23,7 @@ def test_segments():
 
 
 def test_templates_nepali_by_default_and_short(monkeypatch):
-    monkeypatch.setattr(settings, "sms_language", "ne")
+    monkeypatch.setattr(sms_texts, "SMS_LANGUAGE", "ne")
     text = render_sms("received", company="Acme", job="Backend Engineer")
     assert "आवेदन" in text
     assert sms.sms_segments(text) == 1
@@ -34,14 +35,14 @@ def test_templates_nepali_by_default_and_short(monkeypatch):
     )
     assert sms.sms_segments(booked) <= 2
 
-    monkeypatch.setattr(settings, "sms_language", "en")
+    monkeypatch.setattr(sms_texts, "SMS_LANGUAGE", "en")
     assert render_sms("closed", company="Acme", job="Dev").startswith(
         "Acme: hiring for Dev"
     )
 
 
 def test_long_nepali_falls_back_to_english(monkeypatch):
-    monkeypatch.setattr(settings, "sms_language", "ne")
+    monkeypatch.setattr(sms_texts, "SMS_LANGUAGE", "ne")
     url = "https://rojgarai.com/schedule/" + "x" * 200
     text = render_sms("shortlisted", company="Acme", job="Dev", url=url)
     assert text.startswith("Acme: you're shortlisted")

@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import and_, case, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import DEFAULT_TIMEZONE
 from app.modules.applications.service import visible_job_ids
 from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.auth.enums import MembershipRole, MembershipStatus
@@ -35,7 +36,6 @@ from app.shared.enums import (
     ReviewState,
 )
 
-DEFAULT_TIMEZONE = "Asia/Kathmandu"
 # Closed roles stay on Today while they still have work, but not forever.
 CLOSED_ROLE_WINDOW_DAYS = 30
 

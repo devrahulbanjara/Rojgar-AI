@@ -2,6 +2,7 @@ import jwt
 from sqlalchemy import select
 
 from app.core.config import settings
+from app.core.constants import JWT_ALGORITHM
 from app.core.security import (
     create_pending_signup_token,
     decode_pending_signup_token,
@@ -11,7 +12,7 @@ from app.modules.auth.models import User
 
 
 def _claims(token: str) -> dict:
-    return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+    return jwt.decode(token, settings.secret_key, algorithms=[JWT_ALGORITHM])
 
 
 class TestVerifyEmail:

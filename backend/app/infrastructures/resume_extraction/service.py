@@ -10,8 +10,15 @@ from loguru import logger
 from pydantic import BaseModel
 
 from app.core.config import settings
+from app.core.constants import MAX_CV_BYTES
 
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
+
+
+# LlamaExtract settings (their hosted models; nothing runs on our side).
+LLAMA_EXTRACT_MODE = "PREMIUM"
+LLAMA_PARSE_MODEL = "gemini-2.5-pro"
+LLAMA_EXTRACT_MODEL = "openai-gpt-5-mini"
 
 
 class ResumeExtractionService:
@@ -71,7 +78,7 @@ class ResumeExtractionService:
                 detail="Uploaded file is empty.",
             )
 
-        if size > settings.resume_import_max_upload_bytes:
+        if size > MAX_CV_BYTES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Resume file is too large.",
@@ -90,9 +97,9 @@ class ResumeExtractionService:
 
         return ExtractConfig(
             extraction_target="PER_DOC",
-            extraction_mode=settings.llama_extract_mode.upper(),
-            parse_model=settings.llama_extract_parse_model,
-            extract_model=settings.llama_extract_model,
+            extraction_mode=LLAMA_EXTRACT_MODE,
+            parse_model=LLAMA_PARSE_MODEL,
+            extract_model=LLAMA_EXTRACT_MODEL,
             multimodal_fast_mode=False,
             system_prompt=None,
             use_reasoning=True,
@@ -129,7 +136,7 @@ class ResumeExtractionService:
             logger.info(
                 "Starting LlamaExtract structured resume extraction for file='{}' mode='{}'",
                 file.filename or "resume.pdf",
-                settings.llama_extract_mode.upper(),
+                LLAMA_EXTRACT_MODE,
             )
             result = await asyncio.to_thread(
                 client.extract,

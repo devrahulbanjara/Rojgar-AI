@@ -21,7 +21,7 @@ class AssistantThread(Base):
 
     kind="job_draft": `draft` holds the latest structured draft, application_id is null.
     kind="candidate": one thread per (recruiter, application), `draft` is null.
-    `messages` keeps only the last few turns (settings.assistant_history_turns).
+    `messages` keeps only the last few turns (service.HISTORY_TURNS).
     """
 
     __tablename__ = "assistant_threads"

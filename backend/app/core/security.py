@@ -10,8 +10,12 @@ from argon2.exceptions import VerifyMismatchError
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.core.config import settings
+from app.core.constants import JWT_ALGORITHM
 
 ph = PasswordHasher()
+
+ACCESS_TOKEN_MINUTES = 15
+REFRESH_TOKEN_DAYS = 7
 
 
 def hash_password(password: str) -> str:
@@ -46,16 +50,16 @@ def create_tokens(user_id: str) -> tuple[dict, str, datetime]:
     """
     now = datetime.now(UTC)
     jti = str(uuid.uuid4())
-    refresh_expires_at = now + timedelta(days=settings.refresh_token_expire_days)
+    refresh_expires_at = now + timedelta(days=REFRESH_TOKEN_DAYS)
 
     access = jwt.encode(
         {
             "sub": user_id,
-            "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
+            "exp": now + timedelta(minutes=ACCESS_TOKEN_MINUTES),
             "type": "access",
         },
         settings.secret_key,
-        algorithm=settings.algorithm,
+        algorithm=JWT_ALGORITHM,
     )
     refresh = jwt.encode(
         {
@@ -65,7 +69,7 @@ def create_tokens(user_id: str) -> tuple[dict, str, datetime]:
             "type": "refresh",
         },
         settings.secret_key,
-        algorithm=settings.algorithm,
+        algorithm=JWT_ALGORITHM,
     )
     tokens = {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
     return tokens, jti, refresh_expires_at
@@ -74,9 +78,7 @@ def create_tokens(user_id: str) -> tuple[dict, str, datetime]:
 def decode_access_token(token: str) -> str | None:
     """Decode an access JWT and return the user ID if valid."""
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
+        payload = jwt.decode(token, settings.secret_key, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
             return None
         return payload["sub"]
@@ -87,9 +89,7 @@ def decode_access_token(token: str) -> str | None:
 def decode_refresh_token(token: str) -> tuple[str, str] | None:
     """Returns (user_id, jti) or None if invalid."""
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
+        payload = jwt.decode(token, settings.secret_key, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "refresh":
             return None
         return payload["sub"], payload["jti"]
@@ -122,15 +122,13 @@ def create_pending_signup_token(data: dict) -> str:
         )
     else:
         payload["password_hash"] = None
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+    return jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
 
 
 def decode_pending_signup_token(token: str) -> dict | None:
     """Validates a pending-signup JWT; returns its payload or None."""
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
+        payload = jwt.decode(token, settings.secret_key, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "pending_person":
             return None
         encrypted = payload.pop("password_hash_enc", None)
