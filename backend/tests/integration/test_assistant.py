@@ -9,11 +9,11 @@ import json
 import pytest
 from sqlalchemy import func, select
 
-from app.modules.activity.models import ActivityEvent
+from app.modules.applications.models import ApplicationEvent
 from app.modules.assistant import llm, service
 from app.modules.assistant.models import AssistantThread
 from app.modules.assistant.schemas import JobDraft
-from app.shared.enums import ApplicationStatus
+from app.shared.enums import ApplicationStage
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
@@ -61,7 +61,7 @@ async def setup_application(db, email="a@test.com", company="A", cv=CV, answers=
         db,
         company_row.id,
         title="Staff Nurse",
-        requirements=["NNC registration", "2+ years in a hospital ward"],
+        must_haves=["NNC registration", "2+ years in a hospital ward"],
     )
     application = await make_application(db, candidate.id, job.id, resume.id)
     application.screening_answers = answers or [
@@ -209,7 +209,7 @@ async def test_no_cv_answers_from_form_only(client, db, monkeypatch):
 
 async def test_assistant_never_writes_hiring_data(client, db, monkeypatch):
     recruiter, app = await setup_application(db, "w@test.com", "W")
-    events_before = await db.scalar(select(func.count(ActivityEvent.id)))
+    events_before = await db.scalar(select(func.count(ApplicationEvent.id)))
     fake_llm(
         monkeypatch,
         {
@@ -231,8 +231,8 @@ async def test_assistant_never_writes_hiring_data(client, db, monkeypatch):
         "application_ids": [str(app.id)],
     }
     await db.refresh(app)
-    assert app.status == ApplicationStatus.applied
-    assert await db.scalar(select(func.count(ActivityEvent.id))) == events_before
+    assert app.stage == ApplicationStage.new
+    assert await db.scalar(select(func.count(ApplicationEvent.id))) == events_before
 
 
 async def test_candidate_questions_never_use_web_search(client, db, monkeypatch):

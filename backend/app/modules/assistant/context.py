@@ -5,8 +5,8 @@ Scoped by Job.company_id == the caller's company:
 - jobs: company_id, title, must_haves, nice_to_haves
 - resumes: headline, summary, experiences, educations, skills (PII redacted)
 - reviews: fit, summary, checks (criterion, result, evidence)
-- scorecards: ratings per must-have, recommendation, notes
-- events/activity: timeline of application actions
+- scorecards (interview notes): ratings per must-have, recommendation, notes
+- application_events: the timeline (stage changes, notes, emails, interviews)
 """
 
 import uuid
@@ -16,8 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.activity.models import ActivityEvent
-from app.modules.applications.models import Application, Review
+from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.interviews.models import Interview, Scorecard
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
@@ -32,7 +31,7 @@ _STAGE_WORDS = {
     "interview": "Interview",
     "offer": "Offer",
     "hired": "Hired",
-    "rejected": "Rejected",
+    "rejected": "Not selected",
     "withdrawn": "Withdrawn",
 }
 
@@ -51,6 +50,25 @@ class CandidateContext:
     @property
     def cv_available(self) -> bool:
         return bool(self.sections.get("cv", "").strip())
+
+
+def _event_line(event: ApplicationEvent) -> str | None:
+    """One timeline entry in plain words; None for internal bookkeeping."""
+    data = event.payload or {}
+    when = f"{event.created_at:%d %b %Y}"
+    if event.type == "applied":
+        return f"{when} Applied (source: {data.get('source', 'direct')})"
+    if event.type == "stage_changed":
+        before = _STAGE_WORDS.get(data.get("from", ""), data.get("from"))
+        after = _STAGE_WORDS.get(data.get("to", ""), data.get("to"))
+        return f"{when} Moved from {before} to {after}"
+    if event.type == "note":
+        return f"{when} Note: {data.get('text', '')}"
+    if event.type == "email_sent":
+        return f"{when} Email sent: {data.get('subject', '')}"
+    if event.type == "interview_done":
+        return f"{when} Interview notes added"
+    return None
 
 
 def _cv_text(resume: Resume | None, include_summary: bool) -> str:
@@ -119,19 +137,13 @@ async def load_candidate_context(
     review_lines: list[str] = []
     if review:
         if review.fit:
-            fit_val = (
-                review.fit.value if hasattr(review.fit, "value") else str(review.fit)
-            )
-            review_lines.append(f"{fit_val.capitalize()} fit")
+            review_lines.append(f"{review.fit.capitalize()} fit")
         if review.summary:
             review_lines.append(f"Summary: {review.summary}")
-        for c in review.checks or []:
-            crit = c.get("criterion", "")
-            res = c.get("result", "")
-            quote = c.get("evidence", "")
-            line = f"Check: {crit} → {res}"
-            if quote:
-                line += f' (Quote: "{quote}")'
+        for check in review.checks or []:
+            line = f"Check: {check.get('criterion', '')} → {check.get('result', '')}"
+            if check.get("evidence"):
+                line += f' (Quote: "{check["evidence"]}")'
             review_lines.append(line)
 
     scorecards = (
@@ -165,33 +177,21 @@ async def load_candidate_context(
     ).all()
     events = (
         await db.scalars(
-            select(ActivityEvent)
-            .where(
-                ActivityEvent.application_id == application.id,
-                ActivityEvent.audience == "recruiter",
-            )
-            .order_by(ActivityEvent.created_at.desc())
+            select(ApplicationEvent)
+            .where(ApplicationEvent.application_id == application.id)
+            .order_by(ApplicationEvent.created_at.desc())
             .limit(30)
         )
     ).all()
     activity_lines = [
-        f"{i.start_time:%d %b %Y %H:%M} Interview booked: {i.title or 'Interview'}"
+        f"{i.start_time:%d %b %Y %H:%M} Interview: {i.title or 'Interview'} ({i.status})"
         for i in interviews
-    ] + [
-        f"{e.created_at:%d %b %Y} {e.title}"
-        + (f": {e.description}" if e.description else "")
-        for e in reversed(events)
-    ]
+    ] + [line for e in reversed(events) if (line := _event_line(e)) is not None]
 
-    stage_key = (
-        application.stage.value
-        if hasattr(application.stage, "value")
-        else str(application.stage)
-    )
     return CandidateContext(
         application_id=application.id,
         job_title=job.title,
-        stage=_STAGE_WORDS.get(stage_key, "New"),
+        stage=_STAGE_WORDS.get(application.stage.value, "New"),
         must_haves=list(job.must_haves or [])[:6],
         nice_to_haves=list(job.nice_to_haves or [])[:6],
         flag_reason=review.flag_reason if review else None,
