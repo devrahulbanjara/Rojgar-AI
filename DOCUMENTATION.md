@@ -97,21 +97,22 @@ Transitions enforced in service layer. Frontend keeps two parallel type unions (
 
 ## 6. AI Shortlisting Pipeline (multi-agent LangGraph)
 
-Triggered when the job expires. Three steps:
+Runs when the job expires (or when a recruiter clicks "Run AI screening"). The AI **recommends**; a recruiter **decides**.
 
-**Step 1 — ML pre-filter (free).** A scikit-learn RandomForest classifier, trained on historical hire / no-hire labels, scores every resume in milliseconds. Three deterministic features: years-of-experience match, skills-overlap ratio against JD requirements, and resume-vs-JD embedding cosine similarity (fastembed). Calibrated to a percentile threshold so **only the top 20%** advance to the LLM stage. The rejected 80% never spend LLM tokens; recall on strong candidates is preserved.
+**Step 1 — ML ranking (free).** A scikit-learn RandomForest scores each application in milliseconds from six features: TF-IDF and embedding similarity between resume and JD, years of experience, number of roles, degrees, and skills. *Caveat:* the model was trained on 10,000 **synthetic** labelled pairs (`training.py`), not real hiring outcomes, so its output is used only to **rank**, never to reject. Applications it cannot score (missing experience data or embedding, or a missing model file) stay unscored and are flagged for human review — never given a fabricated score.
 
-**Step 2 — AI deep review (AWS Bedrock Claude).** For each kept resume, three personas run in a critique loop:
-- **CTO agent** — technical depth, tooling, real delivery, framework fluency. Has Tavily web search (1-call cap per resume).
-- **HR agent** — seniority, communication, hiring risk, role fit. Has Tavily web search (1-call cap per resume).
-- **Judge** — reads both persona evaluations; emits confidence 0–100; if ≥ 70%, exit; else loop with feedback (max 1–2 iterations per resume).
-- **Final merge** — cheaper Groq model combines both personas into clean `strengths` / `concerns` / `evidence` lists.
+**Step 2 — AI review (AWS Bedrock Claude).** Jobs with ≤ 30 applications get an LLM review for everyone; larger jobs review the top 20% by ML rank. Per application:
+- **Guardrail** — the resume is screened once by a Groq prompt-injection classifier. A flagged resume is not sent to the reviewers; it is marked *needs human review* with a recruiter-only reason. If the classifier is unavailable, a deterministic marker scan decides instead.
+- **Technical reviewer** — technical depth and delivery evidence against the JD. One Tavily search allowed.
+- **Role-requirements reviewer** — checks the JD's explicit must-haves (experience level, scope, domain, required credentials). It does **not** judge employment gaps, tenure, or writing style.
+- **Critique (optional)** — only when `SHORTLISTING_REFLECTION_MAX_ITERATIONS` ≥ 2; exits when the critique is satisfied *and* confident (≥ 0.7), otherwise one reflection round.
+- **Final merge** — Bedrock Claude Haiku merges both reviews into recruiter-facing `strengths` / `weaknesses`.
 
-Every prompt is wrapped by **NeMo `self_check_input` rail** (blocks resume-borne prompt injection) and **LangChain `PIIMiddleware`** (redacts email / URL / phone before it hits the LLM). `BedrockPromptCachingMiddleware` reuses the JD across personas — only the resume changes between calls.
+Blind review: the text sent to the reviewers omits the candidate's name, email, phone, and links (also inside the summary), gives roles as durations instead of dates, and omits institution names. `PIIMiddleware` redacts email / URL / phone as a second layer. The static rubric + JD sit in the cached system prompt; the resume is sent last.
 
-**Step 3 — Save.** Per-application idempotent commit; status → `shortlisted` (≥ threshold) or `rejected` with structured feedback persisted. Crash-safe — partial runs resume from where they stopped.
+**Step 3 — Recruiter confirms.** Nothing is shortlisted or rejected automatically. When the run finishes the job shows *AI recommendations ready*; the recruiter reviews and clicks **Approve AI recommendations** (or decides individually). Approval is audit-logged with the approving user. Each application records `ai_review_status` (`completed` / `failed` / `needs_human_review`) and an attempt count; a failing review is retried at most `SHORTLISTING_MAX_REVIEW_ATTEMPTS` times and never blocks the rest of the job. Runs are claimed atomically, so multiple workers never duplicate a job.
 
-**Cost savers stacked.** ML pre-filter 20% gating · Bedrock prompt caching middleware (JD reused) · structured-output schema caps (short answers only) · judge early-exit · cheap-AI final merge · 1-call web-search cap + result cache. Net: ~80% cheaper vs naive "every-resume-to-LLM".
+**Cost.** ML ranking gates large jobs · cacheable per-job system prompt · structured-output caps · critique skipped unless enabled · Haiku merge · 1-call web-search cap. Cost per reviewed application has not been measured in production; record Bedrock usage before quoting savings.
 
 ---
 
@@ -120,11 +121,11 @@ Every prompt is wrapped by **NeMo `self_check_input` rail** (blocks resume-borne
 Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context preserved across logins. Sidebar shows all sessions with timestamps; switch to restore full history; start fresh chat anytime.
 
 **Per-turn pipeline.**
-**auth → rate limit (20 msg / min, 10 sessions / 5 min) → Redis idempotency dedupe (10 min TTL on `client_message_id`) → NeMo input rail (block prompt injection) → append to history → maybe summarize → intent router → handler → SSE stream → save state (JSONB + version++) → cache reply for retry**
+**auth → rate limit (per recruiter: 20 msg / min, 10 sessions / 5 min) → Redis idempotency dedupe (10 min TTL on `client_message_id`) → prompt-injection input rail → append to history → maybe summarize → intent router → handler → SSE stream → save state (JSONB + version++) → cache reply for retry**
 
 **Memory + summarization middleware.** History capped at 40 messages; over the cap, Groq compresses older turns to a ~300-word summary while keeping the 6 most recent intact. ~60% context-token reduction with no quality loss. Stored alongside conversation in JSONB; `state_version` increments per turn.
 
-**Intent router (cost-optimised).** Rule-based classifier first (~80% of messages match keyword rules — free); only the remaining ~20% reach Groq for structured-JSON intent classification. Direct-reply shortcut handles "hi" / "what can you do" with zero API calls.
+**Intent router.** Groq classifies each message into an intent (structured JSON). If the classifier is unavailable the assistant asks the recruiter to rephrase — it never falls back to web search, so candidate names cannot leak to the search provider.
 
 **7 intent paths.**
 - `search_candidates` — semantic search across all company applications via Qdrant; natural language ("strong Python devs from last 3 months, senior") with hybrid retrieval
@@ -143,11 +144,11 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 
 ## 8. Guardrails (defense in depth)
 
-**Input rail (NeMo Guardrails `self_check_input`).** Groq-classifier inspects every user-controlled input for prompt-injection / role-hijack / system-prompt-exfil patterns before it reaches any production LLM. Wired at: shortlisting CTO + HR nodes (resume body), resume-gap analyze + auto-patch, recruiter chat send + stream, job-AI generate + refine. Fails open if rail itself errors; toggleable via `guardrails_enabled` setting.
+**Input rail (Groq prompt-injection classifier).** A direct Groq classifier (`app/infrastructures/guardrails`; the NeMo config in `guardrails_config/` is only used by a test script) inspects user-controlled input for prompt-injection / role-hijack / system-prompt-exfil patterns. Untrusted text is wrapped in random per-call delimiter tags. Wired at: application submit and shortlisting (flag → recruiter review, never a silent rejection), resume-gap analyze + auto-patch, recruiter chat send + stream, job-AI generate + refine. Interactive surfaces fail open on classifier errors; unattended flows fall back to a deterministic marker scan. Toggle: `guardrails_enabled`.
 
 **PII redaction (LangChain `PIIMiddleware`).** Email, URL, and phone-number patterns redacted before prompts reach the shortlisting LLM. Defense in depth alongside input rail.
 
-**Hallucination prevention.** Resume auto-patch enforces **Frozen Facts** (company, title, dates, institution, certs immutable). Job-edit chat tool restricts writes to **14-field allowlist** with before / after preview + explicit human confirm. Auto-patch additionally caps skill additions (max 5 new, 30 total).
+**Hallucination prevention.** Resume auto-patch enforces **Frozen Facts** in code: identity fields are rebuilt from the database, new skills must already be evidenced in the resume text, and rewrites that introduce numbers or technologies the resume never mentions are discarded. Job-edit chat tool restricts writes to **14-field allowlist** with before / after preview + explicit human confirm. Auto-patch additionally caps skill additions (max 5 new, 30 total).
 
 **Other safety layers.** XML tag scrubber + `<user_message>` wrapping in chat. Recruiter DB strings sanitised before LLM. Idempotency keys prevent double LLM calls on retry. Rate limits stop abuse. Row-level locks stop concurrent state corruption.
 
@@ -179,7 +180,7 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 - **scikit-learn RandomForest** — shortlisting ML pre-filter
 - **fastembed** — fast similarity for ML pre-filter features
 - **Whisper Small fine-tuned on Nepali audio** — hosted on HF Space; transcribes English + Nepali + code-switched interviews
-- **NeMo Guardrails** — `self_check_input` rail backed by Groq
+- **Prompt-injection rail** — Groq classifier (gpt-oss-120b) + deterministic fallback
 - **LangChain PIIMiddleware** — email / URL / phone redaction in shortlisting
 
 **External services.** Cal.com (booking + webhook), SMTP provider, S3-compatible storage, HuggingFace Spaces.
@@ -215,8 +216,9 @@ applied  ──[ML pre-filter top 20% ➜ CTO + HR critique loop ➜ Judge ➜ F
 - **AI assists, humans decide.** Every shortlist call, email send, and job-edit write is human-confirmed.
 - **No silent emails.** Every outreach draft sits in review queue until reviewed + approved.
 - **Pipeline opens only after expiry.** Fair window for every applicant.
-- **Candidates always know where they stand.** Real-time status; rejection includes specific AI feedback.
+- **Candidates always know where they stand.** Real-time status. Rejection emails use a fixed, respectful template — internal AI review notes are never sent to candidates.
 - **One application per job. One booking per application.**
 - **Job edits always preview.** Before / after diff with explicit confirm; never silent writes.
-- **Defense in depth.** NeMo input rail + PIIMiddleware + Frozen Facts + 14-field allowlist + rate limits + idempotency + row-level locks.
-- **Cost-aware AI.** Rule-classifier first, ML pre-filter, prompt caching, schema caps, judge early-exit, summarization, salary cache, cheap-AI final merge.
+- **Humans decide.** AI ranks and summarises; shortlist/reject decisions are confirmed by a recruiter and audit-logged.
+- **Defense in depth.** Prompt-injection rail + PIIMiddleware + Frozen Facts + 14-field allowlist + rate limits + idempotency + row-level locks.
+- **Cost-aware AI.** ML ranking for large jobs, prompt caching, schema caps, optional critique, summarization, salary cache, cheap-model final merge.

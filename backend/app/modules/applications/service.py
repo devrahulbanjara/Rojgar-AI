@@ -472,12 +472,13 @@ async def apply_to_job(
         resume = await db.scalar(resume_stmt)
 
     # 2c. Prompt-injection guardrail on candidate-controlled resume text.
-    # Block submission outright so injected payloads never sit in the DB or hit
-    # downstream LLM hops (shortlisting, recruiter chat candidate summaries).
-    scanned_text = resume_text_for_guardrails(resume)
-    await guardrails_service.assert_input_safe(
-        scanned_text,
+    # A flag quarantines the application for recruiter review instead of
+    # blocking the candidate: false positives (e.g. security engineers who
+    # describe injection testing) must not silently cost someone a job.
+    guardrail_verdict = await guardrails_service.check_input(
+        resume_text_for_guardrails(resume),
         source="applications.apply",
+        fail_closed=True,
     )
 
     # 3. Check for duplicate application before inserting
@@ -508,6 +509,12 @@ async def apply_to_job(
         **share_settings.model_dump(),
         **_build_shared_profile_snapshot(user, profile, share_settings),
     )
+    if not guardrail_verdict.safe:
+        application.ai_review_status = "needs_human_review"
+        application.ai_flag_reason = (
+            "Flagged for manual review by the prompt-injection rail: "
+            f"{guardrail_verdict.reason or 'suspicious content'}"
+        )
     db.add(application)
     try:
         await db.flush()
@@ -736,6 +743,8 @@ async def _build_company_applications(
             score=application.score,
             strengths=application.strengths,
             weaknesses=application.weaknesses,
+            ai_review_status=application.ai_review_status,
+            ai_flag_reason=application.ai_flag_reason,
         )
         for application, applicant, job in rows
     ]
@@ -799,6 +808,8 @@ async def _build_company_candidates(
             score=application.score,
             strengths=application.strengths,
             weaknesses=application.weaknesses,
+            ai_review_status=application.ai_review_status,
+            ai_flag_reason=application.ai_flag_reason,
         )
 
         if bucket is None:
@@ -942,6 +953,8 @@ async def _build_company_candidate_detail(
         score=application.score,
         strengths=application.strengths,
         weaknesses=application.weaknesses,
+        ai_review_status=application.ai_review_status,
+        ai_flag_reason=application.ai_flag_reason,
         interview=RecruiterCandidateInterviewView.model_validate(interview)
         if interview
         else None,

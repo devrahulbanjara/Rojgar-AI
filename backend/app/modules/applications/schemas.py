@@ -178,6 +178,10 @@ class RecruiterApplicationView(BaseSchema):
     score: int | None = None
     strengths: list[str] | None = None
     weaknesses: list[str] | None = None
+    # Recruiter-only AI review state: pending | completed | failed |
+    # needs_human_review. Never exposed on candidate-facing views.
+    ai_review_status: str | None = None
+    ai_flag_reason: str | None = None
 
 
 class RecruiterCandidateApplicationSummary(BaseSchema):
@@ -190,6 +194,10 @@ class RecruiterCandidateApplicationSummary(BaseSchema):
     score: int | None = None
     strengths: list[str] | None = None
     weaknesses: list[str] | None = None
+    # Recruiter-only AI review state: pending | completed | failed |
+    # needs_human_review. Never exposed on candidate-facing views.
+    ai_review_status: str | None = None
+    ai_flag_reason: str | None = None
 
 
 class RecruiterCandidateInterviewView(BaseSchema):
@@ -239,6 +247,10 @@ class RecruiterCandidateDetailView(BaseSchema):
     score: int | None = None
     strengths: list[str] | None = None
     weaknesses: list[str] | None = None
+    # Recruiter-only AI review state: pending | completed | failed |
+    # needs_human_review. Never exposed on candidate-facing views.
+    ai_review_status: str | None = None
+    ai_flag_reason: str | None = None
     interview: RecruiterCandidateInterviewView | None = None
     resume: ResumeResponse | None = None
     share_settings: CandidateShareSettings

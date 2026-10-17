@@ -118,8 +118,15 @@ class Settings(BaseSettings):
     aws_bedrock_shortlisting_merge_max_tokens: int = 600
     shortlisting_prompt_cache_ttl: str = "5m"
     shortlisting_web_search_budget_per_persona: int = 1
+    # Number of persona review rounds. 1 = single pass (no critique call);
+    # 2 = one critique-driven reflection round when the critique is not satisfied.
     shortlisting_reflection_max_iterations: int = 1
     shortlisting_web_search_max_results: int = 3
+    # Jobs with at most this many applications get an LLM review for everyone;
+    # the ML pre-filter only ranks, it never decides who is seen.
+    shortlisting_full_review_max_applicants: int = 30
+    # Per-application LLM review attempts before routing to a human.
+    shortlisting_max_review_attempts: int = 3
 
     # Resume import
     resume_import_max_upload_bytes: int = 10 * 1024 * 1024

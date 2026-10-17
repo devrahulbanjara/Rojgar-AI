@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import html
+from html.parser import HTMLParser
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
-from loguru import logger
 from pydantic import SecretStr
 
 from app.core.config import settings
@@ -27,26 +27,12 @@ Rules:
 - Output only the HTML email body, no subject line, no ```html, direct html content
 """.strip()
 
-_REJECTION_SYSTEM = """
-You are a professional hiring coordinator writing on behalf of {company_name}.
-Write a kind, motivating rejection email to a candidate who was not selected.
-
-Rules:
-- Address them by first name only
-- Mention the job title
-- Include the specific feedback provided by paraphrasing it naturally
-- Be encouraging and wish them well
-- Keep it under 150 words
-- Sound human, not robotic
-- Do NOT include any closing, sign-off, signature, or footer (e.g. no "Warm regards", "Best", "[Your Name]", etc.)
-- Output only the HTML email body, no subject line, , no ```html, direct html content
-""".strip()
-
 _llm = ChatGroq(
     model=settings.groq_model_recruiter_chat,
-    # Lower temperature reduces hallucinated feedback in rejection/shortlist emails.
-    # 0.2 keeps tone natural while staying grounded in the provided strengths/weaknesses.
+    # Low temperature keeps the shortlist note grounded in the provided strengths.
     temperature=0.2,
+    timeout=30,
+    max_retries=2,
     api_key=SecretStr(settings.groq_api_key),
 )
 
@@ -60,25 +46,7 @@ _shortlist_chain = (
                     "Candidate name: {candidate_name}\n"
                     "Job title: {job_title}\n"
                     "Interview booking link: {booking_url}\n"
-                    "Feedback from review: {feedback}"
-                ),
-            ),
-        ]
-    )
-    | _llm
-    | StrOutputParser()
-)
-
-_rejection_chain = (
-    ChatPromptTemplate.from_messages(
-        [
-            ("system", _REJECTION_SYSTEM),
-            (
-                "human",
-                (
-                    "Candidate name: {candidate_name}\n"
-                    "Job title: {job_title}\n"
-                    "Feedback from review: {feedback}"
+                    "What stood out in their application: {feedback}"
                 ),
             ),
         ]
@@ -138,16 +106,46 @@ def _static_template(
     return subject, body
 
 
-def _format_review_text(
-    strengths: list[str] | None, weaknesses: list[str] | None
-) -> str:
-    """Join strengths/weaknesses into a compact text for the LLM chain."""
-    parts: list[str] = []
-    if strengths:
-        parts.append("Strengths: " + "; ".join(strengths))
-    if weaknesses:
-        parts.append("Weaknesses: " + "; ".join(weaknesses))
-    return " | ".join(parts)
+_ALLOWED_TAGS = {"p", "br", "strong", "b", "em", "i", "ul", "ol", "li", "a"}
+
+
+class _EmailSanitizer(HTMLParser):
+    """Allow-list sanitizer for LLM-written email HTML.
+
+    Keeps simple formatting tags and http(s)/mailto links; everything else is
+    reduced to escaped text, so model output cannot inject scripts, tracking
+    pixels, forms, or arbitrary attributes into mail sent from our domain.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.out: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in _ALLOWED_TAGS:
+            return
+        if tag == "a":
+            href = next((v for k, v in attrs if k == "href" and v), "")
+            if not href.lower().startswith(("https://", "http://", "mailto:")):
+                return
+            self.out.append(f'<a href="{html.escape(href, quote=True)}">')
+            return
+        self.out.append("<br />" if tag == "br" else f"<{tag}>")
+
+    def handle_endtag(self, tag):
+        if tag in _ALLOWED_TAGS and tag != "br":
+            self.out.append(f"</{tag}>")
+
+    def handle_data(self, data):
+        self.out.append(html.escape(data))
+
+
+def sanitize_email_html(raw: str) -> str:
+    """Return email HTML restricted to a small allow-list of tags."""
+    parser = _EmailSanitizer()
+    parser.feed(raw.replace("```html", "").replace("```", ""))
+    parser.close()
+    return "".join(parser.out).strip()
 
 
 async def compose_email(
@@ -156,20 +154,19 @@ async def compose_email(
     job_title: str,
     application_status: ApplicationStatus,
     strengths: list[str] | None,
-    weaknesses: list[str] | None,
+    weaknesses: list[str] | None = None,
     booking_url: str | None = None,
 ) -> tuple[str, str]:
-    """Compose an outreach email tailored to the candidate and job context."""
+    """Compose an outreach email tailored to the candidate and job context.
+
+    Rejections always use the static template: internal AI review notes
+    (weaknesses) are recruiter-facing judgments and must never be paraphrased
+    into candidate mail. Shortlist notes may mention strengths only.
+    """
+    del weaknesses  # deliberately never used in candidate-facing mail
     first_name = _first_name(candidate_name)
 
-    feedback_text = _format_review_text(strengths, weaknesses)
-    if not feedback_text:
-        logger.info(
-            "outreach.compose.no_feedback_static candidate='{}' job='{}' status='{}'",
-            candidate_name,
-            job_title,
-            application_status.value,
-        )
+    if application_status != ApplicationStatus.shortlisted or not strengths:
         return _static_template(
             application_status,
             first_name,
@@ -178,26 +175,14 @@ async def compose_email(
             booking_url,
         )
 
-    if application_status == ApplicationStatus.shortlisted:
-        subject = f"You've been shortlisted for {job_title} at {company_name}"
-        body = await _shortlist_chain.ainvoke(
-            {
-                "company_name": company_name,
-                "candidate_name": first_name,
-                "job_title": job_title,
-                "booking_url": booking_url or "",
-                "feedback": feedback_text,
-            }
-        )
-    else:
-        subject = f"Your application for {job_title} at {company_name}"
-        body = await _rejection_chain.ainvoke(
-            {
-                "company_name": company_name,
-                "candidate_name": first_name,
-                "job_title": job_title,
-                "feedback": feedback_text,
-            }
-        )
-
-    return subject, body.strip()
+    subject = f"You've been shortlisted for {job_title} at {company_name}"
+    body = await _shortlist_chain.ainvoke(
+        {
+            "company_name": company_name,
+            "candidate_name": first_name,
+            "job_title": job_title,
+            "booking_url": booking_url or "",
+            "feedback": "; ".join(strengths),
+        }
+    )
+    return subject, sanitize_email_html(body)

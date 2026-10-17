@@ -38,7 +38,9 @@ class AutoPatchRequest(BaseModel):
 
     resume_id: UUID
     job_id: UUID
-    gap_result: GapAnalysisResult
+    # Accepted for backward compatibility but ignored: the server uses its own
+    # gap analysis so a client cannot steer the rewrite with invented gaps.
+    gap_result: GapAnalysisResult | None = None
 
 
 class ExperiencePatch(BaseModel):

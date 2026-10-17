@@ -85,10 +85,16 @@ async def get_company_context(
 
 
 async def get_source_job_context(
-    db: AsyncSession, job_id: uuid.UUID
+    db: AsyncSession, job_id: uuid.UUID, company_id: uuid.UUID
 ) -> dict[str, Any] | None:
-    """Return source job context for improve or clone draft modes."""
-    job = await db.scalar(select(Job).where(Job.id == job_id))
+    """Return source job context for improve or clone draft modes.
+
+    Scoped to the recruiter's company: a job id from another company must not
+    be readable (or clonable) through the drafting assistant.
+    """
+    job = await db.scalar(
+        select(Job).where(Job.id == job_id, Job.company_id == company_id)
+    )
     if not job:
         return None
 
@@ -134,10 +140,10 @@ async def get_salary_research_data(
 
     queries = [
         f"{role} salary {country} {research_year}",
-        f"{role} salary {country} rupees NPR",
-        f"{role} compensation package Kathmandu",
-        f"average {role} salary South Asia",
+        f"{role} compensation package {country}",
     ]
+    if "nepal" in country.lower() or "kathmandu" in country.lower():
+        queries.append(f"{role} salary Nepal NPR per month")
 
     aggregated: list[dict[str, Any]] = []
     seen_urls: set[str] = set()

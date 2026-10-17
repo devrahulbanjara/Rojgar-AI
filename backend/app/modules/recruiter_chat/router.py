@@ -1,12 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import StreamingResponse
 from fastapi_limiter.depends import RateLimiter
 from pyrate_limiter import Duration, Limiter, Rate
 
 from app.core.dependencies import ActiveMember, DbSession
 from app.core.responses import ResponseBuilder, UnifiedResponse
+from app.core.security import decode_access_token
 from app.modules.recruiter_chat import service
 from app.modules.recruiter_chat.schemas import (
     ChatExchangeResponse,
@@ -17,14 +18,38 @@ from app.modules.recruiter_chat.schemas import (
     ConfirmJobSelectionRequest,
 )
 
-
 router = APIRouter(prefix="/recruiter-chat", tags=["recruiter-chat"])
+
+
+async def _chat_rate_limit_identifier(request: Request) -> str:
+    """Rate-limit key for recruiter chat: the authenticated user, per route.
+
+    fastapi-limiter's default identifier keys on the first X-Forwarded-For entry,
+    which clients control. Every chat route requires a recruiter token, so the
+    token's user id is a stable, unspoofable key that also gives each recruiter
+    their own budget (behind a proxy, all users would otherwise share one IP).
+    Requests without a valid token fall back to the socket peer; they are
+    rejected by the auth dependency anyway.
+    """
+    auth = request.headers.get("Authorization", "")
+    user_id = (
+        decode_access_token(auth[7:]) if auth.lower().startswith("bearer ") else None
+    )
+    if user_id:
+        key = f"user:{user_id}"
+    else:
+        key = f"ip:{request.client.host if request.client else 'unknown'}"
+    return f"{key}:{request.scope['path']}"
+
+
+def _chat_limit(rate: Rate) -> RateLimiter:
+    return RateLimiter(limiter=Limiter(rate), identifier=_chat_rate_limit_identifier)
 
 
 @router.post(
     "/sessions",
     summary="Create a recruiter chat session",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE * 5))))],
+    dependencies=[Depends(_chat_limit(Rate(10, Duration.MINUTE * 5)))],
 )
 async def create_recruiter_chat_session(
     user: ActiveMember,
@@ -38,7 +63,7 @@ async def create_recruiter_chat_session(
 @router.get(
     "/sessions",
     summary="List recruiter chat sessions",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
+    dependencies=[Depends(_chat_limit(Rate(30, Duration.MINUTE)))],
 )
 async def list_recruiter_chat_sessions(
     user: ActiveMember,
@@ -54,7 +79,7 @@ async def list_recruiter_chat_sessions(
 @router.get(
     "/sessions/{session_id}/history",
     summary="Get recruiter chat history",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
+    dependencies=[Depends(_chat_limit(Rate(30, Duration.MINUTE)))],
 )
 async def get_recruiter_chat_history(
     session_id: uuid.UUID,
@@ -69,7 +94,7 @@ async def get_recruiter_chat_history(
 @router.post(
     "/sessions/{session_id}/messages",
     summary="Send a recruiter chat message",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(20, Duration.MINUTE))))],
+    dependencies=[Depends(_chat_limit(Rate(20, Duration.MINUTE)))],
 )
 async def send_recruiter_chat_message(
     session_id: uuid.UUID,
@@ -85,7 +110,7 @@ async def send_recruiter_chat_message(
 @router.post(
     "/sessions/{session_id}/messages/stream",
     summary="Stream a recruiter chat message response",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(20, Duration.MINUTE))))],
+    dependencies=[Depends(_chat_limit(Rate(20, Duration.MINUTE)))],
 )
 async def stream_recruiter_chat_message(
     session_id: uuid.UUID,
@@ -109,7 +134,7 @@ async def stream_recruiter_chat_message(
 @router.post(
     "/sessions/{session_id}/confirm-job-selection",
     summary="Confirm a specific job choice for recruiter chat",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(15, Duration.MINUTE))))],
+    dependencies=[Depends(_chat_limit(Rate(15, Duration.MINUTE)))],
 )
 async def confirm_recruiter_chat_job_selection(
     session_id: uuid.UUID,
@@ -125,7 +150,7 @@ async def confirm_recruiter_chat_job_selection(
 @router.post(
     "/sessions/{session_id}/confirm-job-edit",
     summary="Approve or cancel the pending recruiter chat job edit",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(15, Duration.MINUTE))))],
+    dependencies=[Depends(_chat_limit(Rate(15, Duration.MINUTE)))],
 )
 async def confirm_recruiter_chat_job_edit(
     session_id: uuid.UUID,
@@ -142,7 +167,7 @@ async def confirm_recruiter_chat_job_edit(
 @router.delete(
     "/sessions/{session_id}",
     summary="Delete a recruiter chat session",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE * 5))))],
+    dependencies=[Depends(_chat_limit(Rate(10, Duration.MINUTE * 5)))],
 )
 async def delete_recruiter_chat_session(
     session_id: uuid.UUID,

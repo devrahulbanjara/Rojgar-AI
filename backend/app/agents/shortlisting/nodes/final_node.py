@@ -16,12 +16,11 @@ async def final_node(state: ShortlistState) -> dict:
         hr_eval=state["hr_evals"][-1].model_dump_json(),
     )
     response = cast(FinalResponse, await summary_llm.ainvoke(prompt))
-    name = state["applicant_name"]
     logger.info(
-        "[{}] Final said: strengths={} | weaknesses={}",
-        name,
-        response.strengths,
-        response.weaknesses,
+        "[app={}] Final merge: {} strengths, {} weaknesses",
+        state["application_ref"],
+        len(response.strengths or []),
+        len(response.weaknesses or []),
     )
     return {
         "final_strengths": response.strengths,
