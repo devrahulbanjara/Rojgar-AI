@@ -33,7 +33,7 @@ export function ActionTile({
         TONES[count === 0 ? 'muted' : tone],
       )}
     >
-      <span className="text-2xl leading-none font-light tabular-nums">
+      <span className="font-heading text-2xl leading-none font-light tabular-nums">
         {count > 0 ? `+${count}` : 0}
       </span>
       <span className="truncate text-xs font-medium">{label}</span>
