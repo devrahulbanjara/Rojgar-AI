@@ -44,6 +44,7 @@ from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job, JobReferrer
 from app.modules.profiles.models import Profile
+from app.shared.enums import ApplicationStage
 from app.modules.public import cv_text
 from app.modules.public.models import JobSuggestion, MagicLinkToken
 from app.modules.public.notify import notify_applicant

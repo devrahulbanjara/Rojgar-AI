@@ -80,6 +80,23 @@ ACTIVE_STAGES = frozenset(
 )
 
 
+class ApplicationStatus(str, Enum):
+    applied = "applied"
+    shortlisted = "shortlisted"
+    rejected = "rejected"
+    interview_booked = "interview_booked"
+    interview_completed = "interview_completed"
+    offer = "offer"
+    offer_accepted = "offer_accepted"
+    offer_declined = "offer_declined"
+
+
+class ShortlistStatus(str, Enum):
+    not_started = "not_started"
+    in_progress = "in_progress"
+    completed = "completed"
+
+
 class ApplicationSource(str, Enum):
     linkedin = "linkedin"
     facebook = "facebook"
