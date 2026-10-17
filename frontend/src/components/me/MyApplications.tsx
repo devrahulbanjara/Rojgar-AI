@@ -120,19 +120,17 @@ function ApplicationRow({ app }: { app: MyApplication }) {
         className="flex items-start gap-3 px-4 py-4 transition-colors hover:bg-accent sm:px-5"
       >
         <EntityAvatar name={app.company_name} src={app.company_logo_url} kind="company" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <p className="line-clamp-2 font-semibold text-foreground">{app.job_title}</p>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <p className="line-clamp-2 font-semibold text-foreground">{app.job_title}</p>
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <StagePill stage={app.stage} />
+            <span className="min-w-0 truncate text-sm text-muted-foreground">
+              {app.company_name} · {formatDate(app.updated_at, locale)}
+            </span>
           </div>
-          <p className="truncate text-sm text-muted-foreground">
-            {app.company_name} · {formatDate(app.updated_at, locale)}
-          </p>
           <p
             className={
-              interviewSoon
-                ? 'mt-1 text-sm font-medium text-foreground'
-                : 'mt-1 text-sm text-foreground'
+              interviewSoon ? 'text-sm font-medium text-foreground' : 'text-sm text-foreground'
             }
           >
             {next}
