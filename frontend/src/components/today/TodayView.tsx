@@ -104,22 +104,11 @@ export function TodayView() {
     )
   }
 
-  const totals = home.roles.reduce((sum, role) => ({ review: sum.review + role.to_review }), {
-    review: 0,
-  })
-
   return (
     <PageContainer>
       <PageHeader
-        breadcrumb={[{ label: home.company_name || 'Today' }]}
         title={`${greeting()}, ${home.first_name}`}
-        facts={[
-          format(new Date(), 'EEEE, d MMMM'),
-          totals.review ? `${totals.review} to review` : null,
-          home.interviews_today.length
-            ? `${home.interviews_today.length} interview${home.interviews_today.length === 1 ? '' : 's'} today`
-            : null,
-        ]}
+        facts={[format(new Date(), 'EEEE, d MMMM')]}
         primaryAction={
           <Button asChild>
             <Link href="/recruiter/jobs/new">

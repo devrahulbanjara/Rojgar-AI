@@ -4,7 +4,7 @@
  */
 import { JOB_CATEGORIES } from '@/lib/jobHelpers'
 import { store } from '@/store'
-import { type ApiResponse, baseApi } from '@/store/services/baseApi'
+import { type ApiResponse, baseApi, refreshSession } from '@/store/services/baseApi'
 import type {
   EmploymentType,
   JobCategory,
@@ -584,15 +584,7 @@ async function authedFetch(url: string, init: RequestInit = {}): Promise<Respons
     })
   const response = await send(store.getState().auth.accessToken)
   if (response.status !== 401) return response
-  const refreshed = await fetch(`${API}/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: '{}',
-  })
-  if (!refreshed.ok) return response
-  const body = (await refreshed.json()) as ApiResponse<{ access_token: string }>
-  const token = body.data?.access_token
+  const { token } = await refreshSession()
   if (!token) return response
   store.dispatch(updateAccessToken(token))
   return send(token)

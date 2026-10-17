@@ -1,5 +1,7 @@
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query'
+
 import { type AuthUser, clearCredentials, setCredentials, updateUser } from '../slices/authSlice'
-import { type ApiResponse, baseApi } from './baseApi'
+import { type ApiResponse, baseApi, refreshSession } from './baseApi'
 
 // ---------------------------------------------------------------------------
 // Request types
@@ -56,6 +58,13 @@ export interface LoginData {
   user: AuthUser
   /** True when a phone sign-in just created the account. */
   is_new?: boolean
+}
+
+/** Which ways to sign in are switched on (GET /auth/options). */
+export interface AuthOptions {
+  sms: boolean
+  google: boolean
+  email_link: boolean
 }
 
 export interface RefreshData {
@@ -117,6 +126,12 @@ export const authApi = baseApi.injectEndpoints({
       },
     }),
 
+    /** GET /auth/options — sign-in methods that work right now. */
+    getAuthOptions: builder.query<ApiResponse<AuthOptions>, void>({
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/options`,
+      keepUnusedDataFor: 3600,
+    }),
+
     /** POST /auth/otp/request — texts a 6-digit code to a Nepali mobile. */
     requestPhoneCode: builder.mutation<EmptyResponse, { phone: string }>({
       query: (body) => ({
@@ -176,11 +191,12 @@ export const authApi = baseApi.injectEndpoints({
      *  Reads refresh_token from HttpOnly cookie automatically.
      *  The reauth wrapper in baseApi calls this transparently on 401. */
     refresh: builder.mutation<ApiResponse<RefreshData>, void>({
-      query: () => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
-        method: 'POST',
-        body: {},
-      }),
+      async queryFn() {
+        const refreshed = await refreshSession()
+        return refreshed.token
+          ? { data: refreshed.body as ApiResponse<RefreshData> }
+          : { error: { status: refreshed.status, data: refreshed.body } as FetchBaseQueryError }
+      },
     }),
 
     /** POST /auth/logout — 200, data: null
@@ -322,7 +338,22 @@ export const {
   useRequestPhoneCodeMutation,
   useVerifyPhoneCodeMutation,
   useSetActiveBusinessMutation,
+  useGetAuthOptionsQuery,
 } = authApi
+
+/**
+ * Sign-in methods to offer. Until the server answers (or if it can't), only
+ * email and Google: the phone code shows only when SMS is switched on.
+ */
+export function useAuthOptions(): AuthOptions {
+  const { data } = useGetAuthOptionsQuery()
+  const options = data?.data
+  return {
+    sms: options?.sms ?? false,
+    google: options?.google ?? true,
+    email_link: options?.email_link ?? false,
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Google OAuth — browser-redirect based (not an RTK mutation)

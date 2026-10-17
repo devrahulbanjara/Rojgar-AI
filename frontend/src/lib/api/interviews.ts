@@ -24,7 +24,7 @@ export interface Interview {
   scorecard_state: ScorecardState
 }
 
-/** upcoming: today onwards, plus earlier ones that still need a scorecard. */
+/** upcoming: today onwards, plus earlier ones still waiting for notes. */
 export type InterviewRange = 'upcoming' | 'all'
 
 export type Weekday = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'
@@ -177,7 +177,7 @@ export const interviewsApi = baseApi.injectEndpoints({
           .map(fromAgenda)
           .filter(
             (item) =>
-              new Date(item.starts_at) >= startOfToday || item.scorecard_state !== 'not_due',
+              new Date(item.starts_at) >= startOfToday || item.scorecard_state === 'due',
           )
           .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
       },

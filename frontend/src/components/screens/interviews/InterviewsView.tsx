@@ -167,8 +167,6 @@ export function InterviewsView() {
     const key = groupOf(interview)
     grouped.set(key, [...(grouped.get(key) ?? []), interview])
   }
-  const todayCount = grouped.get('today')?.length ?? 0
-  const dueCount = interviews.filter((i) => i.scorecard_state === 'due').length
 
   const availability = (
     <Button asChild variant="outline">
@@ -180,14 +178,6 @@ export function InterviewsView() {
     <PageContainer>
       <PageHeader
         title="Interviews"
-        facts={
-          interviews.length
-            ? [
-                todayCount ? `${todayCount} today` : 'None today',
-                dueCount ? `${dueCount} waiting for your notes` : null,
-              ]
-            : undefined
-        }
         secondaryAction={availability}
       />
       {isLoading ? (
