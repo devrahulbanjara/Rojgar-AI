@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     # Number of reverse proxies in front of the API that append to
     # X-Forwarded-For (e.g. 1 on Render). 0 = trust only the socket peer.
     trusted_proxy_hops: int = 0
+    # Per-client limits on auth and public endpoints (core/rate_limit.py).
+    rate_limit_enabled: bool = True
 
     # Auth
     secret_key: str
@@ -49,6 +51,11 @@ class Settings(BaseSettings):
     db_host: str
     db_port: int = 5432
     db_name: str
+    # Connections per API worker: pool_size kept open, up to max_overflow more
+    # under load. Keep workers * (size + overflow) below Postgres max_connections.
+    db_pool_size: int = 10
+    db_max_overflow: int = 10
+    db_pool_timeout_seconds: int = 10
 
     # Test Database
     test_db_user: str
