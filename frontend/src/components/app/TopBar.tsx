@@ -21,7 +21,7 @@ export function MobileNav() {
 export function TopBar({ area = 'business' }: { area?: AppArea }) {
   const isAdmin = useIsOwner()
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-card/90 px-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-card px-4 sm:px-6">
       <MobileNav />
       <div className="ml-auto flex items-center gap-1">
         {area === 'business' ? (

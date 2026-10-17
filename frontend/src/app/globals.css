@@ -187,14 +187,16 @@
   --color-neutral-bg: var(--tone-neutral-bg);
 }
 
-/*
-  Critical baseline styles - loaded before any SCSS bundle.
-  Prevents the black FOUC flash that occurs during SSR -> hydration.
-*/
 html,
 body {
-  background-color: #f6f7fb;
-  color: #141a2e;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), var(--font-devanagari), system-ui, sans-serif;
+}
+
+/* sonner sets its own system font stack; use ours. */
+[data-sonner-toaster] {
+  font-family: var(--font-dm-sans), var(--font-devanagari), system-ui, sans-serif;
 }
 
 /* Migrated app surfaces opt in to the new tokens via the AppShell. */

@@ -52,7 +52,7 @@ export function AppShell({
 export function CandidateShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-surface">
-      <header className="sticky top-0 z-30 border-b bg-card/90 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b bg-card">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
           <Link href="/me/applications" className="shrink-0">
             <Logo className="h-6" />

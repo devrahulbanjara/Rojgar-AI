@@ -40,7 +40,7 @@ export function PublicNav({
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 w-full border-b border-border/70 bg-background/85 backdrop-blur-md',
+        'sticky top-0 z-40 w-full border-b border-border/70 bg-background',
         className,
       )}
     >

@@ -7,7 +7,7 @@ export const en = {
   nav: {
     howItWorks: 'How it works',
     pricing: 'Pricing',
-    logIn: 'Log in',
+    logIn: 'Sign in',
     startHiring: 'Start hiring',
     openApp: `Open ${BRAND.name}`,
     menu: 'Open menu',

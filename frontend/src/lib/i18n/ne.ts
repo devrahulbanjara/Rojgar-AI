@@ -9,7 +9,7 @@ export const ne: Dict = {
   nav: {
     howItWorks: 'कसरी काम गर्छ',
     pricing: 'मूल्य',
-    logIn: 'लग इन',
+    logIn: 'साइन इन',
     startHiring: 'भर्ना सुरु गर्नुहोस्',
     openApp: `${BRAND.name} खोल्नुहोस्`,
     menu: 'मेनु खोल्नुहोस्',

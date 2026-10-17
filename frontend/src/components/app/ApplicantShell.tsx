@@ -34,7 +34,7 @@ export function ApplicantShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/85 backdrop-blur-md">
+      <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4 sm:h-16 sm:px-6">
           <Link href="/me/applications" className="inline-flex shrink-0 items-center">
             <Logo variant="mark" className="size-8 sm:hidden" />
