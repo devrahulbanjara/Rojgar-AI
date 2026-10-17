@@ -27,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 import { AskBox } from './AskBox'
 import { DecisionButtons } from './DecisionButtons'
-import { CallButtons, FitPill, FlagLine } from './parts'
+import { ContactButtons, FitPill, FlagLine } from './parts'
 
 function Dot() {
   return <span aria-hidden="true">·</span>
@@ -378,7 +378,11 @@ export function CandidatePanel({
           <DecisionButtons stage={candidate.stage} name={candidate.person.name} onDecide={decide} />
         </div>
         {phoneFirst && candidate.person.phone ? (
-          <CallButtons phone={candidate.person.phone} size="lg" className="sm:hidden" />
+          <ContactButtons
+            phone={candidate.person.phone}
+            email={candidate.person.email}
+            className="sm:hidden"
+          />
         ) : null}
         {candidate.review.flag_reason ? <FlagLine reason={candidate.review.flag_reason} /> : null}
         <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
