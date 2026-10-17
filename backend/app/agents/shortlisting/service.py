@@ -231,19 +231,23 @@ async def evaluate_resume_text(
     )
     if not verdict.safe:
         logger.warning(
-            "[app={}] Shortlisting skipped: resume needs human review ({}).",
+            "[app={}] Shortlisting skipped: resume flagged for human review.",
             application_ref,
-            "classifier unavailable" if verdict.error else "guardrail flag",
         )
         return ShortlistingAgentResult(
             strengths=None,
             weaknesses=None,
             needs_human_review=True,
             review_note=(
-                "Automatic review unavailable; please review manually."
-                if verdict.error
-                else f"Flagged by the prompt-injection rail: {verdict.reason or 'suspicious content'}"
+                "Flagged for manual review by the prompt-injection rail: "
+                f"{verdict.reason or 'suspicious content'}"
             ),
+        )
+    if verdict.error:
+        logger.warning(
+            "[app={}] Guardrail classifier unavailable; no injection markers found, "
+            "continuing review.",
+            application_ref,
         )
 
     inputs = build_shortlisting_inputs_from_text(

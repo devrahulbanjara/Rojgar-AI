@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import secrets
 from dataclasses import dataclass
 
@@ -71,6 +72,31 @@ Do not include any other text, code fences, or commentary.
 {user_input}
 </{tag}>
 """
+
+
+# Deterministic fallback used only when the classifier is unavailable in
+# unattended flows: high-precision markers of instruction injection.
+_HEURISTIC_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in (
+        r"\bignore\s+(all\s+)?(the\s+)?(previous|prior|above)\s+(instructions|rules|prompts?)",
+        r"\bdisregard\s+(all\s+)?(previous|prior|above)\b",
+        r"^\s*(system|assistant|developer)\s*:",
+        r"</?\s*(system|instructions?|resume|untrusted_input[\w-]*)\s*>",
+        r"\byou\s+are\s+now\b",
+        r"\b(score|rate|rank)\s+(this|the|me|my)\b.{0,40}\b(100|10/10|highest|top)\b",
+        r"\b(reveal|print|show)\s+(your\s+)?(system|hidden)\s+(prompt|instructions)",
+        r"\b(dan|developer)\s+mode\b",
+    )
+]
+
+
+def heuristic_injection_signal(text: str) -> str | None:
+    """Return a short reason if the text matches a known injection marker."""
+    for pattern in _HEURISTIC_PATTERNS:
+        if pattern.search(text):
+            return "Contains an instruction-injection marker."
+    return None
 
 
 @dataclass(slots=True)
@@ -204,7 +230,9 @@ class GuardrailsService:
         `fail_closed=False` (interactive surfaces): an unavailable classifier lets
         the input through, flagged with `error=True`.
         `fail_closed=True` (unattended flows such as shortlisting): the same case
-        returns `safe=False` so the item is routed to a human instead of an LLM.
+        falls back to a deterministic marker scan and returns `safe=False` when
+        it matches, so suspicious input is routed to a human rather than an LLM
+        while a classifier outage or rate limit does not block every item.
         """
         if not settings.guardrails_enabled:
             return GuardrailResult(safe=True, source=source)
@@ -213,9 +241,13 @@ class GuardrailsService:
             return GuardrailResult(safe=True, source=source)
 
         def _unavailable(reason: str) -> GuardrailResult:
-            return GuardrailResult(
-                safe=not fail_closed, source=source, reason=reason, error=True
-            )
+            if fail_closed:
+                marker = heuristic_injection_signal(text)
+                if marker:
+                    return GuardrailResult(
+                        safe=False, source=source, reason=marker, score=80, error=True
+                    )
+            return GuardrailResult(safe=True, source=source, reason=reason, error=True)
 
         llm = self._get_llm()
         if llm is None:
