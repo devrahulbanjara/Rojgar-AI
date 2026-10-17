@@ -8,6 +8,7 @@ import { notify } from '@/lib/notify'
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
+  useUpdateApplicationStatusMutation,
 } from '@/store/services/applicationsApi'
 import {
   type EmailDraftRecord,
@@ -23,7 +24,7 @@ import {
   useFinalizeShortlistMutation,
   useGetShortlistSummaryQuery,
 } from '@/store/services/shortlistingApi'
-import { Bot, RefreshCw, Send, X } from 'lucide-react'
+import { Bot, Check, RefreshCw, Send, X } from 'lucide-react'
 
 import Avatar from '@/components/common/Avatar'
 import CandidateDrawer, {
@@ -117,6 +118,11 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
 
   const candidates = useMemo(() => data?.data ?? [], [data?.data])
 
+  // Optimistic status overrides so a decision moves the row instantly.
+  const [optimisticStatus, setOptimisticStatus] = useState<Record<string, ApplicationStatus>>({})
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [updateStatus] = useUpdateApplicationStatusMutation()
+
   // Flatten applications for this job, with candidate metadata attached.
   const jobApplications = useMemo(() => {
     const rows: Array<{
@@ -145,7 +151,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
             applicant_avatar_url: candidate.applicant_avatar_url,
             job_id: application.job_id,
             job_title: application.job_title,
-            status: application.status,
+            status: optimisticStatus[application.application_id] ?? application.status,
             score: application.score,
             strengths: application.strengths,
             weaknesses: application.weaknesses,
@@ -154,7 +160,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         })
     })
     return rows
-  }, [candidates, jobId])
+  }, [candidates, jobId, optimisticStatus])
 
   const stageCounts = useMemo(() => {
     const counts: Record<PipelineStage, number> = {
@@ -176,8 +182,62 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
     () =>
       jobApplications
         .filter((row) => visibleStage.statuses.includes(row.status))
-        .sort((a, b) => b.created_at.localeCompare(a.created_at)),
+        .sort((a, b) => {
+          // Applied: best AI match first so the recruiter decides top-down.
+          if (visibleStage.id === 'applied' && a.score !== b.score) {
+            return (b.score ?? -1) - (a.score ?? -1)
+          }
+          return b.created_at.localeCompare(a.created_at)
+        }),
     [jobApplications, visibleStage],
+  )
+  const visibleIds = useMemo(
+    () => visibleApplications.map((row) => row.application_id),
+    [visibleApplications],
+  )
+  const selectedVisibleIds = visibleIds.filter((id) => selectedIds.has(id))
+
+  const toggleSelected = useCallback((applicationId: string) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous)
+      if (next.has(applicationId)) next.delete(applicationId)
+      else next.add(applicationId)
+      return next
+    })
+  }, [])
+
+  const decide = useCallback(
+    async (applicationIds: string[], status: 'shortlisted' | 'rejected') => {
+      if (applicationIds.length === 0) return
+      setOptimisticStatus((previous) => ({
+        ...previous,
+        ...Object.fromEntries(applicationIds.map((id) => [id, status])),
+      }))
+      setSelectedIds(new Set())
+      const results = await Promise.allSettled(
+        applicationIds.map((id) => updateStatus({ application_id: id, body: { status } }).unwrap()),
+      )
+      const failed = applicationIds.filter((_, index) => results[index].status === 'rejected')
+      const label = status === 'shortlisted' ? 'Shortlisted' : 'Rejected'
+      if (failed.length > 0) {
+        notify.error(
+          `Could not update ${failed.length} candidate${failed.length === 1 ? '' : 's'}.`,
+        )
+      } else {
+        notify.success(
+          applicationIds.length === 1
+            ? `${label}.`
+            : `${label} ${applicationIds.length} candidates.`,
+        )
+      }
+      await refetch()
+      setOptimisticStatus((previous) => {
+        const next = { ...previous }
+        applicationIds.forEach((id) => delete next[id])
+        return next
+      })
+    },
+    [refetch, updateStatus],
   )
 
   // ── AI evaluation summary + bulk-approve wiring ──────────────────────────
@@ -620,6 +680,68 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         <div className={styles.empty}>No candidates in this stage yet.</div>
       ) : (
         <div className={styles.list}>
+          {isAppliedStage ? (
+            <div className={styles.bulkBar} aria-live="polite">
+              <span
+                role="checkbox"
+                tabIndex={0}
+                aria-checked={
+                  selectedVisibleIds.length === 0
+                    ? false
+                    : selectedVisibleIds.length === visibleIds.length
+                      ? true
+                      : 'mixed'
+                }
+                aria-label="Select all candidates"
+                className={styles.checkbox}
+                onClick={() =>
+                  setSelectedIds(
+                    selectedVisibleIds.length === visibleIds.length
+                      ? new Set()
+                      : new Set(visibleIds),
+                  )
+                }
+                onKeyDown={(event) => {
+                  if (event.key !== ' ' && event.key !== 'Enter') return
+                  event.preventDefault()
+                  setSelectedIds(
+                    selectedVisibleIds.length === visibleIds.length
+                      ? new Set()
+                      : new Set(visibleIds),
+                  )
+                }}
+              >
+                {selectedVisibleIds.length > 0 ? <Check size={12} aria-hidden="true" /> : null}
+              </span>
+              {selectedVisibleIds.length > 0 ? (
+                <>
+                  <span className={styles.bulkBarText}>
+                    <strong>{selectedVisibleIds.length}</strong> selected
+                  </span>
+                  <span className={styles.evaluationBarSpacer} />
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={() => void decide(selectedVisibleIds, 'rejected')}
+                  >
+                    <X size={14} aria-hidden="true" /> Reject {selectedVisibleIds.length}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--primary btn--sm"
+                    onClick={() => void decide(selectedVisibleIds, 'shortlisted')}
+                  >
+                    <Check size={14} aria-hidden="true" /> Shortlist {selectedVisibleIds.length}
+                  </button>
+                </>
+              ) : (
+                <span className={styles.bulkBarHint}>
+                  Sorted by AI match. Select candidates, or use ✓ / ✗ on a row. Open a candidate and
+                  press S / R to decide, J / K to move.
+                </span>
+              )}
+            </div>
+          ) : null}
           {visibleApplications.map((row) => {
             const defaultTab: DrawerTab =
               activeStage === 'interview'
@@ -635,9 +757,34 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
               <button
                 type="button"
                 key={row.application_id}
-                className={`${styles.row} ${isPostShortlistStage ? styles.rowOutreach : ''}`}
+                className={`${styles.row} ${isPostShortlistStage ? styles.rowOutreach : ''} ${
+                  isAppliedStage ? styles.rowDecide : ''
+                }`}
                 onClick={() => openDrawer(row.application_id, defaultTab)}
               >
+                {isAppliedStage ? (
+                  <span
+                    role="checkbox"
+                    tabIndex={0}
+                    aria-checked={selectedIds.has(row.application_id)}
+                    aria-label={`Select ${row.applicant_name}`}
+                    className={styles.checkbox}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      toggleSelected(row.application_id)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== ' ' && event.key !== 'Enter') return
+                      event.preventDefault()
+                      event.stopPropagation()
+                      toggleSelected(row.application_id)
+                    }}
+                  >
+                    {selectedIds.has(row.application_id) ? (
+                      <Check size={12} aria-hidden="true" />
+                    ) : null}
+                  </span>
+                ) : null}
                 <Avatar
                   name={row.applicant_name}
                   src={row.applicant_avatar_url}
@@ -661,7 +808,12 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
 
                 <span className={styles.feedback}>
                   {row.strengths?.length || row.weaknesses?.length
-                    ? `${row.strengths?.length ?? 0} strengths, ${row.weaknesses?.length ?? 0} gaps`
+                    ? [
+                        row.strengths?.[0] ? `+ ${row.strengths[0]}` : null,
+                        row.weaknesses?.[0] ? `− ${row.weaknesses[0]}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join('  ·  ')
                     : isPostShortlistStage
                       ? 'Manual decision — no AI feedback'
                       : row.score !== null
@@ -726,6 +878,44 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                     <span
                       role="button"
                       tabIndex={0}
+                      className={`btn btn--icon btn--sm ${styles.decideReject}`}
+                      aria-label={`Reject ${row.applicant_name}`}
+                      title="Reject"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        void decide([row.application_id], 'rejected')
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return
+                        event.preventDefault()
+                        event.stopPropagation()
+                        void decide([row.application_id], 'rejected')
+                      }}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className={`btn btn--icon btn--sm ${styles.decideShortlist}`}
+                      aria-label={`Shortlist ${row.applicant_name}`}
+                      title="Shortlist"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        void decide([row.application_id], 'shortlisted')
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return
+                        event.preventDefault()
+                        event.stopPropagation()
+                        void decide([row.application_id], 'shortlisted')
+                      }}
+                    >
+                      <Check size={14} aria-hidden="true" />
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
                       className={`btn btn--icon btn--sm ${evaluatingAppId === row.application_id ? styles.evaluatingIcon : ''}`}
                       aria-label="Run AI evaluation"
                       aria-disabled={evaluatingAppId === row.application_id}
@@ -759,6 +949,8 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
         onClose={closeDrawer}
         onTabChange={setDrawerTab}
         onApplicationChange={(appId) => updateParams({ app: appId })}
+        queue={visibleIds}
+        onDecide={(appId, status) => decide([appId], status)}
       />
 
       {isConfirmOpen ? (
