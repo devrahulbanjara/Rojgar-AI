@@ -5,7 +5,6 @@ from app.core.cache import (
     invalidate_job_detail_caches,
     invalidate_profile_read_caches,
     invalidate_resume_caches,
-    invalidate_resume_gap_caches,
 )
 from app.infrastructures.redis.service import redis_service
 
@@ -73,16 +72,6 @@ async def test_invalidate_resume_caches_with_detail() -> None:
 
     assert await redis_service.get("resumes:list:user-1") is None
     assert await redis_service.get("resume:detail:resume-9:user:user-1") is None
-
-
-async def test_invalidate_resume_gap_caches() -> None:
-    await _seed("resume_gap:resume-9:summary")
-    await _seed("resume_gap:resume-9:detail")
-
-    await invalidate_resume_gap_caches("resume-9")
-
-    assert await redis_service.get("resume_gap:resume-9:summary") is None
-    assert await redis_service.get("resume_gap:resume-9:detail") is None
 
 
 async def test_job_update_invalidates_then_warms() -> None:

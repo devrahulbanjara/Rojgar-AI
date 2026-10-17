@@ -8,9 +8,26 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 
-from main import app
 from app.core.config import settings
-from app.core.database import Base, get_db
+
+# Point the app's own engine and vector store at the test stack *before*
+# anything builds clients from settings. Background tasks, sync daemons and
+# SWR refreshes open sessions via AsyncSessionLocal, so without this they
+# would read and write the developer's real database and Qdrant collections.
+settings.db_user = settings.test_db_user
+settings.db_password = settings.test_db_password
+settings.db_host = settings.test_db_host
+settings.db_port = settings.test_db_port
+settings.db_name = settings.test_db_name
+settings.qdrant_url = settings.test_qdrant_url
+settings.qdrant_api_key = settings.test_qdrant_api_key or ""
+settings.qdrant_collection_name = f"test_{settings.test_db_name}_jobs"
+settings.qdrant_candidate_collection_name = f"test_{settings.test_db_name}_candidates"
+
+from main import app  # noqa: E402
+from app.core.database import Base, get_db  # noqa: E402
+
+RUN_LIVE_AI = os.getenv("RUN_HYBRID_EVAL") == "1"
 
 
 @pytest.fixture(scope="session")
@@ -42,6 +59,24 @@ def disable_side_effects(monkeypatch_session):
     monkeypatch_session.setattr(
         _qdrant_mod.qdrant_service, "search_applications", _mock_search_applications
     )
+
+    # No live LLM/embedding calls in the default suite: they cost money and
+    # fail under provider rate limits (the root cause of earlier flaky runs).
+    if not RUN_LIVE_AI:
+        import hashlib
+
+        from app.infrastructures.ai.service import ai_service
+        from app.infrastructures.guardrails.service import guardrails_service
+
+        async def _fake_embeddings(text: str) -> list[float]:
+            seed = hashlib.sha256(text.encode()).digest()
+            dim = settings.embedding_output_dimensionality
+            return [seed[i % len(seed)] / 255.0 for i in range(dim)]
+
+        monkeypatch_session.setattr(ai_service, "get_embeddings", _fake_embeddings)
+        monkeypatch_session.setattr(guardrails_service, "_get_llm", lambda: None)
+        # Paid CV parsing (LlamaExtract) is skipped when no key is configured.
+        monkeypatch_session.setattr(settings, "llama_cloud_api_key", None)
 
     # Bypass in-memory rate limiter so tests don't hit per-IP request caps.
     # Must match the original signature (self, request, response) so FastAPI

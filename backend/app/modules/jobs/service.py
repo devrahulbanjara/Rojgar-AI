@@ -187,6 +187,7 @@ def _job_list_item_from_row(
             "id": job.id,
             "company_id": job.company_id,
             "company": company,
+            "slug": job.slug,
             "title": job.title,
             "location": job.location,
             "location_type": job.location_type,
@@ -221,6 +222,7 @@ def _job_detail_response_from_row(
             "company_id": job.company_id,
             "company": company,
             "posted_by": job.posted_by,
+            "slug": job.slug,
             "title": job.title,
             "location": job.location,
             "location_type": job.location_type,
@@ -237,6 +239,7 @@ def _job_detail_response_from_row(
             "requirements": job.requirements,
             "preferred_qualifications": job.preferred_qualifications,
             "benefits": job.benefits,
+            "screening_questions": job.screening_questions or [],
             "applications_count": int(applications_count or 0),
             "hiring_completed": job.hiring_completed,
             "hired_at": job.hired_at,
@@ -311,6 +314,7 @@ async def create_job(
         requirements=payload.requirements or [],
         preferred_qualifications=payload.preferred_qualifications or [],
         benefits=payload.benefits or [],
+        screening_questions=payload.screening_questions or [],
     )
 
     # guard against active jobs already expired
@@ -582,6 +586,14 @@ async def get_job_detail(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Job not found."
         )
+    # Never cached: the shared payload above is visible to the public.
+    if user is not None and await _is_company_member(db, user, response.company_id):
+        rows = await db.execute(
+            select(Application.source, func.count(Application.id))
+            .where(Application.job_id == response.id)
+            .group_by(Application.source)
+        )
+        response.source_counts = {source: count for source, count in rows.all()}
     return response
 
 

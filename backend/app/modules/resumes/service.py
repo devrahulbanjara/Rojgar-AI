@@ -8,7 +8,6 @@ from app.core.cache import (
     get_resume_application_ids,
     invalidate_application_candidate_detail_caches,
     invalidate_resume_caches,
-    invalidate_resume_gap_caches,
 )
 from app.core.swr_cache import swr_get
 from app.modules.applications.models import Application
@@ -268,7 +267,6 @@ async def update_resume(
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
     await invalidate_resume_caches(str(user.id), str(resume.id))
-    await invalidate_resume_gap_caches(str(resume.id))
     await invalidate_application_candidate_detail_caches(
         [str(application_id) for application_id in linked_application_ids]
     )
@@ -342,6 +340,5 @@ async def delete_resume(db: AsyncSession, user: User, resume_id: str) -> None:
     await db.delete(resume)
     await db.commit()
     await invalidate_resume_caches(str(user.id), resume_id)
-    await invalidate_resume_gap_caches(resume_id)
     await invalidate_application_candidate_detail_caches(linked_application_ids)
     logger.info(f"Deleted resume {resume_id} for user {user.id}")

@@ -21,7 +21,6 @@ class ApplyRequest(BaseSchema):
     share_location: bool = True
     share_links: bool = True
     share_headline_summary: bool = True
-    apply_pending_patch: bool = False
 
 
 class CandidateShareSettings(BaseSchema):
@@ -182,6 +181,9 @@ class RecruiterApplicationView(BaseSchema):
     # needs_human_review. Never exposed on candidate-facing views.
     ai_review_status: str | None = None
     ai_flag_reason: str | None = None
+    # Where the applicant came from: linkedin | facebook | merojob | direct |
+    # other | platform.
+    source: str | None = None
 
 
 class RecruiterCandidateApplicationSummary(BaseSchema):
@@ -198,6 +200,9 @@ class RecruiterCandidateApplicationSummary(BaseSchema):
     # needs_human_review. Never exposed on candidate-facing views.
     ai_review_status: str | None = None
     ai_flag_reason: str | None = None
+    # Where the applicant came from: linkedin | facebook | merojob | direct |
+    # other | platform.
+    source: str | None = None
 
 
 class RecruiterCandidateInterviewView(BaseSchema):
@@ -251,8 +256,13 @@ class RecruiterCandidateDetailView(BaseSchema):
     # needs_human_review. Never exposed on candidate-facing views.
     ai_review_status: str | None = None
     ai_flag_reason: str | None = None
+    # Where the applicant came from: linkedin | facebook | merojob | direct |
+    # other | platform.
+    source: str | None = None
     interview: RecruiterCandidateInterviewView | None = None
     resume: ResumeResponse | None = None
+    screening_answers: list[dict] = Field(default_factory=list)
+    has_cv_file: bool = False
     share_settings: CandidateShareSettings
     timeline: list[ActivityEventResponse] = Field(default_factory=list)
     outreach_audit: list["ApplicationOutreachAuditItem"] = Field(default_factory=list)

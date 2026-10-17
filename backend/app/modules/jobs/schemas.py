@@ -24,6 +24,8 @@ class JobBase(BaseSchema):
     auto_shortlist: bool = False
     shortlist_threshold: int = Field(default=70, ge=0, le=100)
     required_years_of_experience: int | None = None
+    # Up to 3 short questions candidates answer on the public apply page.
+    screening_questions: list[str] | None = Field(default=None, max_length=3)
 
     @model_validator(mode="after")
     def validate_job_fields(self) -> "JobBase":
@@ -34,6 +36,12 @@ class JobBase(BaseSchema):
             and self.salary_min > self.salary_max
         ):
             raise ValueError("salary_min cannot be greater than salary_max")
+
+        if self.screening_questions is not None:
+            cleaned = [q.strip() for q in self.screening_questions if q and q.strip()]
+            if any(len(q) > 200 for q in cleaned):
+                raise ValueError("screening questions must be 200 characters or less")
+            self.screening_questions = cleaned
 
         if self.expires_at is not None:
             if self.expires_at.tzinfo is None:
@@ -81,6 +89,7 @@ class JobListItem(BaseSchema):
     id: UUID
     company_id: UUID
     company: CompanySnippet
+    slug: str | None = None
     title: str
     location: str | None = None
     location_type: LocationType
@@ -115,6 +124,7 @@ class JobDetailResponse(BaseSchema):
     company_id: UUID
     company: CompanySnippet
     posted_by: UUID | None = None
+    slug: str | None = None
     title: str
     location: str | None = None
     location_type: LocationType
@@ -131,7 +141,10 @@ class JobDetailResponse(BaseSchema):
     requirements: list[str] = []
     preferred_qualifications: list[str] = []
     benefits: list[str] = []
+    screening_questions: list[str] = []
     applications_count: int = 0
+    # Company members only: applications per source (linkedin, facebook, ...).
+    source_counts: dict[str, int] | None = None
     hiring_completed: bool = False
     hired_at: datetime | None = None
     has_applied: bool = False

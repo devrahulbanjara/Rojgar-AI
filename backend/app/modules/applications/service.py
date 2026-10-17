@@ -66,13 +66,10 @@ from app.modules.jobs.models import Job
 from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
 from app.infrastructures.guardrails import guardrails_service
-from app.modules.resume_gap.service import (
-    consume_pending_patch as consume_pending_resume_patch,
-    resume_text_for_guardrails,
-)
 from app.modules.resumes.models import Resume
 from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, JobStatus
+from app.shared.resume_text import resume_text_for_guardrails
 
 
 async def _compute_resume_embedding(
@@ -428,8 +425,14 @@ async def apply_to_job(
     user: User,
     payload: ApplyRequest,
     bg_tasks: BackgroundTasks | None = None,
+    *,
+    extra_fields: dict | None = None,
 ) -> ApplicationResponse:
-    """Submit an application. A resume_id belonging to the user is required."""
+    """Submit an application. A resume_id belonging to the user is required.
+
+    `extra_fields` lets the public (no-account) apply path set source,
+    consent, answers and the contact snapshot the candidate typed in.
+    """
     # 1. Verify the job exists and is active
     result = await db.execute(select(Job).where(Job.id == payload.job_id))
     job = result.scalar_one_or_none()
@@ -466,11 +469,6 @@ async def apply_to_job(
             detail="Invalid resume ID or access denied.",
         )
 
-    # 2b. Apply any pending AI resume patch the candidate accepted in the apply flow.
-    if payload.apply_pending_patch:
-        await consume_pending_resume_patch(db, user, payload.resume_id, payload.job_id)
-        resume = await db.scalar(resume_stmt)
-
     # 2c. Prompt-injection guardrail on candidate-controlled resume text.
     # A flag quarantines the application for recruiter review instead of
     # blocking the candidate: false positives (e.g. security engineers who
@@ -500,14 +498,18 @@ async def apply_to_job(
     resume_embedding = await _compute_resume_embedding(db, payload.resume_id)
 
     # 4. Create and persist the application
+    application_fields = {
+        **share_settings.model_dump(),
+        **_build_shared_profile_snapshot(user, profile, share_settings),
+        **(extra_fields or {}),
+    }
     application = Application(
         job_id=payload.job_id,
         user_id=user.id,
         resume_id=payload.resume_id,
         resume_embedding=resume_embedding,
         status=ApplicationStatus.applied,
-        **share_settings.model_dump(),
-        **_build_shared_profile_snapshot(user, profile, share_settings),
+        **application_fields,
     )
     if not guardrail_verdict.safe:
         application.ai_review_status = "needs_human_review"
@@ -745,6 +747,7 @@ async def _build_company_applications(
             weaknesses=application.weaknesses,
             ai_review_status=application.ai_review_status,
             ai_flag_reason=application.ai_flag_reason,
+            source=application.source,
         )
         for application, applicant, job in rows
     ]
@@ -810,6 +813,7 @@ async def _build_company_candidates(
             weaknesses=application.weaknesses,
             ai_review_status=application.ai_review_status,
             ai_flag_reason=application.ai_flag_reason,
+            source=application.source,
         )
 
         if bucket is None:
@@ -955,6 +959,9 @@ async def _build_company_candidate_detail(
         weaknesses=application.weaknesses,
         ai_review_status=application.ai_review_status,
         ai_flag_reason=application.ai_flag_reason,
+        source=application.source,
+        screening_answers=application.screening_answers or [],
+        has_cv_file=bool(application.resume and application.resume.cv_file_key),
         interview=RecruiterCandidateInterviewView.model_validate(interview)
         if interview
         else None,
@@ -963,6 +970,28 @@ async def _build_company_candidate_detail(
         timeline=timeline,
         outreach_audit=outreach_audit,
     )
+
+
+async def get_company_application_cv_url(
+    db: AsyncSession, user: User, application_id
+) -> str:
+    """Short-lived download link for the CV a candidate uploaded with this application."""
+    from app.infrastructures.storage.service import storage_service
+
+    company_id = await _get_active_company_id(db, user)
+    row = await db.execute(
+        select(Resume.cv_file_key)
+        .join(Application, Application.resume_id == Resume.id)
+        .join(Job, Job.id == Application.job_id)
+        .where(Application.id == application_id, Job.company_id == company_id)
+    )
+    cv_key = row.scalar_one_or_none()
+    if not cv_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No CV file for this application.",
+        )
+    return await storage_service.generate_presigned_url(cv_key, expires_in=600)
 
 
 async def get_company_candidate_detail(

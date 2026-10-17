@@ -37,11 +37,11 @@ from app.modules.jobs.router import router as jobs_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.outreach.router import router as outreach_router
 from app.modules.profiles.router import router as profiles_router
+from app.modules.public.router import router as public_router
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
-from app.modules.resume_gap.router import router as resume_gap_router
 from app.modules.resumes.router import router as resumes_router
 from app.modules.shortlisting.ml_bouncer import assert_model_available
 from app.modules.shortlisting.router import router as shortlisting_router
@@ -135,6 +135,7 @@ app.include_router(activity_router)
 app.include_router(dash_router)
 app.include_router(companies_router)
 app.include_router(profiles_router)
+app.include_router(public_router)
 app.include_router(resumes_router)
 app.include_router(job_ai_router)
 app.include_router(recruiter_chat_router)
@@ -142,7 +143,6 @@ app.include_router(notifications_router)
 app.include_router(recruiter_preferences_router)
 app.include_router(jobs_router)
 app.include_router(applications_router)
-app.include_router(resume_gap_router)
 app.include_router(shortlisting_router)
 app.include_router(interviews_router)
 app.include_router(evaluation_router)
