@@ -4168,6 +4168,8 @@ async def seed_company(
         status=BusinessStatus.active,
         verified_at=NOW - timedelta(days=400),
         created_by_user_id=admin.id,
+        # Several open jobs and a team: the Team plan (5 jobs, 5 seats).
+        plan="team",
     )
     db.add(company)
     await db.flush()
@@ -6685,6 +6687,7 @@ async def seed_nontech_companies(db) -> tuple[list[dict], dict[str, int]]:
             status=BusinessStatus.active,
             verified_at=NOW - timedelta(days=200),
             created_by_user_id=admin.id,
+            plan="team",
         )
         db.add(company)
         await db.flush()
