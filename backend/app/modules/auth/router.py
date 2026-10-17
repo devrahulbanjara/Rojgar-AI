@@ -15,12 +15,14 @@ from fastapi import (
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from loguru import logger
+from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.database import release_connection
 from app.core.dependencies import CurrentUser, DbSession
 from app.core.rate_limit import RateLimit
 from app.core.responses import ResponseBuilder, UnifiedResponse
+from app.infrastructures.sms.service import sms_available
 from app.infrastructures.storage.service import storage_service
 from app.modules.auth import otp, service
 from app.modules.auth.oauth import (
@@ -44,6 +46,28 @@ from app.modules.auth.schemas import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+class AuthOptions(BaseModel):
+    """Which sign-in methods this deployment offers."""
+
+    sms: bool  # phone + SMS code (/auth/otp/*); off unless SMS is paid for
+    google: bool  # /auth/google
+    email_link: bool  # one-time email link (/public/auth/magic-link)
+    password: bool  # email + password (/auth/login, /auth/signup)
+
+
+@router.get("/options", summary="Sign-in methods available here (public)")
+async def auth_options() -> UnifiedResponse[AuthOptions]:
+    """Lets the sign-in screen show only what works (no phone codes when SMS is off)."""
+    return ResponseBuilder.success(
+        data=AuthOptions(
+            sms=sms_available(),
+            google=bool(settings.google_client_id and settings.google_client_secret),
+            email_link=True,
+            password=True,
+        )
+    )
 
 
 @router.post(

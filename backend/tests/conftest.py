@@ -43,6 +43,9 @@ def disable_side_effects(monkeypatch_session):
     original_redis_url = settings.redis_url
     settings.send_emails = False
     settings.redis_url = settings.test_redis_url
+    # SMS flows run against the console provider (never a real SMS outside
+    # prod); test_sms_off.py covers the default, SMS off.
+    monkeypatch_session.setattr(settings, "sms_enabled", True)
 
     import app.infrastructures.qdrant.service as _qdrant_mod
 

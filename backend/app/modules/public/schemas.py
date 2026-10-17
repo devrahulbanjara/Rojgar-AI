@@ -96,8 +96,12 @@ class GuestApplicationCreated(BaseSchema):
     company_name: str
     phone: str
     email: str | None = None
-    # The status link goes by email (proves the address) and by SMS.
+    # The status link goes by email (proves the address) and by SMS when on.
     status_link_sent: bool
+    # Private link to this application, only when they gave no email (with an
+    # email it goes there, which proves the address). The done screen shows it
+    # so phone-only applicants can keep it (copy, Viber, WhatsApp).
+    status_url: str | None = None
 
 
 class InterviewInfo(BaseSchema):

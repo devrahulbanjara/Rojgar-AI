@@ -1,9 +1,10 @@
 """SMS channel: ``send_sms(phone, text)`` behind a swappable provider.
 
-Providers: ``sparrow`` (Sparrow SMS, Nepal) and ``console`` (logs only). Any
-environment other than prod always uses ``console``, so local runs and tests
-never send a real SMS. A Viber/WhatsApp provider can be added with the same
-``send`` signature.
+Off unless ``SMS_ENABLED=true`` (SMS costs money): ``send_sms`` then returns
+False without a word, and callers fall back to email. When on, prod uses
+``sparrow`` (Sparrow SMS, Nepal) and every other environment ``console`` (logs
+only), so local runs and tests never send a real SMS. A Viber/WhatsApp
+provider can be added with the same ``send`` signature.
 """
 
 from __future__ import annotations
@@ -99,18 +100,30 @@ class SparrowSmsProvider:
 _console = ConsoleSmsProvider()
 
 
+def _sparrow_ready() -> bool:
+    return settings.sms_provider == "sparrow" and bool(settings.sparrow_sms_token)
+
+
+def sms_available() -> bool:
+    """True when texts can actually reach people (phone codes, updates)."""
+    if not settings.sms_enabled:
+        return False
+    return settings.environment != "prod" or _sparrow_ready()
+
+
 def get_sms_provider() -> SmsProvider:
-    if (
-        settings.environment == "prod"
-        and settings.sms_provider == "sparrow"
-        and settings.sparrow_sms_token
-    ):
+    if settings.environment == "prod" and _sparrow_ready():
         return SparrowSmsProvider(settings.sparrow_sms_token, settings.sparrow_sms_from)
     return _console
 
 
 async def send_sms(phone: str | None, text: str) -> bool:
-    """Send one SMS to a Nepali mobile number. Never raises."""
+    """Send one SMS to a Nepali mobile number. Never raises.
+
+    False when SMS is off or the number is not a Nepali mobile.
+    """
+    if not sms_available():
+        return False
     to = normalize_np_mobile(phone)
     if to is None:
         return False

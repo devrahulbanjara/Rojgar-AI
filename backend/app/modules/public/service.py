@@ -355,20 +355,20 @@ async def _send_status_email(
 
 async def _send_status_link(
     *, phone: str, email: str | None, job: Job, application_id: uuid.UUID, again: bool
-) -> bool:
-    """Status link by SMS, and by email when they gave one."""
+) -> tuple[bool, str]:
+    """Status link by email when they gave one, and by SMS when SMS is on.
+
+    Returns (sent, link); the done screen shows the link either way.
+    """
     token = create_status_token(application_id)
+    link = status_url(token)
     sent = await notify_applicant(
-        phone,
-        "received",
-        company=job.company.name,
-        job=job.title,
-        url=status_url(token),
+        phone, "received", company=job.company.name, job=job.title, url=link
     )
     if email:
         await _send_status_email(email, job.title, job.company.name, token, again=again)
         sent = True
-    return sent
+    return sent, link
 
 
 async def submit_guest_application(
@@ -425,12 +425,15 @@ async def submit_guest_application(
         )
     )
     if existing is not None:
-        await _send_status_link(
+        # The link itself is never returned here: anyone can type a number.
+        resent, _link = await _send_status_link(
             phone=phone, email=email, job=job, application_id=existing, again=True
         )
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            detail="You've already applied. We've sent your status link again.",
+            detail="You've already applied. We've sent your status link again."
+            if resent
+            else "You've already applied to this job.",
         )
     await _enforce_person_rate(db, user.id)
 
@@ -516,7 +519,7 @@ async def submit_guest_application(
     schedule_review(bg_tasks, application.id, sync_event.id, review=not parse_first)
     await invalidate_after_new_application(job)
 
-    sent = await _send_status_link(
+    sent, link = await _send_status_link(
         phone=phone, email=email, job=job, application_id=application.id, again=False
     )
     return GuestApplicationCreated(
@@ -526,6 +529,7 @@ async def submit_guest_application(
         phone=phone,
         email=email,
         status_link_sent=sent,
+        status_url=None if email else link,
     )
 
 

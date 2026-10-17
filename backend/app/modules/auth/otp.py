@@ -1,7 +1,8 @@
 """Sign in or sign up with a phone number and a 6-digit SMS code.
 
 Codes are stored hashed, expire after 5 minutes and allow 5 wrong tries.
-Sending is limited per phone (and per IP by the route's RateLimit).
+Sending is limited per phone (and per IP by the route's RateLimit). While SMS
+is off (the free setup) both steps are refused: people use Google or email.
 """
 
 import hashlib
@@ -15,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.rate_limit import TOO_MANY_MESSAGE, hit
-from app.infrastructures.sms.service import send_sms
+from app.infrastructures.sms.service import send_sms, sms_available
 from app.modules.auth.models import PhoneOtp, User
 
 CODE_TTL = timedelta(minutes=5)
@@ -24,8 +25,18 @@ SENDS_PER_PHONE = 3
 SEND_WINDOW_SECONDS = 600
 
 
+PHONE_CODES_OFF = "Phone codes are not available. Use Google or email."
+
+
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def _require_sms() -> None:
+    if not sms_available():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=PHONE_CODES_OFF
+        )
 
 
 def _hash(phone: str, code: str) -> str:
@@ -36,6 +47,7 @@ def _hash(phone: str, code: str) -> str:
 
 async def request_code(db: AsyncSession, phone: str) -> None:
     """Text a fresh code to ``phone``; earlier unused codes stop working."""
+    _require_sms()
     if settings.rate_limit_enabled and not await hit(
         f"otp.send:phone:{phone}", SENDS_PER_PHONE, SEND_WINDOW_SECONDS
     ):
@@ -69,6 +81,7 @@ def _bad_code(detail: str) -> HTTPException:
 
 async def verify_code(db: AsyncSession, phone: str, code: str) -> tuple[User, bool]:
     """Check the code; return the person for this phone (created if new)."""
+    _require_sms()
     otp = await db.scalar(
         select(PhoneOtp)
         .where(PhoneOtp.phone == phone, PhoneOtp.consumed_at.is_(None))

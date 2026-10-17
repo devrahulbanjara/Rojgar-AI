@@ -45,9 +45,11 @@ class Settings(BaseSettings):
     mail_from: str
     send_emails: bool = True
 
-    # SMS (infrastructures/sms). Off unless environment=prod, provider=sparrow
-    # and a token are all set (see `sms_enabled`); while off nothing is sent,
-    # phone codes are refused and applicants hear back by email.
+    # SMS costs money, so it is off by default: nothing is sent, phone codes
+    # are refused and applicants hear back by email. With SMS_ENABLED=true real
+    # texts go out only in prod with SMS_PROVIDER=sparrow and a token; dev and
+    # test log them instead (see infrastructures/sms `sms_available`).
+    sms_enabled: bool = False
     sms_provider: Literal["console", "sparrow"] = "console"
     sparrow_sms_token: str | None = None
     sparrow_sms_from: str = "RojgarAI"
@@ -179,15 +181,6 @@ class Settings(BaseSettings):
     # Public jobs hybrid search
     jobs_hybrid_search_enabled: bool = True
     jobs_hybrid_prefetch_limit: int = 50
-
-    @property
-    def sms_enabled(self) -> bool:
-        """Real SMS only in prod with Sparrow and a token; costs money."""
-        return (
-            self.environment == "prod"
-            and self.sms_provider == "sparrow"
-            and bool(self.sparrow_sms_token)
-        )
 
     # Derived URLs
     @property

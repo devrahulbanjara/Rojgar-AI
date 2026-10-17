@@ -2,7 +2,8 @@
 
 ``notify_applicant`` is the one entry point the public module uses. Texts are Nepali,
 with English fallback when long names would push the Nepali past two SMS.
-Uses ``app.infrastructures.sms.service.send_sms``.
+Uses ``app.infrastructures.sms.service.send_sms``, which returns False while
+SMS is off; callers then rely on email and the link shown after applying.
 """
 
 from __future__ import annotations
