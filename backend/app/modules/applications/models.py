@@ -124,7 +124,11 @@ class Application(Base):
     job: Mapped[Job] = relationship(lazy="raise")
     referrer: Mapped[JobReferrer | None] = relationship(lazy="raise")
     review: Mapped[Review | None] = relationship(
-        lazy="raise", uselist=False, back_populates="application"
+        lazy="raise",
+        uselist=False,
+        back_populates="application",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
 

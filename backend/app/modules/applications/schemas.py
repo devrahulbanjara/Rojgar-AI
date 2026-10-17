@@ -291,6 +291,8 @@ class CandidatePanelResponse(BaseSchema):
     answers: list[AnswerView] = Field(default_factory=list)
     # Short-lived link to the CV PDF; null when the candidate sent no file.
     cv_url: str | None = None
+    # Structured CV (builder resumes, or parsed from the PDF), share flags applied.
+    resume: ResumeResponse | None = None
     # Other applications by this person to this company's jobs.
     other_applications: int = 0
     events: list[EventView] = Field(default_factory=list)

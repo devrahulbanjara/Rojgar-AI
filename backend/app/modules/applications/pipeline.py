@@ -69,6 +69,7 @@ from app.modules.auth.models import User
 from app.modules.companies.models import Company
 from app.modules.jobs.models import Job, JobReferrer
 from app.modules.resumes.models import Resume
+from app.modules.resumes.schemas import ResumeResponse
 from app.modules.review.service import rereview
 from app.shared.enums import (
     ACTIVE_STAGES,
@@ -230,7 +231,12 @@ async def _company_application(
         select(Application, Job)
         .join(Job, Job.id == Application.job_id)
         .where(Application.id == application_id, Job.company_id == company_id)
-        .options(selectinload(Application.referrer))
+        .options(
+            selectinload(Application.referrer),
+            selectinload(Application.resume).selectinload(Resume.experiences),
+            selectinload(Application.resume).selectinload(Resume.educations),
+            selectinload(Application.resume).selectinload(Resume.skills),
+        )
     )
     found = row.one_or_none()
     if found is None:
@@ -259,6 +265,21 @@ async def _events(db: AsyncSession, application_id) -> list[EventView]:
             )
         )
     return views
+
+
+def _recruiter_safe_resume(application: Application) -> ResumeResponse | None:
+    """The CV as recruiters may see it, honouring the candidate's share flags."""
+    if application.resume is None:
+        return None
+    resume = ResumeResponse.model_validate(application.resume)
+    hidden: dict[str, None] = {}
+    if not application.share_phone:
+        hidden["phone"] = None
+    if not application.share_location:
+        hidden["location"] = None
+    if not application.share_links:
+        hidden.update(linkedin_url=None, github_url=None, portfolio_url=None)
+    return resume.model_copy(update=hidden) if hidden else resume
 
 
 async def candidate_panel(
@@ -331,6 +352,7 @@ async def candidate_panel(
             for a in application.screening_answers or []
         ],
         cv_url=cv_url,
+        resume=_recruiter_safe_resume(application),
         other_applications=int(others or 0),
         events=await _events(db, application.id),
         actions=actions_for(application.stage),

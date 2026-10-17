@@ -88,7 +88,7 @@ class TestProfileAccess:
         await db.flush()
 
         resp = await client.get(
-            f"/applications/company/me/candidates/{application.id}",
+            f"/recruiter/v2/applications/{application.id}",
             headers=auth_headers(recruiter.id),
         )
 

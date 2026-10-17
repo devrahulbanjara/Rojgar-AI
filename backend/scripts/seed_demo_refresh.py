@@ -1,9 +1,10 @@
 """Refresh the seeded demo so time-based screens always have something to show.
 
 seed_data.py writes fixed dates, so after a day "Today" is empty and nothing is
-closing soon. This moves F1Soft's demo data relative to now: interviews today
-and tomorrow, a job closing in 2 days, AI reviews awaiting a recruiter, a
-flagged CV, applicants waiting over 5 days, and unsent outreach drafts.
+closing soon. This moves the demo data relative to now: F1Soft interviews today
+and tomorrow, a job closing in 2 days, one CV flagged for a person, one review
+still running, applicants waiting over 5 days, and every non-tech job open for
+at least another week (with its interviews in the coming days).
 
 Idempotent and local-only. Run after seed_data.py, and again any day:
     uv run python scripts/seed_demo_refresh.py
@@ -23,7 +24,6 @@ from app.core.destructive_guard import assert_local_target
 
 COMPANY = "F1Soft%"
 CANDIDATE_EMAIL = "aashish.basnet@gmail.com"
-RECRUITER_EMAIL = "priya.maharjan@f1soft.com"
 MEET_LINK = "https://meet.google.com/demo-f1soft-int"
 
 # Kathmandu wall-clock times for interviews today and tomorrow.
@@ -49,7 +49,7 @@ async def refresh() -> None:
                     FROM applications a
                     JOIN jobs j ON j.id = a.job_id
                     JOIN users u ON u.id = a.user_id
-                    WHERE j.company_id = :c AND a.status = 'interview_booked'
+                    WHERE j.company_id = :c AND a.stage = 'interview'
                     ORDER BY (u.email = :cand) DESC, a.created_at
                     """
                 ),
@@ -96,36 +96,38 @@ async def refresh() -> None:
                     },
                 )
 
-        # One active job closes in 2 days.
+        # One open job closes in 2 days; the others stay open for a while.
+        first_open = (
+            "(SELECT id FROM jobs WHERE company_id = :c AND status = 'open' "
+            "ORDER BY created_at LIMIT 1)"
+        )
         await conn.execute(
             text(
-                """
-                UPDATE jobs SET expires_at = now() + interval '2 days'
-                WHERE id = (SELECT id FROM jobs WHERE company_id = :c AND status = 'active'
-                            ORDER BY created_at LIMIT 1)
-                """
+                f"UPDATE jobs SET closes_at = now() + interval '2 days' WHERE id = {first_open}"
             ),
             {"c": company_id},
         )
         await conn.execute(
             text(
-                """
-                UPDATE jobs SET expires_at = now() + interval '20 days'
-                WHERE company_id = :c AND status = 'active' AND expires_at < now() + interval '2 days'
-                  AND id <> (SELECT id FROM jobs WHERE company_id = :c AND status = 'active'
-                             ORDER BY created_at LIMIT 1)
+                f"""
+                UPDATE jobs SET closes_at = now() + interval '20 days'
+                WHERE company_id = :c AND status = 'open'
+                  AND (closes_at IS NULL OR closes_at < now() + interval '2 days')
+                  AND id <> {first_open}
                 """
             ),
             {"c": company_id},
         )
 
-        # AI reviews: applied candidates are reviewed and await a recruiter;
-        # the most recent expired job has recommendations ready to approve.
+        # Reviews: every new applicant is reviewed, except one CV flagged for a
+        # person to check and one review still running.
         await conn.execute(
             text(
                 """
-                UPDATE applications a SET ai_review_status = 'completed', ai_flag_reason = NULL
-                FROM jobs j WHERE j.id = a.job_id AND j.company_id = :c AND a.status = 'applied'
+                UPDATE application_reviews r SET state = 'done', flag_reason = NULL,
+                    fit = coalesce(r.fit, 'possible')
+                FROM applications a JOIN jobs j ON j.id = a.job_id
+                WHERE r.application_id = a.id AND j.company_id = :c AND a.stage = 'new'
                 """
             ),
             {"c": company_id},
@@ -133,24 +135,29 @@ async def refresh() -> None:
         await conn.execute(
             text(
                 """
-                UPDATE jobs SET final_shortlist_completed = false
-                WHERE id = (SELECT j.id FROM jobs j JOIN applications a ON a.job_id = j.id
-                            WHERE j.company_id = :c AND j.status = 'expired' AND a.status = 'applied'
-                            ORDER BY j.expires_at DESC LIMIT 1)
+                UPDATE application_reviews SET state = 'needs_person', fit = NULL,
+                    flag_reason = 'Possible hidden instructions in the CV. Check the CV before deciding.'
+                WHERE application_id = (
+                    SELECT a.id FROM applications a JOIN jobs j ON j.id = a.job_id
+                    JOIN users u ON u.id = a.user_id
+                    WHERE j.company_id = :c AND a.stage = 'new' AND u.email <> :cand
+                    ORDER BY a.id DESC LIMIT 1)
                 """
             ),
-            {"c": company_id},
+            {"c": company_id, "cand": CANDIDATE_EMAIL},
         )
-        # One CV flagged for a person to check.
         await conn.execute(
             text(
                 """
-                UPDATE applications SET ai_review_status = 'needs_human_review',
-                    ai_flag_reason = 'Possible hidden instructions in the CV'
-                WHERE id = (SELECT a.id FROM applications a JOIN jobs j ON j.id = a.job_id
-                            JOIN users u ON u.id = a.user_id
-                            WHERE j.company_id = :c AND a.status = 'applied' AND u.email <> :cand
-                            ORDER BY a.created_at DESC LIMIT 1)
+                UPDATE application_reviews SET state = 'pending', fit = NULL,
+                    summary = NULL, checks = '[]'::jsonb, attempts = 0
+                WHERE application_id = (
+                    SELECT a.id FROM applications a JOIN jobs j ON j.id = a.job_id
+                    JOIN application_reviews r ON r.application_id = a.id
+                    JOIN users u ON u.id = a.user_id
+                    WHERE j.company_id = :c AND a.stage = 'new' AND r.state = 'done'
+                      AND u.email <> :cand
+                    ORDER BY a.id DESC LIMIT 1)
                 """
             ),
             {"c": company_id, "cand": CANDIDATE_EMAIL},
@@ -162,56 +169,51 @@ async def refresh() -> None:
                 """
                 UPDATE applications a SET created_at = now() - interval '8 days',
                     updated_at = now() - interval '8 days'
-                FROM jobs j WHERE j.id = a.job_id AND j.company_id = :c AND a.status = 'applied'
-                  AND a.id IN (SELECT a2.id FROM applications a2 JOIN jobs j2 ON j2.id = a2.job_id
-                               WHERE j2.company_id = :c AND a2.status = 'applied'
-                               ORDER BY a2.created_at LIMIT 3)
+                WHERE a.id IN (SELECT a2.id FROM applications a2 JOIN jobs j2 ON j2.id = a2.job_id
+                               WHERE j2.company_id = :c AND a2.stage = 'new'
+                               ORDER BY a2.id LIMIT 3)
                 """
             ),
             {"c": company_id},
         )
-
-        # Two shortlist emails drafted but not sent.
-        recruiter_id = await conn.scalar(
-            text("SELECT id FROM users WHERE email = :e"), {"e": RECRUITER_EMAIL}
+        await conn.execute(
+            text(
+                """
+                UPDATE application_events e SET created_at = a.created_at
+                FROM applications a
+                WHERE e.application_id = a.id AND e.type = 'applied'
+                  AND a.created_at = now() - interval '8 days'
+                """
+            )
         )
-        shortlisted = (
-            await conn.execute(
-                text(
-                    """
-                    SELECT a.id, u.full_name, j.title FROM applications a
-                    JOIN jobs j ON j.id = a.job_id JOIN users u ON u.id = a.user_id
-                    WHERE j.company_id = :c AND a.status = 'shortlisted'
-                    ORDER BY a.created_at LIMIT 2
-                    """
-                ),
-                {"c": company_id},
+
+        # Non-tech employers: keep their jobs open and interviews upcoming.
+        await conn.execute(
+            text(
+                """
+                UPDATE jobs SET closes_at = now() + interval '7 days'
+                WHERE status = 'open' AND category <> 'it_software'
+                  AND (closes_at IS NULL OR closes_at < now() + interval '7 days')
+                """
             )
-        ).all()
-        for app_id, name, title in shortlisted:
-            await conn.execute(
-                text(
-                    "DELETE FROM email_drafts WHERE application_id = :a AND is_sent = false"
-                ),
-                {"a": app_id},
+        )
+        await conn.execute(
+            text(
+                """
+                UPDATE interviews i SET
+                    start_time = date_trunc('day', now()) + interval '1 day 5 hours',
+                    end_time = date_trunc('day', now()) + interval '1 day 5 hours 30 minutes'
+                FROM applications a JOIN jobs j ON j.id = a.job_id
+                WHERE i.application_id = a.id AND j.category <> 'it_software'
+                  AND i.start_time < now()
+                """
             )
-            await conn.execute(
-                text(
-                    "INSERT INTO email_drafts (id, application_id, subject, body, is_approved, is_sent, "
-                    "is_discarded, created_at, updated_at, generated_by_user_id) VALUES "
-                    "(gen_random_uuid(), :a, :s, :b, false, false, false, now(), now(), :r)"
-                ),
-                {
-                    "a": app_id,
-                    "s": f"Next step for {title}",
-                    "b": f"<p>Hi {name.split()[0]},</p><p>Thanks for applying. "
-                    "We'd like to talk. Please pick a time that suits you.</p>",
-                    "r": recruiter_id,
-                },
-            )
+        )
 
     await engine.dispose()
-    print("Demo data refreshed for F1Soft and", CANDIDATE_EMAIL)
+    print(
+        "Demo data refreshed for F1Soft,", CANDIDATE_EMAIL, "and the non-tech employers"
+    )
 
 
 if __name__ == "__main__":

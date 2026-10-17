@@ -18,17 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sqlalchemy import select
 
 # Register all model classes with Base.metadata so relationship() lookups resolve.
-import app.modules.auth.models  # noqa: F401
-import app.modules.companies.models  # noqa: F401
-import app.modules.profiles.models  # noqa: F401
-import app.modules.resumes.models  # noqa: F401
-import app.modules.jobs.models  # noqa: F401
-import app.modules.applications.models  # noqa: F401
-import app.modules.job_ai.models  # noqa: F401
-import app.modules.interviews.models  # noqa: F401
-import app.modules.interviews.recording_model  # noqa: F401
-import app.modules.interviews.evaluation_models  # noqa: F401
-import app.modules.outreach.models  # noqa: F401
+import app.core.model_registry  # noqa: F401
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
