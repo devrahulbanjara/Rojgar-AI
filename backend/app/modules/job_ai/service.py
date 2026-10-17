@@ -4,7 +4,8 @@ from typing import Any, cast
 from fastapi import BackgroundTasks, HTTPException, status
 from langchain_core.runnables import RunnableConfig
 from langgraph.types import Command
-from sqlalchemy import select
+from loguru import logger
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.enums import UserRole
@@ -141,7 +142,12 @@ async def create_draft(
     source_job = None
 
     if payload.source_job_id:
-        source_job = await get_source_job_context(db, payload.source_job_id)
+        source_job = await get_source_job_context(db, payload.source_job_id, company_id)
+        if source_job is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Source job not found.",
+            )
 
     draft_row = JobAIDraft(
         recruiter_id=user.id,
@@ -297,51 +303,57 @@ async def run_draft_generation_background(
         if not draft_row:
             return
 
-        company_context = await get_company_context(db, company_id)
-
-        source_job = None
-        if source_job_id:
-            source_job = await get_source_job_context(db, source_job_id)
-
-        salary_research_input = None
-        if research_salary:
-            role_for_salary = title or (source_job.get("title") if source_job else None)
-            country = company_context["company"].get("location") or "Kathmandu, Nepal"
-            if role_for_salary:
-                salary_research_input = await get_salary_research_data(
-                    role=role_for_salary,
-                    country=country,
-                )
-
-        graph = job_ai_runtime.get_graph()
-
-        config = {"configurable": {"thread_id": thread_id}}
-
-        state_input = {
-            "draft_db_id": str(draft_id),
-            "thread_id": thread_id,
-            "recruiter_id": str(recruiter_id),
-            "company_id": str(company_id),
-            "mode": mode,
-            "title": title,
-            "rough_description": rough_description,
-            "source_job": source_job,
-            "company_context": company_context,
-            "research_salary": research_salary,
-            "salary_role": None,
-            "salary_country": None,
-            "salary_research_input": salary_research_input,
-            "salary_research": None,
-            "locked_fields": locked_fields,
-            "draft": None,
-            "assumptions": [],
-            "warnings": [],
-            "missing_fields": [],
-            "validation_errors": [],
-            "human_decision": None,
-        }
-
         try:
+            company_context = await get_company_context(db, company_id)
+
+            source_job = None
+            if source_job_id:
+                source_job = await get_source_job_context(db, source_job_id, company_id)
+                if source_job is None:
+                    raise ValueError("Source job not found for this company.")
+
+            salary_research_input = None
+            if research_salary:
+                role_for_salary = title or (
+                    source_job.get("title") if source_job else None
+                )
+                country = (
+                    company_context["company"].get("location") or "Kathmandu, Nepal"
+                )
+                if role_for_salary:
+                    salary_research_input = await get_salary_research_data(
+                        role=role_for_salary,
+                        country=country,
+                    )
+
+            graph = job_ai_runtime.get_graph()
+
+            config = {"configurable": {"thread_id": thread_id}}
+
+            state_input = {
+                "draft_db_id": str(draft_id),
+                "thread_id": thread_id,
+                "recruiter_id": str(recruiter_id),
+                "company_id": str(company_id),
+                "mode": mode,
+                "title": title,
+                "rough_description": rough_description,
+                "source_job": source_job,
+                "company_context": company_context,
+                "research_salary": research_salary,
+                "salary_role": None,
+                "salary_country": None,
+                "salary_research_input": salary_research_input,
+                "salary_research": None,
+                "locked_fields": locked_fields,
+                "draft": None,
+                "assumptions": [],
+                "warnings": [],
+                "missing_fields": [],
+                "validation_errors": [],
+                "human_decision": None,
+            }
+
             result = await graph.ainvoke(
                 cast(JobAgentState, state_input),
                 config=cast(RunnableConfig, config),
@@ -364,14 +376,25 @@ async def run_draft_generation_background(
                 draft_row.assumptions = result.get("assumptions", [])
                 draft_row.warnings = result.get("warnings", [])
                 draft_row.missing_fields = result.get("missing_fields", [])
+            await db.commit()
 
         except Exception as e:
-            draft_row.status = "failed"
-            draft_row.last_interrupt = {"error": str(e)}
+            # Roll back first, then record the failure in a fresh transaction.
+            # (Setting the status before rollback discarded it, leaving the
+            # draft stuck in "drafting" forever while the UI kept polling.)
             await db.rollback()
-            return
-
-        await db.commit()
+            logger.exception("Job AI draft {} failed: {}", draft_id, type(e).__name__)
+            await db.execute(
+                update(JobAIDraft)
+                .where(JobAIDraft.id == draft_id)
+                .values(
+                    status="failed",
+                    last_interrupt={
+                        "error": "Draft generation failed. Please try again."
+                    },
+                )
+            )
+            await db.commit()
 
 
 async def get_draft(
