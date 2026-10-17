@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 import {
   ACTION_LABEL,
@@ -33,14 +33,22 @@ const SOURCE: Record<QuoteSource, string> = {
 
 type Exchange = { question: string; answer: CandidateAnswer }
 
-/** "Ask about this candidate": streams an answer with quotes from the CV. */
+/**
+ * "Ask about Nisha": one small button. Opening it shows the question box and
+ * three suggestions; answers stream in with quotes from the CV. The box closes
+ * again when it is empty and loses focus.
+ */
 export function AskBox({
   applicationId,
+  firstName,
   onDecide,
 }: {
   applicationId: string
+  firstName: string
   onDecide: (action: DecisionAction) => void
 }) {
+  const [open, setOpen] = useState(false)
+  const [askedHere, setAskedHere] = useState(false)
   const [question, setQuestion] = useState('')
   const [asked, setAsked] = useState('')
   const [streaming, setStreaming] = useState(false)
@@ -48,6 +56,8 @@ export function AskBox({
   const [last, setLast] = useState<Exchange | null>(null)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const boxId = useId()
 
   // Show the last answer from earlier visits.
   useEffect(() => {
@@ -77,16 +87,11 @@ export function AskBox({
     }
   }, [applicationId])
 
-  if (!CAPABILITIES.assistant) {
-    return (
-      <Input
-        disabled
-        placeholder="Ask about this candidate · coming soon"
-        aria-label="Ask about this candidate (coming soon)"
-        className="rounded-full bg-card"
-      />
-    )
-  }
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+
+  if (!CAPABILITIES.assistant) return null
 
   async function ask(message: string) {
     const clean = message.trim()
@@ -95,6 +100,7 @@ export function AskBox({
     const controller = new AbortController()
     abortRef.current = controller
     setAsked(clean)
+    setAskedHere(true)
     setQuestion('')
     setStreaming(true)
     setText('')
@@ -114,10 +120,18 @@ export function AskBox({
     }
   }
 
-  const shown = streaming ? null : last
+  // A past answer shows once the box is opened; a new one stays after it closes.
+  const shown = streaming || (!open && !askedHere) ? null : last
+  const label = `Ask about ${firstName}`
 
   return (
-    <div className="flex flex-col gap-3 border-t pt-4">
+    <div
+      className="flex flex-col gap-3"
+      onBlur={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+        if (!question.trim() && !streaming) setOpen(false)
+      }}
+    >
       {streaming ? (
         <AiGlow active className="p-3">
           <p className="text-xs text-muted-foreground">{asked}</p>
@@ -156,36 +170,56 @@ export function AskBox({
         </div>
       ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          void ask(question)
-        }}
-      >
-        <Input
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Ask about this candidate"
-          aria-label="Ask about this candidate"
-          disabled={streaming}
-          className="rounded-full bg-background"
-        />
-      </form>
-      {!streaming && !last ? (
-        <div className="flex flex-wrap gap-2">
-          {SUGGESTIONS.map((suggestion) => (
-            <Button
-              key={suggestion}
-              size="sm"
-              variant="outline"
-              className="font-normal"
-              onClick={() => void ask(suggestion)}
-            >
-              {suggestion}
-            </Button>
-          ))}
+      {open || streaming ? (
+        <div id={boxId} className="flex flex-col gap-2">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              void ask(question)
+            }}
+          >
+            <Input
+              ref={inputRef}
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && !question) setOpen(false)
+              }}
+              placeholder={label}
+              aria-label={label}
+              disabled={streaming}
+              className="rounded-full bg-background"
+            />
+          </form>
+          {!streaming && !askedHere ? (
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTIONS.map((suggestion) => (
+                <Button
+                  key={suggestion}
+                  size="sm"
+                  variant="outline"
+                  className="font-normal"
+                  onClick={() => void ask(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          className="self-start"
+          aria-expanded={false}
+          aria-controls={boxId}
+          onClick={() => setOpen(true)}
+        >
+          <AiSpark />
+          {askedHere ? 'Ask another question' : label}
+        </Button>
+      )}
     </div>
   )
 }
