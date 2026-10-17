@@ -120,7 +120,13 @@ export default function StepReview({
       ) : null}
 
       <p className={styles.applyModal__intro}>
-        Sharing: {shareSettings.share_profile_all ? 'full profile' : 'limited profile'} ·{' '}
+        Sharing:{' '}
+        {shareSettings.share_profile_all
+          ? 'full profile'
+          : shareSettings.share_phone || shareSettings.share_location
+            ? 'custom'
+            : 'profile, email and links (not phone or location)'}{' '}
+        ·{' '}
         <button
           aria-expanded={showSharing}
           className={styles.applyModal__inlineLink}

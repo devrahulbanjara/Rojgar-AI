@@ -48,7 +48,7 @@ export interface ShareSettingsDraft {
   share_headline_summary: boolean
 }
 
-const DEFAULT_SHARE_SETTINGS: ShareSettingsDraft = {
+const FULL_SHARE_SETTINGS: ShareSettingsDraft = {
   share_profile_all: true,
   share_avatar: true,
   share_email: true,
@@ -56,6 +56,14 @@ const DEFAULT_SHARE_SETTINGS: ShareSettingsDraft = {
   share_location: true,
   share_links: true,
   share_headline_summary: true,
+}
+
+// Privacy by default: phone number and location are shared only on opt-in.
+const DEFAULT_SHARE_SETTINGS: ShareSettingsDraft = {
+  ...FULL_SHARE_SETTINGS,
+  share_profile_all: false,
+  share_phone: false,
+  share_location: false,
 }
 
 interface UseApplyFlowOptions {
@@ -209,7 +217,7 @@ export function useApplyFlow({ jobId, onSuccess }: UseApplyFlowOptions) {
         }
 
         if (key === 'share_profile_all') {
-          return value ? DEFAULT_SHARE_SETTINGS : { ...prev, share_profile_all: false }
+          return value ? FULL_SHARE_SETTINGS : { ...prev, share_profile_all: false }
         }
 
         return {
