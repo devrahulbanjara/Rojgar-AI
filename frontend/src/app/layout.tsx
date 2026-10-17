@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { DM_Sans, EB_Garamond, Geist_Mono, Manrope, Noto_Sans_Devanagari } from 'next/font/google'
+import { DM_Sans, Manrope, Noto_Sans_Devanagari } from 'next/font/google'
 
 import '@/app/globals.css'
 import { BRAND } from '@/lib/brand'
@@ -13,7 +13,6 @@ import { SiteLayout } from '@/components/app/SiteLayout'
 // ToasterNoSSR is a Client Component that uses dynamic(ssr:false) internally,
 // which is the correct pattern for Server Component layouts.
 import ToasterNoSSR from '@/components/common/ToasterNoSSR'
-
 
 const manrope = Manrope({
   variable: '--font-manrope',
@@ -40,20 +39,6 @@ const devanagari = Noto_Sans_Devanagari({
   preload: false,
 })
 
-const ebGaramond = EB_Garamond({
-  variable: '--font-resume',
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  display: 'swap',
-  fallback: ['Garamond', 'Times New Roman', 'serif'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-mono',
-  subsets: ['latin'],
-  display: 'swap',
-})
-
 export const metadata: Metadata = {
   title: { default: BRAND.name, template: `%s · ${BRAND.name}` },
   description: BRAND.tagline,
@@ -66,10 +51,7 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale()
   return (
-    <html
-      lang={locale}
-      className={`${manrope.variable} ${dmSans.variable} ${devanagari.variable} ${ebGaramond.variable} ${geistMono.variable}`}
-    >
+    <html lang={locale} className={`${manrope.variable} ${dmSans.variable} ${devanagari.variable}`}>
       <body>
         <a
           href="#main-content"
