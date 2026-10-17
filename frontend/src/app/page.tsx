@@ -97,17 +97,10 @@ export default function Home() {
               Search
             </button>
           </form>
-          {/* Social proof */}
           <div className="homepage__proof-container">
-            <Image
-              src="/homepage/testimonial.svg"
-              width={100}
-              height={50}
-              className="homepage__proofImg"
-              alt="Testimonials Image"
-            />
             <p className="homepage__proof">
-              Trusted by <strong>12,000+</strong> job seekers. 3,400 hired last month.
+              <strong>Free for job seekers.</strong> AI explains every match, and a recruiter makes
+              every final decision.
             </p>
           </div>
         </div>

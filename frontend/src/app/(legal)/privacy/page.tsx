@@ -208,14 +208,16 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p className="legal__text">
               <strong>AI processing:</strong> Your resume and application data may be processed by
-              AI models to generate scores, feedback, and suggestions. PII redaction is applied
-              before data reaches AI models in applicable pipelines. Prompt injection guardrails
-              protect all AI interactions. All consequential AI-assisted decisions (shortlisting,
-              outreach, job edits) require explicit human confirmation before taking effect.
+              AI models to generate scores, feedback, and suggestions. Contact details (email,
+              phone, links) are removed before your resume reaches screening models. AI output is a{' '}
+              <strong>recommendation only</strong>: a recruiter reviews and confirms every
+              shortlisting or rejection decision, and every outreach email and job edit, before it
+              takes effect.
             </p>
             <p className="legal__text">
-              We do <strong>not</strong> use your data for automated decision-making that produces
-              legal or similarly significant effects without your explicit prior consent.
+              We do <strong>not</strong> make solely automated decisions about your application. You
+              can ask the hiring company for a human review of any decision by replying to their
+              email or contacting us.
             </p>
           </section>
 

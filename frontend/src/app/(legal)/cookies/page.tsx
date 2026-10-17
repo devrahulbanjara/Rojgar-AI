@@ -192,19 +192,6 @@ export default function CookiePolicyPage() {
                 .
               </li>
               <li>
-                <strong>Stripe</strong>: Payment processing for Employer subscriptions. Only loaded
-                on checkout pages. Privacy:{' '}
-                <Link
-                  href="https://stripe.com/en-np/privacy"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="legal__link"
-                >
-                  Stripe Privacy Policy
-                </Link>
-                .
-              </li>
-              <li>
                 <strong>LinkedIn / Google OAuth</strong>: Only active if you choose to sign in with
                 those services.
               </li>

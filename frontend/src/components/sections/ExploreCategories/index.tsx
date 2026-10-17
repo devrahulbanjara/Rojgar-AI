@@ -8,26 +8,6 @@ import 'swiper/css'
 import { Navigation } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
-const LOGOS = [
-  { src: '/homepage/logoMarquee/google.png', alt: 'Google' },
-  { src: '/homepage/logoMarquee/fusemachines.png', alt: 'Fusemachines' },
-  { src: '/homepage/logoMarquee/leapfrog.png', alt: 'Leapfrog' },
-  { src: '/homepage/logoMarquee/cotiviti.webp', alt: 'Cotiviti' },
-  { src: '/homepage/logoMarquee/f1soft.png', alt: 'F1Soft' },
-  { src: '/homepage/logoMarquee/logpoint.webp', alt: 'Logpoint' },
-  { src: '/homepage/logoMarquee/ingtech.svg', alt: 'Ingtech' },
-  { src: '/homepage/logoMarquee/innovateTech.svg', alt: 'Innovate Tech' },
-  { src: '/homepage/logoMarquee/LISNepal.webp', alt: 'LIS Nepal' },
-  { src: '/homepage/logoMarquee/adexLtd.webp', alt: 'Adex Ltd' },
-  { src: '/homepage/logoMarquee/cedargate.png', alt: 'Cedargate' },
-  { src: '/homepage/logoMarquee/clocoNepal.webp', alt: 'Cloco Nepal' },
-  { src: '/homepage/logoMarquee/ebPearls.jpg', alt: 'EB Pearls' },
-  { src: '/homepage/logoMarquee/infoDevelopers.webp', alt: 'Info Developers' },
-  { src: '/homepage/logoMarquee/softbenzinfosys.png', alt: 'Softbenz Infosys' },
-  { src: '/homepage/logoMarquee/vairavTech.png', alt: 'Vairav Tech' },
-  { src: '/homepage/logoMarquee/ycotek.jpg', alt: 'Ycotek' },
-]
-
 const CATEGORIES = [
   { src: '/homepage/exploreSection/cards/graphicDesign.png', label: 'Graphic Design' },
   { src: '/homepage/exploreSection/cards/uiuxDesign.png', label: 'UI/UX Design' },
@@ -40,10 +20,9 @@ const CATEGORIES = [
 ]
 
 const STATS = [
-  { num: '50+', desc: 'Job Categories' },
-  { num: '12k+', desc: 'Active Listings' },
-  { num: '500+', desc: 'Partner Companies' },
-  { num: '3,400+', desc: 'Candidates Hired' },
+  { num: 'Free', desc: 'For job seekers' },
+  { num: 'AI + You', desc: 'Explained fit feedback on every application' },
+  { num: 'Human', desc: 'A recruiter makes every final decision' },
 ]
 
 export default function ExploreCategories() {
@@ -58,18 +37,6 @@ export default function ExploreCategories() {
         className="explore__bg"
         aria-hidden="true"
       />
-
-      {/* Logos marquee - fades in as section enters viewport */}
-      <div className="explore__logos" data-reveal>
-        <div className="explore__marquee-track">
-          {/* Duplicate for seamless loop */}
-          {[...LOGOS, ...LOGOS].map((logo, i) => (
-            <div key={i} className="explore__logo">
-              <Image src={logo.src} alt={logo.alt} width={120} height={36} />
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Main split */}
       <div className="container explore__main">
