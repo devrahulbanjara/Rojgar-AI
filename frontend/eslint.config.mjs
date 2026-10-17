@@ -3,17 +3,6 @@ import nextTs from 'eslint-config-next/typescript'
 import prettier from 'eslint-config-prettier/flat'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-import { LEGACY_LUCIDE, LEGACY_RAW_ELEMENTS, LEGACY_SCSS_ROUTES } from './eslint.legacy.mjs'
-
-// Design-system code: the shared product components and every migrated screen.
-const NEW_CODE = [
-  'src/components/app/**',
-  'src/components/public/**',
-  'src/components/me/**',
-  'src/components/today/**',
-  'src/components/screens/**',
-]
-
 const RAW_ELEMENT_MESSAGE =
   'Use the shared primitive from @/components/ui (Button, Input, Select, Textarea, Table, Dialog) instead of a raw element.'
 
@@ -31,45 +20,18 @@ const rawElementRule = [
   },
 ]
 
-const LEGACY_COMPONENT_IMPORTS = [
-  '@/components/common/header',
-  '@/components/common/header/*',
-  '@/components/common/footer',
-  '@/components/common/footer/*',
-  '@/components/common/Loader',
-  '@/components/common/Loader/*',
-  '@/components/common/SegmentedControl',
-  '@/components/common/SegmentedControl/*',
-  '@/components/common/Toolbar',
-  '@/components/common/Toolbar/*',
-  '@/components/sections/*',
-  '@/components/layout/DashNavbar',
-]
-
 const ICON_MESSAGE = 'Import icons from @/components/icons.'
 
-function imports({ icons = false, scss = false, legacy = false }) {
-  return [
-    'error',
-    {
-      paths: icons
-        ? [
-            { name: 'lucide-react', message: ICON_MESSAGE },
-            { name: '@phosphor-icons/react', message: ICON_MESSAGE },
-          ]
-        : [],
-      patterns: [
-        ...(icons ? [{ group: ['@phosphor-icons/react/*'], message: ICON_MESSAGE }] : []),
-        ...(scss
-          ? [{ group: ['*.scss'], message: 'No SCSS in new code: use Tailwind tokens.' }]
-          : []),
-        ...(legacy
-          ? [{ group: LEGACY_COMPONENT_IMPORTS, message: 'Legacy component: use components/app.' }]
-          : []),
-      ],
-    },
-  ]
-}
+const restrictedImports = [
+  'error',
+  {
+    paths: [{ name: '@phosphor-icons/react', message: ICON_MESSAGE }],
+    patterns: [
+      { group: ['@phosphor-icons/react/*'], message: ICON_MESSAGE },
+      { group: ['*.scss', '*.sass'], message: 'No SCSS: use Tailwind tokens.' },
+    ],
+  },
+]
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -81,36 +43,16 @@ const eslintConfig = defineConfig([
       'react/jsx-key': 'error',
     },
   },
-  // Icons from one module, no SCSS in new routes, no legacy chrome in new code.
-  // `no-restricted-imports` blocks override each other, so the file sets are disjoint.
+  // Icons only through the registry; no SCSS anywhere.
   {
     files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/app/**', ...NEW_CODE, 'src/components/icons.ts', ...LEGACY_LUCIDE],
-    rules: { 'no-restricted-imports': imports({ icons: true }) },
-  },
-  {
-    files: ['src/app/**/*.{ts,tsx}'],
-    ignores: [...LEGACY_LUCIDE, ...LEGACY_SCSS_ROUTES],
-    rules: { 'no-restricted-imports': imports({ icons: true, scss: true }) },
-  },
-  {
-    files: LEGACY_LUCIDE.filter((file) => file.startsWith('src/app/')),
-    ignores: LEGACY_SCSS_ROUTES,
-    rules: { 'no-restricted-imports': imports({ scss: true }) },
-  },
-  {
-    files: LEGACY_SCSS_ROUTES,
-    ignores: LEGACY_LUCIDE,
-    rules: { 'no-restricted-imports': imports({ icons: true }) },
-  },
-  {
-    files: NEW_CODE,
-    rules: { 'no-restricted-imports': imports({ icons: true, scss: true, legacy: true }) },
+    ignores: ['src/components/icons.ts'],
+    rules: { 'no-restricted-imports': restrictedImports },
   },
   // Raw form/table/dialog elements only inside components/ui.
   {
-    files: ['src/app/**/*.tsx', ...NEW_CODE],
-    ignores: LEGACY_RAW_ELEMENTS,
+    files: ['src/**/*.tsx'],
+    ignores: ['src/components/ui/**'],
     rules: { 'no-restricted-syntax': rawElementRule },
   },
   prettier, // MUST be last to disable formatting conflicts
