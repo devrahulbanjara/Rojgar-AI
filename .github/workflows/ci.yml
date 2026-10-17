@@ -73,9 +73,6 @@ jobs:
       TEST_DB_PORT: "5432"
       TEST_DB_NAME: rojgarai_test
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
       AWS_ACCESS_KEY_ID_SHORTLISTING: ${{ secrets.AWS_ACCESS_KEY_ID_SHORTLISTING }}
       AWS_SECRET_ACCESS_KEY_SHORTLISTING: ${{ secrets.AWS_SECRET_ACCESS_KEY_SHORTLISTING }}
       QDRANT_URL: ${{ secrets.QDRANT_URL }}
