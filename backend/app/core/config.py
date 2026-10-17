@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     mail_from: str
     send_emails: bool = True
 
+    # SMS (infrastructures/sms). Real SMS only when environment=prod and
+    # provider=sparrow; everything else logs to the console.
+    sms_provider: Literal["console", "sparrow"] = "console"
+    sparrow_sms_token: str | None = None
+    sparrow_sms_from: str = "RojgarAI"
+    # Candidate SMS language: "ne" (Nepali, English when Nepali runs long) or "en".
+    sms_language: Literal["ne", "en"] = "ne"
+
     # Database
     db_user: str
     db_password: str
