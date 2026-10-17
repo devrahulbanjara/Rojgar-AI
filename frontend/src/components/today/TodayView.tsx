@@ -6,7 +6,6 @@ import Link from 'next/link'
 
 import { formatTime, formatWhen } from '@/lib/dates'
 import { notify } from '@/lib/notify'
-import { useUpdateRecruiterStatusMutation } from '@/store/services/companyApi'
 import {
   type RecruiterHomeData,
   type RecruiterHomeInterview,
@@ -67,54 +66,6 @@ function InterviewRow({ interview, now }: { interview: RecruiterHomeInterview; n
         </Button>
       ) : null}
     </li>
-  )
-}
-
-function JoinRequests({ requests }: { requests: RecruiterHomeData['join_requests'] }) {
-  const [updateStatus, { isLoading }] = useUpdateRecruiterStatusMutation()
-
-  async function decide(membershipId: string, name: string, status: 'active' | 'rejected') {
-    try {
-      await updateStatus({ membershipId, status }).unwrap()
-      notify.success(status === 'active' ? `${name} can now sign in` : `Declined ${name}`)
-    } catch {
-      notify.error("Couldn't update the request. Try again.")
-    }
-  }
-
-  return (
-    <Section title={`Waiting to join (${requests.length})`}>
-      <ul className="divide-y rounded-xl border bg-card">
-        {requests.map((request) => (
-          <li key={request.membership_id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <EntityAvatar name={request.recruiter_name} className="size-8" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{request.recruiter_name}</p>
-              <p className="truncate text-xs text-muted-foreground">{request.recruiter_email}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={isLoading}
-                onClick={() =>
-                  void decide(request.membership_id, request.recruiter_name, 'rejected')
-                }
-              >
-                Decline
-              </Button>
-              <Button
-                size="sm"
-                disabled={isLoading}
-                onClick={() => void decide(request.membership_id, request.recruiter_name, 'active')}
-              >
-                Approve
-              </Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Section>
   )
 }
 
@@ -179,10 +130,6 @@ export function TodayView() {
           </Button>
         }
       />
-
-      {home.is_admin && home.join_requests.length > 0 ? (
-        <JoinRequests requests={home.join_requests} />
-      ) : null}
 
       <Section
         title="Interviews today"

@@ -104,7 +104,7 @@ function ProfileCard() {
           />
         </FormField>
         <FormField id="profile-email" label="Email">
-          <Input id="profile-email" value={user.email} readOnly disabled />
+          <Input id="profile-email" value={user.email ?? ''} readOnly disabled />
         </FormField>
       </SettingsCard>
     </form>

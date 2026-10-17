@@ -152,7 +152,11 @@ function Why({
             ))}
           </ul>
         ) : null}
-        <AskBox applicationId={candidate.application_id} onDecide={onDecide} />
+        <AskBox
+          applicationId={candidate.application_id}
+          firstName={candidate.person.name.split(' ')[0]}
+          onDecide={onDecide}
+        />
       </section>
     </AiGlow>
   )

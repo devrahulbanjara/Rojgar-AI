@@ -6,13 +6,15 @@ import Link from 'next/link'
 
 import { shortDate } from '@/lib/dates'
 import { notify } from '@/lib/notify'
+import { ROLE_LABEL } from '@/lib/session'
+import type { BusinessRole } from '@/lib/types/user'
 import { useAppSelector } from '@/store/hooks'
 import {
-  type RecruiterMember,
-  useGetCompanyRecruitersQuery,
+  type TeamMember,
+  useCreateInviteMutation,
   useGetMyCompanyQuery,
-  useRemoveRecruiterMutation,
-  useUpdateRecruiterStatusMutation,
+  useGetTeamQuery,
+  useRemoveMemberMutation,
 } from '@/store/services/companyApi'
 import type { ColumnDef } from '@tanstack/react-table'
 
@@ -23,64 +25,10 @@ import { ErrorState } from '@/components/app/Feedback'
 import { PageHeader } from '@/components/app/PageHeader'
 import { PersonCell } from '@/components/app/PersonCell'
 import { Section } from '@/components/app/Section'
+import { StatusPill } from '@/components/app/StatusPill'
 import { LinkIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-
-function JoinRequests({ requests }: { requests: RecruiterMember[] }) {
-  const [updateStatus] = useUpdateRecruiterStatusMutation()
-  const [busy, setBusy] = useState<string | null>(null)
-
-  async function decide(member: RecruiterMember, status: 'active' | 'rejected') {
-    setBusy(member.membership_id)
-    try {
-      await updateStatus({ membershipId: member.membership_id, status }).unwrap()
-      notify.success(
-        status === 'active'
-          ? `${member.full_name} can now sign in`
-          : `Declined ${member.full_name}`,
-      )
-    } catch {
-      notify.error("Couldn't update the request. Try again.")
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  return (
-    <Section title={`Waiting to join (${requests.length})`}>
-      <ul className="divide-y rounded-xl border bg-card">
-        {requests.map((member) => (
-          <li key={member.membership_id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <PersonCell
-              name={member.full_name}
-              meta={member.email}
-              src={member.avatar_url}
-              className="flex-1 basis-56"
-            />
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy === member.membership_id}
-                onClick={() => void decide(member, 'rejected')}
-              >
-                Decline
-              </Button>
-              <Button
-                size="sm"
-                loading={busy === member.membership_id}
-                onClick={() => void decide(member, 'active')}
-              >
-                Approve
-              </Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Section>
-  )
-}
 
 function TeamSkeleton() {
   return (
@@ -100,44 +48,40 @@ function TeamSkeleton() {
   )
 }
 
-/** Admins: who is on the team, who is waiting to join, and an invite link. */
+/** Business team view: members, roles, remove with undo, and invite links. */
 export function TeamView() {
   const me = useAppSelector((s) => s.auth.user)
-  const { data, isLoading, isError, isFetching, refetch } = useGetCompanyRecruitersQuery()
+  const businessId = me?.active_business?.business_id
+  const isOwner = me?.active_business?.role === 'owner'
+  const { data, isLoading, isError, isFetching, refetch } = useGetTeamQuery(businessId ?? '', {
+    skip: !businessId,
+  })
   const company = useGetMyCompanyQuery().data?.data
-  const [removeRecruiter] = useRemoveRecruiterMutation()
+  const [removeMember] = useRemoveMemberMutation()
+  const [createInvite, { isLoading: creatingInvite }] = useCreateInviteMutation()
   const [hidden, setHidden] = useState<Set<string>>(new Set())
 
   const all = useMemo(() => data?.data ?? [], [data])
-  const pending = all.filter((m) => m.status === 'pending')
-  const members = useMemo(() => {
-    const active = all.filter((m) => m.status === 'active' && !hidden.has(m.membership_id))
-    if (!me || active.some((m) => m.user_id === me.id)) return active
-    // The admin isn't in the recruiters list; show them too so the count is right.
-    const self: RecruiterMember = {
-      membership_id: `self-${me.id}`,
-      user_id: me.id,
-      full_name: me.full_name,
-      email: me.email,
-      avatar_url: me.avatar_url,
-      status: 'active',
-      joined_at: me.created_at,
-    }
-    return [self, ...active]
-  }, [all, hidden, me])
+  const members = useMemo(
+    () => all.filter((m) => !hidden.has(m.membership_id)),
+    [all, hidden],
+  )
 
   async function copyInvite() {
-    if (!company) return
-    const url = `${window.location.origin}/signup?role=company&join=${encodeURIComponent(company.name)}`
+    if (!businessId) return
     try {
-      await navigator.clipboard.writeText(url)
-      notify.success('Invite link copied', 'Send it to your teammate. You approve them here.')
+      const res = await createInvite({ businessId, role: 'interviewer' }).unwrap()
+      if (res.data?.url) {
+        await navigator.clipboard.writeText(res.data.url)
+        notify.success('Invite link copied', 'Valid for 7 days. Send it to your teammate.')
+      }
     } catch {
-      notify.error(`Couldn't copy. Send this link instead: ${url}`)
+      notify.error("Couldn't create invite link. Try again.")
     }
   }
 
-  function remove(member: RecruiterMember) {
+  function remove(member: TeamMember) {
+    if (!businessId) return
     setHidden((prev) => new Set(prev).add(member.membership_id))
     const restore = () =>
       setHidden((prev) => {
@@ -148,7 +92,7 @@ export function TeamView() {
     notify.undoable(`Removed ${member.full_name}`, {
       onUndo: restore,
       onCommit: () => {
-        removeRecruiter(member.membership_id)
+        removeMember({ businessId, membershipId: member.membership_id })
           .unwrap()
           .catch(() => {
             restore()
@@ -158,16 +102,25 @@ export function TeamView() {
     })
   }
 
-  const columns: ColumnDef<RecruiterMember>[] = [
+  const columns: ColumnDef<TeamMember>[] = [
     {
       accessorKey: 'full_name',
       header: ({ column }) => <SortableHeader column={column} label="Name" />,
       cell: ({ row }) => (
         <PersonCell
           name={row.original.full_name + (row.original.user_id === me?.id ? ' (you)' : '')}
-          meta={row.original.email}
+          meta={row.original.email ?? row.original.phone}
           src={row.original.avatar_url}
         />
+      ),
+    },
+    {
+      accessorKey: 'role',
+      header: ({ column }) => <SortableHeader column={column} label="Role" />,
+      cell: ({ row }) => (
+        <StatusPill tone={row.original.role === 'owner' ? 'success' : 'neutral'}>
+          {ROLE_LABEL[row.original.role as BusinessRole] ?? row.original.role}
+        </StatusPill>
       ),
     },
     {
@@ -184,7 +137,7 @@ export function TeamView() {
       id: 'remove',
       header: () => <span className="sr-only">Remove</span>,
       cell: ({ row }) =>
-        row.original.user_id === me?.id ? null : (
+        !isOwner || row.original.user_id === me?.id ? null : (
           <div className="flex justify-end">
             <Button size="sm" variant="ghost" onClick={() => remove(row.original)}>
               Remove
@@ -204,10 +157,12 @@ export function TeamView() {
             : undefined
         }
         primaryAction={
-          <Button onClick={() => void copyInvite()} disabled={!company}>
-            <LinkIcon />
-            Copy invite link
-          </Button>
+          isOwner ? (
+            <Button onClick={() => void copyInvite()} disabled={!businessId || creatingInvite}>
+              <LinkIcon />
+              Copy invite link
+            </Button>
+          ) : undefined
         }
         secondaryAction={
           <Button asChild variant="outline">
@@ -215,8 +170,6 @@ export function TeamView() {
           </Button>
         }
       />
-
-      {pending.length ? <JoinRequests requests={pending} /> : null}
 
       {isLoading ? (
         <TeamSkeleton />
@@ -227,7 +180,7 @@ export function TeamView() {
       ) : members.length === 0 ? (
         <EmptyState>Only you so far.</EmptyState>
       ) : (
-        <Section title={pending.length ? 'Members' : null}>
+        <Section title="Members">
           <DataTable
             columns={columns}
             data={members}

@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ago } from '@/lib/dates'
 import { useAppSelector } from '@/store/hooks'
 import { type AuditLogItem, useGetCompanyAuditLogsQuery } from '@/store/services/auditApi'
-import { useGetCompanyRecruitersQuery } from '@/store/services/companyApi'
+import { type TeamMember, useGetTeamQuery } from '@/store/services/companyApi'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 
@@ -123,8 +123,9 @@ export function AuditView() {
   const area = (AREAS.find((a) => a.value === params.get('area'))?.value ?? 'all') as string
   const person = params.get('person') ?? EVERYONE
 
-  const recruiters = useGetCompanyRecruitersQuery().data
-  const members = useMemo(() => recruiters?.data ?? [], [recruiters])
+  const businessId = useAppSelector((s) => s.auth.user?.active_business?.business_id)
+  const { data: teamData } = useGetTeamQuery(businessId ?? '', { skip: !businessId })
+  const members = useMemo<TeamMember[]>(() => teamData?.data ?? [], [teamData])
   const { data, isLoading, isError, isFetching, refetch } = useGetCompanyAuditLogsQuery({
     limit: 300,
     ...(area !== 'all' ? { category: area } : {}),
@@ -133,7 +134,7 @@ export function AuditView() {
 
   const me = useAppSelector((s) => s.auth.user)
   const names = useMemo(() => {
-    const map = new Map(members.map((m) => [m.user_id, m.full_name]))
+    const map = new Map<string, string>(members.map((m) => [m.user_id, m.full_name]))
     if (me) map.set(me.id, me.full_name)
     return map
   }, [members, me])

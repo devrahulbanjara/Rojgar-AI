@@ -10,8 +10,8 @@ import { parseApiError } from '@/lib/apiError'
 import { useT } from '@/lib/i18n/client'
 import {
   consumePostAuthRedirect,
-  getRoleDashboard,
   getSafeRedirect,
+  homePathFor,
   rememberPostAuthRedirect,
 } from '@/lib/roleRoutes'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -63,7 +63,7 @@ export function LoginForm() {
     if (!isAuthenticated) return
     const hasCookie = document.cookie.split(';').some((c) => c.trim().startsWith('auth_present=1'))
     if (hasCookie) {
-      router.replace(consumePostAuthRedirect() ?? nextUrl ?? getRoleDashboard(user?.primary_role))
+      router.replace(consumePostAuthRedirect() ?? nextUrl ?? homePathFor(user))
     } else {
       dispatch(clearCredentials())
     }
@@ -95,7 +95,7 @@ export function LoginForm() {
         return
       }
       router.push(
-        consumePostAuthRedirect() ?? nextUrl ?? getRoleDashboard(result.data?.user?.primary_role),
+        consumePostAuthRedirect() ?? nextUrl ?? homePathFor(result.data?.user),
       )
     } catch (err) {
       const code = apiErrorCode(err)

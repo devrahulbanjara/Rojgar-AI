@@ -25,12 +25,14 @@ const matches = (pathname: string | null, prefixes: string[]) =>
 
 export const isAppPath = (pathname: string | null) => matches(pathname, APP_PREFIXES)
 
+import { homePathFor } from '@/lib/roleRoutes'
+
 /** Where a signed-in person works: members in the business app, applicants in /me. */
 function useSignedInHome(): string | null {
   const mounted = useMounted()
   const { user, isAuthenticated } = useAppSelector((s) => s.auth)
   if (!mounted || !isAuthenticated || !user) return null
-  return user.primary_role === 'candidate' ? '/me/applications' : '/recruiter'
+  return homePathFor(user)
 }
 
 /** Log in · Start hiring, or "Open Rojgar AI" once signed in. */
