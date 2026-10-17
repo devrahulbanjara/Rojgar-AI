@@ -93,6 +93,25 @@ function isTyping(target: EventTarget | null) {
 
 type Invite = { ids: string[]; recipients: InviteRecipient[] }
 
+// While CVs are being read, check back: every 5 s, every 30 s once nothing has
+// changed for 2 minutes, and not at all after 10 quiet minutes.
+function useReviewPolling(reviewing: number): number {
+  // The phase belongs to one `reviewing` count; a new count starts fast again.
+  const [state, setState] = useState<{ count: number; phase: 'slow' | 'off' } | null>(null)
+  useEffect(() => {
+    if (!reviewing) return
+    const slow = setTimeout(() => setState({ count: reviewing, phase: 'slow' }), 2 * 60_000)
+    const off = setTimeout(() => setState({ count: reviewing, phase: 'off' }), 10 * 60_000)
+    return () => {
+      clearTimeout(slow)
+      clearTimeout(off)
+    }
+  }, [reviewing])
+  const phase = state?.count === reviewing ? state.phase : 'fast'
+  if (!reviewing || phase === 'off') return 0
+  return phase === 'fast' ? 5000 : 30_000
+}
+
 export function JobPage({ jobId }: { jobId: string }) {
   const pathname = usePathname()
   const params = useSearchParams()
@@ -106,11 +125,10 @@ export function JobPage({ jobId }: { jobId: string }) {
 
   const job = useGetJobQuery(jobId)
   const args = { jobId, stage, sort }
-  // While CVs are being read, check back every few seconds.
   const reviewingBefore = recruiterApi.endpoints.getPipeline.useQueryState(args).data?.reviewing
   const pipeline = useGetPipelineQuery(args, {
     refetchOnMountOrArgChange: 30,
-    pollingInterval: reviewingBefore ? 5000 : 0,
+    pollingInterval: useReviewPolling(reviewingBefore ?? 0),
   })
   // currentData, not data: data still holds the previous tab while the next one loads.
   const items = useMemo(() => pipeline.currentData?.items ?? [], [pipeline.currentData])
