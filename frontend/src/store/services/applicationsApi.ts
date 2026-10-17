@@ -110,22 +110,6 @@ export interface ApplicationOutreachAuditItem {
   updated_at: string
 }
 
-export interface CandidateApplicationView {
-  id: string
-  job_id: string
-  status: ApplicationStatus
-  created_at: string
-  updated_at: string
-  job_title: string
-  company_name: string
-  company_logo_url: string | null
-  location: string | null
-  location_type: 'remote' | 'onsite' | 'hybrid'
-  score: number | null
-  strengths: string[] | null
-  weaknesses: string[] | null
-}
-
 export interface RecruiterApplicationView {
   id: string
   status: ApplicationStatus
@@ -139,34 +123,6 @@ export interface RecruiterApplicationView {
   score: number | null
   strengths: string[] | null
   weaknesses: string[] | null
-}
-
-export interface ApplicationApplicantSummary {
-  id: string
-  full_name: string
-  email: string
-}
-
-export interface LegacyApplicationListItem {
-  id: string
-  job_id: string
-  user_id: string
-  status: ApplicationStatus
-  created_at: string
-  applicant: ApplicationApplicantSummary
-}
-
-export interface ApplyToJobPayload {
-  job_id: string
-  resume_id: string
-  share_profile_all?: boolean
-  share_avatar?: boolean
-  share_email?: boolean
-  share_phone?: boolean
-  share_location?: boolean
-  share_links?: boolean
-  share_headline_summary?: boolean
-  apply_pending_patch?: boolean
 }
 
 export interface UpdateApplicationStatusPayload {
@@ -335,28 +291,6 @@ export interface SimilarCandidatesResponse {
 
 export const applicationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    /** POST /applications/ — candidate applies to a job */
-    applyToJob: builder.mutation<ApiResponse<ApplicationResponse>, ApplyToJobPayload>({
-      query: (body) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/`,
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['Applications', 'Candidates', 'Jobs'],
-    }),
-
-    /** GET /applications/me — list all applications for the current candidate */
-    getMyApplications: builder.query<
-      ApiResponse<CandidateApplicationView[]>,
-      { page?: number; size?: number } | void
-    >({
-      query: (params) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/me`,
-        params: params ?? undefined,
-      }),
-      providesTags: ['Applications'],
-    }),
-
     /** GET /applications/company/me — list all company applications, optionally filtered by job */
     getMyCompanyApplications: builder.query<
       ApiResponse<RecruiterApplicationView[]>,
@@ -384,18 +318,6 @@ export const applicationsApi = baseApi.injectEndpoints({
       query: (applicationId) =>
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/company/me/candidates/${applicationId}`,
       providesTags: (_result, _error, id) => [{ type: 'Candidates', id }],
-    }),
-
-    getApplicationById: builder.query<ApiResponse<ApplicationResponse>, string>({
-      query: (applicationId) =>
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${applicationId}`,
-      providesTags: (_result, _error, id) => [{ type: 'Applications', id }],
-    }),
-
-    getApplicationTimeline: builder.query<ApiResponse<ActivityEvent[]>, string>({
-      query: (applicationId) =>
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${applicationId}/timeline`,
-      providesTags: (_result, _error, id) => [{ type: 'Activity', id }],
     }),
 
     getCompanyCandidateTimeline: builder.query<ApiResponse<ActivityEvent[]>, string>({
@@ -439,21 +361,6 @@ export const applicationsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Applications', 'Candidates'],
     }),
 
-    respondToOffer: builder.mutation<
-      ApiResponse<null>,
-      { application_id: string; accepted: boolean }
-    >({
-      query: ({ application_id, accepted }) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${application_id}/offer/respond`,
-        method: 'POST',
-        body: { accepted },
-      }),
-      invalidatesTags: (_result, _error, { application_id }) => [
-        'Applications',
-        { type: 'Applications', id: application_id },
-      ],
-    }),
-
     /** GET /applications/company/me/candidates/search — semantic candidate search */
     semanticSearchCandidates: builder.query<
       ApiResponse<SemanticCandidateSearchResponse>,
@@ -483,18 +390,13 @@ export const applicationsApi = baseApi.injectEndpoints({
 })
 
 export const {
-  useApplyToJobMutation,
-  useGetMyApplicationsQuery,
   useGetMyCompanyApplicationsQuery,
   useGetMyCompanyCandidatesQuery,
   useGetCompanyCandidateByIdQuery,
-  useGetApplicationByIdQuery,
-  useGetApplicationTimelineQuery,
   useGetCompanyCandidateTimelineQuery,
   useGetJobApplicationsQuery,
   useUpdateApplicationReviewMutation,
   useUpdateApplicationStatusMutation,
-  useRespondToOfferMutation,
   useSemanticSearchCandidatesQuery,
   useLazySemanticSearchCandidatesQuery,
   useGetSimilarCandidatesQuery,
