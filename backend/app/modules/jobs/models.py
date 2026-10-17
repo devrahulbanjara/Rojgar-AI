@@ -4,7 +4,6 @@ from datetime import datetime
 from sqlalchemy import (
     Boolean,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
     String,
@@ -101,9 +100,6 @@ class Job(Base):
     # [{"label": str, "type": "short_text" | "yes_no", "required": bool}]
     questions: Mapped[list[dict]] = mapped_column(
         JSONB, nullable=False, default=list, server_default="[]"
-    )
-    jd_embedding: Mapped[list[float] | None] = mapped_column(
-        ARRAY(Float), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

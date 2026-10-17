@@ -5,9 +5,8 @@ import time
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
-from app.infrastructures.ai.service import EMBEDDING_DIM, AIService, EmbeddingError
+from app.infrastructures.ai.service import AIService, EmbeddingError
 from app.infrastructures.qdrant import outbox
-from app.modules.review.ml_rank import _calibrated_similarity, _semantic_similarity
 from app.shared.enums import SyncStatus
 
 
@@ -83,12 +82,3 @@ def test_outbox_backoff_then_parks():
     assert not outbox.is_due(retry, now)  # third retry waits 4 minutes
     retry.updated_at = now - timedelta(minutes=5)
     assert outbox.is_due(retry, now)
-
-
-def test_ml_similarity_ignores_vectors_from_another_model():
-    old = [0.1] * 3072
-    new = [0.1] * EMBEDDING_DIM
-    assert _semantic_similarity(old, new) is None
-    assert _semantic_similarity(new, new) == 1.0
-    assert _calibrated_similarity(0.78) == 0.5
-    assert 0.0 <= _calibrated_similarity(0.2) <= _calibrated_similarity(0.99) <= 1.0

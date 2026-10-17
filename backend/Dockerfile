@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
 # Copy app code
-COPY main.py alembic.ini entrypoint.sh ml_bouncer_model.pkl ./
+COPY main.py alembic.ini entrypoint.sh ./
 COPY app ./app
 COPY alembic ./alembic
 
@@ -35,8 +35,6 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
 
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
-# Fail the build if the ML ranking model (review tie-break) is missing.
-RUN test -s /app/ml_bouncer_model.pkl
 RUN mkdir -p /app/logs && chown -R app:app /app
 
 ENV PATH="/app/.venv/bin:$PATH" \

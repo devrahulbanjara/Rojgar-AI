@@ -37,7 +37,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.database import AsyncSessionLocal, release_connection
+from app.core.database import AsyncSessionLocal
 from app.infrastructures.guardrails.service import heuristic_injection_signal
 from app.modules.applications.models import Application, ApplicationEvent, Review
 from app.modules.entitlements import service as entitlements
@@ -122,7 +122,6 @@ class _Inputs:
     blind_text: str
     raw_text: str
     skip_guardrail: bool
-    tiebreak: float | None
 
 
 @dataclass
@@ -146,8 +145,6 @@ def ensure_review(db: AsyncSession, application_id: uuid.UUID) -> Review:
 
 async def _load_inputs(db: AsyncSession, application_id: uuid.UUID) -> _Inputs | None:
     """Load everything the review needs and render it to plain text."""
-    from app.modules.review.ml_rank import ensure_embeddings, ml_signal
-
     application = await db.scalar(
         select(Application)
         .where(Application.id == application_id)
@@ -182,16 +179,6 @@ async def _load_inputs(db: AsyncSession, application_id: uuid.UUID) -> _Inputs |
         application.user.full_name if application.user else None
     )
     answers = list(application.screening_answers or [])
-    try:
-        # Missing vectors (new or edited job, new CV) are filled here, with no
-        # transaction open while the embedding model runs.
-        await release_connection(db)
-        await ensure_embeddings(db, job, application)
-        await db.commit()
-        tiebreak = await asyncio.to_thread(ml_signal, job, application)
-    except Exception:  # noqa: BLE001 - tie-break only; never blocks a review
-        logger.exception("ML tie-break failed for application {}", application_id)
-        tiebreak = None
     return _Inputs(
         application_id=application_id,
         job_id=job.id,
@@ -208,7 +195,6 @@ async def _load_inputs(db: AsyncSession, application_id: uuid.UUID) -> _Inputs |
         ),
         raw_text=candidate_text_for_guardrail(application.resume, answers),
         skip_guardrail=flag_cleared is not None,
-        tiebreak=tiebreak,
     )
 
 
@@ -289,7 +275,7 @@ async def _evaluate(
                 {"criterion": text, "kind": kind, "result": "missing", "evidence": None}
                 for kind, text in inputs.criteria
             ],
-            rank_score=rubric.rank_score([], inputs.tiebreak),
+            rank_score=rubric.rank_score([]),
         )
 
     # What the model reads: the whole application, or its best-matching
@@ -321,7 +307,7 @@ async def _evaluate(
             summary=rubric.cap_summary(call.output.summary),
             triage=ReviewTriage.extract.value,
             usages=[call.usage],
-            rank_score=rubric.rank_score([], inputs.tiebreak),
+            rank_score=rubric.rank_score([]),
         )
 
     usages: list[Usage] = []
@@ -344,7 +330,7 @@ async def _evaluate(
         fit=rubric.derive_fit(checks),
         summary=rubric.cap_summary(summary),
         checks=checks,
-        rank_score=rubric.rank_score(checks, inputs.tiebreak),
+        rank_score=rubric.rank_score(checks),
         triage=triage,
         usages=usages,
     )

@@ -339,7 +339,6 @@ async def _is_company_member(
     return membership_id is not None
 
 
-_JD_FIELDS = {"title", "description", "must_haves", "nice_to_haves", "status"}
 _CRITERIA_FIELDS = {"must_haves", "nice_to_haves"}
 
 
@@ -404,11 +403,6 @@ async def update_job(
     if closing:
         job.closed_reason = closed_reason
         job.closed_at = _utcnow()
-
-    if _JD_FIELDS & set(update_data):
-        # Recomputed by the next review (ml_rank.ensure_embeddings), outside
-        # this request and its transaction.
-        job.jd_embedding = None
 
     email_ids: list[uuid.UUID] = []
     closed_out = 0

@@ -76,7 +76,7 @@ There is no job board, resume builder or candidate profile. Applicants never pay
   - When you add or remove a setting, update `.env.example` and `.github/workflows/ci.yml`.
 - **Async rule:**
   - Use `async def` only when everything inside is awaited.
-  - Sync libraries (Cloudinary SDK, scikit-learn, pypdf, fastembed, sync SDKs) go in a plain `def` endpoint (it runs in the threadpool) or in `await asyncio.to_thread(...)`.
+  - Sync libraries (Cloudinary SDK, pypdf, fastembed, sync SDKs) go in a plain `def` endpoint (it runs in the threadpool) or in `await asyncio.to_thread(...)`.
   - No `time.sleep` in async code.
   - No slow external calls (AI, storage, email) while holding a DB transaction: upload or call first, then write.
 - **People decide:** AI never moves an applicant's stage by itself. Every decision is recorded as an Event and goes through the undo window.

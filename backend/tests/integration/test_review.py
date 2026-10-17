@@ -117,10 +117,10 @@ class TestDeterministicFit:
         checks = _checks("met", "partly", "missing")
         assert {rubric.derive_fit(checks) for _ in range(20)} == {"possible"}
 
-    def test_ml_tiebreak_never_beats_more_evidence(self):
-        more = rubric.rank_score(_checks("met", "met"), tiebreak=0.0)
-        less = rubric.rank_score(_checks("met", "partly"), tiebreak=1.0)
-        assert more > less
+    def test_more_evidence_ranks_higher(self):
+        more = rubric.rank_score(_checks("met", "met"))
+        less = rubric.rank_score(_checks("met", "partly"))
+        assert more > less and rubric.rank_score([]) == 0.0
 
     def test_summary_capped_on_word_boundary(self):
         summary = rubric.cap_summary("word " * 60)

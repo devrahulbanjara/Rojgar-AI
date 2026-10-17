@@ -17,7 +17,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -42,10 +42,6 @@ class Application(Base):
     # NULL when the candidate applied without a CV (answers only).
     resume_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("resumes.id", ondelete="RESTRICT"), nullable=True, index=True
-    )
-    # Blind resume embedding; only an input to the review's rank_score.
-    resume_embedding: Mapped[list[float] | None] = mapped_column(
-        ARRAY(Float), nullable=True
     )
     share_profile_all: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true", nullable=False

@@ -95,21 +95,16 @@ def derive_fit(checks: list[dict]) -> str | None:
     return Fit.weak.value
 
 
-def rank_score(checks: list[dict], tiebreak: float | None) -> float:
-    """Sort key within a fit bucket: rubric points first, ML signal breaks ties.
-
-    Rubric: must-haves weigh 2, nice-to-haves 1 (0-100). The tie-break is in
-    [0, 1) so it can never lift anyone past a candidate with more evidence.
-    """
+def rank_score(checks: list[dict]) -> float:
+    """Sort key within a fit bucket: rubric points, 0-100 (must-haves weigh 2,
+    nice-to-haves 1). Equal scores keep the order people applied in."""
     weights = {"must": 2.0, "nice": 1.0}
     total = sum(weights.get(c.get("kind"), 0.0) for c in checks)
     earned = sum(
         weights.get(c.get("kind"), 0.0) * _RESULT_POINTS.get(c["result"], 0.0)
         for c in checks
     )
-    rubric = 100.0 * earned / total if total else 0.0
-    signal = 0.5 if tiebreak is None else max(0.0, min(1.0, tiebreak))
-    return round(rubric + 0.99 * signal, 4)
+    return round(100.0 * earned / total, 4) if total else 0.0
 
 
 def cap_summary(text: str | None) -> str | None:

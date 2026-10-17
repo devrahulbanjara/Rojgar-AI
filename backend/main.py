@@ -44,7 +44,6 @@ from app.modules.public.router import router as public_router
 from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
-from app.modules.review.ml_rank import assert_model_available
 from app.modules.review.service import recover_pending_reviews, waiting_review_loop
 
 setup_logging()
@@ -66,9 +65,6 @@ async def _run_startup_backlog() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Run startup and shutdown tasks for the FastAPI application lifecycle."""
-    if settings.environment == "prod":
-        # The ML tie-break model ships with the image; fail loudly if not.
-        await asyncio.to_thread(assert_model_available)
     # vector store — job/candidate search
     await qdrant_service.initialize()
     # cache layer — jobs, applications, companies

@@ -111,15 +111,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Builds the production image; the Dockerfile fails the build if the
-      # ML pre-filter model is missing.
+      # Builds the production image (dependencies must install without a
+      # compiler, as on the host).
       - name: Build image
         run: docker build -t rojgar-ai-backend:ci backend
 
       - name: Smoke-test runtime tools
         run: |
           docker run --rm --entrypoint sh rojgar-ai-backend:ci -c \
-            "test -s /app/ml_bouncer_model.pkl"
+            "alembic --help >/dev/null && python -c 'import fastapi, langchain, fastembed'"
 
   frontend:
     name: Frontend
