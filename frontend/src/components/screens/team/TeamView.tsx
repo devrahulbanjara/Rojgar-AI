@@ -4,30 +4,44 @@ import { useMemo, useState } from 'react'
 
 import Link from 'next/link'
 
+import { parseApiError } from '@/lib/apiError'
 import { shortDate } from '@/lib/dates'
 import { notify } from '@/lib/notify'
 import { ROLE_LABEL } from '@/lib/session'
 import type { BusinessRole } from '@/lib/types/user'
 import { useAppSelector } from '@/store/hooks'
 import {
+  type Invite,
   type TeamMember,
-  useCreateInviteMutation,
+  useChangeMemberRoleMutation,
+  useGetInvitesQuery,
   useGetTeamQuery,
   useRemoveMemberMutation,
+  useRevokeInviteMutation,
 } from '@/store/services/companyApi'
 import type { ColumnDef } from '@tanstack/react-table'
+import { formatDistanceToNowStrict } from 'date-fns'
 
 import { PageContainer } from '@/components/app/AppShell'
 import { DataTable, SortableHeader } from '@/components/app/DataTable'
-import { EmptyState } from '@/components/app/EmptyState'
 import { ErrorState } from '@/components/app/Feedback'
 import { PageHeader } from '@/components/app/PageHeader'
 import { PersonCell } from '@/components/app/PersonCell'
 import { Section } from '@/components/app/Section'
 import { StatusPill } from '@/components/app/StatusPill'
-import { LinkIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+
+import { InviteDialog } from './InviteDialog'
+
+const ROLES: BusinessRole[] = ['owner', 'manager', 'interviewer']
 
 function TeamSkeleton() {
   return (
@@ -47,33 +61,65 @@ function TeamSkeleton() {
   )
 }
 
-/** Business team view: members, roles, remove with undo, and invite links. */
+/** Invite links nobody has used yet, with Cancel. */
+function OpenInvites({ businessId }: { businessId: string }) {
+  const { data } = useGetInvitesQuery(businessId)
+  const [revoke] = useRevokeInviteMutation()
+  const invites = data?.data ?? []
+  if (!invites.length) return null
+
+  async function cancel(invite: Invite) {
+    try {
+      await revoke({ businessId, inviteId: invite.id }).unwrap()
+      notify.success('Invite link cancelled')
+    } catch (error) {
+      notify.error(parseApiError(error, {}, "Couldn't cancel the link. Try again.").message)
+    }
+  }
+
+  return (
+    <Section title="Invite links not used yet">
+      <ul className="divide-y rounded-xl border bg-card">
+        {invites.map((invite) => (
+          <li key={invite.id} className="flex items-center gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">{ROLE_LABEL[invite.role]}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {[
+                  invite.created_by_name ? `Made by ${invite.created_by_name}` : null,
+                  `Works for ${formatDistanceToNowStrict(new Date(invite.expires_at))} more`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => void cancel(invite)}>
+              Cancel link
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )
+}
+
+/** Owners: who is on the team, their roles, invite links; remove with Undo. */
 export function TeamView() {
   const me = useAppSelector((s) => s.auth.user)
-  const businessId = me?.active_business?.business_id
-  const isOwner = me?.active_business?.role === 'owner'
+  const business = me?.active_business
+  const businessId = business?.business_id
+  const isOwner = business?.role === 'owner'
   const { data, isLoading, isError, isFetching, refetch } = useGetTeamQuery(businessId ?? '', {
     skip: !businessId,
   })
   const [removeMember] = useRemoveMemberMutation()
-  const [createInvite, { isLoading: creatingInvite }] = useCreateInviteMutation()
+  const [changeRole] = useChangeMemberRoleMutation()
   const [hidden, setHidden] = useState<Set<string>>(new Set())
 
-  const all = useMemo(() => data?.data ?? [], [data])
-  const members = useMemo(() => all.filter((m) => !hidden.has(m.membership_id)), [all, hidden])
-
-  async function copyInvite() {
-    if (!businessId) return
-    try {
-      const res = await createInvite({ businessId, role: 'interviewer' }).unwrap()
-      if (res.data?.url) {
-        await navigator.clipboard.writeText(res.data.url)
-        notify.success('Invite link copied', 'Valid for 7 days. Send it to your teammate.')
-      }
-    } catch {
-      notify.error("Couldn't create invite link. Try again.")
-    }
-  }
+  const members = useMemo(
+    () => (data?.data ?? []).filter((m) => !hidden.has(m.membership_id)),
+    [data, hidden],
+  )
 
   function remove(member: TeamMember) {
     if (!businessId) return
@@ -84,17 +130,32 @@ export function TeamView() {
         next.delete(member.membership_id)
         return next
       })
-    notify.undoable(`Removed ${member.full_name}`, {
+    notify.undoable(`Removed ${member.full_name || member.phone}`, {
       onUndo: restore,
       onCommit: () => {
         removeMember({ businessId, membershipId: member.membership_id })
           .unwrap()
-          .catch(() => {
+          .catch((error: unknown) => {
             restore()
-            notify.error(`Couldn't remove ${member.full_name}. Try again.`)
+            notify.error(parseApiError(error, {}, "Couldn't remove them. Try again.").message)
           })
       },
     })
+  }
+
+  async function setRole(member: TeamMember, role: BusinessRole) {
+    if (!businessId || role === member.role) return
+    const before = member.role
+    const name = member.full_name || member.phone || 'They'
+    try {
+      await changeRole({ businessId, membershipId: member.membership_id, role }).unwrap()
+      notify.undoable(`${name} is now ${ROLE_LABEL[role]}`, {
+        onUndo: () =>
+          void changeRole({ businessId, membershipId: member.membership_id, role: before }),
+      })
+    } catch (error) {
+      notify.error(parseApiError(error, {}, "Couldn't change the role. Try again.").message)
+    }
   }
 
   const columns: ColumnDef<TeamMember>[] = [
@@ -103,7 +164,10 @@ export function TeamView() {
       header: ({ column }) => <SortableHeader column={column} label="Name" />,
       cell: ({ row }) => (
         <PersonCell
-          name={row.original.full_name + (row.original.user_id === me?.id ? ' (you)' : '')}
+          name={
+            (row.original.full_name || row.original.phone || 'No name yet') +
+            (row.original.user_id === me?.id ? ' (you)' : '')
+          }
           meta={row.original.email ?? row.original.phone}
           src={row.original.avatar_url}
         />
@@ -112,11 +176,32 @@ export function TeamView() {
     {
       accessorKey: 'role',
       header: ({ column }) => <SortableHeader column={column} label="Role" />,
-      cell: ({ row }) => (
-        <StatusPill tone={row.original.role === 'owner' ? 'success' : 'neutral'}>
-          {ROLE_LABEL[row.original.role as BusinessRole] ?? row.original.role}
-        </StatusPill>
-      ),
+      cell: ({ row }) =>
+        isOwner && row.original.user_id !== me?.id ? (
+          <Select
+            value={row.original.role}
+            onValueChange={(value) => void setRole(row.original, value as BusinessRole)}
+          >
+            <SelectTrigger
+              size="sm"
+              className="w-36 rounded-full bg-card"
+              aria-label={`Role of ${row.original.full_name}`}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {ROLE_LABEL[role]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <StatusPill tone={row.original.role === 'owner' ? 'success' : 'neutral'}>
+            {ROLE_LABEL[row.original.role]}
+          </StatusPill>
+        ),
     },
     {
       accessorKey: 'joined_at',
@@ -152,17 +237,16 @@ export function TeamView() {
             : undefined
         }
         primaryAction={
-          isOwner ? (
-            <Button onClick={() => void copyInvite()} disabled={!businessId || creatingInvite}>
-              <LinkIcon />
-              Copy invite link
-            </Button>
+          isOwner && business ? (
+            <InviteDialog businessId={business.business_id} businessName={business.business_name} />
           ) : undefined
         }
         secondaryAction={
-          <Button asChild variant="outline">
-            <Link href="/recruiter/audit">Audit log</Link>
-          </Button>
+          isOwner ? (
+            <Button asChild variant="outline">
+              <Link href="/recruiter/audit">Audit log</Link>
+            </Button>
+          ) : undefined
         }
       />
 
@@ -172,18 +256,16 @@ export function TeamView() {
         <ErrorState onRetry={() => void refetch()} retrying={isFetching}>
           Couldn&apos;t load your team.
         </ErrorState>
-      ) : members.length === 0 ? (
-        <EmptyState>Only you so far.</EmptyState>
       ) : (
-        <Section title="Members">
-          <DataTable
-            columns={columns}
-            data={members}
-            getRowId={(row) => row.membership_id}
-            initialSorting={[{ id: 'full_name', desc: false }]}
-          />
-        </Section>
+        <DataTable
+          columns={columns}
+          data={members}
+          getRowId={(row) => row.membership_id}
+          initialSorting={[{ id: 'full_name', desc: false }]}
+        />
       )}
+
+      {isOwner && businessId ? <OpenInvites businessId={businessId} /> : null}
     </PageContainer>
   )
 }

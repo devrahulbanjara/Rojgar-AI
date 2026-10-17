@@ -7,6 +7,13 @@ export const ROLE_LABEL: Record<BusinessRole, string> = {
   interviewer: 'Interviewer',
 }
 
+/** What each role can do, in a few words (shown when picking a role). */
+export const ROLE_CAN: Record<BusinessRole, string> = {
+  manager: 'Posts jobs and decides on applicants',
+  interviewer: 'Sees applicants for their interviews and adds notes',
+  owner: 'Everything, including the team and payments',
+}
+
 /** The business the signed-in person is working in now, if any. */
 export function useActiveBusiness() {
   return useAppSelector((s) => s.auth.user?.active_business ?? null)
