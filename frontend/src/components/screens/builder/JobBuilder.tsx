@@ -369,7 +369,11 @@ export function JobBuilder({
       },
       { id: 'must-haves', label: 'Must-haves', complete: form.must_haves.length >= 3 },
       { id: 'questions', label: 'Questions', complete: form.questions.length > 0 },
-      { id: 'publish', label: 'Publish', complete: status === 'open' },
+      {
+        id: 'publish',
+        label: status === 'draft' ? 'Publish' : 'Closing date',
+        complete: status === 'open',
+      },
     ],
     [form, status],
   )
@@ -635,7 +639,9 @@ export function JobBuilder({
         </section>
 
         <section id="publish" className="flex scroll-mt-24 flex-col gap-3 border-t pt-6">
-          <h2 className="font-heading text-base font-semibold">Publish</h2>
+          <h2 className="font-heading text-base font-semibold">
+            {status === 'draft' ? 'Publish' : 'Closing date'}
+          </h2>
           <FormField id="closes" label="Applications close on">
             <Input
               id="closes"
@@ -643,7 +649,7 @@ export function JobBuilder({
               value={closesOn}
               min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
               onChange={(event) => setClosesOn(event.target.value)}
-              className="w-full sm:w-56"
+              className="w-full sm:max-w-56"
             />
           </FormField>
         </section>

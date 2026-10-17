@@ -99,7 +99,9 @@ export function BuilderLayout({
             {saving
               ? 'Saving…'
               : savedAt
-                ? `Saved · ${formatDistanceToNowStrict(savedAt)} ago`
+                ? / seconds?$/.test(formatDistanceToNowStrict(savedAt))
+                  ? 'Saved'
+                  : `Saved · ${formatDistanceToNowStrict(savedAt)} ago`
                 : null}
           </p>
         </div>

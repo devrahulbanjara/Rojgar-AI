@@ -134,7 +134,7 @@ function Why({
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <FitPill fit={review.fit} />
-              {review.checks.length ? (
+              {review.checks.some((c) => c.evidence) ? (
                 <span className="text-xs text-muted-foreground">
                   Checked against your must-haves
                 </span>

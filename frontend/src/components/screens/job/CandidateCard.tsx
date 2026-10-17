@@ -40,6 +40,7 @@ export function CandidateCard({
   selected,
   onSelectChange,
   onDecide,
+  onOpen,
 }: {
   item: PipelineItem
   href: string
@@ -47,6 +48,7 @@ export function CandidateCard({
   selected: boolean
   onSelectChange: (selected: boolean) => void
   onDecide: (action: DecisionAction) => void
+  onOpen: () => void
 }) {
   const { primary } = actionsFor(item.stage)
   const phone = item.person.phone
@@ -64,7 +66,7 @@ export function CandidateCard({
           checked={selected}
           onCheckedChange={(value) => onSelectChange(!!value)}
           aria-label={`Select ${item.person.name}`}
-          className="mt-1 hidden lg:flex"
+          className="relative z-10 mt-1 hidden lg:flex"
         />
         <EntityAvatar
           name={item.person.name}
@@ -74,6 +76,11 @@ export function CandidateCard({
         <Link
           href={href}
           scroll={false}
+          onClick={(event) => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+            event.preventDefault()
+            onOpen()
+          }}
           aria-current={active ? 'true' : undefined}
           className="flex min-w-0 flex-1 flex-col gap-1 outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-2 focus-visible:after:ring-ring lg:after:rounded-xl"
         >
@@ -99,9 +106,9 @@ export function CandidateCard({
         </Link>
       </div>
       {phone || primary.length ? (
-        <div className="relative z-10 grid auto-cols-fr grid-flow-col gap-2 border-t px-4 py-3 lg:hidden">
+        <div className="relative z-10 flex flex-col gap-2 border-t px-4 py-3 lg:hidden">
           {phone ? (
-            <>
+            <div className="grid grid-cols-2 gap-2">
               <Button asChild variant="outline" size="lg">
                 <a href={contactLinks.call(phone)}>
                   <PhoneIcon />
@@ -111,19 +118,22 @@ export function CandidateCard({
               <Button asChild variant="outline" size="lg">
                 <a href={contactLinks.viber(phone)}>Viber</a>
               </Button>
-            </>
+            </div>
           ) : null}
-          {primary.map((action, index) => (
-            <Button
-              key={action}
-              size="lg"
-              variant={index === primary.length - 1 ? 'primary' : 'outline'}
-              onClick={() => onDecide(action)}
-              className="px-2"
-            >
-              {ACTION_LABEL[action]}
-            </Button>
-          ))}
+          {primary.length ? (
+            <div className="grid auto-cols-fr grid-flow-col gap-2">
+              {primary.map((action, index) => (
+                <Button
+                  key={action}
+                  size="lg"
+                  variant={index === primary.length - 1 ? 'primary' : 'outline'}
+                  onClick={() => onDecide(action)}
+                >
+                  {ACTION_LABEL[action]}
+                </Button>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </li>

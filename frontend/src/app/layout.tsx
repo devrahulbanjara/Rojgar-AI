@@ -1,8 +1,8 @@
-import { BRAND } from '@/lib/brand'
 import type { Metadata } from 'next'
-import { DM_Sans, EB_Garamond, Geist_Mono, Manrope } from 'next/font/google'
+import { DM_Sans, EB_Garamond, Geist_Mono, Manrope, Noto_Sans_Devanagari } from 'next/font/google'
 
 import '@/app/globals.css'
+import { BRAND } from '@/lib/brand'
 import LenisProvider from '@/providers/LenisProvider'
 import StoreProvider from '@/providers/StoreProvider'
 
@@ -32,6 +32,20 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
+// Nepali text: DM Sans and Manrope have no Devanagari glyphs, so both stacks
+// fall back to Noto Sans Devanagari for those characters only.
+const devanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+  preload: false,
+})
+
+const fontStacks = {
+  '--font-dm-sans': `${dmSans.style.fontFamily}, ${devanagari.style.fontFamily}`,
+  '--font-manrope': `${manrope.style.fontFamily}, ${devanagari.style.fontFamily}`,
+} as React.CSSProperties
+
 const ebGaramond = EB_Garamond({
   variable: '--font-resume',
   subsets: ['latin'],
@@ -60,6 +74,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${manrope.variable} ${dmSans.variable} ${ebGaramond.variable} ${geistMono.variable}`}
+      style={fontStacks}
     >
       <body>
         <a href="#main-content" className="skip-to-content">

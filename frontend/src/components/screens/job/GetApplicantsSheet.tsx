@@ -104,40 +104,6 @@ function AskPeople({ job }: { job: Job & { slug: string } }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(event) => {
-          event.preventDefault()
-          void makeLink()
-        }}
-      >
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="ref-name">Who are you asking?</Label>
-          <Input
-            id="ref-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Ram Thapa"
-            autoComplete="off"
-            className="h-11"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="ref-phone">Their phone (optional)</Label>
-          <Input
-            id="ref-phone"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            placeholder="98XXXXXXXX"
-            inputMode="tel"
-            className="h-11"
-          />
-        </div>
-        <Button type="submit" size="lg" loading={busy} disabled={!name.trim()}>
-          Make their link
-        </Button>
-      </form>
-
       {current ? (
         <div className="flex flex-col gap-3 rounded-2xl border bg-muted/40 p-4">
           <p className="text-sm font-medium">Message for {current.name}</p>
@@ -179,6 +145,40 @@ function AskPeople({ job }: { job: Job & { slug: string } }) {
           </div>
         </div>
       ) : null}
+
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void makeLink()
+        }}
+      >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ref-name">{current ? 'Ask someone else' : 'Who are you asking?'}</Label>
+          <Input
+            id="ref-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Ram Thapa"
+            autoComplete="off"
+            className="h-11"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ref-phone">Their phone (optional)</Label>
+          <Input
+            id="ref-phone"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="98XXXXXXXX"
+            inputMode="tel"
+            className="h-11"
+          />
+        </div>
+        <Button type="submit" size="lg" loading={busy} disabled={!name.trim()}>
+          Make their link
+        </Button>
+      </form>
 
       {asked.length > 1 ? (
         <ul className="flex flex-col gap-2 text-sm">

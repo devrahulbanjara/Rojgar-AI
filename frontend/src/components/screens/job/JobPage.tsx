@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 
 import {
   type Candidate,
@@ -90,7 +90,6 @@ function isTyping(target: EventTarget | null) {
 type Invite = { ids: string[]; recipients: InviteRecipient[] }
 
 export function JobPage({ jobId }: { jobId: string }) {
-  const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
   const wide = useIsWide()
@@ -120,9 +119,10 @@ export function JobPage({ jobId }: { jobId: string }) {
         if (value) next.set(key, value)
         else next.delete(key)
       }
-      router.replace(`${pathname}${next.size ? `?${next}` : ''}`, { scroll: false })
+      // Native history keeps J/K instant: no server round trip per candidate.
+      window.history.replaceState(null, '', `${pathname}${next.size ? `?${next}` : ''}`)
     },
-    [params, pathname, router],
+    [params, pathname],
   )
 
   const hrefFor = useCallback(
@@ -294,44 +294,46 @@ export function JobPage({ jobId }: { jobId: string }) {
           }
         />
 
-        <div className="flex flex-wrap items-center gap-3">
-          <FilterChips<CountedStage>
-            label="Stage"
-            value={stage}
-            onChange={(value) => {
-              setSelected(new Set())
-              setParams({ stage: value, app: null })
-            }}
-            options={STAGES.map((value) => ({
-              value,
-              label: STAGE_LABEL[value],
-              count: counts?.[value],
-            }))}
-          />
-          <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
-            <Select
-              value={sort}
-              onValueChange={(value) => setParams({ sort: value === 'newest' ? 'newest' : null })}
-            >
-              <SelectTrigger size="sm" className="rounded-full bg-card" aria-label="Sort">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent align="end">
-                <SelectItem value="best_fit">Best fit first</SelectItem>
-                <SelectItem value="newest">Newest first</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              size="sm"
-              variant="outline"
-              className="ml-auto sm:ml-0"
-              onClick={() => setAddOpen(true)}
-            >
-              <PlusIcon />
-              Add candidate
-            </Button>
+        {pipeline.isLoading || total > 0 ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <FilterChips<CountedStage>
+              label="Stage"
+              value={stage}
+              onChange={(value) => {
+                setSelected(new Set())
+                setParams({ stage: value, app: null })
+              }}
+              options={STAGES.map((value) => ({
+                value,
+                label: STAGE_LABEL[value],
+                count: counts?.[value],
+              }))}
+            />
+            <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
+              <Select
+                value={sort}
+                onValueChange={(value) => setParams({ sort: value === 'newest' ? 'newest' : null })}
+              >
+                <SelectTrigger size="sm" className="rounded-full bg-card" aria-label="Sort">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="best_fit">Best fit first</SelectItem>
+                  <SelectItem value="newest">Newest first</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-auto sm:ml-0"
+                onClick={() => setAddOpen(true)}
+              >
+                <PlusIcon />
+                Add candidate
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       {pipeline.isLoading ? (
@@ -341,14 +343,21 @@ export function JobPage({ jobId }: { jobId: string }) {
           Couldn&apos;t load applicants.
         </ErrorState>
       ) : total === 0 ? (
-        <EmptyState action={data.status === 'open' ? getApplicants : undefined}>
+        <EmptyState
+          action={
+            <Button variant="outline" onClick={() => setAddOpen(true)}>
+              <PlusIcon />
+              Add candidate
+            </Button>
+          }
+        >
           No applicants yet.
         </EmptyState>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(300px,380px)_1fr] lg:items-start">
           <div
             className={cn(
-              'flex flex-col gap-2 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:pr-1',
+              'flex flex-col gap-2 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)]',
               activeId && 'hidden lg:flex',
             )}
           >
@@ -386,12 +395,13 @@ export function JobPage({ jobId }: { jobId: string }) {
               </BulkBar>
             ) : null}
             {items.length ? (
-              <ul className="flex flex-col gap-3 lg:gap-1">
+              <ul className="-mx-1 flex flex-col gap-3 px-1 lg:min-h-0 lg:gap-1 lg:overflow-y-auto">
                 {items.map((item) => (
                   <CandidateCard
                     key={item.application_id}
                     item={item}
                     href={hrefFor(item.application_id)}
+                    onOpen={() => setParams({ app: item.application_id })}
                     active={item.application_id === activeId}
                     selected={selected.has(item.application_id)}
                     onSelectChange={(value) =>
