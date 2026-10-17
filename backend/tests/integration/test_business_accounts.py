@@ -9,6 +9,8 @@ from sqlalchemy import select
 from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import BusinessStatus, MembershipRole, MembershipStatus
 from app.modules.companies.models import BusinessInvite, Company, CompanyMembership
+from app.modules.entitlements import service as entitlements
+from app.modules.entitlements.plans import PlanId
 from app.shared.nepal import DISTRICTS
 from tests.integration.helpers import (
     auth_headers,
@@ -209,6 +211,7 @@ class TestPublishing:
 class TestTeam:
     async def test_invite_link_flow(self, client, db):
         owner, company = await make_recruiter_admin(db)
+        await entitlements.set_plan(db, company.id, PlanId.team)
         created = await client.post(
             f"/businesses/{company.id}/invites",
             json={"role": "interviewer"},
@@ -253,6 +256,7 @@ class TestTeam:
 
     async def test_expired_and_revoked_invites(self, client, db):
         owner, company = await make_recruiter_admin(db)
+        await entitlements.set_plan(db, company.id, PlanId.team)
         tokens = []
         for _ in range(2):
             resp = await client.post(

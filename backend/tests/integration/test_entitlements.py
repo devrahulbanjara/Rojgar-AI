@@ -10,7 +10,6 @@ from app.modules.entitlements.plans import SMS, PassKind, PlanId
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
-    make_pending_recruiter,
     make_recruiter_admin,
 )
 
@@ -83,25 +82,20 @@ async def test_free_plan_first_job_free_then_one_active_job(client, db):
     assert publish.status_code == 200
 
 
-async def test_seat_limit_on_approval(client, db):
+async def test_seat_limit_on_invites(client, db):
     admin, company = await make_recruiter_admin(db, email="seats@test.dev")
-    await make_pending_recruiter(db, company.id, email="r1@test.dev")
-    members = await client.get(
-        "/companies/me/recruiters", headers=auth_headers(admin.id)
-    )
-    pending = [m for m in members.json()["data"] if m["status"] == "pending"][0]
-    url = f"/companies/me/recruiters/{pending['membership_id']}/status"
+    url = f"/businesses/{company.id}/invites"
 
-    blocked = await client.patch(
-        url, json={"status": "active"}, headers=auth_headers(admin.id)
+    blocked = await client.post(
+        url, json={"role": "manager"}, headers=auth_headers(admin.id)
     )
     assert blocked.status_code == 402
 
     await entitlements.set_plan(db, company.id, PlanId.team)
-    ok = await client.patch(
-        url, json={"status": "active"}, headers=auth_headers(admin.id)
+    ok = await client.post(
+        url, json={"role": "manager"}, headers=auth_headers(admin.id)
     )
-    assert ok.status_code == 200
+    assert ok.status_code == 201
 
 
 async def test_reviews_use_pass_then_plan_then_extra_then_wait(db):
