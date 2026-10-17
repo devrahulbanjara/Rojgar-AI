@@ -2,12 +2,33 @@ import { cn } from '@/lib/utils'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
-function initials(name: string): string {
+// Legal words that say nothing about who it is ("F1Soft International Pvt. Ltd." → "FI").
+const LEGAL_WORDS = new Set([
+  'pvt',
+  'private',
+  'ltd',
+  'limited',
+  'inc',
+  'llc',
+  'llp',
+  'plc',
+  'co',
+  'corp',
+  'company',
+  'प्रा',
+  'लि',
+])
+
+/** One or two initials from a person's or business's name. */
+export function initials(name: string): string {
   const parts = name
-    .replace(/[^\p{L}\s]/gu, ' ')
+    .replace(/[^\p{L}\p{M}\p{N}\s]/gu, ' ')
     .trim()
     .split(/\s+/)
-  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? (parts.at(-1)?.[0] ?? '') : '')).toUpperCase()
+    .filter((part) => part && !LEGAL_WORDS.has(part.toLowerCase()))
+  const first = parts[0]?.[0] ?? ''
+  const last = parts.length > 1 ? (parts.at(-1)?.[0] ?? '') : ''
+  return (first + last).toUpperCase()
 }
 
 /** Person (round) or company (rounded square) avatar with initials fallback. */
