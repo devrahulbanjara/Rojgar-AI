@@ -47,13 +47,21 @@ To see each branch: `git -C ~/Documents/ConvexHire-wt-b1 log --oneline productio
 8. **Executed and completed `wave/f5` merge (commit `0142b7ae`):**
    - Resolved `icons.ts` conflict by combining platform admin/business icons with `KeyboardIcon` and brand Viber/WhatsApp icons.
    - Wired `ContactButtons` into `CandidatePanel.tsx` and exported `CallButtons` alias in `parts.tsx`.
-   - All 4 wave branches (`wave/b1`, `wave/b4`, `wave/f4`, `wave/f5`) are now fully merged!
+   - All 4 wave branches (`wave/b1`, `wave/b4`, `wave/f4`, `wave/f5`) are now fully merged into `production-hardening`!
+9. **Completed Verification Gates (Part 4):**
+   - **Frontend TypeScript (`npx tsc --noEmit`):** Fixed 22 errors across 8 components (`SiteLayout.tsx`, `LoginForm.tsx`, `SignupForm.tsx`, `AuditView.tsx`, `CandidatePanel.tsx`, `ProfileSettings.tsx`, `TeamView.tsx`, `TodayView.tsx`). Rewrote `SignupForm.tsx` to match wave/b4 auth flow. Passed with 0 errors.
+   - **Frontend Production Build (`pnpm build`):** Successfully built all 32 routes with Next.js Turbopack.
+   - **Backend Pytest (`uv run pytest`):** Cleaned up obsolete recruiter-admin schemas in `dashboards/service.py`, added missing `ApplicationStage` import in `public/service.py`, and added `ApplicationStatus`/`ShortlistStatus` backward-compatibility aliases in `shared/enums.py`. All 330 tests collected and ran with 0 errors.
+   - **Alembic Single Head:** Verified single migration head `e1267236faf8 (head)`.
+10. **Completed Merge to Main (Part 5):**
+   - Merged `production-hardening` into `main`.
 
-### Next steps:
-1. Run gates (Part 4):
-   - Backend: `cd backend && uv run pytest -p no:cacheprovider -o addopts="" -q`
-   - Frontend: `cd frontend && npx tsc --noEmit && npx -y pnpm@10 build`
-2. Merge `production-hardening` into `main` (Part 5): `git checkout main && git merge production-hardening`.
+### Status Summary:
+- **Part 1 (`wave/b1`):** Complete
+- **Part 2 (`wave/b4`):** Complete
+- **Part 3 (`wave/f4` + `wave/f5`):** Complete
+- **Part 4 (Verification Gates):** Complete
+- **Part 5 (Merge to `main`):** Complete
 
 ## How to merge the rest (in this order)
 
