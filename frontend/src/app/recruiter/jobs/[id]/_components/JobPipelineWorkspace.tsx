@@ -548,7 +548,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
       {isAppliedStage && threshold !== null && screeningStats.pending > 0 ? (
         <p className={styles.evaluationNote}>
           <span className={styles.evaluationNoteDot} aria-hidden="true" />
-          Top 20% will be re-evaluated by an agentic AI for the final shortlist.
+          The strongest matches also get a detailed AI review. You make every final decision.
         </p>
       ) : null}
 
@@ -736,8 +736,7 @@ export default function JobPipelineWorkspace({ jobId }: { jobId: string }) {
                 </>
               ) : (
                 <span className={styles.bulkBarHint}>
-                  Sorted by AI match. Select candidates, or use ✓ / ✗ on a row. Open a candidate and
-                  press S / R to decide, J / K to move.
+                  Best matches first. Tick candidates to decide in bulk, or use ✓ / ✗ on a row.
                 </span>
               )}
             </div>
