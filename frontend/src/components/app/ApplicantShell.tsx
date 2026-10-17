@@ -40,15 +40,7 @@ export function ApplicantShell({ children }: { children: ReactNode }) {
             <Logo variant="mark" className="size-8 sm:hidden" />
             <Logo className="hidden h-7 sm:block" />
           </Link>
-          <nav aria-label="Main" className="min-w-0 flex-1">
-            <Link
-              href="/me/applications"
-              aria-current="page"
-              className="truncate text-sm font-medium text-foreground"
-            >
-              {t.nav.myApplications}
-            </Link>
-          </nav>
+          <div className="flex-1" />
           <LanguageToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
