@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 import { notify } from '@/lib/notify'
+import { consumePostAuthRedirect } from '@/lib/roleRoutes'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useCompleteOnboardingMutation } from '@/store/services/profileApi'
 import { updateUser } from '@/store/slices/authSlice'
@@ -98,7 +99,7 @@ function OnboardingForm() {
         notify.success('Welcome to ConvexHire!')
 
         // Since user roles dictate dashboards, redirect to home which then routes identically
-        router.replace('/candidate')
+        router.replace(consumePostAuthRedirect() ?? '/candidate')
       } else {
         notify.error(result.message || 'Something went wrong')
       }

@@ -9,6 +9,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { applyFieldErrors, parseApiError } from '@/lib/apiError'
 import { notify } from '@/lib/notify'
 import {
+  consumePostAuthRedirect,
+  getSafeRedirect,
+  rememberPostAuthRedirect,
+} from '@/lib/roleRoutes'
+import {
   initiateGoogleOAuth,
   useGoogleRegisterMutation,
   useSignupMutation,
@@ -290,6 +295,7 @@ function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isOAuth = searchParams.get('oauth') === 'true'
+  const nextUrl = getSafeRedirect(searchParams.get('next'))
   const setupToken = searchParams.get('setup_token') || ''
   let userInfo: { email?: string; full_name?: string } = {}
   try {
@@ -343,6 +349,12 @@ function SignupContent() {
     }
   }, [])
 
+  // Keep the job the visitor clicked through email verification (new tab) and
+  // the first login, so they land back on it instead of a generic dashboard.
+  useEffect(() => {
+    rememberPostAuthRedirect(nextUrl)
+  }, [nextUrl])
+
   function startResendCooldown() {
     setResendCooldown(60)
     resendTimerRef.current = setInterval(() => {
@@ -390,7 +402,7 @@ function SignupContent() {
         }).unwrap()
 
         if (result.success) {
-          router.push('/candidate')
+          router.push(consumePostAuthRedirect() ?? '/candidate')
         } else {
           notify.error(result.message ?? 'Something went wrong. Please try again.')
         }
@@ -1166,7 +1178,10 @@ function SignupContent() {
         {/* Switch to login */}
         {(step === 'credentials' || step === 'intent') && (
           <p className="auth__switch">
-            Already have an account? <Link href="/login">Sign in</Link>
+            Already have an account?{' '}
+            <Link href={nextUrl ? `/login?next=${encodeURIComponent(nextUrl)}` : '/login'}>
+              Sign in
+            </Link>
           </p>
         )}
       </div>
