@@ -25,7 +25,8 @@ const ROLE_LABEL = {
   candidate: 'Candidate',
 } as const
 
-export function useLogout() {
+/** Signs out everywhere and goes to `to` (log in by default). */
+export function useLogout(to = '/login') {
   const router = useRouter()
   const dispatch = useAppDispatch()
   const [logout] = useLogoutMutation()
@@ -36,7 +37,7 @@ export function useLogout() {
       // The mutation clears local credentials whether or not the call succeeds.
     }
     dispatch(baseApi.util.resetApiState())
-    router.replace('/login')
+    router.replace(to)
   }
 }
 

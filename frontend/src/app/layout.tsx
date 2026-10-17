@@ -1,8 +1,10 @@
-import { BRAND } from '@/lib/brand'
 import type { Metadata } from 'next'
-import { DM_Sans, EB_Garamond, Geist_Mono, Manrope } from 'next/font/google'
+import { DM_Sans, EB_Garamond, Geist_Mono, Manrope, Noto_Sans_Devanagari } from 'next/font/google'
 
 import '@/app/globals.css'
+import { BRAND } from '@/lib/brand'
+import { LocaleProvider } from '@/lib/i18n/client'
+import { getLocale } from '@/lib/i18n/server'
 import LenisProvider from '@/providers/LenisProvider'
 import StoreProvider from '@/providers/StoreProvider'
 
@@ -32,6 +34,16 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
+// Nepali text: DM Sans and Manrope have no Devanagari, so the browser falls back
+// to this per glyph (it is second in both stacks in globals.css). Not preloaded:
+// unicode-range means it only downloads on pages that show Devanagari.
+const devanagari = Noto_Sans_Devanagari({
+  variable: '--font-devanagari',
+  subsets: ['devanagari'],
+  display: 'swap',
+  preload: false,
+})
+
 const ebGaramond = EB_Garamond({
   variable: '--font-resume',
   subsets: ['latin'],
@@ -51,27 +63,30 @@ export const metadata: Metadata = {
   description: BRAND.tagline,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
   return (
     <html
-      lang="en"
-      className={`${manrope.variable} ${dmSans.variable} ${ebGaramond.variable} ${geistMono.variable}`}
+      lang={locale}
+      className={`${manrope.variable} ${dmSans.variable} ${devanagari.variable} ${ebGaramond.variable} ${geistMono.variable}`}
     >
       <body>
         <a href="#main-content" className="skip-to-content">
           Skip to main content
         </a>
-        <StoreProvider>
-          <OfflineBar />
-          <LenisProvider>
-            <SiteLayout>{children}</SiteLayout>
-          </LenisProvider>
-          <ToasterNoSSR />
-        </StoreProvider>
+        <LocaleProvider locale={locale}>
+          <StoreProvider>
+            <OfflineBar />
+            <LenisProvider>
+              <SiteLayout>{children}</SiteLayout>
+            </LenisProvider>
+            <ToasterNoSSR />
+          </StoreProvider>
+        </LocaleProvider>
       </body>
     </html>
   )

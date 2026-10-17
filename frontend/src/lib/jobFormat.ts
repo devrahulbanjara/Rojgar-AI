@@ -1,27 +1,45 @@
-import type { LocationType, PublicJobSummary } from '@/lib/publicApi'
-
-const LOCATION_TYPE: Record<LocationType, string> = {
-  remote: 'Remote',
-  hybrid: 'Hybrid',
-  onsite: 'On-site',
-}
-
-export function locationTypeLabel(type: LocationType): string {
-  return LOCATION_TYPE[type] ?? type
-}
+import type { Dict } from '@/lib/i18n'
+import type { PublicJobSummary } from '@/lib/publicApi'
+import { differenceInCalendarDays } from 'date-fns'
 
 const fmt = (n: number) => n.toLocaleString('en-IN')
 
-/** "NPR 120,000 – 180,000" · "From NPR 120,000" · null */
-export function salaryLabel(job: Pick<PublicJobSummary, 'salary_min' | 'salary_max' | 'currency'>) {
-  const { salary_min: min, salary_max: max, currency } = job
-  if (min && max) return `${currency} ${fmt(min)} – ${fmt(max)}`
-  if (min) return `From ${currency} ${fmt(min)}`
-  if (max) return `Up to ${currency} ${fmt(max)}`
-  return null
+/** "NPR 25,000 – 35,000 / month" · "From रु 25,000 / महिना" · null */
+export function salaryLabel(
+  job: Pick<PublicJobSummary, 'salary_min' | 'salary_max' | 'currency'>,
+  t: Dict,
+): string | null {
+  const { salary_min: min, salary_max: max } = job
+  const currency = job.currency === 'NPR' ? t.job.npr : job.currency
+  const amount =
+    min && max
+      ? `${currency} ${fmt(min)} – ${fmt(max)}`
+      : min
+        ? t.job.from(`${currency} ${fmt(min)}`)
+        : max
+          ? t.job.upTo(`${currency} ${fmt(max)}`)
+          : null
+  return amount ? `${amount} ${t.job.perMonth}` : null
 }
 
-/** "Kathmandu · Hybrid" */
-export function placeLabel(job: Pick<PublicJobSummary, 'location' | 'location_type'>) {
-  return [job.location, locationTypeLabel(job.location_type)].filter(Boolean).join(' · ')
+/** "Pokhara · On-site" */
+export function placeLabel(job: Pick<PublicJobSummary, 'location' | 'location_type'>, t: Dict) {
+  return [job.location, t.job[job.location_type]].filter(Boolean).join(' · ')
+}
+
+/** "Closes in 5 days" · null when there is no closing date. */
+export function closingLabel(iso: string | null | undefined, t: Dict): string | null {
+  if (!iso) return null
+  const days = differenceInCalendarDays(new Date(iso), new Date())
+  if (days < 0) return t.job.closed
+  if (days === 0) return t.job.closesToday
+  if (days === 1) return t.job.closesTomorrow
+  return t.job.closesIn(days)
+}
+
+/** Place · salary · closing, for a job's one-line facts. */
+export function jobFacts(job: PublicJobSummary, t: Dict): string[] {
+  return [placeLabel(job, t), salaryLabel(job, t), closingLabel(job.expires_at, t)].filter(
+    (fact): fact is string => !!fact,
+  )
 }
