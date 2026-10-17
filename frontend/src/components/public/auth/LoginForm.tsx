@@ -15,7 +15,7 @@ import {
   rememberPostAuthRedirect,
 } from '@/lib/roleRoutes'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'
+import { initiateGoogleOAuth, useAuthOptions, useLoginMutation } from '@/store/services/authApi'
 import { clearCredentials } from '@/store/slices/authSlice'
 
 import type { BaseUser } from '@/lib/types/user'
@@ -41,12 +41,41 @@ export function useAfterSignIn(nextUrl: string | null) {
     router.push(consumePostAuthRedirect() ?? nextUrl ?? homePathFor(user))
 }
 
-/** "Use email instead" / "Use mobile number instead" under the form. */
-export function SwitchMethod({ label, onClick }: { label: string; onClick: () => void }) {
+/**
+ * Under the form: switch to the mobile code (only while SMS is on) and
+ * Continue with Google (only while Google sign-in is on).
+ */
+export function OtherWays({
+  method,
+  onSwitch,
+}: {
+  method: 'phone' | 'email'
+  onSwitch: () => void
+}) {
+  const t = useT()
+  const { sms, google } = useAuthOptions()
   return (
-    <Button type="button" variant="link" className="h-auto self-center p-0" onClick={onClick}>
-      {label}
-    </Button>
+    <>
+      {sms ? (
+        <Button type="button" variant="link" className="h-auto self-center p-0" onClick={onSwitch}>
+          {method === 'phone' ? t.auth.phone.useEmail : t.auth.phone.usePhone}
+        </Button>
+      ) : null}
+      {google ? (
+        <>
+          <AuthDivider />
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={() => initiateGoogleOAuth()}
+          >
+            <GoogleIcon className="size-4" />
+            {t.auth.google}
+          </Button>
+        </>
+      ) : null}
+    </>
   )
 }
 
@@ -64,9 +93,8 @@ export function LoginForm() {
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
   const [login, { isLoading }] = useLoginMutation()
   const afterSignIn = useAfterSignIn(nextUrl)
-  const [method, setMethod] = useState<'phone' | 'email'>(
-    searchParams.get('email') ? 'email' : 'phone',
-  )
+  const { sms } = useAuthOptions()
+  const [method, setMethod] = useState<'phone' | 'email'>('email')
 
   const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [password, setPassword] = useState('')
@@ -181,7 +209,7 @@ export function LoginForm() {
         </Alert>
       ) : null}
 
-      {method === 'phone' ? (
+      {sms && method === 'phone' ? (
         <PhoneCodeForm onSignedIn={(data) => afterSignIn(data.user)} />
       ) : (
             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
@@ -233,20 +261,13 @@ export function LoginForm() {
       </form>
       )}
 
-      <SwitchMethod
-        label={method === 'phone' ? t.auth.phone.useEmail : t.auth.phone.usePhone}
-        onClick={() => {
+      <OtherWays
+        method={method}
+        onSwitch={() => {
           setFormError(null)
           setMethod(method === 'phone' ? 'email' : 'phone')
         }}
       />
-
-      <AuthDivider />
-
-      <Button variant="outline" size="lg" className="w-full" onClick={() => initiateGoogleOAuth()}>
-        <GoogleIcon className="size-4" />
-        {t.auth.google}
-      </Button>
     </AuthCard>
   )
 }

@@ -8,19 +8,19 @@ import { useSearchParams } from 'next/navigation'
 import { parseApiError } from '@/lib/apiError'
 import { useT } from '@/lib/i18n/client'
 import { getSafeRedirect, rememberPostAuthRedirect } from '@/lib/roleRoutes'
-import { initiateGoogleOAuth, useSignupMutation } from '@/store/services/authApi'
+import { useAuthOptions, useSignupMutation } from '@/store/services/authApi'
 
 import { FormField } from '@/components/app/FormField'
 import { PasswordInput } from '@/components/app/PasswordInput'
 import { PasswordRules, passwordMeetsRules } from '@/components/app/PasswordRules'
-import { AlertIcon, GoogleIcon } from '@/components/icons'
+import { AlertIcon } from '@/components/icons'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-import { AuthCard, AuthDivider } from './AuthCard'
+import { AuthCard } from './AuthCard'
 import { CheckEmail } from './CheckEmail'
-import { SwitchMethod, useAfterSignIn } from './LoginForm'
+import { OtherWays, useAfterSignIn } from './LoginForm'
 import { PhoneCodeForm } from './PhoneCodeForm'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -34,7 +34,8 @@ export function SignupForm() {
 
   const [signup, { isLoading }] = useSignupMutation()
   const afterSignIn = useAfterSignIn(nextUrl)
-  const [method, setMethod] = useState<'phone' | 'email'>('phone')
+  const { sms } = useAuthOptions()
+  const [method, setMethod] = useState<'phone' | 'email'>('email')
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -133,7 +134,7 @@ export function SignupForm() {
         </Alert>
       ) : null}
 
-      {method === 'phone' ? (
+      {sms && method === 'phone' ? (
         <PhoneCodeForm onSignedIn={(data) => afterSignIn(data.user)} />
       ) : (
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
@@ -188,20 +189,13 @@ export function SignupForm() {
       </form>
       )}
 
-      <SwitchMethod
-        label={method === 'phone' ? t.auth.phone.useEmail : t.auth.phone.usePhone}
-        onClick={() => {
+      <OtherWays
+        method={method}
+        onSwitch={() => {
           setFormError(null)
           setMethod(method === 'phone' ? 'email' : 'phone')
         }}
       />
-
-      <AuthDivider />
-
-      <Button variant="outline" size="lg" className="w-full" onClick={() => initiateGoogleOAuth()}>
-        <GoogleIcon className="size-4" />
-        {t.auth.google}
-      </Button>
 
       <p className="text-center text-xs text-muted-foreground">
         {t.auth.signup.agree}{' '}

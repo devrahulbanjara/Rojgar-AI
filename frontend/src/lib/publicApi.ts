@@ -100,6 +100,8 @@ export type GuestApplicationCreated = {
   phone: string
   email?: string | null
   status_link_sent: boolean
+  /** Private link to this application's status page, for the applicant to keep. */
+  status_url?: string | null
 }
 
 export type InterviewInfo = {
@@ -129,7 +131,11 @@ export type MyApplication = Omit<ApplicationStatusView, 'can_withdraw'> & {
 }
 
 export type WithdrawResult = { withdrawn: boolean; data_deleted: boolean }
-export type RecommendSent = { sent: boolean }
+export type RecommendSent = {
+  sent: boolean
+  /** The suggested person's own apply link, for the suggester to send them. */
+  job_url?: string | null
+}
 export type MagicLinkSent = { sent: boolean }
 export type ScreeningAnswer = { question: string; answer: string }
 
@@ -257,13 +263,9 @@ export const publicApi = {
     ),
 
   withdraw: (token: string) =>
-    request<WithdrawResult>(
-      '/public/applications/withdraw',
-      json({ token }),
-    ),
+    request<WithdrawResult>('/public/applications/withdraw', json({ token })),
 
-  magicLink: (email: string) =>
-    request<MagicLinkSent>('/public/auth/magic-link', json({ email })),
+  magicLink: (email: string) => request<MagicLinkSent>('/public/auth/magic-link', json({ email })),
 
   myApplications: (accessToken?: string) =>
     request<MyApplication[]>(

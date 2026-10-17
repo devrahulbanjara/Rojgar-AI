@@ -94,6 +94,7 @@ export async function JobPage({
           >
             <ApplyForm
               slug={job.slug}
+              jobTitle={job.title}
               companyName={job.company.name}
               questions={job.questions}
               source={source}

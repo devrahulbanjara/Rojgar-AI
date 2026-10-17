@@ -66,7 +66,10 @@ export default function TermsPage() {
           </li>
           <li>Post only real jobs that are open, with honest pay and place.</li>
           <li>Use applicants&apos; details only to hire for the job they applied to.</li>
-          <li>Answer every applicant. {BRAND.name} sends the message for you when you decide.</li>
+          <li>
+            Answer every applicant. When you decide, {BRAND.name} updates their status page and
+            emails them if they gave an email.
+          </li>
           <li>
             Keep your login safe. The owner of a business is responsible for the people they invite
             to its team.

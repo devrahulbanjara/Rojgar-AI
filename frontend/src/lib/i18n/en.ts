@@ -40,6 +40,14 @@ export const en = {
     crashed: 'Something went wrong.',
   },
 
+  send: {
+    viber: 'Send on Viber',
+    whatsapp: 'Send on WhatsApp',
+    toMyViber: 'Send to my Viber',
+    toMyWhatsapp: 'Send to my WhatsApp',
+    copy: 'Copy link',
+  },
+
   cookie: { line: 'We only use cookies that keep you signed in.', details: 'Details', ok: 'OK' },
 
   stage: {
@@ -105,7 +113,7 @@ export const en = {
   apply: {
     title: 'Apply',
     name: 'Your name',
-    phone: 'Mobile number',
+    phone: 'Phone (the business will call or Viber you)',
     email: 'Email',
     cv: 'CV',
     addCv: 'Add CV or photo of CV',
@@ -130,8 +138,11 @@ export const en = {
     submit: 'Send application',
     sentTitle: 'Application sent',
     alreadyTitle: 'You already applied',
-    sentSms: (phone: string) => `We'll send updates by SMS to ${phone}.`,
-    sentEmail: (email: string) => `We also emailed a status link to ${email}.`,
+    sentEmail: 'We emailed you a link to check your application.',
+    sentAgainEmail: 'We emailed you the link again.',
+    sentAgainNoEmail: 'Open the link you saved when you applied.',
+    saveLink: 'Save this link to check your application later.',
+    statusText: (job: string, company: string) => `My application: ${job} at ${company}`,
     replyEither: (business: string) => `${business} will reply either way.`,
     seeAll: 'See all my applications',
   },
@@ -148,8 +159,7 @@ export const en = {
     submit: 'Send suggestion',
     sameNumber: 'Their number must be different from yours.',
     doneTitle: 'Thank you!',
-    doneLine: (name: string, company: string) =>
-      `We'll send ${name} the job link by SMS. ${company} decides who to hire.`,
+    doneLine: (name: string) => `Now send ${name} the job link so they can apply.`,
     another: 'Suggest another person',
     seeJob: 'See the job',
   },
@@ -254,7 +264,7 @@ export const en = {
         },
         {
           title: 'Choose who to meet',
-          line: 'Every application is read and sorted with the reason. You decide, and everyone hears back by SMS.',
+          line: 'Every application is read and sorted with the reason. You decide, and everyone hears back.',
         },
       ],
     },
@@ -286,7 +296,7 @@ export const en = {
           name: 'Job Pass',
           price: 'NPR 999',
           period: 'job',
-          line: 'One job for 45 days. 100 applications read, SMS updates to applicants.',
+          line: 'One job for 45 days. 100 applications read for you.',
         },
         {
           id: 'plus',

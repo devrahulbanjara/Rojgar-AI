@@ -99,9 +99,6 @@ export function MyApplications() {
   )
 }
 
-/** "Hotel Thamel Park" → "Hotel"; legal words like "Pvt. Ltd." never become initials. */
-const avatarName = (company: string) => company.split(/\s+/)[0] ?? company
-
 function ApplicationRow({ app }: { app: MyApplication }) {
   const t = useT()
   const locale = useLocale()
@@ -109,7 +106,7 @@ function ApplicationRow({ app }: { app: MyApplication }) {
 
   return (
     <li className="relative flex items-start gap-3 px-4 py-4 transition-colors hover:bg-accent sm:px-5">
-      <EntityAvatar name={avatarName(app.company_name)} src={app.company_logo_url} kind="company" />
+      <EntityAvatar name={app.company_name} src={app.company_logo_url} kind="company" />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <Link
           href={`/applications/status?token=${encodeURIComponent(app.status_token)}`}

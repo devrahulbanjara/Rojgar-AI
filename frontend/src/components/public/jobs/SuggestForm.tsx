@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
+import { SendLink } from '../shared/SendLink'
 import { PhoneInput, toE164 } from './PhoneInput'
 
 type Field = 'referrerName' | 'referrerPhone' | 'name' | 'phone'
@@ -21,11 +22,13 @@ type Field = 'referrerName' | 'referrerPhone' | 'name' | 'phone'
 /** "Suggest someone you know": who you are, who they are, why. */
 export function SuggestForm({
   slug,
+  jobTitle,
   companyName,
   refToken,
   referrer,
 }: {
   slug: string
+  jobTitle: string
   companyName: string
   refToken?: string
   /** The share link's owner, who is most likely the one suggesting. */
@@ -40,7 +43,7 @@ export function SuggestForm({
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
-  const [doneFor, setDoneFor] = useState<string | null>(null)
+  const [done, setDone] = useState<{ name: string; jobUrl: string } | null>(null)
 
   function validate() {
     const next: Partial<Record<Field, string>> = {}
@@ -66,7 +69,7 @@ export function SuggestForm({
     }
     setSending(true)
     try {
-      await publicApi.recommend(slug, {
+      const result = await publicApi.recommend(slug, {
         referrerName: referrerName.trim(),
         referrerPhone: referrerPhone.trim() ? toE164(referrerPhone)! : undefined,
         name: name.trim(),
@@ -74,7 +77,11 @@ export function SuggestForm({
         note: note.trim() || undefined,
         ref: refToken,
       })
-      setDoneFor(name.trim())
+      const fallback = `/jobs/${slug}?src=referral${refToken ? `&ref=${encodeURIComponent(refToken)}` : ''}`
+      setDone({
+        name: name.trim(),
+        jobUrl: result.job_url ?? new URL(fallback, window.location.origin).toString(),
+      })
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t.common.error)
     } finally {
@@ -82,23 +89,23 @@ export function SuggestForm({
     }
   }
 
-  if (doneFor) {
+  if (done) {
     return (
       <div className="flex flex-col gap-4" role="status">
         <CheckCircleIcon className="size-7 text-success" weight="fill" aria-hidden="true" />
         <h2 className="font-heading text-xl font-bold text-foreground">{t.suggest.doneTitle}</h2>
-        <p className="text-sm text-foreground">{t.suggest.doneLine(doneFor, companyName)}</p>
+        <p className="text-sm text-foreground">{t.suggest.doneLine(done.name)}</p>
+        <SendLink text={t.careers.shareText(jobTitle, companyName)} url={done.jobUrl} />
         <div className="flex flex-col gap-2">
           <Button
-            size="lg"
-            variant="outline"
+            variant="ghost"
             className="w-full"
             onClick={() => {
               // Keep who is suggesting; clear the person suggested.
               setName('')
               setPhone('')
               setNote('')
-              setDoneFor(null)
+              setDone(null)
             }}
           >
             {t.suggest.another}

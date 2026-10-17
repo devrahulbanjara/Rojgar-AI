@@ -30,7 +30,7 @@ type State =
   | { kind: 'ready'; view: ApplicationStatusView }
   | { kind: 'withdrawn' }
 
-/** What an applicant sees from the status link in their SMS or email. */
+/** What an applicant sees from their private status link (saved after applying, or emailed). */
 export function StatusView({ token }: { token: string | null }) {
   const t = useT()
   const locale = useLocale()

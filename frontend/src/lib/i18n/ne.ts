@@ -42,6 +42,14 @@ export const ne: Dict = {
     crashed: 'केही मिलेन।',
   },
 
+  send: {
+    viber: 'Viber मा पठाउनुहोस्',
+    whatsapp: 'WhatsApp मा पठाउनुहोस्',
+    toMyViber: 'मेरो Viber मा पठाउनुहोस्',
+    toMyWhatsapp: 'मेरो WhatsApp मा पठाउनुहोस्',
+    copy: 'लिंक कपी गर्नुहोस्',
+  },
+
   cookie: { line: 'हामी साइन इन राख्ने कुकीज मात्र प्रयोग गर्छौं।', details: 'विवरण', ok: 'ठीक छ' },
 
   stage: {
@@ -107,7 +115,7 @@ export const ne: Dict = {
   apply: {
     title: 'आवेदन दिनुहोस्',
     name: 'तपाईंको नाम',
-    phone: 'मोबाइल नम्बर',
+    phone: 'फोन नम्बर (व्यवसायले फोन वा भाइबर गर्नेछ)',
     email: 'इमेल',
     cv: 'CV',
     addCv: 'CV वा CV को फोटो थप्नुहोस्',
@@ -132,8 +140,11 @@ export const ne: Dict = {
     submit: 'आवेदन पठाउनुहोस्',
     sentTitle: 'आवेदन पठाइयो',
     alreadyTitle: 'तपाईंले पहिल्यै आवेदन दिनुभएको छ',
-    sentSms: (phone: string) => `${phone} मा SMS बाट खबर पठाउनेछौं।`,
-    sentEmail: (email: string) => `${email} मा पनि आवेदन हेर्ने लिंक पठाएका छौं।`,
+    sentEmail: 'आवेदन हेर्ने लिंक तपाईंको इमेलमा पठाएका छौं।',
+    sentAgainEmail: 'लिंक फेरि तपाईंको इमेलमा पठाएका छौं।',
+    sentAgainNoEmail: 'आवेदन दिँदा राखेको लिंक खोल्नुहोस्।',
+    saveLink: 'पछि आवेदन हेर्न यो लिंक राख्नुहोस्।',
+    statusText: (job: string, company: string) => `मेरो आवेदन: ${company} मा ${job}`,
     replyEither: (business: string) => `${business} ले जे भए पनि जवाफ दिनेछ।`,
     seeAll: 'मेरा सबै आवेदन हेर्नुहोस्',
   },
@@ -150,8 +161,7 @@ export const ne: Dict = {
     submit: 'सुझाव पठाउनुहोस्',
     sameNumber: 'उहाँको नम्बर तपाईंको भन्दा फरक हुनुपर्छ।',
     doneTitle: 'धन्यवाद!',
-    doneLine: (name: string, company: string) =>
-      `${name} लाई जागिरको लिंक SMS बाट पठाउनेछौं। कसलाई राख्ने भन्ने ${company} ले निर्णय गर्छ।`,
+    doneLine: (name: string) => `अब ${name} लाई आवेदन दिन जागिरको लिंक पठाउनुहोस्।`,
     another: 'अर्को मान्छे सुझाउनुहोस्',
     seeJob: 'जागिर हेर्नुहोस्',
   },
@@ -256,7 +266,7 @@ export const ne: Dict = {
         },
         {
           title: 'कसलाई भेट्ने, छान्नुहोस्',
-          line: 'हरेक आवेदन पढेर कारणसहित मिलाइन्छ। निर्णय तपाईं गर्नुहुन्छ, र सबैले SMS बाट जवाफ पाउँछन्।',
+          line: 'हरेक आवेदन पढेर कारणसहित मिलाइन्छ। निर्णय तपाईं गर्नुहुन्छ, र सबैले जवाफ पाउँछन्।',
         },
       ],
     },
@@ -289,7 +299,7 @@ export const ne: Dict = {
           name: 'Job Pass',
           price: 'रु 999',
           period: 'job',
-          line: 'एउटा जागिर ४५ दिन। १०० आवेदन पढिन्छ, आवेदकलाई SMS खबर।',
+          line: 'एउटा जागिर ४५ दिन। १०० आवेदन पढिन्छ।',
         },
         {
           id: 'plus',

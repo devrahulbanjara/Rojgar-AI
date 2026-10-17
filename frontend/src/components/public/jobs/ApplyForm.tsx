@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
+import { SendLink } from '../shared/SendLink'
 import { PhoneInput, toE164 } from './PhoneInput'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -25,17 +26,19 @@ const CV_ACCEPT = `${CV_TYPES.join(',')},.pdf,.jpg,.jpeg,.png,.webp`
 const ext = (file: File) => file.name.split('.').pop()?.toLowerCase() ?? ''
 
 type Errors = Partial<Record<'cv' | 'fullName' | 'phone' | 'email' | `q${number}`, string>>
-type Sent = { phone: string; email?: string | null; again: boolean }
+type Sent = { email?: string | null; again: boolean; statusUrl?: string | null }
 
 /** Phone-first apply: name, mobile, optional CV (PDF or photo), job questions, optional email. */
 export function ApplyForm({
   slug,
+  jobTitle,
   companyName,
   questions,
   source,
   refToken,
 }: {
   slug: string
+  jobTitle: string
   companyName: string
   questions: PublicQuestion[]
   source: ApplySource
@@ -125,10 +128,10 @@ export function ApplyForm({
         src: source,
         ref: refToken,
       })
-      setSent({ phone: result.phone, email: result.email, again: false })
+      setSent({ email: result.email, again: false, statusUrl: result.status_url })
     } catch (err) {
       if (err instanceof PublicApiError && err.status === 409) {
-        setSent({ phone: e164, email: email.trim() || null, again: true })
+        setSent({ email: email.trim() || null, again: true })
       } else {
         setFormError(err instanceof Error ? err.message : t.common.error)
       }
@@ -138,6 +141,13 @@ export function ApplyForm({
   }
 
   if (sent) {
+    const emailLine = sent.email
+      ? sent.again
+        ? t.apply.sentAgainEmail
+        : t.apply.sentEmail
+      : sent.again
+        ? t.apply.sentAgainNoEmail
+        : null
     return (
       <div ref={doneRef} className="flex flex-col gap-4" role="status">
         <MailCheckIcon className="size-6 text-success" aria-hidden="true" />
@@ -145,9 +155,15 @@ export function ApplyForm({
           {sent.again ? t.apply.alreadyTitle : t.apply.sentTitle}
         </h2>
         <p className="text-sm text-foreground">
-          {t.apply.sentSms(sent.phone.replace(/^\+977(?=\d)/, '+977 '))} {sent.email ? t.apply.sentEmail(sent.email) : null}{' '}
-          {t.apply.replyEither(companyName)}
+          {emailLine} {t.apply.replyEither(companyName)}
         </p>
+        {sent.statusUrl ? (
+          <div className="flex flex-col gap-3 rounded-xl border bg-background p-4">
+            <p className="text-sm font-medium text-foreground">{t.apply.saveLink}</p>
+            <p className="text-xs break-all text-muted-foreground select-all">{sent.statusUrl}</p>
+            <SendLink self text={t.apply.statusText(jobTitle, companyName)} url={sent.statusUrl} />
+          </div>
+        ) : null}
         <div className="flex flex-col gap-2">
           {sent.email ? (
             <Button asChild variant="outline" className="w-full">

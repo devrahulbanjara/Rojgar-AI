@@ -86,8 +86,10 @@ export default function PrivacyPage() {
             every application, but it never decides alone. Every hiring decision is made by a
             person.
           </li>
-          <li>To text and email you about your application: received, interview, decision.</li>
-          <li>To text the person someone suggested, with the job link.</li>
+          <li>
+            To email you about your application (received, interview, decision), if you gave an
+            email.
+          </li>
           <li>To stop fake jobs, spam and misuse.</li>
           <li>To bill businesses.</li>
         </ul>
@@ -105,9 +107,9 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Services that run {BRAND.name} for us:</strong> Amazon Web Services (file
-            storage and AI), Google Gemini and Groq (AI), LlamaIndex (reading CVs), Qdrant (search),
-            Sparrow SMS (text messages) and our email provider. Some of them are outside Nepal. They
-            may use your information only to provide their service to us.
+            storage and AI), Google Gemini and Groq (AI), LlamaIndex (reading CVs), Qdrant (search)
+            and our email provider. Some of them are outside Nepal. They may use your information
+            only to provide their service to us.
           </li>
           <li>
             <strong>Courts or police</strong>, only when Nepal law requires us to share it.
@@ -131,8 +133,8 @@ export default function PrivacyPage() {
         <h2>Your choices</h2>
         <ul>
           <li>
-            <strong>See your applications:</strong> open the status link we sent you by SMS or
-            email, or <Link href="/signin">sign in with your email</Link>.
+            <strong>See your applications:</strong> open the status link you saved after applying or
+            the one in your email, or <Link href="/signin">sign in with your email</Link>.
           </li>
           <li>
             <strong>Withdraw and delete:</strong> use &quot;Withdraw application&quot; on the status
