@@ -1,5 +1,5 @@
 import { type ApiResponse, baseApi } from './baseApi'
-import type { JobStatus, LocationType } from './jobsApi'
+import type { ClosedReason, JobStatus, LocationType } from './jobsApi'
 
 /** Types mirror backend/app/modules/dashboards/schemas.py. */
 
@@ -21,16 +21,15 @@ export interface RecruiterHomeRole {
   location: string | null
   location_type: LocationType
   created_at: string
-  /** The job's closes_at (open) or closed_at (closed). */
-  expires_at: string | null
+  closes_at: string | null
+  closed_at: string | null
+  closed_reason: ClosedReason | null
   applicants: number
   to_review: number
   strong: number
   to_contact: number
   upcoming_interviews: number
   to_decide: number
-  /** Closed with closed_reason "hired". */
-  hiring_completed: boolean
   share_slug: string
 }
 

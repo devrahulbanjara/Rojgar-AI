@@ -14,7 +14,10 @@ import { JobStatusPill } from './StatusPill'
 export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; companyName: string }) {
   const jobHref = `/recruiter/jobs/${role.job_id}`
   const isOpen = role.status === 'open'
-  const meta = [`Posted ${ago(role.created_at)}`, closingLabel(role.expires_at)]
+  const meta = [
+    `Posted ${ago(role.created_at)}`,
+    closingLabel(isOpen ? role.closes_at : role.closed_at),
+  ]
     .filter(Boolean)
     .join(' · ')
 
@@ -29,9 +32,7 @@ export function RoleCard({ role, companyName }: { role: RecruiterHomeRole; compa
             {role.title}
           </Link>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <JobStatusPill
-              job={{ status: role.status, closed_reason: role.hiring_completed ? 'hired' : null }}
-            />
+            <JobStatusPill job={role} />
             <span>
               {meta}
               {role.upcoming_interviews > 0
