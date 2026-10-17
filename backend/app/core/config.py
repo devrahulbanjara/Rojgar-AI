@@ -135,6 +135,7 @@ class Settings(BaseSettings):
     public_status_token_days: int = 180
     magic_link_ttl_minutes: int = 15
     guest_applications_per_email_per_hour: int = 10
+    recommendations_per_job_per_hour: int = 30
     magic_links_per_email_per_15_min: int = 3
     resume_import_allowed_extensions: tuple[str, ...] = ("pdf",)
 

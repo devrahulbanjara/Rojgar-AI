@@ -51,7 +51,7 @@ from app.shared.enums import EventType, Fit, ReviewState, ReviewTriage
 FLAG_INJECTION = "Possible hidden instructions in the CV. Check the CV before deciding."
 FLAG_UNCHECKED = "The automatic safety check was unavailable. Read this application yourself."
 FLAG_FAILED = "The automatic review failed. Read this application yourself."
-FLAG_EMPTY = "Nothing to review yet: no CV and no answers."
+NOTHING_YET = "No CV or answers yet"
 
 _semaphore: asyncio.Semaphore | None = None
 
@@ -217,9 +217,16 @@ async def _evaluate(
         )
 
     if not inputs.blind_text.strip():
+        # e.g. a recommendation with only a name and phone: nothing to check,
+        # nothing suspicious. Re-reviewed when details arrive.
         return _Outcome(
-            state=ReviewState.needs_person.value,
-            flag_reason=FLAG_EMPTY,
+            state=ReviewState.done.value,
+            summary=NOTHING_YET,
+            checks=[
+                {"criterion": text, "kind": kind, "result": "missing", "evidence": None}
+                for kind, text in inputs.criteria
+            ],
+            rank_score=rubric.rank_score([], inputs.tiebreak),
         )
 
     if not inputs.skip_guardrail:

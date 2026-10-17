@@ -32,6 +32,8 @@ from app.modules.public.schemas import (
     MagicLinkSent,
     MyApplication,
     PublicJob,
+    RecommendCreated,
+    RecommendRequest,
     StatusTokenRequest,
     WithdrawResult,
 )
@@ -50,8 +52,27 @@ def _per_ip(times: int, seconds: int):
 
 
 @router.get("/public/jobs/{slug}", summary="Public job page (open jobs only)")
-async def get_public_job(slug: str, db: DbSession) -> UnifiedResponse[PublicJob]:
-    return ResponseBuilder.success(data=await service.get_public_job(db, slug))
+async def get_public_job(
+    slug: str,
+    db: DbSession,
+    ref: Annotated[str | None, Query(max_length=32)] = None,
+) -> UnifiedResponse[PublicJob]:
+    return ResponseBuilder.success(data=await service.get_public_job(db, slug, ref))
+
+
+@router.post(
+    "/public/jobs/{slug}/recommend",
+    status_code=status.HTTP_201_CREATED,
+    summary="Recommend someone for this job (no account needed)",
+    dependencies=[_per_ip(5, 3600)],
+)
+async def recommend(
+    slug: str, payload: RecommendRequest, bg_tasks: BackgroundTasks, db: DbSession
+) -> UnifiedResponse[RecommendCreated]:
+    data = await service.recommend_candidate(db, slug, payload, bg_tasks)
+    return ResponseBuilder.success(
+        data=data, message="Thanks for the recommendation", status_code=status.HTTP_201_CREATED
+    )
 
 
 @router.get("/public/companies/{slug}/jobs", summary="Company careers page: open jobs")
@@ -80,30 +101,34 @@ async def apply_as_guest(
     bg_tasks: BackgroundTasks,
     db: DbSession,
     full_name: Annotated[str, Form(min_length=1, max_length=255)],
-    email: Annotated[str, Form(min_length=3, max_length=255)],
-    cv: Annotated[UploadFile, File()],
     consent: Annotated[bool, Form()],
+    email: Annotated[str | None, Form(max_length=255)] = None,
     phone: Annotated[str | None, Form(max_length=30)] = None,
+    cv: Annotated[UploadFile | None, File()] = None,
     answers: Annotated[str | None, Form(max_length=20000)] = None,
     src: Annotated[ApplySource, Form()] = "direct",
+    ref: Annotated[str | None, Form(max_length=32)] = None,
     turnstile_token: Annotated[str | None, Form(max_length=4096)] = None,
 ) -> UnifiedResponse[GuestApplicationCreated]:
-    try:
-        _EMAIL.validate_python(email)
-    except ValidationError as exc:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter a valid email."
-        ) from exc
+    email = (email or "").strip() or None
+    if email is not None:
+        try:
+            _EMAIL.validate_python(email)
+        except ValidationError as exc:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Please enter a valid email."
+            ) from exc
     data = await service.submit_guest_application(
         db,
         slug=slug,
         full_name=full_name,
         email=email,
         phone=(phone or "").strip() or None,
-        cv=cv,
+        cv=cv if cv is not None and cv.filename else None,
         answers_json=answers,
         consent=consent,
         source=src,
+        ref=(ref or "").strip() or None,
         turnstile_token=turnstile_token,
         client_ip=client_ip(request),
         bg_tasks=bg_tasks,
