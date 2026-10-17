@@ -609,13 +609,18 @@ PROVIDER_DOWN_MESSAGE = (
 )
 
 
+CLASSIFIER_UNAVAILABLE_INTENT = "classifier_unavailable"
+
+
 async def _safe_classify_intent(message: str, state: dict[str, Any]) -> str:
     """Classify intent with a graceful fallback when the provider is unreachable."""
     try:
         return await _classify_intent(message, state)
     except Exception as exc:
-        logger.warning("Intent classifier provider failed: {}", exc)
-        return "recruiting_web_question"
+        # Never fall back to web search here: the message may contain candidate
+        # names or other tenant data that must not leave for a search provider.
+        logger.warning("Intent classifier provider failed: {}", type(exc).__name__)
+        return CLASSIFIER_UNAVAILABLE_INTENT
 
 
 async def _safe_search_web(query: str, *, max_results: int = 5) -> list[dict[str, Any]]:
@@ -2073,8 +2078,9 @@ async def _handle_candidate_followup(
     lines.append(f"- **Status:** {status_str}")
     if application.score is not None:
         lines.append(f"- **Score:** {application.score}")
-    if applicant.email:
-        lines.append(f"- **Email:** {applicant.email}")
+    # Respect the candidate's sharing choice for this application.
+    if application.share_email and application.shared_email_value:
+        lines.append(f"- **Email:** {application.shared_email_value}")
     if getattr(application, "strengths", None):
         lines.append(f"- **Strengths:** {application.strengths}")
     if getattr(application, "weaknesses", None):
@@ -2524,6 +2530,23 @@ async def _handle_out_of_scope(
     return _serialize_response(ChatResponseType.out_of_scope, reply)
 
 
+async def _handle_classifier_unavailable(
+    db: AsyncSession,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    """Ask the recruiter to retry instead of guessing an intent."""
+    reply = (
+        "I couldn't work out what you need just now. Could you try again or "
+        "rephrase it, for example \"find candidates with Python experience\" or "
+        "\"show my open jobs\"?"
+    )
+    _append_history(state, "assistant", reply, response_type=ChatResponseType.text)
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(ChatResponseType.text, reply)
+
+
 async def _intent_matches_mode(message: str, mode: str, state: dict[str, Any]) -> bool:
     """Return True if message intent is consistent with the current pending mode.
 
@@ -2735,6 +2758,8 @@ async def _send_message_inner(
             state,
             user_message,
         )
+    elif intent == CLASSIFIER_UNAVAILABLE_INTENT:
+        reply = await _handle_classifier_unavailable(db, session, state, user_message)
     else:
         reply = await _handle_out_of_scope(db, session, state, user_message)
 
@@ -3544,6 +3569,10 @@ async def _stream_message_inner(
             ):
                 yield event
             return
+        elif intent == CLASSIFIER_UNAVAILABLE_INTENT:
+            reply = await _handle_classifier_unavailable(
+                db, session, state, user_message
+            )
         else:
             reply = await _handle_out_of_scope(db, session, state, user_message)
 
