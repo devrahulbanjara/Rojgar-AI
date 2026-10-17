@@ -39,6 +39,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const bare = isAuthPath(pathname)
   return (
     <>
+      {bare ? null : <CookieBanner />}
       {bare ? null : (
         <PublicNav
           links={LINKS}
@@ -58,7 +59,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
       {bare ? null : <PublicFooter />}
-      <CookieBanner />
     </>
   )
 }
