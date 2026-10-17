@@ -2,61 +2,147 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 import { type VariantProps, cva } from 'class-variance-authority'
+import { Loader2 } from 'lucide-react'
 import { Slot } from 'radix-ui'
 
+/**
+ * The one button. See docs/DESIGN_SYSTEM.md → "Buttons" for which variant to use.
+ * Icons go in children (lucide, auto-sized to 16px): <Button><Plus />Post a job</Button>.
+ */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  [
+    'relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap select-none',
+    'transition-[color,background-color,border-color,box-shadow,transform] duration-150 active:scale-[0.98]',
+    'outline-none focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+    'disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
+    'aria-invalid:border-destructive aria-invalid:ring-destructive/20',
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  ],
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        destructive:
-          'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
+        /** The single main action of a screen or dialog. */
+        primary: 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/85',
+        /** Neutral filled — a strong alternative next to a primary. */
+        secondary:
+          'bg-foreground/[0.06] text-foreground hover:bg-foreground/10 active:bg-foreground/[0.14]',
+        /** Supporting actions: Share, Edit, Cancel, Decline. */
         outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'border border-border bg-card text-foreground hover:bg-accent active:bg-foreground/[0.08]',
+        /** Low-emphasis and icon-only toolbar actions. */
+        ghost: 'text-foreground hover:bg-accent active:bg-foreground/[0.08]',
+        /** Irreversible actions only (delete, remove member). */
+        destructive:
+          'bg-destructive text-white hover:bg-destructive/90 active:bg-destructive/85 focus-visible:ring-destructive/30',
+        /** Navigation that looks like text (table "Open →"). */
+        link: 'h-auto rounded-sm px-0 text-primary underline-offset-4 hover:underline active:scale-100',
+        /** @deprecated shadcn alias for `primary`; kept for generated components. */
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/85',
       },
       size: {
-        default: 'h-9 px-4 py-2 has-[>svg]:px-3',
-        xs: "h-6 gap-1 rounded-full px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: 'h-8 gap-1.5 rounded-full px-3 has-[>svg]:px-2.5',
-        lg: 'h-10 rounded-full px-6 has-[>svg]:px-4',
-        icon: 'size-9',
-        'icon-xs': "size-6 rounded-full [&_svg:not([class*='size-'])]:size-3",
+        sm: 'h-8 px-3 text-sm has-[>svg]:px-2.5',
+        md: 'h-10 px-4 text-sm has-[>svg]:px-3.5',
+        lg: 'h-12 min-h-11 px-6 text-base has-[>svg]:px-5',
+        icon: 'size-10',
         'icon-sm': 'size-8',
-        'icon-lg': 'size-10',
+        /** @deprecated shadcn aliases kept for generated components. */
+        default: 'h-10 px-4 text-sm has-[>svg]:px-3.5',
+        xs: "h-6 gap-1 px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+        'icon-xs': "size-6 [&_svg:not([class*='size-'])]:size-3",
+        'icon-lg': 'size-12',
+      },
+      fullWidth: {
+        true: 'w-full',
+        false: '',
       },
     },
+    compoundVariants: [{ variant: 'link', className: 'h-auto px-0 has-[>svg]:px-0' }],
     defaultVariants: {
-      variant: 'default',
-      size: 'default',
+      variant: 'primary',
+      size: 'md',
+      fullWidth: false,
     },
   },
 )
 
+type ButtonProps = React.ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    /** Render the child element (e.g. <Link>) with button styles. */
+    asChild?: boolean
+    /** Shows a spinner, sets aria-busy and disables the button without changing its width. */
+    loading?: boolean
+  }
+
 function Button({
   className,
-  variant = 'default',
-  size = 'default',
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
   asChild = false,
+  loading = false,
+  disabled,
+  children,
   ...props
-}: React.ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : 'button'
+}: ButtonProps) {
+  const classes = cn(buttonVariants({ variant, size, fullWidth, className }))
+
+  if (asChild) {
+    return (
+      <Slot.Root
+        data-slot="button"
+        data-variant={variant}
+        data-size={size}
+        className={classes}
+        {...props}
+      >
+        {children}
+      </Slot.Root>
+    )
+  }
 
   return (
-    <Comp
+    <button
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={classes}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...props}
+    >
+      {loading ? (
+        <>
+          <span className="invisible inline-flex items-center gap-2">{children}</span>
+          <span className="absolute inset-0 inline-flex items-center justify-center">
+            <Loader2 className="animate-spin" aria-hidden="true" />
+            <span className="sr-only">Loading</span>
+          </span>
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  )
+}
+
+type IconButtonProps = Omit<ButtonProps, 'size' | 'aria-label'> & {
+  /** Required accessible name — icon-only buttons have no visible text. */
+  label: string
+  size?: 'sm' | 'md'
+}
+
+/** Icon-only button: always has an accessible label; defaults to ghost. */
+function IconButton({ label, size = 'md', variant = 'ghost', ...props }: IconButtonProps) {
+  return (
+    <Button
+      aria-label={label}
+      title={label}
+      size={size === 'sm' ? 'icon-sm' : 'icon'}
+      variant={variant}
       {...props}
     />
   )
 }
 
-export { Button, buttonVariants }
+export { Button, IconButton, buttonVariants }
+export type { ButtonProps }
