@@ -1,3 +1,4 @@
+import { neDigits } from './digits'
 import { type Dict, en } from './en'
 import { ne } from './ne'
 
@@ -27,7 +28,6 @@ export function pickLocale(saved?: string | null, acceptLanguage?: string | null
 
 // Browsers often ship without Nepali date data (Intl falls back to US English),
 // so Nepali dates are built here: Devanagari digits, Nepali month names.
-const NE_DIGITS = '०१२३४५६७८९'
 const NE_MONTHS = [
   'जनवरी',
   'फेब्रुअरी',
@@ -43,7 +43,6 @@ const NE_MONTHS = [
   'डिसेम्बर',
 ]
 const NE_DAYS = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिही', 'शुक्र', 'शनि']
-const neDigits = (n: number | string) => String(n).replace(/\d/g, (d) => NE_DIGITS[Number(d)])
 
 function neTime(date: Date): string {
   const h = date.getHours()

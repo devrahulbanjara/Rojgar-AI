@@ -1,6 +1,7 @@
 import { BRAND } from '@/lib/brand'
 
 import { authNe } from './auth'
+import { neDigits } from './digits'
 import type { Dict } from './en'
 
 /** नेपाली. Words from docs/AGENT_BRIEF.md: व्यवसाय, टिम, जागिर, आवेदक. Never "सिफारिस". */
@@ -75,7 +76,7 @@ export const ne: Dict = {
     perMonth: '/ महिना',
     closesToday: 'आज बन्द हुन्छ',
     closesTomorrow: 'भोलि बन्द हुन्छ',
-    closesIn: (days: number) => `${days} दिनमा बन्द हुन्छ`,
+    closesIn: (days: number) => `${neDigits(days)} दिनमा बन्द हुन्छ`,
     closed: 'बन्द भयो',
     full_time: 'पूरा समय',
     part_time: 'आंशिक समय',
@@ -170,7 +171,7 @@ export const ne: Dict = {
   },
 
   careers: {
-    openJobs: (n: number) => `${n} वटा खुला जागिर`,
+    openJobs: (n: number) => `${neDigits(n)} वटा खुला जागिर`,
     noJobs: 'अहिले कुनै खुला जागिर छैन।',
     website: 'वेबसाइट हेर्नुहोस्',
     shareText: (job: string, company: string) =>
@@ -198,8 +199,8 @@ export const ne: Dict = {
 
   me: {
     title: 'मेरा आवेदनहरू',
-    count: (n: number) => `${n} वटा आवेदन`,
-    upcoming: (n: number) => `${n} वटा अन्तर्वार्ता आउँदै`,
+    count: (n: number) => `${neDigits(n)} वटा आवेदन`,
+    upcoming: (n: number) => `${neDigits(n)} वटा अन्तर्वार्ता आउँदै`,
     needsYou: 'तपाईंको काम',
     inProgress: 'हेर्दै',
     closed: 'सकिएका',
