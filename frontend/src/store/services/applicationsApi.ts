@@ -64,7 +64,6 @@ export interface ApplicationResponse {
   location_type: 'remote' | 'onsite' | 'hybrid' | null
   interview: {
     id: string
-    cal_booking_uid: string
     start_time: string
     end_time: string
     timezone: string | null
@@ -203,7 +202,6 @@ export interface RecruiterCandidateDetailView {
   weaknesses: string[] | null
   interview: {
     id: string
-    cal_booking_uid: string
     start_time: string
     end_time: string
     timezone: string | null

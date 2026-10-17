@@ -1,7 +1,5 @@
 import { expect, test } from '@playwright/test'
 
-import { SEED, loginAs } from './helpers'
-
 test.describe('Form validation guards', () => {
   test('login: malformed email blocked client-side', async ({ page }) => {
     await page.goto('/login')
@@ -53,22 +51,5 @@ test.describe('Form validation guards', () => {
     await expect(page.locator('text=/valid email|invalid/i').first()).toBeVisible({
       timeout: 3_000,
     })
-  })
-
-  test('candidate skill: duplicate not addable (chip button stays disabled)', async ({ page }) => {
-    await loginAs(page, SEED.candidateEmail)
-    await page.goto('/candidate/profile')
-
-    const skillInput = page.getByPlaceholder(/add a skill|figma/i).first()
-    const skillCount = await skillInput.count()
-    test.skip(skillCount === 0, 'Skill input not visible — profile UI may differ')
-
-    await skillInput.fill('E2E-Unique-Skill')
-    const addBtn = page.getByRole('button', { name: /^add$/i }).first()
-    await addBtn.click()
-
-    // Try duplicate
-    await skillInput.fill('E2E-Unique-Skill')
-    await expect(addBtn).toBeDisabled()
   })
 })

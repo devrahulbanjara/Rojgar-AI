@@ -18,7 +18,7 @@ export async function loginAs(page: Page, email: string, password = SEED.passwor
 }
 
 export async function expectLoggedInAsCandidate(page: Page) {
-  await expect(page).toHaveURL(/\/candidate/, { timeout: 10_000 })
+  await expect(page).toHaveURL(/\/me\/applications/, { timeout: 10_000 })
 }
 
 export async function expectLoggedInAsRecruiter(page: Page) {

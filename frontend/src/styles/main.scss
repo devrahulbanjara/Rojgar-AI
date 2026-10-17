@@ -17,19 +17,12 @@
 
 // ── 4. Components ────────────────────────────────────────────
 @use 'buttons';
-@use 'components/cookie-banner';
-@use 'components/loader';
-@use 'components/connection-status';
 
 // ── 5. Pages ─────────────────────────────────────────────────
 @use 'pages/legal';
 @use 'pages/auth';
 @use 'pages/dashboard';
-@use 'pages/applications';
-@use 'pages/resume';
 @use 'pages/profile';
-@use 'pages/job-drafting';
-@use 'pages/interviews';
 
 // ── 6. Global tokens (CSS custom properties + body defaults) ─
 :root {

@@ -113,12 +113,6 @@ export interface SearchJobsParams {
   size?: number
 }
 
-export interface CompleteHiringResponse {
-  hiring_completed: boolean
-  hired_at: string
-  rejected_application_count: number
-}
-
 // ---------------------------------------------------------------------------
 // API endpoints
 // ---------------------------------------------------------------------------
@@ -182,19 +176,6 @@ export const jobsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs'],
     }),
 
-    completeHiring: builder.mutation<ApiResponse<CompleteHiringResponse>, string>({
-      query: (id) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}/complete-hiring`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: 'Jobs', id },
-        'Jobs',
-        'Interviews',
-        'Applications',
-      ],
-    }),
-
     /** DELETE /jobs/{job_id} — delete a job posting (owner only) */
     deleteJob: builder.mutation<ApiResponse<null>, string>({
       query: (id) => ({
@@ -213,6 +194,5 @@ export const {
   useGetCompanyJobsQuery,
   useGetJobByIdQuery,
   useUpdateJobMutation,
-  useCompleteHiringMutation,
   useDeleteJobMutation,
 } = jobsApi

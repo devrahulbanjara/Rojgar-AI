@@ -7,7 +7,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { ago } from '@/lib/dates'
 import { useGetRecruiterJobsOverviewQuery } from '@/store/services/dashboardApi'
-import { useGetJobAIDraftsQuery } from '@/store/services/jobAiApi'
 import type { JobStatus, LocationType } from '@/store/services/jobsApi'
 import type { ColumnDef } from '@tanstack/react-table'
 
@@ -32,7 +31,6 @@ const LOCATION_TYPE: Record<LocationType, string> = {
 }
 
 export type JobRow = {
-  kind: 'job' | 'ai_draft'
   id: string
   title: string
   meta: string
@@ -60,7 +58,6 @@ function matches(row: JobRow, filter: Filter): boolean {
 }
 
 function statusPill(row: JobRow) {
-  if (row.kind === 'ai_draft') return <StatusPill tone="warning">Drafting</StatusPill>
   if (row.hiringCompleted) return <StatusPill tone="success">Hired</StatusPill>
   if (row.status === 'active') return <StatusPill tone="success">Open</StatusPill>
   if (row.status === 'draft') return <StatusPill tone="warning">Draft</StatusPill>
@@ -121,13 +118,7 @@ const columns: ColumnDef<JobRow>[] = [
     header: () => <span className="sr-only">Open</span>,
     cell: ({ row }) => (
       <div className="flex items-center justify-end gap-1">
-        <RowLink href={row.original.href}>
-          {row.original.kind === 'ai_draft'
-            ? 'Continue'
-            : row.original.toReview > 0
-              ? 'Review'
-              : 'Open'}
-        </RowLink>
+        <RowLink href={row.original.href}>{row.original.toReview > 0 ? 'Review' : 'Open'}</RowLink>
         <JobRowActions row={row.original} />
       </div>
     ),
@@ -142,11 +133,9 @@ export function JobsView() {
   const query = params.get('q') ?? ''
 
   const jobs = useGetRecruiterJobsOverviewQuery(undefined, { refetchOnMountOrArgChange: true })
-  const drafts = useGetJobAIDraftsQuery()
 
   const rows = useMemo<JobRow[]>(() => {
     const jobRows: JobRow[] = (jobs.data?.data ?? []).map((job) => ({
-      kind: 'job',
       id: job.job_id,
       title: job.title,
       meta: [job.location, LOCATION_TYPE[job.location_type]].filter(Boolean).join(' · '),
@@ -157,22 +146,8 @@ export function JobsView() {
       toReview: job.to_review,
       href: `/recruiter/jobs/${job.job_id}${job.to_review > 0 ? '?stage=applied' : ''}`,
     }))
-    const draftRows: JobRow[] = (drafts.data?.data ?? [])
-      .filter((draft) => draft.status !== 'committed')
-      .map((draft) => ({
-        kind: 'ai_draft',
-        id: draft.id,
-        title: draft.latest_draft?.title || draft.source_title || 'Untitled job',
-        meta: 'Being drafted',
-        status: 'draft',
-        hiringCompleted: false,
-        createdAt: draft.created_at,
-        applicants: 0,
-        toReview: 0,
-        href: `/recruiter/jobs/new?draftId=${draft.id}`,
-      }))
-    return [...draftRows, ...jobRows]
-  }, [jobs.data, drafts.data])
+    return jobRows
+  }, [jobs.data])
 
   const counts = useMemo(
     () => ({
@@ -244,7 +219,7 @@ export function JobsView() {
         </div>
       </div>
 
-      {jobs.isLoading || drafts.isLoading ? (
+      {jobs.isLoading ? (
         <Skeleton className="h-80 rounded-xl" />
       ) : jobs.isError ? (
         <ErrorState onRetry={() => void jobs.refetch()} retrying={jobs.isFetching}>
@@ -256,7 +231,7 @@ export function JobsView() {
         <DataTable
           columns={columns}
           data={visible}
-          getRowId={(row) => `${row.kind}-${row.id}`}
+          getRowId={(row) => row.id}
           emptyText="No jobs match."
         />
       )}

@@ -134,7 +134,6 @@ export const baseApi = createApi({
     'Interviews',
     'Profile',
     'Resumes',
-    'JobAIDrafts',
     'Evaluation',
     'Activity',
     'Audit',

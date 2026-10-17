@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { Calendar, ChevronRight, ShieldCheck } from 'lucide-react'
+import { CalendarIcon, ChevronRightIcon, ShieldCheckIcon } from '@/components/icons'
 
 export const metadata: Metadata = {
   title: 'Copyright Notice - Rojgar AI',
@@ -48,12 +48,12 @@ export default function CopyrightPage() {
           <h1 className="legal__title">Copyright Notice</h1>
           <div className="legal__meta">
             <span className="legal__meta-item">
-              <Calendar aria-hidden="true" />
+              <CalendarIcon aria-hidden="true" />
               Effective: 1 Falgun 2081 BS (13 February 2025)
             </span>
             <span className="legal__meta-sep" aria-hidden="true" />
             <span className="legal__meta-item">
-              <ShieldCheck aria-hidden="true" />
+              <ShieldCheckIcon aria-hidden="true" />
               Copyright Act 2059 (Nepal)
             </span>
           </div>
@@ -78,8 +78,8 @@ export default function CopyrightPage() {
         <main className="legal__content">
           <div className="legal__callout">
             <p>
-              <strong>© {new Date().getFullYear()} Rojgar AI</strong> All rights
-              reserved. All original content on this platform is protected under the{' '}
+              <strong>© {new Date().getFullYear()} Rojgar AI</strong> All rights reserved. All
+              original content on this platform is protected under the{' '}
               <strong>Copyright Act 2059 (2002)</strong> of Nepal and applicable international
               copyright conventions, including the <strong>Berne Convention</strong> to which Nepal
               is a signatory.
@@ -89,11 +89,10 @@ export default function CopyrightPage() {
           <section className="legal__section" id="ownership">
             <h2 className="legal__section-title">1. Ownership of Content</h2>
             <p className="legal__text">
-              The Rojgar AI platform, including its original design, user interface, graphics,
-              text, code, databases, logos, and all other original content (&quot;Platform
-              Content&quot;), is owned by or exclusively licensed to{' '}
-              <strong>Rojgar AI</strong> and is protected as an original work
-              under:
+              The Rojgar AI platform, including its original design, user interface, graphics, text,
+              code, databases, logos, and all other original content (&quot;Platform Content&quot;),
+              is owned by or exclusively licensed to <strong>Rojgar AI</strong> and is protected as
+              an original work under:
             </p>
             <ul className="legal__list">
               <li>
@@ -281,9 +280,9 @@ export default function CopyrightPage() {
             <h2 className="legal__section-title">7. Copyright Takedown Procedure</h2>
             <p className="legal__text">
               If you believe that content on Rojgar AI infringes your copyright, please submit a
-              written notice to copyright@rojgarai.app containing all of the following
-              information, as required under the <strong>Copyright Act 2059</strong> and
-              international best practice:
+              written notice to copyright@rojgarai.app containing all of the following information,
+              as required under the <strong>Copyright Act 2059</strong> and international best
+              practice:
             </p>
             <ul className="legal__list">
               <li>Your full name, address, telephone number, and email address</li>
@@ -312,8 +311,8 @@ export default function CopyrightPage() {
             <h2 className="legal__section-title">8. Trademarks</h2>
             <p className="legal__text">
               &quot;Rojgar AI&quot;, the Rojgar AI logo, and all related marks, logos, and service
-              names are trademarks or service marks of Rojgar AI, registered or
-              applied for under the <strong>Trademark Act 2022 BS</strong> of Nepal.
+              names are trademarks or service marks of Rojgar AI, registered or applied for under
+              the <strong>Trademark Act 2022 BS</strong> of Nepal.
             </p>
             <p className="legal__text">
               You may not use Rojgar AI trademarks, logos, or brand assets without prior written
@@ -343,15 +342,15 @@ export default function CopyrightPage() {
 
           <nav className="legal__related" aria-label="Related policies">
             <Link href="/privacy" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Privacy Policy
             </Link>
             <Link href="/cookies" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Cookie Policy
             </Link>
             <Link href="/terms" className="legal__related-link">
-              <ChevronRight aria-hidden="true" />
+              <ChevronRightIcon aria-hidden="true" />
               Terms &amp; Conditions
             </Link>
           </nav>

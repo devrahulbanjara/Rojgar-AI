@@ -21,7 +21,7 @@ export function FormField({
   children: ReactNode
 }) {
   return (
-    <Field data-invalid={!!error || undefined} className="gap-2">
+    <Field data-invalid={!!error || undefined} className="relative gap-2">
       <div className="flex items-center justify-between gap-3">
         <FieldLabel htmlFor={id} className="text-foreground">
           {label}

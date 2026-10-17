@@ -35,7 +35,7 @@ function CopyRow({ label, value, what }: { label: string; value: string; what: s
       </div>
       <Button size="sm" variant="outline" onClick={() => void copy(value, what)}>
         <CopyIcon />
-        CopyIcon
+        Copy
       </Button>
     </div>
   )
@@ -94,7 +94,7 @@ export function ShareMenu({ job, trigger }: { job: ShareableJob; trigger?: React
             </p>
             <Button size="sm" variant="outline" onClick={downloadQr}>
               <DownloadIcon />
-              DownloadIcon QR
+              Download QR
             </Button>
           </div>
         </div>

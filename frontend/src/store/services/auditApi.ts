@@ -37,15 +37,6 @@ export type CompanyAuditParams = {
   end_at?: string
 }
 
-export const AUDIT_CATEGORIES = [
-  { value: '', label: 'All categories' },
-  { value: 'auth', label: 'Auth & Access' },
-  { value: 'jobs', label: 'Jobs' },
-  { value: 'pipeline', label: 'Pipeline' },
-  { value: 'outreach', label: 'Outreach' },
-  { value: 'interviews', label: 'Interviews' },
-] as const
-
 export const auditApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCompanyAuditLogs: builder.query<ApiResponse<AuditLogItem[]>, CompanyAuditParams | void>({
