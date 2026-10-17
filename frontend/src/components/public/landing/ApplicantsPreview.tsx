@@ -1,13 +1,12 @@
-import { Check, X } from 'lucide-react'
-
 import { FitMeter } from '@/components/app/Numbers'
 import { PersonCell } from '@/components/app/PersonCell'
 import { StatusPill } from '@/components/app/StatusPill'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { IconButton } from '@/components/ui/button'
+import { CheckIcon, CloseIcon } from '@/components/icons'
 
 const SAMPLE = [
-  { name: 'Sita Gurung', reason: '5 yrs Python & FastAPI · led a payments API', score: 91 },
+  { name: 'Sita Gurung', reason: '5 yrs Python · led a payments API', score: 91 },
   { name: 'Arjun Thapa', reason: 'Django at scale · strong on PostgreSQL', score: 84 },
   { name: 'Maya Rai', reason: 'Backend + DevOps · AWS certified', score: 77 },
   { name: 'Bikram Shah', reason: 'Fresh graduate · good final-year project', score: 52 },
@@ -40,12 +39,12 @@ export function ApplicantsPreview() {
               </StatusPill>
             ) : (
               <div className="flex items-center gap-1.5" aria-hidden="true">
-                <Button variant="outline" size="icon-sm" tabIndex={-1} aria-label="Shortlist">
-                  <Check className="text-success" />
-                </Button>
-                <Button variant="outline" size="icon-sm" tabIndex={-1} aria-label="Not now">
-                  <X className="text-danger" />
-                </Button>
+                <IconButton label="Shortlist" variant="outline" size="sm" tabIndex={-1}>
+                  <CheckIcon className="text-success" />
+                </IconButton>
+                <IconButton label="Not now" variant="outline" size="sm" tabIndex={-1}>
+                  <CloseIcon className="text-danger" />
+                </IconButton>
               </div>
             )}
           </li>

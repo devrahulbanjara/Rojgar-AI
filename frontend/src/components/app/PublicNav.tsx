@@ -6,9 +6,9 @@ import Link from 'next/link'
 
 import { BRAND } from '@/lib/brand'
 import { cn } from '@/lib/utils'
-import { Menu } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
+import { MenuIcon } from '@/components/icons'
+import { Button, IconButton } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 export type NavLink = { href: string; label: string }
@@ -65,9 +65,9 @@ export function PublicNav({
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
-              <Menu />
-            </Button>
+            <IconButton label="Open menu" className="md:hidden">
+              <MenuIcon className="size-5" />
+            </IconButton>
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
             <SheetHeader>

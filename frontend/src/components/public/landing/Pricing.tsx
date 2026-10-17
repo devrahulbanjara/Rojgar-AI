@@ -1,9 +1,9 @@
 import Link from 'next/link'
 
 import { cn } from '@/lib/utils'
-import { Check } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { CheckIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 
 type Plan = {
@@ -83,12 +83,12 @@ export function Pricing() {
               <ul className="flex flex-1 flex-col gap-3">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm text-foreground">
-                    <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
                     {feature}
                   </li>
                 ))}
               </ul>
-              <Button asChild variant={plan.featured ? 'default' : 'outline'} className="w-full">
+              <Button asChild variant={plan.featured ? 'primary' : 'outline'} className="w-full">
                 {plan.cta.external ? (
                   <a href={plan.cta.href} target="_blank" rel="noopener noreferrer">
                     {plan.cta.label}

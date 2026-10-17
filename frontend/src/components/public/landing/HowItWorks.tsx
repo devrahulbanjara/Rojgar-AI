@@ -1,18 +1,18 @@
-import { FileSearch, Link2, MousePointerClick } from 'lucide-react'
+import { ClickIcon, LinkIcon, ReadCvIcon } from '@/components/icons'
 
 const STEPS = [
   {
-    icon: Link2,
+    icon: LinkIcon,
     title: 'Share your link',
     line: 'One apply link for LinkedIn, Facebook, Merojob or your site.',
   },
   {
-    icon: FileSearch,
+    icon: ReadCvIcon,
     title: 'Every CV gets read',
     line: 'Applicants are ranked, each with a one-line reason.',
   },
   {
-    icon: MousePointerClick,
+    icon: ClickIcon,
     title: 'Decide in one click',
     line: 'Shortlist or pass. Candidates get an email either way.',
   },

@@ -1,14 +1,14 @@
-import { MailCheck, UserCheck, UserRoundX } from 'lucide-react'
+import { MailCheckIcon, NoAccountIcon, PersonDecidesIcon } from '@/components/icons'
 
 const PROMISES = [
-  { icon: UserCheck, text: 'A person makes every decision' },
-  { icon: MailCheck, text: 'Every candidate hears back' },
-  { icon: UserRoundX, text: 'No account needed to apply' },
+  { icon: PersonDecidesIcon, text: 'A person makes every decision' },
+  { icon: MailCheckIcon, text: 'Every candidate hears back' },
+  { icon: NoAccountIcon, text: 'No account needed to apply' },
 ]
 
 export function Promises() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+    <section className="mx-auto max-w-6xl px-4 pt-12 pb-4 sm:px-6">
       <ul className="grid gap-4 sm:grid-cols-3">
         {PROMISES.map((item) => (
           <li key={item.text} className="flex items-center gap-3">
