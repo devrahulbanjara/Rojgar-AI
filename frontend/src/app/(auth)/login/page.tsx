@@ -109,6 +109,11 @@ function LoginPageInner() {
     rememberPostAuthRedirect(nextUrl)
   }, [nextUrl])
 
+  const oauthError = searchParams.get('error')
+  useEffect(() => {
+    if (oauthError) notify.error('Google sign-in did not complete. Please try again.')
+  }, [oauthError])
+
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
   const router = useRouter()
@@ -181,7 +186,9 @@ function LoginPageInner() {
       // Check for email-not-verified error (403 or specific message)
       const rtkErr = err as { status?: number; data?: { message?: string } }
       const errMsg = rtkErr?.data?.message ?? ''
-      if (rtkErr?.status === 403 || /not verified|email.*verif|verif.*email/i.test(errMsg)) {
+      // The backend has no error codes yet; only the verification message means
+      // "unverified". Other 403s (e.g. a blocked account) show their own message.
+      if (/not verified|email.*verif|verif.*email/i.test(errMsg)) {
         setEmailUnverified(true)
         return
       }

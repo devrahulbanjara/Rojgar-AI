@@ -47,7 +47,6 @@ function OAuthCallbackInner() {
       }
 
       if (errorParam) {
-        notify.error('Google sign-in failed. Please try again.')
         router.replace(`/login?error=${encodeURIComponent(errorParam)}`)
         return
       }
@@ -66,7 +65,6 @@ function OAuthCallbackInner() {
         router.replace(consumePostAuthRedirect() ?? getRoleDashboard(user.primary_role))
       } catch {
         dispatch(clearCredentials())
-        notify.error('Something went wrong during sign-in. Please try again.')
         router.replace('/login?error=oauth_failed')
       }
     }
