@@ -9,6 +9,7 @@ import {
   type DraftFields,
   loadDraft,
   protectedGroundWarning,
+  refusalMessage,
   streamJobDraft,
 } from '@/lib/api/recruiter'
 import { EMPLOYMENT_TYPES, JOB_CATEGORIES, LOCATION_TYPES } from '@/lib/jobHelpers'
@@ -50,6 +51,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 
 import { GetApplicantsSheet } from '../job/GetApplicantsSheet'
+import { PLAN_LIMIT, isPlanLimit } from '../job/JobLifecycle'
 import { MustHaveChips, SuggestButton } from './MustHaveChips'
 
 /** The builder fields; category stays empty until someone picks one. */
@@ -403,8 +405,13 @@ export function JobBuilder({
         notify.success('Changes saved')
         router.push(`/recruiter/jobs/${saved.id}`)
       }
-    } catch {
-      notify.error("Couldn't publish. Try again.")
+    } catch (error) {
+      if (isPlanLimit(error))
+        notify.error(PLAN_LIMIT.title, PLAN_LIMIT.next, {
+          action: { label: PLAN_LIMIT.action, onClick: () => router.push(PLAN_LIMIT.href) },
+          duration: 10_000,
+        })
+      else notify.error(refusalMessage(error, "Couldn't publish. Try again."))
     } finally {
       setPublishing(false)
     }

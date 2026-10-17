@@ -28,7 +28,7 @@ export function JobMoreMenu({ job, waiting }: { job: JobDetail; waiting: number 
 
   async function exportCsv() {
     try {
-      await exportPipelineCsv(job.id)
+      await exportPipelineCsv(job.id, job.title)
     } catch {
       notify.error("Couldn't export. Try again.")
     }
@@ -36,7 +36,8 @@ export function JobMoreMenu({ job, waiting }: { job: JobDetail; waiting: number 
 
   return (
     <>
-      <DropdownMenu>
+      {/* Not modal: a dialog opened from an item would otherwise leave the page unclickable. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <IconButton label="More actions" variant="outline">
             <MoreIcon weight="bold" />

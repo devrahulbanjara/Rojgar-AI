@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 
+import Link from 'next/link'
+
+import { refusalMessage } from '@/lib/api/recruiter'
 import { notify } from '@/lib/notify'
 import {
   type JobListItem,
@@ -23,6 +26,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export type JobDialog = 'filled' | 'close' | 'delete' | 'reopen'
+
+/** Opening a job past the plan's limit (HTTP 402): plain words and where to go next. */
+export const PLAN_LIMIT = {
+  title: 'No open jobs left on your plan',
+  next: 'Close a job or get a Job Pass for this one.',
+  href: '/recruiter/settings/company',
+  action: 'See plans',
+}
+
+export const isPlanLimit = (err: unknown) => (err as { status?: unknown } | null)?.status === 402
 
 type LifecycleJob = Pick<JobListItem, 'id' | 'title' | 'status' | 'closed_reason' | 'closes_at'> & {
   applicants: number
@@ -67,6 +80,7 @@ function ReopenDialog({
     ),
   )
   const [error, setError] = useState<string | null>(null)
+  const [limited, setLimited] = useState(false)
 
   async function submit() {
     const date = new Date(`${closesOn}T23:59:00`)
@@ -78,8 +92,13 @@ function ReopenDialog({
       await updateJob({ id: job.id, status: 'open', closes_at: date.toISOString() }).unwrap()
       notify.success(`${job.title} is open again`)
       onOpenChange(false)
-    } catch {
-      setError("Couldn't reopen the job. Try again.")
+    } catch (err) {
+      setLimited(isPlanLimit(err))
+      setError(
+        isPlanLimit(err)
+          ? `${PLAN_LIMIT.title}. ${PLAN_LIMIT.next}`
+          : refusalMessage(err, "Couldn't reopen the job. Try again."),
+      )
     }
   }
 
@@ -102,6 +121,11 @@ function ReopenDialog({
             aria-invalid={!!error}
           />
           {error ? <p className="text-xs text-destructive">{error}</p> : null}
+          {limited ? (
+            <Button asChild variant="link" size="sm" className="h-auto self-start p-0">
+              <Link href={PLAN_LIMIT.href}>{PLAN_LIMIT.action}</Link>
+            </Button>
+          ) : null}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -142,8 +166,8 @@ export function JobLifecycleDialogs({
         reason === 'hired' ? `${job.title} is filled and closed` : `${job.title} is closed`,
       )
       onDialogChange(null)
-    } catch {
-      notify.error("Couldn't close the job. Try again.")
+    } catch (err) {
+      notify.error(refusalMessage(err, "Couldn't close the job. Try again."))
     }
   }
 

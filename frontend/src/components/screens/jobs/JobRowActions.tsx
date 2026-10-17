@@ -28,7 +28,8 @@ export function JobRowActions({ row }: { row: JobRow }) {
 
   return (
     <>
-      <DropdownMenu>
+      {/* Not modal: a dialog opened from an item would otherwise leave the page unclickable. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <IconButton label={`Actions for ${row.title}`} size="sm">
             <MoreIcon weight="bold" />

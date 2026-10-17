@@ -388,6 +388,13 @@ const STAGE_EVENT: Record<Stage, string> = {
   withdrawn: 'Marked withdrawn',
 }
 
+const EMAIL_LABEL: Record<string, string> = {
+  shortlist: 'Shortlist email',
+  rejection: 'Kind email',
+  interview_invite: 'Interview email',
+  offer: 'Offer email',
+}
+
 function eventText(event: EventView, source: Panel['source']): string | null {
   const p = event.payload
   switch (event.type) {
@@ -403,7 +410,7 @@ function eventText(event: EventView, source: Panel['source']): string | null {
     case 'email_scheduled':
       return p.status === 'failed' ? "Email couldn't be sent" : 'Email sending soon'
     case 'email_sent':
-      return typeof p.subject === 'string' ? `Email sent: ${p.subject}` : 'Email sent'
+      return `${EMAIL_LABEL[String(p.template)] ?? 'Email'} sent`
     case 'interview_booked':
       return typeof p.starts_at === 'string'
         ? `Interview booked for ${formatWhen(p.starts_at)}`

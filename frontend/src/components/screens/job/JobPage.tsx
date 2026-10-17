@@ -46,7 +46,7 @@ import { cardActions } from './DecisionButtons'
 import { GetApplicantsSheet } from './GetApplicantsSheet'
 import { InviteDialog, type InviteRecipient } from './InviteDialog'
 import { JobMoreMenu } from './JobMoreMenu'
-import { JobPageSkeleton, PipelineSkeleton } from './skeletons'
+import { JobPageSkeleton, ListSkeleton, PipelineSkeleton } from './skeletons'
 import { useDecisions } from './useDecisions'
 
 const STAGES: Stage[] = [
@@ -112,7 +112,9 @@ export function JobPage({ jobId }: { jobId: string }) {
     refetchOnMountOrArgChange: 30,
     pollingInterval: reviewingBefore ? 5000 : 0,
   })
-  const items = useMemo(() => pipeline.data?.items ?? [], [pipeline.data])
+  // currentData, not data: data still holds the previous tab while the next one loads.
+  const items = useMemo(() => pipeline.currentData?.items ?? [], [pipeline.currentData])
+  const switching = !pipeline.currentData && pipeline.isFetching
   const counts = pipeline.data?.counts
   const reviewing = pipeline.data?.reviewing ?? 0
 
@@ -410,7 +412,9 @@ export function JobPage({ jobId }: { jobId: string }) {
                 ) : null}
               </BulkBar>
             ) : null}
-            {items.length ? (
+            {switching ? (
+              <ListSkeleton />
+            ) : items.length ? (
               <ul className="-mx-1 flex flex-col gap-3 px-1 lg:min-h-0 lg:gap-1 lg:overflow-y-auto">
                 {items.map((item) => (
                   <CandidateCard

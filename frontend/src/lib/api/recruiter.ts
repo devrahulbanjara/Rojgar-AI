@@ -560,6 +560,13 @@ export const {
   useLazySearchPeopleQuery,
 } = recruiterApi
 
+/** The server's own words for a refusal (plan limit, bad date…); `fallback` for anything else. */
+export function refusalMessage(err: unknown, fallback: string): string {
+  const { status, data } = (err ?? {}) as { status?: unknown; data?: { message?: unknown } }
+  const ok = typeof status === 'number' && status >= 400 && status < 500 && status !== 401
+  return ok && typeof data?.message === 'string' ? data.message : fallback
+}
+
 /** Job page link that opens one applicant: /recruiter/jobs/{job}?stage=…&app=… */
 export function applicantHref(jobId: string, applicationId: string, stage?: Stage | null) {
   const params = new URLSearchParams()
@@ -591,15 +598,15 @@ async function authedFetch(url: string, init: RequestInit = {}): Promise<Respons
 }
 
 /** Download every applicant for a job as a CSV file (opens in Excel). */
-export async function exportPipelineCsv(jobId: string): Promise<void> {
+export async function exportPipelineCsv(jobId: string, jobTitle: string): Promise<void> {
   const response = await authedFetch(`${API}/recruiter/v2/jobs/${jobId}/export.csv`)
   if (!response.ok) throw new Error(String(response.status))
-  const name =
-    /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ??
-    'applicants.csv'
   const link = document.createElement('a')
   link.href = URL.createObjectURL(await response.blob())
-  link.download = name
+  link.download = `${jobTitle
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase()}-applicants.csv`
   link.click()
   URL.revokeObjectURL(link.href)
 }
