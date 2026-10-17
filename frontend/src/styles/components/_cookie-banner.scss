@@ -20,7 +20,8 @@
   position: fixed;
   right: $space-6;
   bottom: $space-6;
-  z-index: $z-modal;
+  // Above the connection-status card and toasts so consent is always clickable.
+  z-index: $z-tooltip + 200;
   width: min(400px, calc(100vw - #{$space-8}));
   background: $color-white;
   border: 1px solid $color-gray-200;
