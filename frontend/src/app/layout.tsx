@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { EB_Garamond, Geist_Mono, Manrope } from 'next/font/google'
+import { DM_Sans, EB_Garamond, Geist_Mono, Manrope } from 'next/font/google'
 
 import '@/app/globals.css'
 import LenisProvider from '@/providers/LenisProvider'
@@ -13,12 +13,21 @@ import MainLayout from '@/components/layout/MainLayout'
 
 import '@/styles/main.scss'
 
-// One typeface for the whole app; styles/main.scss maps the legacy
-// --font-heading / --font-body variables onto it.
+// Two typefaces (see docs/DESIGN_SYSTEM.md → Typography): Manrope for headings
+// and large numerals, DM Sans for everything else. styles/main.scss maps the
+// legacy --font-heading / --font-body variables onto these.
 const manrope = Manrope({
   variable: '--font-manrope',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+const dmSans = DM_Sans({
+  variable: '--font-dm-sans',
+  subsets: ['latin'],
+  // Variable font: covers the 400–600 weights we use, plus optical size.
+  axes: ['opsz'],
   display: 'swap',
 })
 
@@ -49,7 +58,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${ebGaramond.variable} ${geistMono.variable}`}
+      className={`${manrope.variable} ${dmSans.variable} ${ebGaramond.variable} ${geistMono.variable}`}
     >
       <body>
         <a href="#main-content" className="skip-to-content">

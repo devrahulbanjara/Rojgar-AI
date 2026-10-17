@@ -28,11 +28,13 @@ export function FitMeter({ score, outOf = 100 }: { score: number | null; outOf?:
 /** One bordered row of 3–4 numbers that drive action. Label small and muted above value. */
 export function StatStrip({ items }: { items: { label: string; value: ReactNode }[] }) {
   return (
-    <dl className="grid grid-cols-2 divide-x divide-y rounded-xl border bg-card sm:grid-cols-4 sm:divide-y-0">
+    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
       {items.map((item) => (
-        <div key={item.label} className="flex flex-col gap-1 px-4 py-3">
+        <div key={item.label} className="flex flex-col gap-1 bg-card px-4 py-3">
           <dt className="text-xs text-muted-foreground">{item.label}</dt>
-          <dd className="text-xl font-light tabular-nums text-foreground">{item.value}</dd>
+          <dd className="font-heading text-xl font-light tabular-nums text-foreground">
+            {item.value}
+          </dd>
         </div>
       ))}
     </dl>

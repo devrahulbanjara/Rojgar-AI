@@ -17,7 +17,7 @@ export function Section({
   return (
     <section className={cn('flex flex-col gap-3', className)}>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <h2 className="font-heading text-base font-semibold text-foreground">{title}</h2>
         {action}
       </div>
       {children}
