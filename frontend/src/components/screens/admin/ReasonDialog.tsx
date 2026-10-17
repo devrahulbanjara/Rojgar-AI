@@ -68,7 +68,7 @@ export function ReasonDialog({
               key={line}
               size="sm"
               variant="outline"
-              className="h-auto py-1.5 text-left whitespace-normal"
+              className="h-auto max-w-full py-1.5 text-left whitespace-normal"
               onClick={() => setText(line)}
             >
               {line}

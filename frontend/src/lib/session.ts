@@ -26,7 +26,10 @@ export function useIsOwner(): boolean {
 
 /** Nepali numbers as people write them (98XXXXXXXX); other countries keep their +code. */
 export function localPhone(phone: string | null | undefined): string | null {
-  return phone ? phone.replace(/^\+977/, '') : null
+  if (!phone?.startsWith('+977')) return phone ?? null
+  const local = phone.slice(4)
+  // Mobiles are 98XXXXXXXX; landlines get their trunk 0 back (01-4XXXXXX).
+  return /^9\d{9}$/.test(local) ? local : `0${local}`
 }
 
 /** A name to show for a person who signed up by phone and hasn't added one yet. */

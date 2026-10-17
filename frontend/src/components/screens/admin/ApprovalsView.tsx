@@ -86,7 +86,7 @@ function ApprovalCard({ item }: { item: ApprovalItem }) {
         {item.info_requested ? <StatusPill tone="warning">Asked for more</StatusPill> : null}
       </div>
 
-      <dl className="grid gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Detail label="Business phone">{localPhone(item.phone) ?? '—'}</Detail>
         <Detail label="PAN number">{item.pan_number ?? 'Not given'}</Detail>
         <Detail label="Created by">
@@ -124,7 +124,7 @@ function ApprovalCard({ item }: { item: ApprovalItem }) {
         <ReasonDialog
           trigger={<Button variant="outline">Ask for more info</Button>}
           title={`Ask ${item.name} for more`}
-          label="Message (sent by SMS and email)"
+          label="Message to the owner"
           suggestions={ASK_LINES}
           confirmLabel="Send"
           onConfirm={(message) =>
