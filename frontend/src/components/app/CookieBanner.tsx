@@ -39,7 +39,7 @@ export function CookieBanner() {
   if (!visible) return null
 
   return (
-    <div role="region" aria-label="Cookie notice" className="app-surface border-b bg-card">
+    <div role="region" aria-label="Cookie notice" className="app-surface min-h-0 border-b bg-card">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2 text-sm text-muted-foreground">
         <p className="min-w-0 flex-1">
           We only use cookies that keep you signed in.{' '}
