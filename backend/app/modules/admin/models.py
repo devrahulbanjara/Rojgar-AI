@@ -1,4 +1,4 @@
-"""Platform moderation: job reports and flags, takedowns, manual payments."""
+"""Platform moderation: job reports and flags, takedowns, bank-transfer payments."""
 
 from __future__ import annotations
 
@@ -58,10 +58,10 @@ class JobTakedown(Base):
 
 
 class ManualPayment(Base):
-    """A pass or plan paid by bank transfer, waiting for staff to confirm.
+    """A pass, plan or top-up paid by bank transfer, waiting for staff to confirm.
 
-    Placeholder until entitlements and eSewa/Khalti land: staff mark the
-    transfer received; nothing is unlocked automatically yet.
+    Marking it received applies the purchase through entitlements (until
+    eSewa/Khalti confirm payments by themselves).
     """
 
     __tablename__ = "manual_payments"
@@ -70,7 +70,12 @@ class ManualPayment(Base):
     company_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    item: Mapped[str] = mapped_column(String(60), nullable=False)
+    # job_pass | job_pass_plus | team | business | top_up
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    # The job a pass is for.
+    job_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="SET NULL")
+    )
     amount_npr: Mapped[int] = mapped_column(Integer, nullable=False)
     reference: Mapped[str | None] = mapped_column(String(100))
     # awaiting | received

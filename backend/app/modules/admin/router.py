@@ -4,11 +4,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
-from app.core.dependencies import DbSession, PlatformAdmin, UUIDPath
+from app.core.dependencies import DbSession, OwnerContext, PlatformAdmin, UUIDPath
 from app.core.rate_limit import RateLimit, client_ip
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.admin import guards  # noqa: F401  (registers the job rules)
-from app.modules.admin import service
+from app.modules.admin import billing, service
 from app.modules.admin.schemas import (
     ApprovalItem,
     BusinessRow,
@@ -17,8 +17,10 @@ from app.modules.admin.schemas import (
     MessageRequest,
     OptionalReasonRequest,
     PaymentRow,
+    PaymentsOverview,
     ReasonRequest,
     ReportCreate,
+    TransferRequest,
 )
 from app.modules.auth.enums import BusinessStatus
 
@@ -128,11 +130,11 @@ async def dismiss(
     return ResponseBuilder.success(message="Dismissed.")
 
 
-@admin.get("/payments", summary="Bank-transfer payments waiting for confirmation")
+@admin.get("/payments", summary="Bank transfers to confirm, and who pays for what")
 async def payments(
     _: PlatformAdmin, db: DbSession
-) -> UnifiedResponse[list[PaymentRow]]:
-    return ResponseBuilder.success(data=await service.list_payments(db))
+) -> UnifiedResponse[PaymentsOverview]:
+    return ResponseBuilder.success(data=await service.payments_overview(db))
 
 
 @admin.post("/payments/{payment_id}/received", summary="Mark a bank transfer received")
@@ -147,6 +149,25 @@ async def mark_received(
 
 
 router.include_router(admin)
+
+
+@router.post(
+    "/businesses/{business_id}/bank-transfers",
+    status_code=status.HTTP_201_CREATED,
+    summary="Owner: pay for a pass, plan or top-up by bank transfer",
+)
+async def request_bank_transfer(
+    business_id: UUIDPath, payload: TransferRequest, ctx: OwnerContext, db: DbSession
+) -> UnifiedResponse[PaymentRow]:
+    del business_id
+    payment = await billing.request_transfer(
+        db, ctx.business, payload.kind, payload.job_id
+    )
+    return ResponseBuilder.success(
+        data=service.payment_row(payment, ctx.business.name, None),
+        message="We'll add it as soon as the transfer arrives.",
+        status_code=status.HTTP_201_CREATED,
+    )
 
 
 @router.post(

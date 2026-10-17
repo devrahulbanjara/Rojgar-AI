@@ -268,7 +268,10 @@ def upgrade() -> None:
             nullable=False,
             index=True,
         ),
-        sa.Column("item", sa.String(60), nullable=False),
+        sa.Column("kind", sa.String(20), nullable=False),
+        sa.Column(
+            "job_id", sa.Uuid(), sa.ForeignKey("jobs.id", ondelete="SET NULL")
+        ),
         sa.Column("amount_npr", sa.Integer(), nullable=False),
         sa.Column("reference", sa.String(100)),
         sa.Column("status", sa.String(20), nullable=False, server_default="awaiting"),

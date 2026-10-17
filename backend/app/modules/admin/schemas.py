@@ -79,11 +79,16 @@ class FlaggedJob(BaseSchema):
     latest_at: datetime
 
 
+PurchaseKind = Literal["job_pass", "job_pass_plus", "team", "business", "top_up"]
+
+
 class PaymentRow(BaseSchema):
     id: UUID
     business_id: UUID
     business_name: str
+    kind: PurchaseKind
     item: str
+    job_title: str | None = None
     amount_npr: int
     reference: str | None = None
     status: Literal["awaiting", "received"]
@@ -91,5 +96,23 @@ class PaymentRow(BaseSchema):
     received_at: datetime | None = None
 
 
+class PaidPlanRow(BaseSchema):
+    business_id: UUID
+    business_name: str
+    plan: str
+    active_passes: int
+
+
+class PaymentsOverview(BaseSchema):
+    transfers: list[PaymentRow]
+    # Businesses on a paid plan or with a live Job Pass.
+    paid: list[PaidPlanRow]
+
+
 class MarkReceivedRequest(BaseSchema):
     reference: str | None = Field(default=None, max_length=100)
+
+
+class TransferRequest(BaseSchema):
+    kind: PurchaseKind
+    job_id: UUID | None = None

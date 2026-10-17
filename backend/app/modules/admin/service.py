@@ -17,11 +17,14 @@ from app.core.config import settings
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.storage.service import storage_service
 from app.modules.admin.models import JobReport, JobTakedown, ManualPayment
+from app.modules.admin import billing
 from app.modules.admin.schemas import (
     ApprovalItem,
     BusinessRow,
     FlaggedJob,
     PaymentRow,
+    PaymentsOverview,
+    PaidPlanRow,
     ReportCreate,
     ReportItem,
 )
@@ -29,6 +32,8 @@ from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import BusinessStatus, MembershipRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
+from app.modules.entitlements.models import JobPass
+from app.modules.entitlements.plans import PassKind, PlanId
 from app.modules.jobs.models import Job
 from app.infrastructures.sms.service import send_sms
 
@@ -240,8 +245,7 @@ async def list_businesses(
             district=c.district,
             status=c.status,
             status_reason=c.status_reason,
-            # Billing plans arrive with entitlements; until then everyone is free.
-            plan=getattr(c, "plan", None) or "free",
+            plan=c.plan,
             members=m,
             jobs=j,
             open_reports=r,
@@ -449,52 +453,81 @@ async def report_job(
 # ---------------------------------------------------------------- payments
 
 
-async def list_payments(db: AsyncSession) -> list[PaymentRow]:
+def payment_row(payment: ManualPayment, business_name: str, job_title: str | None):
+    return PaymentRow(
+        id=payment.id,
+        business_id=payment.company_id,
+        business_name=business_name,
+        kind=payment.kind,
+        item=billing.PURCHASES[payment.kind].label,
+        job_title=job_title,
+        amount_npr=payment.amount_npr,
+        reference=payment.reference,
+        status=payment.status,
+        created_at=payment.created_at,
+        received_at=payment.received_at,
+    )
+
+
+async def payments_overview(db: AsyncSession) -> PaymentsOverview:
     rows = await db.execute(
-        select(ManualPayment, Company.name)
+        select(ManualPayment, Company.name, Job.title)
         .join(Company, Company.id == ManualPayment.company_id)
+        .outerjoin(Job, Job.id == ManualPayment.job_id)
         .order_by(
             (ManualPayment.status == "awaiting").desc(), ManualPayment.created_at.desc()
         )
         .limit(500)
     )
-    return [
-        PaymentRow(
-            id=p.id,
-            business_id=p.company_id,
-            business_name=name,
-            item=p.item,
-            amount_npr=p.amount_npr,
-            reference=p.reference,
-            status=p.status,
-            created_at=p.created_at,
-            received_at=p.received_at,
+    live_passes = (
+        select(func.count(JobPass.id))
+        .where(
+            JobPass.company_id == Company.id,
+            JobPass.kind != PassKind.first_job.value,
+            JobPass.expires_at > _now(),
         )
-        for p, name in rows.all()
-    ]
+        .scalar_subquery()
+    )
+    paid = await db.execute(
+        select(Company.id, Company.name, Company.plan, live_passes)
+        .where(or_(Company.plan != PlanId.free.value, live_passes > 0))
+        .order_by(Company.name)
+    )
+    return PaymentsOverview(
+        transfers=[payment_row(p, name, title) for p, name, title in rows.all()],
+        paid=[
+            PaidPlanRow(business_id=i, business_name=n, plan=plan, active_passes=c)
+            for i, n, plan, c in paid.all()
+        ],
+    )
 
 
 async def mark_received(
     db: AsyncSession, payment_id: str, admin: User, reference: str | None
 ) -> None:
-    payment = await db.get(ManualPayment, uuid.UUID(payment_id))
+    payment = await db.get(ManualPayment, uuid.UUID(payment_id), with_for_update=True)
     if payment is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Payment not found.")
     if payment.status == "received":
         return
     company = await db.get(Company, payment.company_id)
-    payment.status = "received"
-    payment.received_at = _now()
+    await billing.apply(db, payment)
     payment.received_by_user_id = admin.id
     if reference:
         payment.reference = reference
+    item = billing.PURCHASES[payment.kind].label
     await _audit(
         db,
         action="payment_received",
-        message=f"Bank transfer received: {payment.item}, NPR {payment.amount_npr:,}",
+        message=f"Bank transfer received: {item}, NPR {payment.amount_npr:,}",
         company=company,
         entity_type="payment",
         entity_id=payment.id,
-        metadata={"reference": payment.reference, "amount_npr": payment.amount_npr},
+        metadata={
+            "reference": payment.reference,
+            "amount_npr": payment.amount_npr,
+            "kind": payment.kind,
+        },
     )
     await db.commit()
+    await invalidate_company_detail_caches(db, str(company.id))

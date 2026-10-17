@@ -1,11 +1,14 @@
 """Platform staff: approvals, suspensions, reports and payments, all audited."""
 
+import uuid
+
 from sqlalchemy import select
 
 from app.modules.admin.models import JobReport, ManualPayment
 from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import BusinessStatus
 from app.modules.companies.models import Company
+from app.modules.entitlements.models import JobPass
 from app.infrastructures.sms.service import get_sms_provider
 from tests.integration.helpers import (
     auth_headers,
@@ -182,26 +185,60 @@ async def test_jobs_asking_for_money_or_unfair_must_haves_are_flagged(db):
     assert all(job_id != fine.id for job_id, _ in reasons)
 
 
-async def test_payments_mark_received(client, db):
+async def test_bank_transfer_marked_received_applies_the_purchase(client, db):
     staff = await make_platform_admin(db)
-    _, company = await make_recruiter_admin(db)
-    payment = ManualPayment(company_id=company.id, item="Job Pass", amount_npr=1500)
-    db.add(payment)
-    await db.flush()
+    owner, company = await make_recruiter_admin(db)
+    job = await make_active_job(db, company.id)
+    owner_headers = auth_headers(owner.id)
+
+    no_job = await client.post(
+        f"/businesses/{company.id}/bank-transfers",
+        json={"kind": "job_pass"},
+        headers=owner_headers,
+    )
+    assert no_job.status_code == 400
+    asked = await client.post(
+        f"/businesses/{company.id}/bank-transfers",
+        json={"kind": "job_pass", "job_id": str(job.id)},
+        headers=owner_headers,
+    )
+    assert asked.status_code == 201
+    assert asked.json()["data"]["amount_npr"] == 1129  # 999 + 13% VAT
+    plan = await client.post(
+        f"/businesses/{company.id}/bank-transfers",
+        json={"kind": "team"},
+        headers=owner_headers,
+    )
     headers = auth_headers(staff.id)
 
-    rows = (await client.get("/admin/payments", headers=headers)).json()["data"]
-    assert rows[0]["status"] == "awaiting" and rows[0]["business_name"] == "ACME Corp"
-    await client.post(
-        f"/admin/payments/{payment.id}/received",
-        json={"reference": "NIC-778812"},
-        headers=headers,
-    )
-    await db.refresh(payment)
-    assert payment.status == "received" and payment.received_by_user_id == staff.id
+    overview = (await client.get("/admin/payments", headers=headers)).json()["data"]
+    assert {t["item"] for t in overview["transfers"]} == {
+        "Job Pass",
+        "Team plan, 1 month",
+    }
+    assert overview["paid"] == []
+
+    for payment_id in (asked.json()["data"]["id"], plan.json()["data"]["id"]):
+        done = await client.post(
+            f"/admin/payments/{payment_id}/received",
+            json={"reference": "NIC-778812"},
+            headers=headers,
+        )
+        assert done.status_code == 200
+    passes = list(await db.scalars(select(JobPass).where(JobPass.job_id == job.id)))
+    assert [p.kind for p in passes] == ["job_pass"]
+    await db.refresh(company)
+    assert company.plan == "team"
+
+    overview = (await client.get("/admin/payments", headers=headers)).json()["data"]
+    assert {t["status"] for t in overview["transfers"]} == {"received"}
+    assert overview["paid"][0]["plan"] == "team"
+    assert overview["paid"][0]["active_passes"] == 1
     row = await _audit(db, "payment_received")
     assert row.actor_user_id == staff.id
     assert row.metadata_json["reference"] == "NIC-778812"
+    payment = await db.get(ManualPayment, uuid.UUID(asked.json()["data"]["id"]))
+    assert payment.received_by_user_id == staff.id
 
 
 async def test_business_owner_cannot_use_admin(client, db):
