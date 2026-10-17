@@ -17,7 +17,13 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-import { type NavItem, RECRUITER_NAV, RECRUITER_SETTINGS, isActivePath } from './navigation'
+import {
+  type NavItem,
+  RECRUITER_INSIGHTS,
+  RECRUITER_NAV,
+  RECRUITER_SETTINGS,
+  isActivePath,
+} from './navigation'
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const active = isActivePath(pathname, item)
@@ -57,7 +63,8 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
+        <SidebarMenu className="gap-1">
+          <NavLink item={RECRUITER_INSIGHTS} pathname={pathname} />
           <NavLink item={RECRUITER_SETTINGS} pathname={pathname} />
         </SidebarMenu>
       </SidebarFooter>
