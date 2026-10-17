@@ -66,7 +66,7 @@ export function OfflineBar() {
     <div
       role="status"
       aria-live="polite"
-      className="app-surface flex h-8 items-center justify-center bg-foreground px-4 text-center text-xs font-medium text-background"
+      className="app-surface flex h-8 min-h-0 items-center justify-center bg-foreground px-4 text-center text-xs font-medium text-background"
     >
       {online
         ? "Can't reach the server. We'll reconnect automatically."
