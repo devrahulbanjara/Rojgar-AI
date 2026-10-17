@@ -46,12 +46,12 @@ def _load_model():
 
     try:
         model = joblib.load(_MODEL_PATH)
-        logger.info("ML bouncer model loaded from {}", _MODEL_PATH)
+        logger.info("ML ranking model loaded from {}", _MODEL_PATH)
         return model
     except FileNotFoundError:
         logger.error(
-            "ML bouncer model not found at {}. Applications will not be ML-scored "
-            "and are routed to recruiter review.",
+            "ML ranking model not found at {}; the review tie-break is neutral "
+            "(0.5) for every applicant.",
             _MODEL_PATH,
         )
         return None
@@ -137,7 +137,7 @@ def extract_features(job: Job, application: Application) -> list[float] | None:
 
 
 def score_applications(job: Job, applications: list[Application]) -> list[float | None]:
-    """Run the ML bouncer on a batch of applications.
+    """Run the ML ranking model on a batch of applications.
 
     CPU-bound and synchronous (TF-IDF + scikit-learn): async callers must run
     it via `asyncio.to_thread`. Applications must be fully loaded (no lazy
@@ -165,7 +165,7 @@ def score_applications(job: Job, applications: list[Application]) -> list[float 
     for i, prob in zip(scorable, probabilities, strict=True):
         results[i] = float(prob)
         logger.debug(
-            "ML bouncer features app={} job={} {} -> {:.3f}",
+            "ML tie-break features app={} job={} {} -> {:.3f}",
             applications[i].id,
             job.id,
             dict(zip(_FEATURE_NAMES, features[i] or [], strict=True)),
