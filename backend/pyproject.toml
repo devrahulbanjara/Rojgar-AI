@@ -68,9 +68,6 @@ filterwarnings = [
     "ignore::PendingDeprecationWarning:langgraph",
     "ignore::langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
 ]
-markers = [
-    "hybrid_eval: opt-in ranking-quality eval against real Qdrant + Gemini (set RUN_HYBRID_EVAL=1 to run)",
-]
 
 [dependency-groups]
 dev = [
