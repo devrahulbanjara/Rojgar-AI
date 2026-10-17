@@ -110,26 +110,17 @@ class Settings(BaseSettings):
     llama_extract_parse_model: str = "gemini-2.5-pro"
     llama_extract_model: str = "openai-gpt-5-mini"
 
-    # AWS
-    aws_access_key_id: str | None = None
-    aws_secret_access_key: str | None = None
+    # AWS (Bedrock review provider; credentials are the *_shortlisting ones)
     aws_region: str = "us-east-1"
 
-    # S3
-    # "local" keeps uploads on disk (dev/test); "s3" uses the bucket. Empty = local
-    # everywhere except prod, so a laptop can never write to the real bucket.
-    storage_backend: Literal["", "local", "s3"] = ""
+    # File storage
+    # "local" keeps uploads on disk; "cloudinary" uses CLOUDINARY_URL. Empty =
+    # local everywhere except prod, so a laptop never writes to the real cloud.
+    # Tests always use local.
+    storage_backend: Literal["", "local", "cloudinary"] = ""
     local_storage_dir: str = ".local-storage"
-    s3_bucket_name: str | None = None
-    s3_upload_acl: str | None = "public-read"
-    s3_max_upload_bytes: int = 5 * 1024 * 1024
-    s3_allowed_image_extensions: tuple[str, ...] = (
-        "jpg",
-        "jpeg",
-        "png",
-        "webp",
-        "gif",
-    )
+    image_max_upload_bytes: int = 5 * 1024 * 1024
+    image_allowed_extensions: tuple[str, ...] = ("jpg", "jpeg", "png", "webp", "gif")
 
     # AI review (one per application, rolling). Provider: groq | bedrock | fake.
     review_provider: str = "groq"
@@ -179,9 +170,11 @@ class Settings(BaseSettings):
     # Derived URLs
     @property
     def effective_storage_backend(self) -> str:
+        if self.environment == "test":
+            return "local"
         if self.storage_backend:
             return self.storage_backend
-        return "s3" if self.environment == "prod" else "local"
+        return "cloudinary" if self.environment == "prod" else "local"
 
     @property
     def database_url(self) -> str:
@@ -192,13 +185,6 @@ class Settings(BaseSettings):
     def test_database_url(self) -> str:
         """Async SQLAlchemy URL for the test database."""
         return f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
-
-    @property
-    def s3_base_url(self) -> str:
-        """Public base URL for the configured S3 bucket."""
-        if not self.s3_bucket_name:
-            return ""
-        return f"https://{self.s3_bucket_name}.s3.{self.aws_region}.amazonaws.com"
 
     model_config = SettingsConfigDict(
         env_file=".env",

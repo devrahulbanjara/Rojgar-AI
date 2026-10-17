@@ -1,4 +1,4 @@
-"""Local storage backend: dev/test never write to a real bucket."""
+"""Local storage backend: dev/test never write to Cloudinary."""
 
 from urllib.parse import parse_qs, urlparse
 
@@ -7,8 +7,6 @@ import pytest
 from app.core.config import settings
 from app.infrastructures.storage.service import storage_service
 
-pytestmark = pytest.mark.asyncio
-
 
 @pytest.fixture(autouse=True)
 def _local_storage(tmp_path, monkeypatch):
@@ -16,12 +14,18 @@ def _local_storage(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "local_storage_dir", str(tmp_path))
 
 
-def test_dev_defaults_to_local(monkeypatch):
+def test_only_prod_defaults_to_cloudinary(monkeypatch):
     monkeypatch.setattr(settings, "storage_backend", "")
     monkeypatch.setattr(settings, "environment", "dev")
     assert settings.effective_storage_backend == "local"
     monkeypatch.setattr(settings, "environment", "prod")
-    assert settings.effective_storage_backend == "s3"
+    assert settings.effective_storage_backend == "cloudinary"
+
+
+def test_tests_never_use_cloudinary(monkeypatch):
+    monkeypatch.setattr(settings, "storage_backend", "cloudinary")
+    monkeypatch.setattr(settings, "environment", "test")
+    assert settings.effective_storage_backend == "local"
 
 
 async def test_private_file_needs_a_valid_signature(client):
