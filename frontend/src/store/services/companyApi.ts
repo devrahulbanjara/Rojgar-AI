@@ -44,7 +44,8 @@ export interface InvitePreview {
   problem: string | null
 }
 
-export interface CompanyMediaData {
+/** GET /companies/me: the business the person works in now. */
+export interface CompanyProfileData {
   id: string
   name: string
   logo_url: string | null
@@ -52,7 +53,6 @@ export interface CompanyMediaData {
   company_size: string | null
   location: string | null
   website_url: string | null
-  cal_organizer_email: string | null
   description: string | null
   slug: string
   district: string | null
@@ -66,20 +66,16 @@ export interface CompanyMediaData {
   updated_at: string
 }
 
-export type CompanyProfileData = CompanyMediaData
-
 export interface UpdateCompanyRequest {
   name?: string | null
   industry?: string | null
   company_size?: string | null
   location?: string | null
   website_url?: string | null
-  cal_organizer_email?: string | null
   description?: string | null
 }
 
 type EmptyResponse = ApiResponse<null>
-type CompanyMediaResponse = ApiResponse<CompanyMediaData>
 type CompanyProfileResponse = ApiResponse<CompanyProfileData>
 
 // ---------------------------------------------------------------------------
@@ -104,7 +100,7 @@ export const companyApi = baseApi.injectEndpoints({
       invalidatesTags: ['Company'],
     }),
 
-    uploadCompanyLogo: builder.mutation<CompanyMediaResponse, FormData>({
+    uploadCompanyLogo: builder.mutation<CompanyProfileResponse, FormData>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/logo`,
         method: 'PATCH',
