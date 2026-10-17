@@ -1,4 +1,3 @@
-import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Query, status
@@ -17,6 +16,8 @@ from app.modules.jobs.schemas import (
     JobDetailResponse,
     JobListItem,
     JobUpdate,
+    SuggestMustHavesRequest,
+    SuggestMustHavesResponse,
 )
 from app.shared.enums import LocationType
 
@@ -135,15 +136,12 @@ async def delete_job(
 
 
 @router.post(
-    "/{job_id}/complete-hiring",
-    summary="Complete hiring for a job (one-way; auto-rejects pending applicants)",
+    "/suggest-must-haves",
+    summary="Suggest must-haves, nice-to-haves and questions from a description",
 )
-async def complete_hiring(
-    job_id: uuid.UUID,
-    bg_tasks: BackgroundTasks,
-    user: ActiveMember,
-    db: DbSession,
-) -> UnifiedResponse[dict]:
-    """Close the hiring lifecycle for a job."""
-    data = await service.complete_hiring(db, user, job_id, bg_tasks)
-    return ResponseBuilder.success(data=data, message="Hiring completed for this job.")
+async def suggest_must_haves(
+    payload: SuggestMustHavesRequest, user: ActiveMember
+) -> UnifiedResponse[SuggestMustHavesResponse]:
+    del user  # company members only
+    data = await service.suggest_must_haves(payload)
+    return ResponseBuilder.success(data=data)

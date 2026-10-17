@@ -7,13 +7,13 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
-from app.modules.jobs.service import expire_due_jobs
+from app.modules.jobs.service import close_due_jobs
 
 
 async def _expire_due_jobs_once() -> int:
     """Run job expiry once inside the shared application event loop."""
     async with AsyncSessionLocal() as session:
-        return await expire_due_jobs(session)
+        return await close_due_jobs(session)
 
 
 async def _expire_due_jobs_once_in_scheduler_thread() -> int:
@@ -28,7 +28,7 @@ async def _expire_due_jobs_once_in_scheduler_thread() -> int:
 
     try:
         async with session_factory() as session:
-            return await expire_due_jobs(session)
+            return await close_due_jobs(session)
     finally:
         await engine.dispose()
 
@@ -39,7 +39,7 @@ def _run_expire_due_jobs() -> None:
         expired_count = asyncio.run(_expire_due_jobs_once_in_scheduler_thread())
         if expired_count:
             logger.info(
-                "Daily expiry scheduler marked {} job(s) as expired.", expired_count
+                "Hourly scheduler closed {} job(s) past their closing time.", expired_count
             )
     except Exception:
         logger.exception("Daily expiry scheduler failed while expiring due jobs.")
@@ -69,7 +69,7 @@ async def run_job_expiry_startup_check() -> None:
         expired_count = await _expire_due_jobs_once()
         if expired_count:
             logger.info(
-                "Startup expiry check marked {} job(s) as expired.", expired_count
+                "Startup check closed {} job(s) past their closing time.", expired_count
             )
     except Exception:
         logger.exception("Startup expiry check failed while expiring due jobs.")

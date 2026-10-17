@@ -35,7 +35,6 @@ from app.modules.job_ai.router import router as job_ai_router
 from app.modules.job_ai.runtime import job_ai_runtime
 from app.modules.jobs.router import router as jobs_router
 from app.modules.notifications.router import router as notifications_router
-from app.modules.outreach.router import router as outreach_router
 from app.modules.profiles.router import router as profiles_router
 from app.modules.public.router import router as public_router
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
@@ -43,30 +42,33 @@ from app.modules.recruiter_preferences.router import (
     router as recruiter_preferences_router,
 )
 from app.modules.resumes.router import router as resumes_router
-from app.modules.shortlisting.ml_bouncer import assert_model_available
-from app.modules.shortlisting.router import router as shortlisting_router
-from app.modules.shortlisting.service import recover_unfinished_shortlisting
+from app.modules.applications.emails import deliver_overdue
+from app.modules.applications.recruiter_router import router as recruiter_router
+from app.modules.jobs.templates_router import router as job_templates_router
+from app.modules.review.ml_rank import assert_model_available
+from app.modules.review.service import recover_pending_reviews
 
 setup_logging()
 
 
 async def _run_startup_backlog() -> None:
-    """Expire overdue jobs, then resume unfinished shortlisting, off the startup path."""
-    # marks any overdue active jobs as expired on boot
+    """Close overdue jobs, send overdue decision emails, finish pending reviews."""
     await run_job_expiry_startup_check()
     try:
-        # resumes two-stage shortlisting for expired jobs left unfinished by a prior crash
-        await recover_unfinished_shortlisting()
+        await deliver_overdue()
     except Exception:
-        logger.exception("Startup shortlisting recovery failed.")
+        logger.exception("Startup decision-email sweep failed.")
+    try:
+        await recover_pending_reviews()
+    except Exception:
+        logger.exception("Startup review recovery failed.")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Run startup and shutdown tasks for the FastAPI application lifecycle."""
     if settings.environment == "prod":
-        # Refuse to serve with a missing ML pre-filter model rather than
-        # silently mis-scoring every application.
+        # The ML tie-break model ships with the image; fail loudly if not.
         await asyncio.to_thread(assert_model_available)
     # vector store — job/candidate search and recruiter chat
     await qdrant_service.initialize()
@@ -74,14 +76,13 @@ async def lifespan(app: FastAPI):
     await job_ai_runtime.start()
     # cache layer — jobs, applications, companies
     await redis_service.connect()
-    # Expiry + shortlisting recovery can run LLM reviews for many applications;
-    # run them in the background so the API starts serving (and passes health
-    # checks) immediately. Jobs are claimed atomically, so replicas don't collide.
+    # Pending reviews can mean many LLM calls; run them in the background so the
+    # API serves immediately. Review attempts are claimed atomically.
     startup_backlog_task = asyncio.create_task(_run_startup_backlog())
 
     # background loop — retries failed qdrant sync events every 60s
     daemon_task = asyncio.create_task(sync_daemon_loop())
-    # daily cron — marks overdue active jobs as expired
+    # hourly — closes jobs past their closing time
     job_expiry_scheduler = create_job_expiry_scheduler()
     job_expiry_scheduler.start()
 
@@ -143,11 +144,11 @@ app.include_router(notifications_router)
 app.include_router(recruiter_preferences_router)
 app.include_router(jobs_router)
 app.include_router(applications_router)
-app.include_router(shortlisting_router)
+app.include_router(recruiter_router)
+app.include_router(job_templates_router)
 app.include_router(interviews_router)
 app.include_router(evaluation_router)
 app.include_router(recording_router)
-app.include_router(outreach_router)
 app.include_router(cal_webhook_router)
 
 
