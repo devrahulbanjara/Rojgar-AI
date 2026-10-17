@@ -46,8 +46,7 @@ Business posts a job  ─►  one apply link (LinkedIn · Facebook · Viber · M
                                  ▼
              Applicant applies (no account, phone or email, CV if the job needs one)
                                  │
-                 each application is reviewed soon after it arrives
-            knockout answers → injection check → quick pass → full review
+          AI reviews each application soon after it arrives
                  fit: strong · possible · weak, plus a one-line reason
                                  │
            The team sees applicants best-first and decides in one click
@@ -56,26 +55,99 @@ Business posts a job  ─►  one apply link (LinkedIn · Facebook · Viber · M
                      every applicant hears back by email
 ```
 
-AI reads and ranks. A person shortlists, rejects, invites and hires. Each decision waits through a short undo window before its email goes out, so nothing is sent by accident.
+A person shortlists, rejects, invites and hires. Each decision waits through a short undo window before its email goes out, so nothing is sent by accident.
 
 ## Features
 
 - **One apply link per job.** Share it anywhere. Also a printable QR poster, and personal "Suggest someone you know" links that count their own applications.
 - **Applying without an account.** Phone or email, Nepali or English. A CV can be a PDF or a photo of a paper CV.
 - **CV required, per job.** On by default for office, IT, bank, health, education and NGO jobs; off for driving, hotel, shop, factory and construction jobs, where many good people have no CV. Without a CV, the job can ask up to 5 questions instead of 3.
-- **Rolling review.** Each application is read shortly after it arrives, so nobody waits for a closing date. Each must-have is marked met, partly met or missing, backed by a quote that is checked against the CV text. Fit is worked out in code from those checks. Applicants never see AI output.
-- **Blind review.** The AI never sees names, contact details, photos, dates of birth or school names.
+- **AI that reads every application.** A review with quotes as proof, Ask AI about any applicant, a job-writing helper and search by meaning. See [How AI is used](#how-ai-is-used).
 - **Verified businesses.** Sign up as a person, create a business, wait for approval. Only approved businesses' jobs are public.
 - **Teams and roles.** Owner, Manager, Interviewer. Invite-only, with an audit trail.
 - **Interviews.** Applicants pick a time from a signed booking link. Video links use Jitsi Meet (no account needed). `.ics` invites in Nepal time, reschedule and cancel, reminders 24 hours and 1 hour before, and "How did it go?" notes.
-- **Ask AI about an applicant.** Ask a question about one person; the answer comes only from their CV and application, with quotes.
-- **Job-writing helper.** Describe the role in a sentence and it fills in the job post. Salary figures come only from cited web sources.
 - **Everything in one place.** Today page, a job page with a side panel for each applicant, insights, notifications and an activity feed.
 - **English and नेपाली** across the public pages and the applicant side, with Noto Sans Devanagari for Nepali text.
 
+## How AI is used
+
+**AI assists. You decide.** AI reads every application, suggests and drafts. It never decides alone and never changes data: every hiring decision is a person's click. Every AI answer comes back in a fixed structure and is checked in code before anyone sees it.
+
+### At a glance
+
+| Feature | Where you see it | What AI does |
+|---|---|---|
+| **Application review** | Fit pill and one-line reason on every applicant | Checks each must-have (met, partly, missing) and quotes the CV as proof |
+| **Ask AI** | Applicant panel | Answers questions about one applicant, only from their data, with quotes |
+| **Job-writing helper** | New job | Turns a sentence like "need a cook in Pokhara" into a full job post; looks up typical pay when asked |
+| **Suggested must-haves** | Job builder → *Suggest from description* | Proposes must-haves, nice-to-haves and apply-form questions |
+| **Applicant search** | Applicants page search box | Finds applicants by meaning as well as keywords ("worked on payments") |
+| **CV reading** *(optional)* | After someone applies with a PDF | Turns the CV into jobs, education and skills |
+
+### Reviewing an application
+
+Each application is reviewed shortly after it arrives, one at a time, so nobody waits for a closing date.
+
+```text
+application ─► knockout answers ─► shorten long CVs ─► safety check ─► quick review ─► full review
+               (rules, no AI)      (local model)        (injection)     (small model)   (only when needed)
+                                                                              │
+                                     fit + reason, worked out in code ◄───────┘
+```
+
+1. **Knockout answers.** A wrong answer to a must-answer question ("Do you have a licence?" → No) is decided by rules, with no AI call.
+2. **Blind text.** The reviewer never sees names, contact details, photos, links or school names.
+3. **Shorter input.** A long CV is cut to the passages that best match the job's criteria, about 1,000 tokens, chosen by a local model. Answers to the job's questions are always kept.
+4. **Safety check.** The text is checked for hidden instructions aimed at the AI. If found, the application goes to a person instead of the AI.
+5. **Quick review, then full review.** A small model checks every must-have first. The larger model reviews again only if the person looks like a possible fit.
+6. **Checked in code.** Every quote must appear word for word in the CV, or that check counts as missing. The fit (strong, possible, weak) is calculated from the checks, not written by the AI. Applicants never see AI output.
+
+### Ask AI about an applicant
+
+Ask anything about one applicant: "Has she used React in production?", "What should I ask in the interview?". The answer comes only from that applicant's CV, form answers, review, interview notes and activity. Every quote is checked against those words, and an answer without support becomes "Not in their CV or notes." Ask it to shortlist or reject someone and it points you to the button; it can't do it itself.
+
+Each team member's conversation about an applicant is remembered (the last few questions) in Rojgar AI's own database, so it's deleted along with the applicant's data.
+
+### Writing a job post
+
+The job-writing helper is an agent with one tool, a salary search. When you ask what to pay, it looks up typical pay for the job title and town (nothing else is sent) and cites its sources. A salary number in the draft must come from you or from a cited source, or it's removed. It never adds requirements about gender, age, caste, religion, marital status or looks.
+
+### Models
+
+| Purpose | Model | Runs on |
+|---|---|---|
+| Review, Ask AI, job helper, suggestions, safety check | `gpt-oss-120b`; `gpt-oss-20b` for the quick review | Groq |
+| Fallback when Groq is busy or down | `gemini-2.5-flash` (set `GEMINI_API_KEY`) | Google |
+| Search, CV shortening | `multilingual-e5-small` (English, Nepali, romanized Nepali) and BM25 | Local CPU, free |
+| Ordering applicants with nearly equal reviews | scikit-learn model, never decides fit | Local CPU, free |
+| Salary lookups for the job helper | Tavily web search | Tavily |
+| Reading PDF CVs *(optional)* | LlamaCloud extraction (set `LLAMA_CLOUD_API_KEY`) | LlamaCloud |
+
+Every model call goes through one place, `backend/app/infrastructures/ai/llm.py`, built on LangChain agents with structured output. The tests use a scripted model, so no test calls a real provider.
+
+### Staying within free limits
+
+Rojgar AI runs on free tiers, so it counts every model's requests per minute, requests per day and tokens per minute (in Redis, shared by all servers).
+
+- **Before a call:** if a call would go over a model's limit, it goes straight to the other provider (Groq to Gemini).
+- **After a "too many requests" error:** that model is skipped for exactly as long as the provider asked, or until its daily reset.
+- **When everything is busy:** Ask AI and the job helper say so and ask you to try again in a moment. Reviews wait and continue later; they never fail or use up retries because of limits.
+- **Smaller requests:** long CVs are shortened and answer sizes are capped, because Groq counts both against its per-minute limit.
+
+### Safety
+
+- **Hidden instructions.** Text is cleaned of invisible characters, scanned for known injection phrases, and checked by an AI classifier. The text it checks is wrapped in a random tag, so it can't fake the end of its own input. Reviews treat an unavailable check as unsafe and hand the application to a person; even an attack that slips through can't change a decision, because the AI's answers are only data checked in code.
+- **Fair criteria.** Must-haves and questions are checked against Nepal's Labour Act 2074, section 6 (gender, caste or ethnicity, religion, marital status, age and more). Saving is never blocked; the team is asked to reword.
+- **Private data.** Emails, links and phone numbers are removed before a model reads an application. CVs and business documents are private files, opened only through short-lived signed links.
+- **People decide.** No AI feature can move an applicant, send a message or change a job. Decisions are made by a person, wait through an undo window and are kept in the audit log.
+
+### What isn't AI
+
+Filling in your name and email from a CV, knockout questions, the unfair-criteria warning, the fit pill's final value, quote checking and every stage change are plain rules in code: predictable, instant and free.
+
 ## Architecture
 
-A monorepo with a Python API and a Next.js app. The frontend talks to the backend only over HTTP (RTK Query, plus server-sent events for streamed AI answers). The backend owns the database, cache, vector store, file storage and every AI call.
+A monorepo with a Python API and a Next.js app. The frontend talks to the backend only over HTTP (RTK Query, plus server-sent events for AI answers). The backend owns the database, cache, vector store, file storage and every AI call.
 
 ```
 ┌──────────────────────────────┐        ┌──────────────────────────────────────────────┐
@@ -108,11 +180,7 @@ Background work runs inside the API process (started in `main.py`):
 
 **Backend:** Python 3.12, FastAPI, SQLAlchemy 2 (async) with asyncpg, Pydantic v2, Alembic, PostgreSQL, Redis, Qdrant, APScheduler, Argon2, PyJWT, aiosmtplib, Cloudinary, pypdf, `uv` for dependencies, `pytest`.
 
-**AI and ML:**
-- Groq (`gpt-oss-120b` / `gpt-oss-20b`) for review, Ask AI and job writing, through LangChain agents. When `GEMINI_API_KEY` is set, Gemini answers whenever Groq fails or is rate limited, so both free tiers add up.
-- `multilingual-e5-small`: a local Hugging Face model through fastembed. It runs on the CPU, needs no API key and has no rate limit.
-- Tavily for salary lookups. LlamaCloud, optional, for CV parsing.
-- A scikit-learn model used only to break near-ties in the ranking.
+**AI:** LangChain agents on Groq, with Gemini as fallback; local `multilingual-e5-small` and BM25 (fastembed); scikit-learn. See [How AI is used](#how-ai-is-used).
 
 ## Repository layout
 
@@ -227,15 +295,6 @@ npm run fix-all               # types, then lint --fix, then prettier
 ```bash
 npx @google/design.md@0.4.0 lint DESIGN.md
 ```
-
-## AI and safety
-
-- **Review order:** knockout questions first (no AI). Long CVs are cut locally to the passages that best match the criteria (about 1,000 tokens). Then a prompt-injection check, which cleans hidden Unicode first. Then a quick pass with a small model, and a full review only when needed. Every claim needs a quote that appears word for word in the CV, and fit is worked out in code. Cost and tokens are recorded per review, and retries are safe to repeat.
-- **Fails safe where it matters:** if the injection check can't run (an error or a rate limit), the unattended review treats the text as unsafe and retries; after that, a person decides. Interactive features stay usable.
-- **Free-tier limits:** each model's requests per minute and per day and tokens per minute are counted in Redis. A call that would pass a limit, or a model that just returned a 429, goes to the other provider at once (Groq to Gemini). When both are busy, chat answers say so and reviews wait without using up attempts.
-- **People decide:** AI never moves an applicant's stage. Every decision is made by a person, waits through an undo window, and is recorded in the audit log.
-- **Fair criteria:** must-haves and questions are checked against Nepal's Labour Act 2074, section 6 (gender, caste or ethnicity, religion, marital status, age and more). Saving is never blocked; the team is asked to reword.
-- **Files:** CVs and business documents are private on Cloudinary and open only through short-lived signed links. Uploads always go through the backend.
 
 ## Design and branding
 
