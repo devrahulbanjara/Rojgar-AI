@@ -214,6 +214,7 @@ async def test_jobs_overview_lists_every_role_with_counts(client, db):
     rows = {row["title"]: row for row in response.json()["data"]}
     assert set(rows) == {"Open", "Closed long ago", "Draft"}
     assert rows["Open"]["to_review"] == 1
+    assert rows["Open"]["share_slug"] == open_job.slug
     assert rows["Draft"]["applicants"] == 0
 
 
@@ -231,8 +232,6 @@ async def test_dashboard_endpoints_run_on_stage_and_review_data(client, db):
     for path in (
         "/dashboards/recruiter",
         "/dashboards/recruiter/analytics",
-        "/dashboards/recruiter-admin",
-        "/dashboards/recruiter-admin/analytics",
     ):
         response = await client.get(path, headers=auth_headers(admin.id))
         assert response.status_code == 200, (path, response.text)

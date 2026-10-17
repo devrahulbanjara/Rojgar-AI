@@ -3,7 +3,12 @@ from uuid import UUID
 
 from app.core.schemas import BaseSchema
 from app.modules.auth.enums import MembershipStatus
-from app.shared.enums import ApplicationStage, JobStatus, LocationType
+from app.shared.enums import (
+    ApplicationStage,
+    JobClosedReason,
+    JobStatus,
+    LocationType,
+)
 
 
 class ApplicationPipelineItem(BaseSchema):
@@ -81,8 +86,8 @@ class JobPipelineItem(BaseSchema):
     id: UUID
     title: str
     status: JobStatus
-    expires_at: datetime | None
-    days_until_expiry: int | None
+    closes_at: datetime | None
+    days_until_close: int | None
     total_applications: int
     applied_count: int
     shortlisted_count: int
@@ -211,8 +216,10 @@ class RoleCard(BaseSchema):
     location: str | None = None
     location_type: LocationType
     created_at: datetime
-    # The job's closes_at (open) or closed_at (closed).
-    expires_at: datetime | None = None
+    closes_at: datetime | None = None
+    closed_at: datetime | None = None
+    # hired | cancelled | expired when status is closed.
+    closed_reason: JobClosedReason | None = None
     applicants: int
     # Applications nobody has decided on yet (stage new).
     to_review: int
@@ -224,8 +231,7 @@ class RoleCard(BaseSchema):
     # Interviewed (completed, or booked with the time already past) and
     # still without an offer / rejection.
     to_decide: int
-    # Closed with closed_reason "hired".
-    hiring_completed: bool = False
+    # Public apply-link slug (/jobs/{slug}).
     share_slug: str
 
 

@@ -111,7 +111,6 @@ async def _role_cards(
     def count_if(condition):
         return func.coalesce(func.sum(case((condition, 1), else_=0)), 0)
 
-    hired = Job.closed_reason == JobClosedReason.hired.value
     today_filter = [
         or_(
             Job.status == JobStatus.open,
@@ -130,8 +129,10 @@ async def _role_cards(
             Job.location,
             Job.location_type,
             Job.created_at,
-            func.coalesce(Job.closes_at, Job.closed_at).label("expires_at"),
-            func.coalesce(hired, False).label("hiring_completed"),
+            Job.closes_at,
+            Job.closed_at,
+            Job.closed_reason,
+            Job.slug.label("share_slug"),
             func.count(Application.id).label("applicants"),
             count_if(Application.stage == ApplicationStage.new).label("to_review"),
             count_if(
@@ -159,7 +160,7 @@ async def _role_cards(
         .group_by(Job.id)
     )
 
-    cards = [RoleCard(**row._mapping, share_slug=str(row.job_id)) for row in rows.all()]
+    cards = [RoleCard.model_validate(row._mapping) for row in rows.all()]
     if everything:
         cards.sort(key=lambda card: card.created_at, reverse=True)
         return cards
@@ -174,7 +175,7 @@ async def _role_cards(
     cards.sort(
         key=lambda card: (
             -(card.to_review + card.to_contact + card.to_decide),
-            card.expires_at or far_future,
+            card.closes_at or card.closed_at or far_future,
         )
     )
     return cards

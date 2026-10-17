@@ -81,11 +81,11 @@ def _pipeline_step(stage: ApplicationStage) -> int | None:
     return PIPELINE_STEPS.get(stage)
 
 
-def _job_days_until_expiry(expires_at: datetime | None) -> int | None:
-    """Return the number of days until a job expires."""
-    if expires_at is None:
+def _days_until_close(closes_at: datetime | None) -> int | None:
+    """Return the number of days until an open job closes itself."""
+    if closes_at is None:
         return None
-    return (expires_at.date() - _today_utc()).days
+    return (closes_at.date() - _today_utc()).days
 
 
 def _normalize_range_key(range_key: str) -> str:
@@ -484,8 +484,8 @@ async def _get_active_jobs(
             id=row.id,
             title=row.title,
             status=row.status,
-            expires_at=row.closes_at,
-            days_until_expiry=_job_days_until_expiry(row.closes_at),
+            closes_at=row.closes_at,
+            days_until_close=_days_until_close(row.closes_at),
             total_applications=row.total_applications or 0,
             applied_count=row.applied_count or 0,
             shortlisted_count=row.shortlisted_count or 0,
