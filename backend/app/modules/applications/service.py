@@ -605,6 +605,21 @@ def _app_to_list_item(app: Application) -> ApplicationListItem:
     )
 
 
+def _recruiter_safe_resume(application: Application) -> ResumeResponse | None:
+    """Resume as shown to recruiters, honouring the candidate's share settings."""
+    if not application.resume:
+        return None
+    resume = ResumeResponse.model_validate(application.resume)
+    hidden: dict[str, None] = {}
+    if not application.share_phone:
+        hidden["phone"] = None
+    if not application.share_location:
+        hidden["location"] = None
+    if not application.share_links:
+        hidden.update(linkedin_url=None, github_url=None, portfolio_url=None)
+    return resume.model_copy(update=hidden) if hidden else resume
+
+
 async def _get_active_company_id(db: AsyncSession, user: User) -> UUID:
     """Return the user's active company ID or raise HTTP 403."""
     result = await db.execute(
@@ -924,9 +939,7 @@ async def _build_company_candidate_detail(
         interview=RecruiterCandidateInterviewView.model_validate(interview)
         if interview
         else None,
-        resume=ResumeResponse.model_validate(application.resume)
-        if application.resume
-        else None,
+        resume=_recruiter_safe_resume(application),
         share_settings=share,
         timeline=timeline,
         outreach_audit=outreach_audit,
@@ -1099,9 +1112,7 @@ async def get_application(
                 score=application.score,
                 strengths=application.strengths,
                 weaknesses=application.weaknesses,
-                resume=ResumeResponse.model_validate(application.resume)
-                if application.resume
-                else None,
+                resume=_recruiter_safe_resume(application),
                 job_title=job.title,
                 company_name=company.name if company is not None else None,
                 company_logo_url=company.logo_url if company is not None else None,

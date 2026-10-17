@@ -1,13 +1,19 @@
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.cache import invalidate_profile_read_caches
 from app.core.swr_cache import swr_get
+from app.modules.applications.models import Application
+from app.modules.auth.enums import MembershipStatus, UserRole
 from app.modules.auth.models import User
+from app.modules.companies.models import CompanyMembership
+from app.modules.jobs.models import Job
 from app.modules.profiles.models import (
     Profile,
     ProfileEducation,
@@ -221,3 +227,53 @@ async def complete_onboarding(
         f"Candidate {user.id} completed onboarding with roles: {payload.target_roles}"
     )
     return response
+
+
+async def get_profile_for_viewer(
+    db: AsyncSession, viewer: User, user_id: UUID
+) -> ProfileResponse:
+    """Profile by user ID, visible only to its owner or to recruiters whose
+    company received an application from that candidate. Recruiters only see
+    contact fields the candidate chose to share with their company."""
+    not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found."
+    )
+    if viewer.id == user_id:
+        return await get_profile_by_user_id(db, str(user_id))
+
+    if viewer.primary_role not in (UserRole.recruiter, UserRole.recruiter_admin):
+        raise not_found
+
+    company_id = await db.scalar(
+        select(CompanyMembership.company_id).where(
+            CompanyMembership.user_id == viewer.id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+    if company_id is None:
+        raise not_found
+
+    shared = (
+        await db.execute(
+            select(
+                func.bool_or(Application.share_phone),
+                func.bool_or(Application.share_location),
+                func.bool_or(Application.share_links),
+            )
+            .join(Job, Job.id == Application.job_id)
+            .where(Application.user_id == user_id, Job.company_id == company_id)
+        )
+    ).one()
+    share_phone, share_location, share_links = shared
+    if share_phone is None:  # no application to this company
+        raise not_found
+
+    profile = await get_profile_by_user_id(db, str(user_id))
+    hidden: dict[str, None] = {}
+    if not share_phone:
+        hidden["phone"] = None
+    if not share_location:
+        hidden["location"] = None
+    if not share_links:
+        hidden.update(linkedin_url=None, github_url=None, portfolio_url=None)
+    return profile.model_copy(update=hidden) if hidden else profile
