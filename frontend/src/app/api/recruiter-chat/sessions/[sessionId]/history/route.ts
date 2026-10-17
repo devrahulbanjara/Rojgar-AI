@@ -2,6 +2,8 @@ import type { NextRequest } from 'next/server'
 
 import {
   getRecruiterChatBackendBaseUrl,
+  invalidSessionIdResponse,
+  isValidSessionId,
   recruiterChatMisconfiguredResponse,
   recruiterChatUnavailableResponse,
 } from '../../../routeUtils'
@@ -19,18 +21,22 @@ export async function GET(
   }
 
   const { sessionId } = await params
+  if (!isValidSessionId(sessionId)) return invalidSessionIdResponse()
   const authorization = req.headers.get('authorization')
   const cookie = req.headers.get('cookie')
 
   try {
-    const response = await fetch(`${backendBaseUrl}/recruiter-chat/sessions/${sessionId}/history`, {
-      method: 'GET',
-      headers: {
-        ...(authorization ? { Authorization: authorization } : {}),
-        ...(cookie ? { Cookie: cookie } : {}),
+    const response = await fetch(
+      `${backendBaseUrl}/recruiter-chat/sessions/${encodeURIComponent(sessionId)}/history`,
+      {
+        method: 'GET',
+        headers: {
+          ...(authorization ? { Authorization: authorization } : {}),
+          ...(cookie ? { Cookie: cookie } : {}),
+        },
+        credentials: 'include',
       },
-      credentials: 'include',
-    })
+    )
 
     return new Response(await response.text(), {
       status: response.status,
