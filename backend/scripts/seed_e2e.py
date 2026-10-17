@@ -87,4 +87,7 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
+    from app.core.destructive_guard import assert_local_target
+
+    assert_local_target("seed_e2e.py")
     asyncio.run(main())

@@ -45,4 +45,7 @@ async def wipe_database() -> None:
 
 
 if __name__ == "__main__":
+    from app.core.destructive_guard import assert_local_target
+
+    assert_local_target("reset_database.py")
     asyncio.run(wipe_database())

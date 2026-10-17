@@ -29,7 +29,9 @@ async def get_optional_user(
     user_id = decode_access_token(token)
     if not user_id:
         return None
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(
+        select(User).where(User.id == user_id, User.is_deleted.is_(False))
+    )
     user = result.scalar_one_or_none()
     if user is not None:
         bind_actor(actor_user_id=user.id, actor_role=UserRole(user.primary_role).value)
@@ -49,7 +51,9 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(
+        select(User).where(User.id == user_id, User.is_deleted.is_(False))
+    )
     user = result.scalar_one_or_none()
 
     if not user:

@@ -2,7 +2,8 @@
 set -e
 
 # If schema tables already exist but alembic_version is missing,
-# stamp the initial revision so upgrades can continue safely.
+# stamp head: such schemas come from Base.metadata.create_all (seed_data.py),
+# which always reflects the current models.
 echo "Checking database migration state..."
 MIGRATION_STATE="$(python - <<'PY'
 from sqlalchemy import create_engine, text
@@ -43,7 +44,7 @@ PY
 
 if [ "$MIGRATION_STATE" = "STAMP_INITIAL" ]; then
     echo "Detected existing schema without Alembic tracking. Stamping current head..."
-    alembic stamp c4b8e1d9f2a7
+    alembic stamp head
 fi
 
 echo "Applying database migrations..."

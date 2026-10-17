@@ -36,16 +36,22 @@ async def test_swr_fresh_hit_skips_loader() -> None:
     assert calls == 1
 
 
-async def test_swr_stale_returns_old_and_refreshes(
+async def test_swr_stale_returns_old_and_refreshes_on_own_session(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls = 0
+    sessions: list[Any] = []
 
-    async def loader() -> dict[str, Any]:
+    async def loader(db: Any = "request-session") -> dict[str, Any]:
         nonlocal calls
         calls += 1
+        sessions.append(db)
         return {"v": calls}
 
+    async def fake_own_session(fn):
+        return await fn(db="fresh-session")
+
+    monkeypatch.setattr(swr_cache, "_load_with_own_session", fake_own_session)
     now = [1000]
     monkeypatch.setattr(swr_cache.time, "time", lambda: now[0])
 
@@ -61,6 +67,29 @@ async def test_swr_stale_returns_old_and_refreshes(
         await asyncio.gather(*pending, return_exceptions=True)
 
     assert calls == 2
+    # Background refresh never reuses the request-bound session.
+    assert sessions == ["request-session", "fresh-session"]
+
+
+async def test_swr_stale_without_session_param_refreshes_inline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = 0
+
+    async def loader() -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        return {"v": calls}
+
+    now = [1000]
+    monkeypatch.setattr(swr_cache.time, "time", lambda: now[0])
+
+    await swr_get("k", loader, soft_ttl=10, hard_ttl=60)
+    now[0] = 1020
+    refreshed = await swr_get("k", loader, soft_ttl=10, hard_ttl=60)
+
+    assert refreshed == {"v": 2}
+    assert not swr_cache._in_flight
 
 
 async def test_swr_set_writes_envelope() -> None:

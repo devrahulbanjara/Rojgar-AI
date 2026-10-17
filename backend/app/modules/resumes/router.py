@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from app.core.dependencies import CandidateUser, DbSession
+from app.core.dependencies import CandidateUser, DbSession, UUIDPath
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.resumes import service
 from app.modules.resumes.schemas import (
@@ -52,7 +52,7 @@ async def create_resume(
     summary="Get a specific resume by ID",
 )
 async def get_resume(
-    resume_id: str,
+    resume_id: UUIDPath,
     user: CandidateUser,
     db: DbSession,
 ) -> UnifiedResponse[ResumeResponse]:
@@ -66,7 +66,7 @@ async def get_resume(
     summary="Update a resume's fields and/or child collections",
 )
 async def update_resume(
-    resume_id: str,
+    resume_id: UUIDPath,
     payload: ResumeUpdate,
     user: CandidateUser,
     db: DbSession,
@@ -81,7 +81,7 @@ async def update_resume(
     summary="Delete a specific resume",
 )
 async def delete_resume(
-    resume_id: str,
+    resume_id: UUIDPath,
     user: CandidateUser,
     db: DbSession,
 ) -> UnifiedResponse[None]:

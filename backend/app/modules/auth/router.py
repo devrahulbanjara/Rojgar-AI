@@ -8,6 +8,7 @@ from fastapi import (
     Cookie,
     Depends,
     File,
+    HTTPException,
     Response,
     UploadFile,
     status,
@@ -17,7 +18,9 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_limiter.depends import RateLimiter
 from pyrate_limiter import Duration, Limiter, Rate
 
+from app.core.config import settings
 from app.core.dependencies import CurrentUser, DbSession
+from app.core.rate_limit import client_identifier
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.infrastructures.storage.service import storage_service
 from app.modules.auth import service
@@ -47,7 +50,14 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     "/signup",
     status_code=status.HTTP_201_CREATED,
     summary="Stage 1 of local signup: validates credentials and sends verification email",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE * 5))))],
+    dependencies=[
+        Depends(
+            RateLimiter(
+                limiter=Limiter(Rate(5, Duration.MINUTE * 5)),
+                identifier=client_identifier,
+            )
+        )
+    ],
 )
 async def signup(
     payload: SignupRequest,
@@ -66,7 +76,13 @@ async def signup(
 @router.post(
     "/verify-email",
     summary="Complete account creation after email verification",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
+    dependencies=[
+        Depends(
+            RateLimiter(
+                limiter=Limiter(Rate(10, Duration.MINUTE)), identifier=client_identifier
+            )
+        )
+    ],
 )
 async def verify_email(
     payload: VerifyEmailRequest, db: DbSession
@@ -79,7 +95,13 @@ async def verify_email(
 @router.post(
     "/login",
     summary="Authenticate with email and password, return access and refresh tokens",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(10, Duration.MINUTE))))],
+    dependencies=[
+        Depends(
+            RateLimiter(
+                limiter=Limiter(Rate(10, Duration.MINUTE)), identifier=client_identifier
+            )
+        )
+    ],
 )
 async def login(
     payload: LoginRequest, response: Response, db: DbSession
@@ -96,7 +118,13 @@ async def login(
 @router.post(
     "/refresh",
     summary="Refresh expired access token using refresh token cookie",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(30, Duration.MINUTE))))],
+    dependencies=[
+        Depends(
+            RateLimiter(
+                limiter=Limiter(Rate(30, Duration.MINUTE)), identifier=client_identifier
+            )
+        )
+    ],
 )
 async def refresh(
     response: Response,
@@ -129,7 +157,14 @@ async def logout(
 @router.post(
     "/forgot-password",
     summary="Initiate password reset flow: sends reset link to email",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(3, Duration.MINUTE * 10))))],
+    dependencies=[
+        Depends(
+            RateLimiter(
+                limiter=Limiter(Rate(3, Duration.MINUTE * 10)),
+                identifier=client_identifier,
+            )
+        )
+    ],
 )
 async def forgot_password(
     payload: ForgotPasswordRequest,
@@ -146,7 +181,13 @@ async def forgot_password(
 @router.post(
     "/reset-password",
     summary="Complete password reset using token from reset link",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE))))],
+    dependencies=[
+        Depends(
+            RateLimiter(
+                limiter=Limiter(Rate(5, Duration.MINUTE)), identifier=client_identifier
+            )
+        )
+    ],
 )
 async def reset_password(
     payload: ResetPasswordRequest, db: DbSession
@@ -166,7 +207,9 @@ async def login_swagger(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: DbSession = None,
 ):
-    """Authenticate Swagger UI and return a bearer token payload."""
+    """Authenticate Swagger UI and return a bearer token payload (dev only)."""
+    if settings.environment != "dev":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
     return await service.login_swagger(db, form_data)
 
 
@@ -317,8 +360,6 @@ async def google_callback(
     import json
     from urllib.parse import urlencode
 
-    from app.core.config import settings
-
     # 1. state IS the raw CSRF token — compare directly
     if not oauth_state or state != oauth_state:
         return RedirectResponse(f"{settings.frontend_url}/login?error=invalid_state")
@@ -341,11 +382,13 @@ async def google_callback(
 
     params = {}
     if result["action"] == "login":
-        params["access_token"] = result["tokens"]["access_token"]
-        user_schema = UserResponse.model_validate(result["user"]).model_dump(
-            mode="json"
+        # The HttpOnly refresh cookie is already set on redirect_resp. Never put
+        # the access token or user in the URL (history, Referer, proxy logs);
+        # the frontend calls /auth/refresh and then /auth/me.
+        redirect_resp.headers["location"] = (
+            f"{settings.frontend_url}/auth/oauth-callback"
         )
-        params["user"] = json.dumps(user_schema)
+        return redirect_resp
     else:
         params["setup_token"] = result["signup_token"]
         params["user_info"] = json.dumps(result["user_info"])
@@ -361,7 +404,14 @@ async def google_callback(
     "/google/register",
     status_code=status.HTTP_201_CREATED,
     summary="Complete two-phase Google signup: consume signup_token and create account",
-    dependencies=[Depends(RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE * 5))))],
+    dependencies=[
+        Depends(
+            RateLimiter(
+                limiter=Limiter(Rate(5, Duration.MINUTE * 5)),
+                identifier=client_identifier,
+            )
+        )
+    ],
 )
 async def google_register(
     payload: GoogleRegisterRequest,

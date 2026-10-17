@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -50,11 +50,6 @@ def _default_expires_at() -> datetime:
     return _utcnow() + timedelta(weeks=1)
 
 
-def _today_utc() -> date:
-    """Return today's date in UTC."""
-    return _utcnow().date()
-
-
 def _effective_job_status(job: Job) -> JobStatus:
     """Return the effective job status, accounting for expiry."""
     if (
@@ -103,21 +98,21 @@ async def _compute_and_store_jd_embedding(job: Job) -> None:
 
 async def expire_due_jobs(db: AsyncSession) -> int:
     """
-    Expire all jobs whose expiry date is today or earlier.
+    Expire all active jobs whose expires_at timestamp has passed.
 
-    This is date-based instead of timestamp-based so that a job with an
-    expires_at date of "today" is expired on that day by the scheduled task.
+    Timestamp-based on purpose: the previous date-based check expired every
+    job due later "today" (UTC) whenever it ran, closing postings and
+    triggering final shortlisting hours before their deadline.
     """
     from app.core.cache import invalidate_candidate_read_caches_for_users
     from app.modules.applications.models import Application
     from app.modules.shortlisting.service import auto_finalize_expired_job
 
-    today = _today_utc()
     result = await db.execute(
         select(Job).where(
             Job.status == JobStatus.active,
             Job.expires_at.is_not(None),
-            func.date(Job.expires_at) <= today,
+            Job.expires_at <= _utcnow(),
         )
     )
     jobs = result.scalars().all()
@@ -505,7 +500,11 @@ async def search_jobs(
             )
         )
 
-    return final_jobs, len(final_jobs) if page == 1 else total_count
+    # total_count is Qdrant's match count. Only fall back to counting rows
+    # when this page came back short (i.e. there is no further page).
+    if len(final_jobs) < size:
+        return final_jobs, (page - 1) * size + len(final_jobs)
+    return final_jobs, max(total_count, page * size)
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
@@ -575,7 +574,30 @@ async def get_job_detail(
         soft_ttl=300,
         hard_ttl=3600,
     )
-    return JobDetailResponse.model_validate(payload)
+    response = JobDetailResponse.model_validate(payload)
+    if response.status == JobStatus.draft and not await _is_company_member(
+        db, user, response.company_id
+    ):
+        # Drafts are private to the company until published.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found."
+        )
+    return response
+
+
+async def _is_company_member(
+    db: AsyncSession, user: User | None, company_id: uuid.UUID
+) -> bool:
+    if user is None:
+        return False
+    membership_id = await db.scalar(
+        select(CompanyMembership.id).where(
+            CompanyMembership.user_id == user.id,
+            CompanyMembership.company_id == company_id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+    return membership_id is not None
 
 
 async def update_job(

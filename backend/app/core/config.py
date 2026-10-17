@@ -11,9 +11,14 @@ class Settings(BaseSettings):
     app_name: str = "ConvexHire API"
     app_version: str = "1.0.0"
     debug: bool = False
-    environment: Literal["dev", "prod", "test"] = "dev"
+    # Defaults to prod so a missing ENVIRONMENT never exposes /docs or drops the
+    # Secure flag on auth cookies. Local setups set environment=dev (.env.example).
+    environment: Literal["dev", "prod", "test"] = "prod"
     allowed_origins: list[str] = ["http://localhost:3000"]
     frontend_url: str = "http://localhost:3000"
+    # Number of reverse proxies in front of the API that append to
+    # X-Forwarded-For (e.g. 1 on Render). 0 = trust only the socket peer.
+    trusted_proxy_hops: int = 0
 
     # Auth
     secret_key: str
@@ -159,6 +164,9 @@ class Settings(BaseSettings):
     hf_whisper_max_retries: int = 4
     hf_whisper_retry_delays: tuple[int, ...] = (5, 15, 30, 60)
     hf_whisper_token: str | None = None
+
+    # Cal.com webhook: HMAC-SHA256 secret configured on the Cal webhook.
+    cal_webhook_secret: str | None = None
 
     # Derived URLs
     @property

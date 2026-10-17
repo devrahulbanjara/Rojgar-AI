@@ -187,10 +187,10 @@ async def complete_onboarding(
     summary="Get a candidate's public profile by user ID",
 )
 async def get_profile_by_user(
-    user_id: str,
-    _caller: CurrentUser,
+    user_id: UUID,
+    caller: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[ProfileResponse]:
-    """Return a public candidate profile by user ID."""
-    data = await service.get_profile_by_user_id(db, user_id)
+    """Return a candidate profile to its owner or to recruiters they applied to."""
+    data = await service.get_profile_for_viewer(db, caller, user_id)
     return ResponseBuilder.success(data=data, message="Profile fetched.")

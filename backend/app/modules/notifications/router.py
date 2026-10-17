@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import CurrentUser, DbSession
+from app.core.dependencies import CurrentUser, DbSession, UUIDPath
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.notifications import service
 from app.modules.notifications.schemas import NotificationResponse
@@ -25,7 +25,7 @@ async def get_notifications(
 
 @router.post("/{notification_id}/read")
 async def read_notification(
-    notification_id: str,
+    notification_id: UUIDPath,
     current_user: CurrentUser,
     db: DbSession,
 ) -> UnifiedResponse[NotificationResponse]:
