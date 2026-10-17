@@ -285,6 +285,7 @@ class RoleCard(BaseSchema):
     # Interviewed (completed, or booked with the time already past) and
     # still without an offer / rejection.
     to_decide: int
+    hiring_completed: bool = False
     share_slug: str
 
 

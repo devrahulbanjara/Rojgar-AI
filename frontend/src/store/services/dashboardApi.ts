@@ -269,6 +269,7 @@ export interface RecruiterHomeRole {
   to_contact: number
   upcoming_interviews: number
   to_decide: number
+  hiring_completed: boolean
   share_slug: string
 }
 
@@ -296,6 +297,10 @@ export const dashboardApi = baseApi.injectEndpoints({
         params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone },
       }),
       providesTags: ['Applications', 'Jobs', 'Interviews', 'Company'],
+    }),
+    getRecruiterJobsOverview: builder.query<ApiResponse<RecruiterHomeRole[]>, void>({
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/dashboards/recruiter/jobs`,
+      providesTags: ['Jobs', 'Applications'],
     }),
     getCandidateDashboard: builder.query<ApiResponse<CandidateDashboardData>, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/dashboards/candidate`,
@@ -350,4 +355,5 @@ export const {
   useGetRecruiterAdminDashboardQuery,
   useGetRecruiterAdminDashboardAnalyticsQuery,
   useGetRecruiterHomeQuery,
+  useGetRecruiterJobsOverviewQuery,
 } = dashboardApi

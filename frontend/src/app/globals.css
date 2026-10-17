@@ -25,6 +25,7 @@
 @source '../components/public';
 @source '../components/me';
 @source '../components/today';
+@source '../components/screens';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -188,6 +189,15 @@ body {
   ::after {
     border-color: var(--border);
   }
+}
+
+/*
+  Unlayered on purpose: the legacy reset's `button { border: none }` is also
+  unlayered and resets border-color to currentColor, which would beat the
+  layered rule above on every primitive. Utilities (important) still win.
+*/
+[data-slot] {
+  border-color: var(--border);
 }
 
 /* Neutralise legacy element styles inside migrated surfaces (portals carry data-slot). */

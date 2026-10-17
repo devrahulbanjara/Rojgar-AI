@@ -11,6 +11,7 @@ const NEW_CODE = [
   'src/components/public/**',
   'src/components/me/**',
   'src/components/today/**',
+  'src/components/screens/**',
 ]
 
 const RAW_ELEMENT_MESSAGE =

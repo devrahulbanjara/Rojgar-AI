@@ -107,6 +107,7 @@ async def _role_cards(
             Job.location_type,
             Job.created_at,
             Job.expires_at,
+            Job.hiring_completed,
             func.count(Application.id).label("applicants"),
             count_if(Application.status == ApplicationStatus.applied).label(
                 "to_review"

@@ -19,7 +19,7 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider className="app-surface">
       <AppSidebar />
-      <SidebarInset className="bg-background">
+      <SidebarInset className="min-w-0 bg-background">
         <TopBar />
         {children}
       </SidebarInset>

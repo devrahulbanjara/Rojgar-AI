@@ -42,6 +42,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
+declare module '@tanstack/react-table' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData, TValue> {
+    /** Applied to header and cells, e.g. 'hidden md:table-cell' or 'text-right'. */
+    className?: string
+  }
+}
+
 /** Header button with a small sort arrow. */
 export function SortableHeader<T>({ column, label }: { column: Column<T>; label: string }) {
   const sorted = column.getIsSorted()
@@ -167,6 +175,7 @@ export function DataTable<T>({
                   className={cn(
                     'h-10 text-xs text-muted-foreground',
                     header.column.id === '_select' && 'w-10',
+                    header.column.columnDef.meta?.className,
                   )}
                 >
                   {header.isPlaceholder
@@ -182,7 +191,10 @@ export function DataTable<T>({
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id} data-state={row.getIsSelected() ? 'selected' : undefined}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-3">
+                  <TableCell
+                    key={cell.id}
+                    className={cn('py-3', cell.column.columnDef.meta?.className)}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
