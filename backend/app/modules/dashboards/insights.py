@@ -294,9 +294,14 @@ async def _reply_times(
             ),
         )
         .group_by(Job.id)
+        # Slowest first: a job where nobody has heard back for 9 days is as
+        # slow as one that takes 9 days to reply.
         .order_by(
-            median.desc().nulls_last(),
-            func.max(case((waiting, waiting_days))).desc().nulls_last(),
+            func.greatest(
+                func.coalesce(median, 0),
+                func.coalesce(func.max(case((waiting, waiting_days))), 0),
+            ).desc(),
+            Job.title,
         )
         .limit(SLOWEST_JOBS)
     )

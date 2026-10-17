@@ -7,15 +7,15 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.modules.auth.models import PhoneOtp, User
-from app.shared import sms
+from app.infrastructures.sms.service import get_sms_provider
 
 PHONE = "9812345678"
 E164 = "+9779812345678"
 
 
 def _last_code() -> str:
-    to, text = sms.sent[-1]
-    assert to == E164
+    to, text = get_sms_provider().sent[-1]
+    assert to == PHONE
     return re.match(r"(\d{6}) ", text).group(1)
 
 

@@ -12,7 +12,7 @@ sign-in codes, job reports and platform admins.
   the platform, so they start active (verified).
 
 Revision ID: 448c86788f39
-Revises: b0acfd8bc7d7
+Revises: 668b934a505f
 Create Date: 2026-10-17
 """
 
@@ -23,7 +23,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "448c86788f39"
-down_revision: Union[str, None] = "b0acfd8bc7d7"
+down_revision: Union[str, None] = "668b934a505f"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

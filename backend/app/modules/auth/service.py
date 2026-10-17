@@ -14,6 +14,7 @@ from app.core.cache import (
     invalidate_profile_read_caches,
 )
 from app.core.config import settings
+from app.core.database import release_connection
 from app.core.request_context import bind_actor
 from app.core.security import (
     create_pending_signup_token,
@@ -238,6 +239,8 @@ async def login(
         select(User).where(func.lower(User.email) == normalize_email(payload.email))
     )
     user = result.scalar_one_or_none()
+    # Argon2 takes ~100 ms: don't hold a pooled connection while it runs.
+    await release_connection(db)
 
     if not user or not await verify_password_async(
         user.password_hash, payload.password

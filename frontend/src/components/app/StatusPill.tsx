@@ -55,6 +55,23 @@ export function ApplicationStatusPill({ status }: { status: ApplicationStatus })
   return <StatusPill tone={tone}>{label}</StatusPill>
 }
 
+/** Recruiter-facing stage words (RECRUITER_FLOW.md §5): New · Shortlisted · Interview · Offer · Hired. */
+export const STAGE: Record<ApplicationStatus, { tone: Tone; label: string }> = {
+  applied: { tone: 'neutral', label: 'New' },
+  shortlisted: { tone: 'success', label: 'Shortlisted' },
+  interview_booked: { tone: 'success', label: 'Interview' },
+  interview_completed: { tone: 'warning', label: 'Interview' },
+  offer: { tone: 'success', label: 'Offer' },
+  offer_accepted: { tone: 'success', label: 'Hired' },
+  offer_declined: { tone: 'neutral', label: 'Withdrawn' },
+  rejected: { tone: 'danger', label: 'Rejected' },
+}
+
+export function StagePill({ status }: { status: ApplicationStatus }) {
+  const { tone, label } = STAGE[status]
+  return <StatusPill tone={tone}>{label}</StatusPill>
+}
+
 export const JOB_STATUS: Record<JobStatus, { tone: Tone; label: string }> = {
   active: { tone: 'success', label: 'Open' },
   draft: { tone: 'warning', label: 'Draft' },
@@ -73,4 +90,26 @@ export function Tag({ children }: { children: ReactNode }) {
       {children}
     </span>
   )
+}
+
+export type Fit = 'strong' | 'possible' | 'weak'
+
+/** Fit from the old 0–100 score (RECRUITER_FLOW.md: ≥75 strong, 50–74 possible, <50 weak). */
+export function fitFromScore(score: number | null | undefined): Fit | null {
+  if (score === null || score === undefined) return null
+  if (score >= 75) return 'strong'
+  if (score >= 50) return 'possible'
+  return 'weak'
+}
+
+const FIT_TEXT: Record<Fit, { label: string; className: string }> = {
+  strong: { label: 'Fits well', className: 'text-success' },
+  possible: { label: 'Might fit', className: 'text-warning' },
+  weak: { label: 'Weak fit', className: 'text-muted-foreground' },
+}
+
+/** "Fits well" · "Might fit" · "Weak fit" as plain coloured text (no numbers in the UI). */
+export function FitText({ fit }: { fit: Fit }) {
+  const { label, className } = FIT_TEXT[fit]
+  return <span className={cn('text-sm font-medium whitespace-nowrap', className)}>{label}</span>
 }

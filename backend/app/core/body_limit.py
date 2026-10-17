@@ -11,13 +11,6 @@ import json
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 DEFAULT_MAX_BODY_BYTES = 15 * 1024 * 1024  # resume PDFs (10 MB) + form overhead
-RECORDING_MAX_BODY_BYTES = 205 * 1024 * 1024  # interview audio (200 MB)
-
-
-def _limit_for(path: str) -> int:
-    if path.rstrip("/").endswith("/recordings"):
-        return RECORDING_MAX_BODY_BYTES
-    return DEFAULT_MAX_BODY_BYTES
 
 
 class _BodyTooLarge(Exception):
@@ -33,7 +26,7 @@ class BodySizeLimitMiddleware:
             await self.app(scope, receive, send)
             return
 
-        limit = _limit_for(scope.get("path", ""))
+        limit = DEFAULT_MAX_BODY_BYTES
         declared = dict(scope.get("headers") or []).get(b"content-length")
         if declared is not None:
             try:

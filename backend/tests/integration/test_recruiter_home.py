@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from app.modules.interviews.models import Interview
+from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStatus, JobStatus
 from tests.integration.helpers import (
     auth_headers,
@@ -28,11 +29,14 @@ async def _interview(db, application, start):
     db.add(
         Interview(
             application_id=application.id,
-            cal_booking_uid=f"uid-{application.id}",
+            company_id=(await db.get(Job, application.job_id)).company_id,
+            ics_uid=f"uid-{application.id}",
             candidate_name="Candidate",
             candidate_email="candidate@test.com",
             start_time=start,
             end_time=start + timedelta(minutes=45),
+            location="https://meet.jit.si/rojgarai-test",
+            title="Interview",
         )
     )
     await db.flush()

@@ -39,6 +39,50 @@ class EmailService:
         except Exception as e:
             logger.error(f"Failed to send email to {recipient}: {e}")
 
+    @staticmethod
+    async def send_calendar_email(
+        to_email: str,
+        subject: str,
+        html_body: str,
+        ics: str,
+        method: str,
+    ) -> bool:
+        """Send an email carrying a calendar invite (.ics). Never raises.
+
+        The invite is both an inline text/calendar part (Gmail/Outlook show
+        Accept/Decline) and an invite.ics attachment for other clients.
+        """
+        message = EmailMessage()
+        message["From"] = f"{settings.product_name} <{settings.mail_from}>"
+        message["To"] = to_email
+        message["Subject"] = subject
+        message.set_content("Your calendar invite is attached.")
+        message.add_alternative(html_body, subtype="html")
+        message.add_alternative(ics, subtype="calendar", params={"method": method})
+        message.add_attachment(
+            ics.encode(),
+            maintype="application",
+            subtype="ics",
+            filename="invite.ics",
+        )
+        if not settings.send_emails:
+            logger.info(f"Email sending disabled — skipping invite to {to_email}")
+            return True
+        try:
+            await aiosmtplib.send(
+                message,
+                hostname=settings.smtp_host,
+                port=settings.smtp_port,
+                username=settings.smtp_user,
+                password=settings.smtp_password,
+                start_tls=True,
+                timeout=30,
+            )
+            return True
+        except Exception as exc:
+            logger.error(f"Failed to send calendar email to {to_email}: {exc}")
+            return False
+
     @classmethod
     async def send_verification(cls, email: str, token: str) -> None:
         """Send the account-verification email."""

@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.rate_limit import TOO_MANY_MESSAGE, hit
 from app.modules.auth.models import PhoneOtp, User
-from app.shared.sms import send_sms
+from app.infrastructures.sms.service import send_sms
 
 CODE_TTL = timedelta(minutes=5)
 MAX_ATTEMPTS = 5

@@ -1,19 +1,5 @@
 """AI call robustness: no unsafe fallbacks, no silent truncation."""
 
-from app.modules.recruiter_chat import service as chat_service
-
-
-async def test_classifier_failure_does_not_route_to_web_search(monkeypatch):
-    async def boom(*_args, **_kwargs):
-        raise RuntimeError("groq down")
-
-    monkeypatch.setattr(chat_service, "_classify_intent", boom)
-    intent = await chat_service._safe_classify_intent(
-        "tell me about Nisha Sharma's application", {}
-    )
-    assert intent == chat_service.CLASSIFIER_UNAVAILABLE_INTENT
-    assert intent != "recruiting_web_question"
-
 
 class _Choice:
     def __init__(self, content, finish_reason="stop"):
@@ -89,7 +75,7 @@ async def test_chat_rate_limit_key_ignores_forwarded_for():
     from starlette.requests import Request
 
     from app.core.security import create_tokens
-    from app.modules.recruiter_chat.router import _chat_rate_limit_identifier
+    from app.modules.assistant.router import rate_limit_key
 
     tokens, _, _ = create_tokens("11111111-1111-1111-1111-111111111111")
 
@@ -97,7 +83,7 @@ async def test_chat_rate_limit_key_ignores_forwarded_for():
         return Request(
             {
                 "type": "http",
-                "path": "/recruiter-chat/sessions",
+                "path": "/assistant/job-draft",
                 "headers": [
                     (b"authorization", f"Bearer {tokens['access_token']}".encode()),
                     (b"x-forwarded-for", xff.encode()),
@@ -106,24 +92,9 @@ async def test_chat_rate_limit_key_ignores_forwarded_for():
             }
         )
 
-    a = await _chat_rate_limit_identifier(req("1.1.1.1"))
-    b = await _chat_rate_limit_identifier(req("2.2.2.2"))
+    a = await rate_limit_key(req("1.1.1.1"))
+    b = await rate_limit_key(req("2.2.2.2"))
     assert a == b and a.startswith("user:11111111")
-
-
-def test_interview_final_score_requires_a_human_score():
-    from types import SimpleNamespace
-
-    from app.modules.interviews.evaluation_service import (
-        HumanAggregate,
-        _compute_final_score,
-    )
-
-    schema = SimpleNamespace(human_weight=0.7, llm_weight=0.3)
-    llm = SimpleNamespace(weighted_total=90.0)
-    assert _compute_final_score(None, llm, schema) is None
-    humans = HumanAggregate(per_criterion={}, weighted_total=60.0, evaluator_count=1)
-    assert _compute_final_score(humans, llm, schema) == 69.0
 
 
 def test_candidate_relevance_uses_similarity_not_rank():

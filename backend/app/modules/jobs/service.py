@@ -28,6 +28,7 @@ from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
+from app.modules.entitlements.service import ensure_can_open_job, on_job_opened
 from app.modules.jobs.models import Job, JobSyncEvent
 from app.modules.jobs.schemas import (
     CompanySnippet,
@@ -330,10 +331,13 @@ async def create_job(
         )
 
     if job.status == JobStatus.active:
+        await ensure_can_open_job(db, company_id)
         await _compute_and_store_jd_embedding(job)
 
     db.add(job)
     await db.flush()  # Generates job.id without committing yet
+    if job.status == JobStatus.active:
+        await on_job_opened(db, company_id, job.id)
 
     # 1. Transactionally write the outbox event alongside the job
     event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
@@ -727,6 +731,10 @@ async def update_job(
         update_data["expires_at"] = _validate_expires_at_for_write(
             update_data["expires_at"]
         )
+
+    if update_data.get("status") == JobStatus.active and old_status != JobStatus.active:
+        await ensure_can_open_job(db, company_id, job_id=job.id)
+        await on_job_opened(db, company_id, job.id)
 
     for field, value in update_data.items():
         setattr(job, field, value)

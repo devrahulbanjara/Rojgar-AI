@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import EmailStr, Field
+from pydantic import Field
 
 from app.core.schemas import BaseSchema
 from app.modules.auth.enums import BusinessStatus, MembershipRole
@@ -23,8 +23,6 @@ class CompanyResponse(BaseSchema):
     phone: str | None = None
     pan_number: str | None = None
     website_url: str | None = None
-    cal_booking_url: str | None = None
-    cal_organizer_email: EmailStr | None = None
     description: str | None = None
     status: BusinessStatus
     status_reason: str | None = None
@@ -40,8 +38,6 @@ class UpdateCompanyRequest(BaseSchema):
     company_size: str | None = Field(default=None, max_length=50)
     location: str | None = Field(default=None, max_length=255)
     website_url: str | None = Field(default=None, max_length=255)
-    cal_booking_url: str | None = Field(default=None, max_length=500)
-    cal_organizer_email: EmailStr | None = None
     description: str | None = None
 
 

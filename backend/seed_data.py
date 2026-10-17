@@ -18,13 +18,7 @@ from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
-from app.modules.interviews.evaluation_models import (
-    CandidateEvaluationScore,
-    JobEvaluationSchema,
-)
-from app.modules.interviews.models import Interview
-from app.modules.interviews.recording_model import InterviewRecording
-from app.modules.job_ai.models import JobAIDraft
+from app.modules.interviews.models import Interview, Scorecard
 from app.modules.jobs.models import Job, JobSyncEvent
 from app.modules.notifications.models import Notification
 from app.modules.outreach.models import EmailDraft
@@ -35,7 +29,6 @@ from app.modules.profiles.models import (
     ProfileSkill,
     ResumeImportTask,
 )
-from app.modules.recruiter_chat.models import RecruiterChatSession
 from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.modules.resumes.models import (
     Resume,
@@ -47,7 +40,6 @@ from app.shared.enums import (
     ApplicationStatus,
     JobStatus,
     LocationType,
-    RecordingStatus,
     ShortlistStatus,
     SyncAction,
 )
@@ -188,8 +180,6 @@ COMPANIES = [
         "location": "Hattisar, Kathmandu",
         "website_url": "https://f1soft.com",
         "domain": "f1soft.com",
-        "cal_booking_url": "https://cal.com/f1soft-hiring",
-        "cal_organizer_email": "hiring@f1soft.com",
         "description": (
             "F1Soft International is a dominant force in Nepal's fintech landscape, responsible for "
             "developing nearly 90% of the digital banking systems in the country. We are the parent "
@@ -267,38 +257,6 @@ COMPANIES = [
                     "Company-sponsored attendance at one international tech conference per year",
                 ],
                 "shortlist_threshold": 65,
-                "evaluation_criteria": [
-                    {
-                        "key": "technical_depth",
-                        "label": "Technical Depth (Python/FastAPI/DB)",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "system_design",
-                        "label": "System Design & Architecture",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "fintech_domain",
-                        "label": "Fintech Domain Knowledge",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "communication",
-                        "label": "Communication & Clarity",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "cultural_fit",
-                        "label": "Cultural Fit & Team Collaboration",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
             {
                 "title": "Lead Frontend Engineer – Mobile Banking Platform (React Native / Next.js)",
@@ -347,38 +305,6 @@ COMPANIES = [
                     "Gym membership reimbursement up to NPR 5,000/month",
                 ],
                 "shortlist_threshold": 60,
-                "evaluation_criteria": [
-                    {
-                        "key": "frontend_mastery",
-                        "label": "React / React Native Mastery",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "mobile_perf",
-                        "label": "Mobile Performance Optimization",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "leadership",
-                        "label": "Technical Leadership",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "ux_sense",
-                        "label": "UX & Design Sensibility",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "communication",
-                        "label": "Communication Skills",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
             {
                 "title": "DevOps & Cloud Infrastructure Engineer (AWS / Kubernetes)",
@@ -428,38 +354,6 @@ COMPANIES = [
                     "Company equipment: MacBook Pro M3, external monitor, and peripherals",
                 ],
                 "shortlist_threshold": 60,
-                "evaluation_criteria": [
-                    {
-                        "key": "aws_infra",
-                        "label": "AWS & Cloud Infrastructure",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "k8s_expertise",
-                        "label": "Kubernetes & Container Orchestration",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "iac_cicd",
-                        "label": "IaC & CI/CD Pipeline Design",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "security_compliance",
-                        "label": "Security & Compliance Awareness",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "incident_mgmt",
-                        "label": "Incident Management & On-call Readiness",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
             {
                 "title": "QA Automation Engineer – Payment Gateway Testing",
@@ -510,38 +404,6 @@ COMPANIES = [
                     "Annual company retreat within Nepal",
                 ],
                 "shortlist_threshold": 55,
-                "evaluation_criteria": [
-                    {
-                        "key": "automation_skills",
-                        "label": "Test Automation Expertise",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "api_testing",
-                        "label": "API & Integration Testing",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "analytical_thinking",
-                        "label": "Analytical Thinking & Edge Cases",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "tools_cicd",
-                        "label": "Tools & CI/CD Integration",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "communication",
-                        "label": "Communication & Documentation",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
         ],
     },
@@ -552,8 +414,6 @@ COMPANIES = [
         "location": "Kumaripati, Lalitpur",
         "website_url": "https://lftechnology.com",
         "domain": "lftechnology.com",
-        "cal_booking_url": "https://cal.com/leapfrog-interviews",
-        "cal_organizer_email": "interviews@lftechnology.com",
         "description": (
             "Leapfrog Technology Inc. is a premier software development firm known for its strong "
             "engineering culture and technical excellence. We specialize in healthcare technology, "
@@ -630,38 +490,6 @@ COMPANIES = [
                     "Flexible work: core hours 10am–3pm with async flexibility otherwise",
                 ],
                 "shortlist_threshold": 70,
-                "evaluation_criteria": [
-                    {
-                        "key": "ml_fundamentals",
-                        "label": "ML Fundamentals & Theory",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "llm_finetuning",
-                        "label": "LLM Fine-tuning & NLP Expertise",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "engineering_practices",
-                        "label": "ML Engineering Practices",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "research_aptitude",
-                        "label": "Research Aptitude & Publications",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "nepali_language",
-                        "label": "Nepali Language & Domain Knowledge",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
             {
                 "title": "Data Engineer – Healthcare Analytics Pipeline (Spark / dbt / Airflow)",
@@ -711,38 +539,6 @@ COMPANIES = [
                     "Team off-site trips (one per quarter within Nepal)",
                 ],
                 "shortlist_threshold": 60,
-                "evaluation_criteria": [
-                    {
-                        "key": "data_engineering",
-                        "label": "Data Engineering Skills (Spark/Airflow/dbt)",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "sql_mastery",
-                        "label": "SQL & Data Modelling",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "healthcare_data",
-                        "label": "Healthcare Data Knowledge",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "data_quality",
-                        "label": "Data Quality & Testing",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "collaboration",
-                        "label": "Cross-team Collaboration",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
             {
                 "title": "Full Stack Engineer – AI Product Platform (FastAPI + React)",
@@ -793,38 +589,6 @@ COMPANIES = [
                     "Hybrid flexibility: 2–3 days in Kumaripati office, rest remote",
                 ],
                 "shortlist_threshold": 60,
-                "evaluation_criteria": [
-                    {
-                        "key": "fullstack_skills",
-                        "label": "Full Stack Engineering (FastAPI + React)",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "system_design",
-                        "label": "System Design & Architecture",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "product_sense",
-                        "label": "Product Sense & UX Awareness",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "testing_quality",
-                        "label": "Testing & Code Quality",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "ai_ml_exposure",
-                        "label": "AI/ML Integration Experience",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                ],
             },
             {
                 "title": "Computer Vision Engineer – Agricultural Pest Detection (Edge AI)",
@@ -877,38 +641,6 @@ COMPANIES = [
                     "Flexible hours with core time 10am–2pm",
                 ],
                 "shortlist_threshold": 65,
-                "evaluation_criteria": [
-                    {
-                        "key": "cv_expertise",
-                        "label": "Computer Vision & Object Detection",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "edge_deployment",
-                        "label": "Edge AI & Model Optimization",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "data_pipeline",
-                        "label": "Data Collection & Pipeline Design",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "domain_knowledge",
-                        "label": "Agriculture / Domain Knowledge",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "problem_solving",
-                        "label": "Problem Solving & Creativity",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
         ],
     },
@@ -919,8 +651,6 @@ COMPANIES = [
         "location": "Tinkune, Kathmandu",
         "website_url": "https://sastodeal.com",
         "domain": "sastodeal.com",
-        "cal_booking_url": "https://cal.com/sastodeal-hiring",
-        "cal_organizer_email": "careers@sastodeal.com",
         "description": (
             "Sastodeal is Nepal's leading online marketplace connecting buyers and sellers across "
             "electronics, fashion, home goods, and groceries. Founded in 2011, we process over "
@@ -977,32 +707,6 @@ COMPANIES = [
                     "Hybrid work: 3 days office, 2 days remote",
                 ],
                 "shortlist_threshold": 65,
-                "evaluation_criteria": [
-                    {
-                        "key": "backend_depth",
-                        "label": "Backend Engineering",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "ecommerce_domain",
-                        "label": "E-commerce Domain",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "system_design",
-                        "label": "System Design",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "communication",
-                        "label": "Communication",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
         ],
     },
@@ -1013,8 +717,6 @@ COMPANIES = [
         "location": "Thapathali, Kathmandu",
         "website_url": "https://verisk.com/nepal",
         "domain": "verisk.com",
-        "cal_booking_url": "https://cal.com/verisk-nepal",
-        "cal_organizer_email": "recruitment.nepal@verisk.com",
         "description": (
             "Verisk Nepal is the Kathmandu-based development center for Verisk Analytics, a global "
             "data analytics and risk assessment company serving insurance, energy, and financial services "
@@ -1068,32 +770,6 @@ COMPANIES = [
                     "International training opportunities",
                 ],
                 "shortlist_threshold": 70,
-                "evaluation_criteria": [
-                    {
-                        "key": "data_eng",
-                        "label": "Data Engineering",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "spark_airflow",
-                        "label": "Spark & Airflow",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "sql",
-                        "label": "SQL & Data Modeling",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "communication",
-                        "label": "Communication",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
         ],
     },
@@ -1104,8 +780,6 @@ COMPANIES = [
         "location": "Jawalakhel, Lalitpur",
         "website_url": "https://khalti.com",
         "domain": "khalti.com",
-        "cal_booking_url": "https://cal.com/khalti-careers",
-        "cal_organizer_email": "jobs@khalti.com",
         "description": (
             "Khalti is Nepal's fastest-growing digital wallet with 5+ million users. We enable "
             "instant payments, bill payments, mobile recharge, and merchant transactions across Nepal. "
@@ -1159,32 +833,6 @@ COMPANIES = [
                     "Health insurance",
                 ],
                 "shortlist_threshold": 65,
-                "evaluation_criteria": [
-                    {
-                        "key": "flutter",
-                        "label": "Flutter Expertise",
-                        "max_score": 10,
-                        "weight": 2.0,
-                    },
-                    {
-                        "key": "mobile_perf",
-                        "label": "Mobile Performance",
-                        "max_score": 10,
-                        "weight": 1.5,
-                    },
-                    {
-                        "key": "security",
-                        "label": "Security Awareness",
-                        "max_score": 10,
-                        "weight": 1.0,
-                    },
-                    {
-                        "key": "communication",
-                        "label": "Communication",
-                        "max_score": 10,
-                        "weight": 0.5,
-                    },
-                ],
             },
         ],
     },
@@ -2944,32 +2592,6 @@ EXTRA_COMPANY_JOBS = {
                 "Health insurance and festival bonuses",
                 "Learning budget for certifications and courses",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "backend",
-                    "label": "Backend Engineering",
-                    "max_score": 10,
-                    "weight": 1.8,
-                },
-                {
-                    "key": "observability",
-                    "label": "Observability & Reliability",
-                    "max_score": 10,
-                    "weight": 1.6,
-                },
-                {
-                    "key": "debugging",
-                    "label": "Debugging & Incident Response",
-                    "max_score": 10,
-                    "weight": 1.2,
-                },
-                {
-                    "key": "communication",
-                    "label": "Communication",
-                    "max_score": 10,
-                    "weight": 0.8,
-                },
-            ],
         },
         {
             "seed_key": "frontend_platform_active",
@@ -3006,32 +2628,6 @@ EXTRA_COMPANY_JOBS = {
                 "Festival bonuses and health insurance",
                 "Personal development budget",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "react",
-                    "label": "React & TypeScript",
-                    "max_score": 10,
-                    "weight": 1.8,
-                },
-                {
-                    "key": "systems",
-                    "label": "Design Systems",
-                    "max_score": 10,
-                    "weight": 1.5,
-                },
-                {
-                    "key": "performance",
-                    "label": "Performance",
-                    "max_score": 10,
-                    "weight": 1.0,
-                },
-                {
-                    "key": "collaboration",
-                    "label": "Collaboration",
-                    "max_score": 10,
-                    "weight": 0.7,
-                },
-            ],
         },
         {
             "seed_key": "data_platform_draft",
@@ -3063,20 +2659,6 @@ EXTRA_COMPANY_JOBS = {
             "benefits": [
                 "Remote-friendly setup",
                 "Equipment and certification support",
-            ],
-            "evaluation_criteria": [
-                {
-                    "key": "data",
-                    "label": "Data Engineering",
-                    "max_score": 10,
-                    "weight": 2.0,
-                },
-                {
-                    "key": "sql",
-                    "label": "SQL & Modeling",
-                    "max_score": 10,
-                    "weight": 1.0,
-                },
             ],
         },
         {
@@ -3116,32 +2698,6 @@ EXTRA_COMPANY_JOBS = {
                 "Medical coverage and festival bonuses",
                 "Learning budget and internal leadership mentorship",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "backend",
-                    "label": "Backend Engineering",
-                    "max_score": 10,
-                    "weight": 1.8,
-                },
-                {
-                    "key": "integrations",
-                    "label": "Integrations & APIs",
-                    "max_score": 10,
-                    "weight": 1.6,
-                },
-                {
-                    "key": "product_execution",
-                    "label": "Product Execution",
-                    "max_score": 10,
-                    "weight": 1.0,
-                },
-                {
-                    "key": "communication",
-                    "label": "Cross-team Communication",
-                    "max_score": 10,
-                    "weight": 0.8,
-                },
-            ],
         },
         {
             "seed_key": "risk_analytics_active",
@@ -3179,32 +2735,6 @@ EXTRA_COMPANY_JOBS = {
                 "Hybrid work and equipment support",
                 "Medical insurance and learning budget",
                 "Quarterly bonus tied to platform and business impact",
-            ],
-            "evaluation_criteria": [
-                {
-                    "key": "data_platform",
-                    "label": "Data Platform Engineering",
-                    "max_score": 10,
-                    "weight": 1.9,
-                },
-                {
-                    "key": "sql_modeling",
-                    "label": "SQL & Modeling",
-                    "max_score": 10,
-                    "weight": 1.4,
-                },
-                {
-                    "key": "quality",
-                    "label": "Data Quality & Reliability",
-                    "max_score": 10,
-                    "weight": 1.1,
-                },
-                {
-                    "key": "stakeholder",
-                    "label": "Stakeholder Communication",
-                    "max_score": 10,
-                    "weight": 0.7,
-                },
             ],
         },
         {
@@ -3244,32 +2774,6 @@ EXTRA_COMPANY_JOBS = {
                 "Hybrid work, health insurance, and festival bonuses",
                 "Executive coaching and conference budget",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "technical_leadership",
-                    "label": "Technical Leadership",
-                    "max_score": 10,
-                    "weight": 1.7,
-                },
-                {
-                    "key": "people_management",
-                    "label": "People Management",
-                    "max_score": 10,
-                    "weight": 1.5,
-                },
-                {
-                    "key": "delivery",
-                    "label": "Execution & Delivery",
-                    "max_score": 10,
-                    "weight": 1.1,
-                },
-                {
-                    "key": "stakeholder_management",
-                    "label": "Stakeholder Management",
-                    "max_score": 10,
-                    "weight": 0.9,
-                },
-            ],
         },
     ],
     1: [
@@ -3308,32 +2812,6 @@ EXTRA_COMPANY_JOBS = {
                 "Medical coverage and learning stipend",
                 "Quarterly performance bonus",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "python",
-                    "label": "Python & APIs",
-                    "max_score": 10,
-                    "weight": 1.6,
-                },
-                {
-                    "key": "search",
-                    "label": "Search & Ranking",
-                    "max_score": 10,
-                    "weight": 1.5,
-                },
-                {
-                    "key": "ml_product",
-                    "label": "Applied ML Product Sense",
-                    "max_score": 10,
-                    "weight": 1.0,
-                },
-                {
-                    "key": "experimentation",
-                    "label": "Evaluation Rigor",
-                    "max_score": 10,
-                    "weight": 0.9,
-                },
-            ],
         },
         {
             "seed_key": "qa_automation_active",
@@ -3368,32 +2846,6 @@ EXTRA_COMPANY_JOBS = {
                 "Hybrid work and equipment support",
                 "Health insurance and festival bonuses",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "automation",
-                    "label": "Automation Strategy",
-                    "max_score": 10,
-                    "weight": 1.8,
-                },
-                {
-                    "key": "api_testing",
-                    "label": "API Testing",
-                    "max_score": 10,
-                    "weight": 1.3,
-                },
-                {
-                    "key": "frontend_testing",
-                    "label": "UI Testing",
-                    "max_score": 10,
-                    "weight": 1.1,
-                },
-                {
-                    "key": "quality_mindset",
-                    "label": "Quality Mindset",
-                    "max_score": 10,
-                    "weight": 0.8,
-                },
-            ],
         },
         {
             "seed_key": "growth_engineer_draft",
@@ -3425,20 +2877,6 @@ EXTRA_COMPANY_JOBS = {
             "benefits": [
                 "Remote-first collaboration",
                 "Learning and wellness stipend",
-            ],
-            "evaluation_criteria": [
-                {
-                    "key": "product",
-                    "label": "Product Engineering",
-                    "max_score": 10,
-                    "weight": 1.5,
-                },
-                {
-                    "key": "analytics",
-                    "label": "Analytics & Experiments",
-                    "max_score": 10,
-                    "weight": 1.3,
-                },
             ],
         },
     ],
@@ -3478,20 +2916,6 @@ EXTRA_COMPANY_JOBS = {
                 "Festival bonuses",
                 "Health insurance",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "backend",
-                    "label": "Backend Engineering",
-                    "max_score": 10,
-                    "weight": 2.0,
-                },
-                {
-                    "key": "ecommerce",
-                    "label": "E-commerce Domain",
-                    "max_score": 10,
-                    "weight": 1.5,
-                },
-            ],
         },
     ],
     3: [
@@ -3530,20 +2954,6 @@ EXTRA_COMPANY_JOBS = {
                 "Comprehensive health insurance",
                 "International training",
             ],
-            "evaluation_criteria": [
-                {
-                    "key": "data_eng",
-                    "label": "Data Engineering",
-                    "max_score": 10,
-                    "weight": 2.0,
-                },
-                {
-                    "key": "spark",
-                    "label": "Spark & Airflow",
-                    "max_score": 10,
-                    "weight": 1.5,
-                },
-            ],
         },
     ],
     4: [
@@ -3581,20 +2991,6 @@ EXTRA_COMPANY_JOBS = {
                 "ESOPs for early team",
                 "Festival bonuses",
                 "Health insurance",
-            ],
-            "evaluation_criteria": [
-                {
-                    "key": "flutter",
-                    "label": "Flutter Expertise",
-                    "max_score": 10,
-                    "weight": 2.0,
-                },
-                {
-                    "key": "mobile_perf",
-                    "label": "Mobile Performance",
-                    "max_score": 10,
-                    "weight": 1.5,
-                },
             ],
         },
     ],
@@ -3740,8 +3136,7 @@ LIVE_APPLICATIONS = [
         "email_state": "sent",
         "interview_days_offset": -1,
         "interview_hour": 15,
-        "create_evaluations": True,
-        "create_recording": True,
+        "create_scorecard": True,
     },
     {
         "candidate_index": 5,
@@ -3756,8 +3151,7 @@ LIVE_APPLICATIONS = [
         "email_state": "sent",
         "interview_days_offset": -3,
         "interview_hour": 11,
-        "create_evaluations": True,
-        "create_recording": True,
+        "create_scorecard": True,
     },
     {
         "candidate_index": 7,
@@ -3895,8 +3289,7 @@ LIVE_APPLICATIONS = [
         "email_state": "sent",
         "interview_days_offset": -4,
         "interview_hour": 16,
-        "create_evaluations": True,
-        "create_recording": True,
+        "create_scorecard": True,
     },
     {
         "candidate_index": 4,
@@ -3934,8 +3327,7 @@ LIVE_APPLICATIONS = [
         "email_state": "sent",
         "interview_days_offset": -2,
         "interview_hour": 13,
-        "create_evaluations": True,
-        "create_recording": True,
+        "create_scorecard": True,
     },
     {
         "candidate_index": 2,
@@ -4094,8 +3486,7 @@ LIVE_APPLICATIONS = [
         "email_state": "sent",
         "interview_days_offset": -2,
         "interview_hour": 14,
-        "create_evaluations": True,
-        "create_recording": True,
+        "create_scorecard": True,
     },
     {
         "candidate_index": 0,
@@ -4133,8 +3524,7 @@ LIVE_APPLICATIONS = [
         "email_state": "sent",
         "interview_days_offset": 0,
         "interview_hour": 9,
-        "create_evaluations": True,
-        "create_recording": True,
+        "create_scorecard": True,
     },
     {
         "candidate_index": 1,
@@ -4161,316 +3551,6 @@ LIVE_APPLICATIONS = [
         "created_days_ago": 8,
         "updated_days_ago": 2,
         "email_state": "sent",
-    },
-]
-
-AI_DRAFT_BLUEPRINTS = [
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "job-ai-platform-observability",
-        "status": "awaiting_human",
-        "mode": "create",
-        "source_prompt": "Create a backend platform reliability role focused on observability, internal tooling, and developer enablement.",
-        "locked_fields": ["location", "currency"],
-        "latest_draft": {
-            "title": "Senior Platform Reliability Engineer",
-            "location": "Kathmandu",
-            "location_type": LocationType.hybrid,
-            "salary_min": 130000,
-            "salary_max": 190000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 68,
-            "overview": "Own reliability tooling, internal platform APIs, and observability for high-throughput engineering teams.",
-            "responsibilities": [
-                "Improve production diagnostics and alerting quality",
-                "Build internal APIs and automation for developer teams",
-                "Partner with DevOps and backend leads on reliability goals",
-            ],
-            "requirements": [
-                "Strong Python backend experience",
-                "Hands-on observability and production support experience",
-                "Solid SQL and systems-debugging fundamentals",
-            ],
-            "preferred_qualifications": ["Experience in fintech or regulated products"],
-            "benefits": ["Hybrid work", "Health insurance", "Learning budget"],
-            "auto_shortlist": True,
-            "assumptions": [
-                "The role will work closely with the core payments team",
-                "The team prefers Kathmandu-based collaboration for at least part of the week",
-            ],
-            "missing_fields": [],
-            "warnings": ["On-call expectations should be confirmed before publishing."],
-        },
-        "salary_research": {
-            "role": "Senior Platform Reliability Engineer",
-            "country": "Nepal",
-            "currency": "NPR",
-            "recommended_min": 130000,
-            "recommended_max": 190000,
-            "confidence": "medium",
-            "rationale": "Comparable Kathmandu senior backend and DevOps roles cluster in the 1.3L to 1.9L NPR range.",
-            "sources": [
-                {
-                    "source_name": "Local hiring benchmark",
-                    "url": "https://example.com/salary-benchmark/platform-reliability",
-                    "country": "Nepal",
-                    "currency": "NPR",
-                    "quoted_min": 120000,
-                    "quoted_max": 185000,
-                    "notes": "Used as a directional market signal for senior platform roles.",
-                }
-            ],
-            "insufficient_evidence": False,
-        },
-        "assumptions": [
-            "Hiring manager wants a senior IC rather than a team lead",
-        ],
-        "warnings": ["Compensation should be validated before publishing."],
-        "missing_fields": [],
-    },
-    {
-        "company_index": 1,
-        "recruiter_slot": 1,
-        "thread_id": "job-ai-growth-engineer",
-        "status": "draft_saved",
-        "mode": "create",
-        "source_prompt": "Draft a growth engineer role for candidate acquisition funnels and experiment-driven product growth.",
-        "locked_fields": [],
-        "latest_draft": {
-            "title": "Growth Engineer",
-            "location": "Lalitpur",
-            "location_type": LocationType.remote,
-            "salary_min": 100000,
-            "salary_max": 155000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 65,
-            "overview": "Ship acquisition experiments, landing page improvements, and measurement loops that help grow candidate supply.",
-            "responsibilities": [
-                "Build growth experiments end to end",
-                "Instrument and analyze candidate funnel performance",
-                "Collaborate with product and marketing on iteration cycles",
-            ],
-            "requirements": [
-                "Strong product engineering instincts",
-                "Comfort with analytics and experimentation",
-                "Ability to move quickly with clear measurement",
-            ],
-            "preferred_qualifications": ["Marketplace or PLG experience"],
-            "benefits": ["Remote-first setup", "Health insurance", "Growth bonus"],
-            "auto_shortlist": False,
-            "assumptions": ["The role will report into product, not marketing."],
-            "missing_fields": ["Exact interview loop"],
-            "warnings": ["Success metrics should be finalized before publishing."],
-        },
-        "salary_research": None,
-        "assumptions": [
-            "This role will be measured primarily on conversion efficiency."
-        ],
-        "warnings": [
-            "Compensation band may need calibration against product engineering roles."
-        ],
-        "missing_fields": ["Hiring manager"],
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "job-ai-risk-analytics-lead",
-        "status": "awaiting_human",
-        "mode": "create",
-        "source_prompt": "Draft a senior risk analytics platform role for F1Soft's transaction monitoring, reconciliation, and finance reporting stack.",
-        "locked_fields": ["currency", "location"],
-        "latest_draft": {
-            "title": "Senior Risk Analytics Platform Engineer",
-            "location": "Kathmandu",
-            "location_type": LocationType.hybrid,
-            "salary_min": 155000,
-            "salary_max": 225000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 72,
-            "overview": "Build the data platform behind transaction monitoring, merchant risk analytics, and finance-grade reporting across payment operations.",
-            "responsibilities": [
-                "Own warehouse models and orchestration for risk and finance analytics",
-                "Improve quality, lineage, and stakeholder trust in operational datasets",
-                "Partner with product, finance, and risk teams on metric definitions",
-            ],
-            "requirements": [
-                "Strong SQL and Python data engineering background",
-                "Hands-on Airflow and dbt experience",
-                "Good product judgment when working with business metrics",
-            ],
-            "preferred_qualifications": [
-                "Fintech analytics or reconciliation experience"
-            ],
-            "benefits": ["Hybrid work", "Health insurance", "Quarterly bonus"],
-            "auto_shortlist": True,
-            "assumptions": [
-                "The role should sit between data platform and business analytics ownership."
-            ],
-            "missing_fields": ["Final reporting line"],
-            "warnings": [
-                "The panel may want to split this into platform and analytics tracks later."
-            ],
-        },
-        "salary_research": {
-            "role": "Senior Risk Analytics Platform Engineer",
-            "country": "Nepal",
-            "currency": "NPR",
-            "recommended_min": 155000,
-            "recommended_max": 225000,
-            "confidence": "medium",
-            "rationale": "Comparable fintech data platform roles in Kathmandu tend to cluster in the upper senior IC range.",
-            "sources": [
-                {
-                    "source_name": "Internal recruiter benchmark",
-                    "url": "https://example.com/salary-benchmark/data-platform-nepal",
-                    "country": "Nepal",
-                    "currency": "NPR",
-                    "quoted_min": 145000,
-                    "quoted_max": 220000,
-                    "notes": "Directional benchmark used during recruiter calibration.",
-                }
-            ],
-            "insufficient_evidence": False,
-        },
-        "assumptions": [
-            "Priya intends to keep this role senior IC rather than people-manager."
-        ],
-        "warnings": [
-            "Compensation needs final approval from finance before the role is published."
-        ],
-        "missing_fields": ["Hiring manager", "Interview panel"],
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "job-ai-merchant-platform-followup",
-        "status": "draft_saved",
-        "mode": "create",
-        "source_prompt": "Draft a follow-up backend role focused on merchant platform tooling, partner enablement, and operational integrations for F1Soft.",
-        "locked_fields": ["currency"],
-        "latest_draft": {
-            "title": "Backend Engineer (Merchant Platform Tooling)",
-            "location": "Kathmandu",
-            "location_type": LocationType.hybrid,
-            "salary_min": 135000,
-            "salary_max": 198000,
-            "currency": "NPR",
-            "status": JobStatus.draft,
-            "shortlist_threshold": 68,
-            "overview": "Build the internal APIs, onboarding workflows, and operational support tools that help F1Soft scale merchant integrations cleanly.",
-            "responsibilities": [
-                "Ship partner enablement APIs and merchant tooling improvements",
-                "Improve diagnostics and internal workflows for merchant operations teams",
-                "Collaborate with commercial and support stakeholders on integration quality",
-            ],
-            "requirements": [
-                "Strong backend API development experience",
-                "Comfort working across product and business-facing workflows",
-                "Good debugging and operational ownership instincts",
-            ],
-            "preferred_qualifications": ["Payments or merchant platform experience"],
-            "benefits": ["Hybrid work", "Health insurance", "Festival bonuses"],
-            "auto_shortlist": True,
-            "assumptions": [
-                "Priya intends this role to support the main merchant integrations team rather than replace it."
-            ],
-            "missing_fields": ["Hiring manager", "Final level calibration"],
-            "warnings": [
-                "This role overlaps with the existing merchant integrations opening and may need scope clarification."
-            ],
-        },
-        "salary_research": None,
-        "assumptions": [
-            "The role should be positioned as a platform extension role rather than a customer-facing integrations lead."
-        ],
-        "warnings": [
-            "The team should avoid opening this role until the current merchant integrations pipeline is resolved."
-        ],
-        "missing_fields": ["Approval status", "Team placement"],
-    },
-]
-
-CHAT_SESSION_BLUEPRINTS = [
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-payments-overview",
-        "title": "Backend hiring pipeline review",
-        "last_interaction_offset_hours": 4,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 1,
-        "thread_id": "recruiter-chat-frontend-salary-research",
-        "title": "Frontend compensation research",
-        "last_interaction_offset_hours": 26,
-    },
-    {
-        "company_index": 1,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-ai-role-summary",
-        "title": "AI engineer candidate search",
-        "last_interaction_offset_hours": 8,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-platform-calibration",
-        "title": "Platform reliability calibration notes",
-        "last_interaction_offset_hours": 2,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-merchant-shortlist-batch",
-        "title": "Merchant integrations shortlist batch",
-        "last_interaction_offset_hours": 6,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-risk-analytics-forecast",
-        "title": "Risk analytics hiring forecast",
-        "last_interaction_offset_hours": 12,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-offer-prep-nischal",
-        "title": "Offer prep for Nischal Kharel",
-        "last_interaction_offset_hours": 18,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-outreach-approval-queue",
-        "title": "Outreach approval queue review",
-        "last_interaction_offset_hours": 1,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-interview-reschedule-log",
-        "title": "Interview reschedule and follow-up log",
-        "last_interaction_offset_hours": 9,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-rejection-copy-notes",
-        "title": "Rejection copy and candidate notes",
-        "last_interaction_offset_hours": 14,
-    },
-    {
-        "company_index": 0,
-        "recruiter_slot": 0,
-        "thread_id": "recruiter-chat-eng-manager-panel-sync",
-        "title": "Engineering manager panel sync",
-        "last_interaction_offset_hours": 21,
     },
 ]
 
@@ -4637,7 +3717,7 @@ def build_resume(user, data, variant):
 
 
 def generate_shortlist_email(
-    candidate_name: str, job_title: str, company_name: str, cal_url: str
+    candidate_name: str, job_title: str, company_name: str
 ) -> tuple[str, str]:
     """Generate a shortlist email subject and body."""
     subject = f"Great news – You've been shortlisted for {job_title} at {company_name}!"
@@ -4648,12 +3728,8 @@ def generate_shortlist_email(
         f"next stage of our hiring process.\n\n"
         f"Your profile and experience stood out among the applicants, and we would love to "
         f"learn more about you in an interview.\n\n"
-        f"Please book your interview slot using the link below:\n"
-        f"{cal_url}\n\n"
-        f"IMPORTANT: When booking, please use the same name and email address you registered "
-        f"with on Rojgar AI so we can automatically match your booking to your application.\n\n"
-        f"If you have any questions or need to reschedule, please don't hesitate to reach out "
-        f"to us at this email address.\n\n"
+        f"Pick an interview time with the scheduling link in this email; the same "
+        f"link lets you reschedule or cancel.\n\n"
         f"We look forward to speaking with you!\n\n"
         f"Warm regards,\n"
         f"The {company_name} Hiring Team"
@@ -4812,19 +3888,6 @@ async def create_job_with_schema(
     db.add(job)
     await db.flush()
 
-    eval_criteria = data.get("evaluation_criteria", [])
-    if eval_criteria:
-        db.add(
-            JobEvaluationSchema(
-                job_id=job.id,
-                version=1,
-                criteria=eval_criteria,
-                human_weight=0.6,
-                llm_weight=0.4,
-            )
-        )
-        await db.flush()
-
     return job
 
 
@@ -4881,8 +3944,6 @@ async def seed_company(
         location=company_data["location"],
         website_url=company_data["website_url"],
         domain=company_data["domain"],
-        cal_booking_url=company_data["cal_booking_url"],
-        cal_organizer_email=company_data["cal_organizer_email"],
         description=company_data["description"],
     )
     db.add(company)
@@ -5157,12 +4218,10 @@ async def seed_applications(
 
         # Create outreach email draft
         if target_status == ApplicationStatus.interview_booked:
-            cal_url = company_info.get("cal_booking_url", "https://cal.com/default")
             subject, body = generate_shortlist_email(
                 candidate_user.full_name,
                 job.title,
                 company_info["name"],
-                cal_url,
             )
             draft = EmailDraft(
                 application_id=application.id,
@@ -5182,14 +4241,18 @@ async def seed_applications(
             )
             interview = Interview(
                 application_id=application.id,
-                cal_booking_uid=f"cal-booking-{uuid.uuid4().hex[:12]}",
+                company_id=job.company_id,
+                ics_uid=f"interview-{uuid.uuid4()}@rojgarai",
                 candidate_name=candidate_user.full_name,
                 candidate_email=candidate_user.email,
                 start_time=interview_base,
                 end_time=interview_base + timedelta(minutes=45),
                 timezone="Asia/Kathmandu",
-                location="Google Meet – link sent via calendar invite",
-                title=f"Interview: {candidate_user.full_name} – {job.title}",
+                location=f"https://meet.jit.si/rojgarai-{uuid.uuid4().hex[:16]}",
+                title=f"Interview: {job.title}",
+                status="done" if interview_base < NOW else "booked",
+                reminder_24h_sent_at=NOW,
+                reminder_1h_sent_at=NOW,
             )
             db.add(interview)
 
@@ -5227,13 +4290,12 @@ async def seed_live_pipeline_data(
     company_contexts: list[dict],
 ) -> None:
     print(
-        "\n📈 Seeding active pipeline applications, drafts, evaluations, and recordings..."
+        "\n📈 Seeding active pipeline applications, drafts, interviews and scorecards..."
     )
 
     application_counter = 0
     interview_counter = 0
-    evaluation_counter = 0
-    recording_counter = 0
+    scorecard_counter = 0
     draft_counter = 0
 
     for spec in LIVE_APPLICATIONS:
@@ -5301,7 +4363,6 @@ async def seed_live_pipeline_data(
                     candidate_user.full_name,
                     job.title,
                     company_data["name"],
-                    company_data["cal_booking_url"],
                 )
 
             db.add(
@@ -5321,185 +4382,45 @@ async def seed_live_pipeline_data(
             interview_start = NOW.replace(
                 hour=spec.get("interview_hour", 11)
             ) + timedelta(days=interview_days_offset)
-            db.add(
-                Interview(
-                    application_id=application.id,
-                    cal_booking_uid=f"cal-booking-live-{uuid.uuid4().hex[:12]}",
-                    candidate_name=candidate_user.full_name,
-                    candidate_email=candidate_user.email,
-                    start_time=interview_start,
-                    end_time=interview_start + timedelta(minutes=50),
-                    timezone="Asia/Kathmandu",
-                    location="Google Meet",
-                    title=f"Interview: {candidate_user.full_name} – {job.title}",
-                )
+            interview = Interview(
+                application_id=application.id,
+                company_id=job.company_id,
+                interviewer_user_id=company_context["recruiters"][0].id,
+                ics_uid=f"interview-{uuid.uuid4()}@rojgarai",
+                candidate_name=candidate_user.full_name,
+                candidate_email=candidate_user.email,
+                start_time=interview_start,
+                end_time=interview_start + timedelta(minutes=45),
+                timezone="Asia/Kathmandu",
+                location=f"https://meet.jit.si/rojgarai-{uuid.uuid4().hex[:16]}",
+                title=f"Interview: {job.title}",
+                status="booked",
             )
+            db.add(interview)
+            await db.flush()
             interview_counter += 1
 
-        if spec.get("create_evaluations"):
-            schema = await db.scalar(
-                select(JobEvaluationSchema).where(JobEvaluationSchema.job_id == job.id)
-            )
-            if schema is not None:
-                candidate_score = float(spec.get("score") or 75)
-                human_scores = {
-                    item["key"]: min(10.0, round(candidate_score / 10, 1))
-                    for item in schema.criteria
-                }
-                llm_scores = {
-                    item["key"]: max(
-                        5.0, min(10.0, round((candidate_score - 4) / 10, 1))
-                    )
-                    for item in schema.criteria
-                }
-
-                db.add(
-                    CandidateEvaluationScore(
-                        application_id=application.id,
-                        job_id=job.id,
-                        schema_id=schema.id,
-                        schema_version=schema.version,
-                        evaluator_type="human",
-                        scores=human_scores,
-                        criteria_snapshot=schema.criteria,
-                        notes="Human interview panel found strong evidence of role alignment and practical execution.",
-                        weighted_total=round(candidate_score / 10, 2),
-                        submitted_by_user_id=company_context["recruiters"][0].id,
-                    )
-                )
-                db.add(
-                    CandidateEvaluationScore(
-                        application_id=application.id,
-                        job_id=job.id,
-                        schema_id=schema.id,
-                        schema_version=schema.version,
-                        evaluator_type="llm",
-                        scores=llm_scores,
-                        criteria_snapshot=schema.criteria,
-                        notes="LLM evaluation mirrored the strongest signals from the interview transcript and structured answers.",
-                        weighted_total=round(max(candidate_score - 4, 50) / 10, 2),
-                        submitted_by_user_id=None,
-                    )
-                )
-                evaluation_counter += 2
-
-        if spec.get("create_recording"):
+        if spec.get("create_scorecard") and interview_days_offset is not None:
+            must_haves = [r for r in (job.requirements or []) if r.strip()][:6]
+            candidate_score = float(spec.get("score") or 75)
+            rating = 4 if candidate_score >= 85 else 3 if candidate_score >= 70 else 2
             db.add(
-                InterviewRecording(
-                    application_id=application.id,
-                    s3_audio_url=f"https://demo-bucket.example.com/interviews/{application.id}.mp3",
-                    s3_audio_key=f"interviews/{application.id}.mp3",
-                    transcript="Candidate walked through architecture tradeoffs, testing strategy, and practical decision-making with strong clarity.",
-                    evaluation="Communication was clear, examples were concrete, and answers mapped well to the role's core expectations.",
-                    status=RecordingStatus.evaluated,
-                    duration_seconds=2840,
+                Scorecard(
+                    interview_id=interview.id,
+                    author_user_id=company_context["recruiters"][0].id,
+                    ratings=[{"criterion": c, "rating": rating} for c in must_haves],
+                    recommendation="strong_yes" if rating == 4 else "yes",
+                    notes="Clear examples, practical answers, good fit for the role.",
                 )
             )
-            recording_counter += 1
+            interview.status = "done"
+            scorecard_counter += 1
 
     await db.flush()
     print(f"  ✓ Live applications: {application_counter}")
     print(f"  ✓ Live email drafts: {draft_counter}")
     print(f"  ✓ Live interviews: {interview_counter}")
-    print(f"  ✓ Evaluation records: {evaluation_counter}")
-    print(f"  ✓ Interview recordings: {recording_counter}")
-
-
-def _seed_chat_history_message(
-    role: str,
-    content: str,
-    *,
-    hours_ago: int,
-    response_type: str | None = None,
-    data: dict | None = None,
-) -> dict:
-    return {
-        "role": role,
-        "content": content,
-        "created_at": (NOW - timedelta(hours=hours_ago)).isoformat(),
-        "response_type": response_type,
-        "data": data,
-    }
-
-
-def _build_chat_session_state(blueprint: dict) -> dict:
-    title = blueprint["title"].lower()
-    base_history = [
-        _seed_chat_history_message(
-            "user",
-            blueprint["title"],
-            hours_ago=blueprint["last_interaction_offset_hours"] + 2,
-        ),
-    ]
-
-    if "salary" in title or "compensation" in title:
-        base_history.append(
-            _seed_chat_history_message(
-                "assistant",
-                "I compiled the latest frontend compensation benchmark for Nepal and nearby remote markets.",
-                hours_ago=blueprint["last_interaction_offset_hours"],
-                response_type="salary_answer",
-                data={
-                    "role": "Frontend Engineer",
-                    "country": "Nepal",
-                    "currency": "NPR",
-                    "recommended_min": 1800000,
-                    "recommended_max": 2600000,
-                },
-            )
-        )
-    elif "edit" in title or "calibration" in title or "panel sync" in title:
-        base_history.append(
-            _seed_chat_history_message(
-                "assistant",
-                "I prepared a safe job update preview for review before anything is applied.",
-                hours_ago=blueprint["last_interaction_offset_hours"],
-                response_type="job_edit_preview",
-                data={
-                    "job_id": str(uuid.uuid4()),
-                    "job_title": "Platform Reliability Engineer",
-                    "summary": "Update the requirements and tighten the reliability ownership language.",
-                    "patch": {"title": "Senior Platform Reliability Engineer"},
-                    "diffs": [
-                        {
-                            "field": "title",
-                            "before": "Platform Reliability Engineer",
-                            "after": "Senior Platform Reliability Engineer",
-                        }
-                    ],
-                },
-            )
-        )
-    else:
-        base_history.append(
-            _seed_chat_history_message(
-                "assistant",
-                "Here is a company job query summary with the roles that need attention next.",
-                hours_ago=blueprint["last_interaction_offset_hours"],
-                response_type="job_list",
-                data={
-                    "total": 3,
-                    "counts": {"active": 2, "draft": 1, "expired": 0},
-                    "jobs": [],
-                },
-            )
-        )
-
-    return {
-        "mode": "idle",
-        "history": base_history,
-        "salary_slots": {
-            "role": "Frontend Engineer" if "salary" in title else None,
-            "country": "Nepal" if "salary" in title else None,
-            "period": "yearly" if "salary" in title else None,
-            "year": NOW.year if "salary" in title else None,
-        },
-        "pending_job_match": None,
-        "pending_edit": None,
-        "default_scope": "company",
-        "seeded": True,
-        "title": blueprint["title"],
-    }
+    print(f"  ✓ Scorecards: {scorecard_counter}")
 
 
 def _status_activity_copy(
@@ -6002,50 +4923,6 @@ async def seed_preferences_and_activity(
     print(f"  ✓ Activity events: {activity_counter}")
 
 
-async def seed_ai_artifacts(db, company_contexts: list[dict]) -> None:
-    print("\n🤖 Seeding recruiter AI drafts and chat sessions...")
-
-    for blueprint in AI_DRAFT_BLUEPRINTS:
-        company_context = company_contexts[blueprint["company_index"]]
-        recruiter = company_context["recruiters"][blueprint["recruiter_slot"]]
-        db.add(
-            JobAIDraft(
-                recruiter_id=recruiter.id,
-                company_id=company_context["company"].id,
-                thread_id=blueprint["thread_id"],
-                status=blueprint["status"],
-                mode=blueprint["mode"],
-                source_rough_description=blueprint["source_prompt"],
-                locked_fields=blueprint["locked_fields"],
-                latest_draft=blueprint["latest_draft"],
-                salary_research=blueprint["salary_research"],
-                assumptions=blueprint["assumptions"],
-                warnings=blueprint["warnings"],
-                missing_fields=blueprint["missing_fields"],
-                last_interrupt=None,
-            )
-        )
-
-    for blueprint in CHAT_SESSION_BLUEPRINTS:
-        company_context = company_contexts[blueprint["company_index"]]
-        recruiter = company_context["recruiters"][blueprint["recruiter_slot"]]
-        db.add(
-            RecruiterChatSession(
-                recruiter_id=recruiter.id,
-                company_id=company_context["company"].id,
-                thread_id=blueprint["thread_id"],
-                title=blueprint["title"],
-                last_interaction_at=NOW
-                - timedelta(hours=blueprint["last_interaction_offset_hours"]),
-                state_json=_build_chat_session_state(blueprint),
-            )
-        )
-
-    await db.flush()
-    print(f"  ✓ AI drafts: {len(AI_DRAFT_BLUEPRINTS)}")
-    print(f"  ✓ Chat sessions: {len(CHAT_SESSION_BLUEPRINTS)}")
-
-
 async def seed_candidate_import_tasks(
     db, candidate_users: list[tuple[User, list[Resume]]]
 ) -> None:
@@ -6217,12 +5094,7 @@ async def seed_audit_history(
         interview.application_id: interview for interview in interviews
     }
     email_drafts = (await db.execute(select(EmailDraft))).scalars().all()
-    recordings = (await db.execute(select(InterviewRecording))).scalars().all()
-    scores = (await db.execute(select(CandidateEvaluationScore))).scalars().all()
-    evaluation_schemas = (await db.execute(select(JobEvaluationSchema))).scalars().all()
     preferences = (await db.execute(select(RecruiterPreference))).scalars().all()
-    ai_drafts = (await db.execute(select(JobAIDraft))).scalars().all()
-    chat_sessions = (await db.execute(select(RecruiterChatSession))).scalars().all()
     import_tasks = (
         (
             await db.execute(
@@ -6338,7 +5210,6 @@ async def seed_audit_history(
             company,
             before_overrides={
                 "website_url": None,
-                "cal_booking_url": None,
                 "description": f"{company.name} initial company profile.",
             },
         )
@@ -6810,25 +5681,6 @@ async def seed_audit_history(
                 request_method="POST",
             )
 
-    for schema in evaluation_schemas:
-        job = jobs_by_id.get(schema.job_id)
-        actor = actor_by_user_id.get(job.posted_by) if job is not None else None
-        record(
-            created_at=(job.created_at if job is not None else NOW)
-            + timedelta(hours=2),
-            entity_type="job_evaluation_schema",
-            entity_id=schema.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=job.posted_by if job is not None else None,
-            company_id=job.company_id if job is not None else None,
-            parent_entity_type="job",
-            parent_entity_id=schema.job_id,
-            after_json=_serialize_audit_entity(schema),
-            request_path=f"/jobs/{schema.job_id}/evaluation-schema",
-            request_method="POST",
-        )
-
     for application in applications:
         job = jobs_by_id.get(application.job_id)
         candidate = actor_by_user_id.get(application.user_id)
@@ -7124,87 +5976,6 @@ async def seed_audit_history(
                 request_method="POST",
             )
 
-    for recording in recordings:
-        application = applications_by_id.get(recording.application_id)
-        if application is None:
-            continue
-        job = jobs_by_id.get(application.job_id)
-        actor = actor_by_user_id.get(job.posted_by) if job is not None else None
-        company_id = job.company_id if job is not None else None
-        create_after = _serialize_audit_entity(recording)
-        create_after.update(
-            {
-                "status": RecordingStatus.uploaded.value,
-                "transcript": None,
-                "evaluation": None,
-            }
-        )
-        record(
-            created_at=recording.created_at,
-            entity_type="interview_recording",
-            entity_id=recording.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=application.user_id,
-            company_id=company_id,
-            parent_entity_type="application",
-            parent_entity_id=application.id,
-            after_json=create_after,
-            request_path="/interviews/recordings",
-            request_method="POST",
-        )
-        if recording.status != RecordingStatus.uploaded:
-            recording_before, recording_after, recording_diff = _build_audit_snapshots(
-                recording,
-                before_overrides={
-                    "status": RecordingStatus.uploaded,
-                    "transcript": None,
-                    "evaluation": None,
-                },
-            )
-            record(
-                created_at=(recording.updated_at or recording.created_at)
-                + timedelta(minutes=20),
-                entity_type="interview_recording",
-                entity_id=recording.id,
-                action_type="status_transition",
-                actor=actor,
-                target_user_id=application.user_id,
-                company_id=company_id,
-                parent_entity_type="application",
-                parent_entity_id=application.id,
-                before_json=recording_before,
-                after_json=recording_after,
-                diff_json=recording_diff,
-                request_path=f"/interviews/recordings/{recording.id}",
-                request_method="PATCH",
-            )
-
-    for score in scores:
-        application = applications_by_id.get(score.application_id)
-        if application is None:
-            continue
-        job = jobs_by_id.get(score.job_id)
-        _actor_key = score.submitted_by_user_id or (
-            job.posted_by if job is not None else None
-        )
-        actor = actor_by_user_id.get(_actor_key) if _actor_key is not None else None
-        record(
-            created_at=(application.updated_at or application.created_at)
-            + timedelta(hours=4),
-            entity_type="candidate_evaluation_score",
-            entity_id=score.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=application.user_id,
-            company_id=job.company_id if job is not None else None,
-            parent_entity_type="application",
-            parent_entity_id=application.id,
-            after_json=_serialize_audit_entity(score),
-            request_path=f"/interviews/evaluations/{application.id}",
-            request_method="POST",
-        )
-
     for preference in preferences:
         actor = actor_by_user_id.get(preference.user_id)
         company_id = None
@@ -7250,94 +6021,6 @@ async def seed_audit_history(
             diff_json=preference_diff,
             request_path="/recruiter/preferences",
             request_method="PATCH",
-        )
-
-    for draft in ai_drafts:
-        actor = actor_by_user_id.get(draft.recruiter_id)
-        record(
-            created_at=draft.created_at,
-            entity_type="job_ai_draft",
-            entity_id=draft.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=draft.recruiter_id,
-            company_id=draft.company_id,
-            after_json=_serialize_audit_entity(draft),
-            request_path="/job-ai/drafts",
-            request_method="POST",
-        )
-        draft_before, draft_after, draft_diff = _build_audit_snapshots(
-            draft,
-            before_overrides={"status": "drafting", "warnings": []},
-        )
-        record(
-            created_at=(draft.updated_at or draft.created_at) + timedelta(hours=1),
-            entity_type="job_ai_draft",
-            entity_id=draft.id,
-            action_type="update",
-            actor=actor,
-            target_user_id=draft.recruiter_id,
-            company_id=draft.company_id,
-            before_json=draft_before,
-            after_json=draft_after,
-            diff_json=draft_diff,
-            request_path=f"/job-ai/drafts/{draft.id}",
-            request_method="PATCH",
-        )
-
-    first_chat_session = None
-    for session in chat_sessions:
-        actor = actor_by_user_id.get(session.recruiter_id)
-        if first_chat_session is None:
-            first_chat_session = session
-        record(
-            created_at=session.created_at,
-            entity_type="chat_session",
-            entity_id=session.id,
-            action_type="create",
-            actor=actor,
-            target_user_id=session.recruiter_id,
-            company_id=session.company_id,
-            after_json=_serialize_audit_entity(session),
-            request_path="/recruiter-chat/sessions",
-            request_method="POST",
-        )
-        session_before, session_after, session_diff = _build_audit_snapshots(
-            session,
-            before_overrides={"title": "Untitled recruiter chat"},
-        )
-        record(
-            created_at=(session.updated_at or session.created_at) + timedelta(hours=2),
-            entity_type="chat_session",
-            entity_id=session.id,
-            action_type="update",
-            actor=actor,
-            target_user_id=session.recruiter_id,
-            company_id=session.company_id,
-            before_json=session_before,
-            after_json=session_after,
-            diff_json=session_diff,
-            request_path=f"/recruiter-chat/sessions/{session.id}",
-            request_method="PATCH",
-        )
-
-    if first_chat_session is not None:
-        deleted_chat_id = uuid.uuid4()
-        deleted_chat_snapshot = _serialize_audit_entity(first_chat_session) | {
-            "id": str(deleted_chat_id),
-            "title": "Old recruiter sync notes",
-        }
-        record(
-            created_at=NOW - timedelta(days=40),
-            entity_type="chat_session",
-            entity_id=deleted_chat_id,
-            action_type="delete",
-            actor=actor_by_user_id.get(first_chat_session.recruiter_id),
-            target_user_id=first_chat_session.recruiter_id,
-            company_id=first_chat_session.company_id,
-            before_json=deleted_chat_snapshot,
-            request_path=f"/recruiter-chat/sessions/{deleted_chat_id}",
-            request_method="DELETE",
         )
 
     for task_index, task in enumerate(import_tasks):
@@ -7404,9 +6087,7 @@ async def seed() -> None:
         print()
 
         # --- Companies, Admins, Recruiters, Jobs ---
-        print(
-            "📦 Seeding companies, admins, recruiters, jobs, and evaluation schemas..."
-        )
+        print("📦 Seeding companies, admins, recruiters and jobs...")
         all_jobs: list[list[Job]] = []
         company_contexts: list[dict] = []
         for company_index, company_data in enumerate(COMPANIES):
@@ -7446,7 +6127,6 @@ async def seed() -> None:
         # --- Applications, Shortlisting, Outreach, Interviews ---
         await seed_applications(db, candidate_users, all_jobs, COMPANIES)
         await seed_live_pipeline_data(db, candidate_users, company_contexts)
-        await seed_ai_artifacts(db, company_contexts)
         await seed_candidate_import_tasks(db, candidate_users)
         await seed_preferences_and_activity(db, company_contexts)
         await seed_audit_history(db, company_contexts, candidate_users)
@@ -7496,19 +6176,7 @@ async def seed() -> None:
         ) or 0
         total_email_drafts = await db.scalar(select(func.count(EmailDraft.id))) or 0
         total_interviews = await db.scalar(select(func.count(Interview.id))) or 0
-        total_eval_schemas = (
-            await db.scalar(select(func.count(JobEvaluationSchema.id)))
-        ) or 0
-        total_eval_scores = (
-            await db.scalar(select(func.count(CandidateEvaluationScore.id)))
-        ) or 0
-        total_recordings = (
-            await db.scalar(select(func.count(InterviewRecording.id)))
-        ) or 0
-        total_ai_drafts = await db.scalar(select(func.count(JobAIDraft.id))) or 0
-        total_chat_sessions = (
-            await db.scalar(select(func.count(RecruiterChatSession.id)))
-        ) or 0
+        total_scorecards = (await db.scalar(select(func.count(Scorecard.id)))) or 0
         total_import_tasks = (
             await db.scalar(select(func.count(ResumeImportTask.id)))
         ) or 0
@@ -7541,8 +6209,7 @@ async def seed() -> None:
             f"  Jobs                : {total_jobs} "
             f"({active_jobs} active, {draft_jobs} draft, {expired_jobs} expired)"
         )
-        print(f"  Evaluation schemas  : {total_eval_schemas}")
-        print(f"  Evaluation scores   : {total_eval_scores}")
+        print(f"  Scorecards          : {total_scorecards}")
         print(f"  Candidates          : {len(CANDIDATES)}")
         print(f"  Resumes             : {total_resumes}")
         print(f"  Applications        : {total_applications}")
@@ -7577,9 +6244,7 @@ async def seed() -> None:
         )
         print(f"  Email drafts        : {total_email_drafts}")
         print(f"  Interview bookings  : {total_interviews}")
-        print(f"  Interview recordings: {total_recordings}")
-        print(f"  AI job drafts       : {total_ai_drafts}")
-        print(f"  Chat sessions       : {total_chat_sessions}")
+        print(f"  Interview scorecards: {total_scorecards}")
         print(f"  Resume import tasks : {total_import_tasks}")
         print(f"  Activity events     : {total_activity_events}")
         print(f"  Notifications       : {total_notifications}")

@@ -24,7 +24,7 @@ from app.modules.dashboards.schemas import (
     RoleCard,
 )
 from app.modules.dashboards.service import _get_company_context
-from app.modules.interviews.models import Interview
+from app.modules.interviews.models import Interview, InterviewStatus
 from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStatus, JobStatus
 
@@ -66,6 +66,7 @@ async def _interviews_between(
             Interview.start_time >= start,
             Interview.start_time < end,
             Application.status == ApplicationStatus.interview_booked,
+            Interview.status == InterviewStatus.booked,
         )
         .order_by(Interview.start_time.asc())
         .limit(limit)

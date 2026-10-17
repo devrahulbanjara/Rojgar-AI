@@ -16,6 +16,7 @@ from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipRole, MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import BusinessInvite, Company, CompanyMembership
+from app.modules.entitlements.service import ensure_can_add_member
 from app.modules.companies.schemas import (
     InviteCreated,
     InvitePreview,
@@ -217,6 +218,8 @@ def _invite_response(invite: BusinessInvite, inviter: User | None) -> InviteResp
 async def create_invite(
     db: AsyncSession, business: Company, inviter: User, role: MembershipRole
 ) -> InviteCreated:
+    # Say so now rather than when the person opens the link.
+    await ensure_can_add_member(db, business.id)
     token = secrets.token_urlsafe(24)
     invite = BusinessInvite(
         company_id=business.id,
@@ -333,6 +336,7 @@ async def accept_invite(db: AsyncSession, token: str, user: User) -> uuid.UUID:
         )
     )
     if membership is None:
+        await ensure_can_add_member(db, invite.company_id)
         membership = CompanyMembership(
             user_id=user.id,
             company_id=invite.company_id,

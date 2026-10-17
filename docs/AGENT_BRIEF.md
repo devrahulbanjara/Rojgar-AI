@@ -18,7 +18,7 @@ Roles: recruiter, company admin (recruiter + team/company settings/audit), candi
 
 ## Voice and key phrases
 - Human oversight, short: **"AI assists. You decide."** Long: "AI helps you review every application, but it never decides alone. Every hiring decision is made by a person." Never "A person makes this decision" or "A recruiter makes every final decision".
-- Words: Business, Team (Owner, Manager, Interviewer), Job, Applicant, "Suggest someone you know". Stages: New, Shortlisted, Interview, Offer, Hired, Not selected. Never "candidate", "recruiter", "organization", "rejected", "pipeline", "AI screening".
+- Words: Business, Team (Owner, Manager, Interviewer), Job, Applicant, "Suggest someone you know". Stages: New, Shortlisted, Interview, Offer, Hired, Not selected. Never "candidate", "recruiter", "organization", "rejected", "pipeline", "AI screening", "outreach" (say "messages to applicants"), "evaluation", "ATS".
 - Nepali equivalents: व्यवसाय, टिम, जागिर, आवेदक, चिनेको मान्छे सुझाउनुहोस्; stages नयाँ · छानिएको · अन्तर्वार्ता · प्रस्ताव · नियुक्त · यसपटक छानिएन. Avoid "सिफारिस" (sounds like nepotism).
 
 ## Design system (frontend)

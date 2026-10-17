@@ -6,7 +6,7 @@ from app.modules.admin.models import JobReport, ManualPayment
 from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import BusinessStatus
 from app.modules.companies.models import Company
-from app.shared import sms
+from app.infrastructures.sms.service import get_sms_provider
 from tests.integration.helpers import (
     auth_headers,
     make_active_job,
@@ -39,8 +39,8 @@ async def test_approval_queue_and_decisions(client, db):
         headers=headers,
     )
     assert asked.status_code == 200
-    assert sms.sent[-1][0] == "+9779811111111"
-    assert "PAN certificate" in sms.sent[-1][1]
+    assert get_sms_provider().sent[-1][0] == "9811111111"
+    assert "PAN certificate" in get_sms_provider().sent[-1][1]
     queue = (await client.get("/admin/approvals", headers=headers)).json()["data"]
     assert queue[0]["info_requested"].startswith("Please add")
 

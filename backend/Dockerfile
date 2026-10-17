@@ -28,11 +28,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Stage 2: Runtime
 FROM python:3.12-slim
 
-# ffmpeg: interview recordings (webm/mp4/ogg/m4a) are transcoded before ASR.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN groupadd -r app && useradd -r -d /app -g app app
 
 WORKDIR /app

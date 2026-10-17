@@ -36,15 +36,6 @@ class SyncAction(str, Enum):
     DELETE = "DELETE"
 
 
-class RecordingStatus(str, Enum):
-    uploaded = "uploaded"
-    transcribing = "transcribing"
-    transcribed = "transcribed"
-    evaluating = "evaluating"
-    evaluated = "evaluated"
-    failed = "failed"
-
-
 class SyncStatus(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"

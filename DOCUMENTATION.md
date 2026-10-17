@@ -62,11 +62,10 @@ States: `draft → active → expired`. Expiry auto-set when expiry date passes;
 
 **Shortlisting.** Manual one-by-one, or **AI Finalize** — multi-agent LangGraph (see §6) runs across the cohort; ≥ threshold → shortlisted, rest → rejected. Crash-safe per-application idempotent commit with `ShortlistStatus` (`not_started → in_progress → completed | failed`). Shortlist drafts a **warm invite outreach email**; reject drafts a **kind rejection email with embedded AI feedback**. **No email sends without recruiter approval.**
 
-**Outreach.** Pipeline stages: Generate Drafts → Review & Edit → Approve → Send. In-line edit subject + body; discard suppresses send without deleting record; "Send all" dispatches every approved draft via aiosmtplib. Shortlist email contains **Cal.com booking link** with instructions to use registered name + email. Rejection email embeds AI feedback so candidates know why.
+**Outreach.** Pipeline stages: Generate Drafts → Review & Edit → Approve → Send. In-line edit subject + body; discard suppresses send without deleting record; "Send all" dispatches every approved draft via aiosmtplib. Shortlist email contains the candidate's interview scheduling link. Rejection email embeds AI feedback so candidates know why.
 
-**Interviews.** **Cal.com webhook** auto-detects bookings (matched by candidate's registered name + email); status flips `applied` → `interview_booked`; duplicate booking attempts ignored. `/interviews` page filters by job + date range (today / week / month / custom). Marking complete moves status `interview_booked → interview_completed` and unlocks final decision: `offer` or `rejected`. Offer terminal states are set by candidate response (`offer_accepted` / `offer_declined`).
+**Interviews.** Built-in scheduling, no third-party account. Each recruiter sets weekly hours (default Sun–Fri 10:00–17:00 Asia/Kathmandu), interview length (45 min), buffer and a meeting link (their Meet/Zoom URL, or `auto` for a new Jitsi room). Inviting a shortlisted candidate creates a signed scheduling link showing open times for the next 10 working days. Booking is atomic (row lock per interviewer + partial unique indexes), moves the application to interview, and emails both sides an `.ics` invite (METHOD:REQUEST, TZID Asia/Kathmandu); either side reschedules (SEQUENCE+1) or cancels (METHOD:CANCEL) with the same link. Reminders go out 24 h and 1 h before (one worker sends, Postgres advisory lock + atomic claim). After the interview a person fills a scorecard: each must-have rated 1–4, a recommendation (strong yes · yes · no · strong no) and notes.
 
-**Interview Recording + Evaluation.** Recruiter uploads or records interview audio (.webm / .mp3 / .wav / .ogg / .m4a / .mp4). Audio stored in S3 (presigned URL). `RecordingStatus`: `uploaded → transcribing → transcribed → evaluating → evaluated | failed`. **Transcribe** sends audio to a HuggingFace Space hosting **Whisper Small fine-tuned on Nepali speech corpora** — handles English, Nepali, and code-switched candidates. Cold-start retry built in. **Evaluate** runs an LLM against a per-job evaluation schema (rubric criteria with weights) to produce structured competency scores + commentary. Recruiter can also create / edit / delete a manual human evaluation; combined endpoint returns side-by-side AI + human view. **Batch transcribe** processes multiple recordings concurrently.
 
 **Notifications.** In-app feed for application updates, interview bookings, team requests; mark single / mark-all read.
 **Audit log** — company-wide trail of mutating actions per entity (entity_type + entity_id).
@@ -157,12 +156,11 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 ## 9. Data & Infrastructure
 
 **PostgreSQL** — primary store. Alembic migrations. SQLAlchemy 2 async end-to-end.
-**Redis** — caches (salary research 24 h, idempotency 10 min, recruiter-chat retry cache 10 min); rate limiter (`fastapi-limiter`); session locks.
+**Redis** — caches (salary research 24 h, idempotency 10 min, recruiter-chat retry cache 10 min); per-client rate limits (auth/public); session locks.
 **Qdrant** — 3072-d Gemini embeddings of jobs (for candidate semantic search) + applications (for recruiter chat candidate search). **Outbox pattern**: every job mutation writes a `JobSyncEvent` row (`PENDING`); a worker reads pending events and upserts / deletes the Qdrant point, then marks `COMPLETED`. Crash-safe — failed events retry.
-**S3** — image storage (avatars, company logos) + interview audio. Presigned URLs for private playback. Old logos cleaned on replace.
-**HuggingFace Space** — Whisper Small fine-tuned on Nepali audio for interview transcription. Cold-start aware client with retry.
+**S3** — image storage (avatars, company logos). Old logos cleaned on replace.
 **SMTP (aiosmtplib)** — outbound email via configured provider.
-**Cal.com** — interview booking link in shortlist email; webhook handler auto-flips application status on booking.
+**SMS (Sparrow SMS)** — short Nepali texts to candidates at each step (prod only; logged locally).
 **APScheduler** — cron-style background jobs (job expiry sweep, sync-event retry).
 
 ---
@@ -179,11 +177,10 @@ Persistent assistant exclusive to recruiters. Saved sessions, multi-turn context
 - **LlamaCloud** — structured resume parsing
 - **scikit-learn RandomForest** — shortlisting ML pre-filter
 - **fastembed** — fast similarity for ML pre-filter features
-- **Whisper Small fine-tuned on Nepali audio** — hosted on HF Space; transcribes English + Nepali + code-switched interviews
 - **Prompt-injection rail** — Groq classifier (gpt-oss-120b) + deterministic fallback
 - **LangChain PIIMiddleware** — email / URL / phone redaction in shortlisting
 
-**External services.** Cal.com (booking + webhook), SMTP provider, S3-compatible storage, HuggingFace Spaces.
+**External services.** SMTP provider, Sparrow SMS, S3-compatible storage, Jitsi (meeting rooms, no account).
 
 ---
 
@@ -196,11 +193,11 @@ applied  ──[ML pre-filter top 20% ➜ CTO + HR critique loop ➜ Judge ➜ F
                                                                                           ↓
                                                                    outreach drafted ➜ recruiter approves ➜ email sent
                                                                                           ↓
-                                                                          Cal.com booking webhook auto-detect
+                                                          candidate picks a time from the scheduling link
                                                                                           ↓
-                                                       interview_booked ➜ recording uploaded ➜ Whisper-NP transcribe ➜ AI evaluation
+                                                              interview_booked ➜ .ics invites ➜ reminders 24 h / 1 h
                                                                                           ↓
-                                                                              recruiter marks complete
+                                                                          interviewer fills the scorecard
                                                                                           ↓
                                                                             interview_completed
                                                                                           ↓

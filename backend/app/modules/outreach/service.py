@@ -23,6 +23,7 @@ from app.modules.audit.service import create_custom_audit_log
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import Company, CompanyMembership
+from app.modules.interviews.service import scheduling_url_for
 from app.modules.jobs.models import Job
 from app.modules.outreach.email_composer import compose_email
 from app.modules.outreach.models import EmailDraft
@@ -146,6 +147,18 @@ def _resolve_outreach_status(
     return None
 
 
+async def _scheduling_link(
+    db: AsyncSession,
+    application: Application,
+    outreach_status: ApplicationStatus,
+    interviewer_id: uuid.UUID | None,
+) -> str | None:
+    """Shortlist emails carry the candidate's interview scheduling link."""
+    if outreach_status != ApplicationStatus.shortlisted or interviewer_id is None:
+        return None
+    return await scheduling_url_for(db, application.id, interviewer_id)
+
+
 def _draft_to_response(draft: EmailDraft) -> EmailDraftResponse:
     """Convert an email draft ORM instance into its response schema."""
     app = draft.application
@@ -202,9 +215,8 @@ def _compose_draft(
         if booking_url:
             safe_booking_url = html.escape(booking_url, quote=True)
             body += (
-                "<p>Please book your interview using the same name and email address "
-                "you used on Rojgar AI so we can match your booking automatically.</p>"
-                f'<p><a href="{safe_booking_url}">Book your interview</a></p>'
+                "<p>Pick an interview time that suits you:</p>"
+                f'<p><a href="{safe_booking_url}">Choose an interview time</a></p>'
             )
     else:
         subject = f"Update on your {job_title} application"
@@ -233,14 +245,6 @@ async def _compose_draft_with_fallback(
     booking_url: str | None = None,
 ) -> tuple[str, str]:
     """Compose an AI outreach draft and fall back to the static template on failure."""
-    if application_status == ApplicationStatus.shortlisted and not booking_url:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Add your company's Cal booking link in Company Settings before sending shortlist emails."
-            ),
-        )
-
     try:
         subject, body = await compose_email(
             candidate_name=candidate_name,
@@ -314,7 +318,9 @@ async def _upsert_generated_draft(
         application_status=outreach_status,
         strengths=application.strengths,
         weaknesses=application.weaknesses,
-        booking_url=company.cal_booking_url if company else None,
+        booking_url=await _scheduling_link(
+            db, application, outreach_status, generated_by_user_id
+        ),
     )
     body += _build_footer(recruiter_name, company_name)
 
@@ -395,7 +401,9 @@ async def prepare_drafts(
             application_status=outreach_status,
             strengths=application.strengths,
             weaknesses=application.weaknesses,
-            booking_url=company.cal_booking_url if company else None,
+            booking_url=await _scheduling_link(
+                db, application, outreach_status, user_id
+            ),
         )
         db.add(
             EmailDraft(

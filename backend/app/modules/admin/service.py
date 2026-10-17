@@ -30,7 +30,7 @@ from app.modules.auth.enums import BusinessStatus, MembershipRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
-from app.shared.sms import send_sms
+from app.infrastructures.sms.service import send_sms
 
 
 def _now() -> datetime:
