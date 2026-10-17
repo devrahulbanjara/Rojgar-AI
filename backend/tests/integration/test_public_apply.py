@@ -518,7 +518,7 @@ class TestMagicLink:
             "/public/auth/magic", params={"token": token}, follow_redirects=False
         )
         assert opened.status_code == 303
-        assert opened.headers["location"].endswith("/me/applications")
+        assert opened.headers["location"].endswith("/auth/oauth-callback")
         assert "refresh_token=" in opened.headers.get("set-cookie", "")
 
         reused = await client.get(

@@ -174,7 +174,7 @@ async def open_magic_link(
     db: DbSession, token: Annotated[str, Query(min_length=10, max_length=200)]
 ) -> RedirectResponse:
     response = RedirectResponse(
-        f"{settings.frontend_url}/me/applications",
+        f"{settings.frontend_url}/auth/oauth-callback",
         status_code=status.HTTP_303_SEE_OTHER,
     )
     try:
