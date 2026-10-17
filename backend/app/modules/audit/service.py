@@ -155,20 +155,49 @@ async def get_entity_audit_timeline(
         return []
 
     if user.primary_role == UserRole.candidate:
-        if not any(
-            item.target_user_id == user.id or item.actor_user_id == user.id
+        visible = [
+            item
             for item in items
-        ):
+            if item.target_user_id == user.id or item.actor_user_id == user.id
+        ]
+        if not visible:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have access to this audit trail.",
             )
-    else:
-        membership = await _get_active_company_membership(db, user.id)
-        if not any(item.company_id == membership.company_id for item in items):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have access to this audit trail.",
-            )
+        return [_candidate_safe(item, user.id) for item in visible]
 
-    return [AuditLogResponse.model_validate(item) for item in items]
+    membership = await _get_active_company_membership(db, user.id)
+    visible = [item for item in items if item.company_id == membership.company_id]
+    if not visible:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this audit trail.",
+        )
+    return [AuditLogResponse.model_validate(item) for item in visible]
+
+
+# Fields describing who acted and how (recruiter identity, IP, device, request
+# internals, raw before/after snapshots) are never exposed to candidates.
+_CANDIDATE_HIDDEN_FIELDS = {
+    "actor_role": None,
+    "company_id": None,
+    "request_id": None,
+    "request_path": None,
+    "request_method": None,
+    "ip_address": None,
+    "user_agent": None,
+    "error_message": None,
+    "before_json": None,
+    "after_json": None,
+    "diff_json": None,
+    "metadata": None,
+}
+
+
+def _candidate_safe(item: AuditLog, viewer_id: uuid.UUID) -> AuditLogResponse:
+    response = AuditLogResponse.model_validate(item)
+    hidden = dict(_CANDIDATE_HIDDEN_FIELDS)
+    if item.actor_user_id != viewer_id:
+        hidden["actor_user_id"] = None
+    return response.model_copy(update=hidden)
